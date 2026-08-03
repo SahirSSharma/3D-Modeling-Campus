@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// Build app/data/campus-3d.json — the geometry behind Campus Rush.
+// Build docs/data/campus-3d.json — the geometry behind Campus Rush.
 //
-// WHY THIS EXISTS. The Campus Map tool already ships app/data/campus-map.json,
+// WHY THIS EXISTS. The Campus Map tool already ships docs/data/campus-map.json,
 // but everything in it is either a *point* (204 pinned places) or a big
 // neighbourhood *outline* (the campus edge, the seven colleges). You cannot
 // ride through a point. A game with a camera sitting six metres behind a
@@ -44,13 +44,13 @@ const ENDPOINTS = [
   "https://overpass.private.coffee/api/interpreter",
 ];
 
-/* The academic spine, not the whole campus. This box runs from Revelle's
-   residence halls in the south up past Muir and the Price Center to Marshall,
-   which is where the classes and the dorms that feed them actually are. The
-   full campus box that build-campus-map.mjs uses reaches down to Scripps and
-   out to the medical campus; pulling building geometry for all of that would
-   roughly triple the payload to render coastline nobody rides through. */
-const BBOX = "32.8715,-117.2465,32.8845,-117.2360";
+/* The whole main campus, as bounded by the roads that bound it: North Torrey
+   Pines Road on the west, La Jolla Village Drive on the south, Genesee Avenue
+   across the north-east, and I-5 on the east. Everything a student walks —
+   all seven colleges, Eighth at Pepper Canyon, University Center, the Geisel
+   forecourt — lives inside this box. It is ~9x the old Argo–Peterson corridor
+   and the payload grows with it; that is the point now. */
+const BBOX = "32.8655,-117.2540,32.8905,-117.2215";
 
 /* Metres per degree at this latitude. Campus is ~1.5 km across, so a local
    flat projection is accurate to well under a metre here — far below the
@@ -87,6 +87,7 @@ const MIN_FOOTPRINT_M2 = 60;
 const QUERY = `[out:json][timeout:180];
 (
   way["building"](${BBOX});
+  way["building:part"](${BBOX});
   way["highway"~"^(footway|path|pedestrian|steps|cycleway|living_street|service)$"](${BBOX});
   way["amenity"="fountain"](${BBOX});
   way["natural"="water"](${BBOX});
@@ -180,9 +181,11 @@ function heightOf(tags, area) {
   const known = KNOWN_HEIGHTS[tags.name];
   if (known) return known;
   const explicit = parseFloat(tags.height);
-  if (Number.isFinite(explicit) && explicit > 0) return round1(Math.min(explicit, 60));
+  /* Clamp raised from 60 m: the Eighth College tower (Sankofa) really is the
+     tallest building on campus at ~80 m, and the old clamp flattened it. */
+  if (Number.isFinite(explicit) && explicit > 0) return round1(Math.min(explicit, 90));
   const levels = parseFloat(tags["building:levels"]);
-  if (Number.isFinite(levels) && levels > 0) return round1(Math.min(levels * 3.6 + 1.2, 60));
+  if (Number.isFinite(levels) && levels > 0) return round1(Math.min(levels * 3.6 + 1.2, 90));
   /* Calibrated against the buildings that DO carry tags, then corrected once:
      the first cut put everything in the 400-1200 m² band at 7 m and produced a
      campus of bungalows — Solis Hall, 64 Degrees and the Chancellor's Complex
@@ -207,11 +210,27 @@ function build(elements) {
   const buildings = [];
   const paths = [];
   const surfaces = [];
+  const looseParts = [];
 
   for (const el of elements) {
     if (el.type !== "way" || !el.geometry?.length) continue;
     const tags = el.tags || {};
     const pts = el.geometry.map((g) => project(g.lat, g.lon));
+
+    if (tags["building:part"] && tags["building:part"] !== "no") {
+      /* A part is one mass of a multi-mass building — the handful of places
+         OSM mappers modelled a complex shape properly. Collected first, then
+         attached to whichever footprint contains them; the LiDAR pass
+         measures each part's own roof so a stepped building steps. */
+      const ring = pts.slice(0, -1);
+      if (ring.length >= 3 && areaOf(ring) >= 15) {
+        const part = { p: ring };
+        const h = parseFloat(tags.height);
+        if (Number.isFinite(h) && h > 0) part.h = round1(Math.min(h, 90));
+        looseParts.push(part);
+      }
+      continue;
+    }
 
     if (tags.building) {
       // Closed ring; drop the duplicated last vertex OSM uses to close it.
@@ -256,6 +275,28 @@ function build(elements) {
       if (ring.length >= 3) surfaces.push({ kind: "green", p: ring });
     }
   }
+
+  /* Attach each part to the building whose footprint holds its centroid.
+     A building with two or more parts is a genuinely multi-mass shape; the
+     renderer draws the parts instead of the single slab. */
+  const inRing = (pt, ring) => {
+    let ins = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const [xi, zi] = ring[i];
+      const [xj, zj] = ring[j];
+      if (zi > pt[1] !== zj > pt[1] && pt[0] < ((xj - xi) * (pt[1] - zi)) / (zj - zi) + xi) ins = !ins;
+    }
+    return ins;
+  };
+  let attached = 0;
+  for (const part of looseParts) {
+    const c = centroid(part.p);
+    const host = buildings.find((b) => inRing(c, b.p));
+    if (!host) continue;
+    (host.parts ??= []).push(part);
+    attached++;
+  }
+  if (looseParts.length) console.log(`  ${attached}/${looseParts.length} building parts attached`);
 
   /* Named anchors a run can start or finish at. The game asks a student for
      their dorm once and reads their classes off their schedule, and both of

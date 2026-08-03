@@ -133,3 +133,24 @@ geometry). It will fold back into TritonPlan once it stands up on its own.
 
 Unofficial and not affiliated with, endorsed by, or operated by any university. Not a navigation
 aid.
+
+FULL CAMPUS (2026-08-03). The corridor became the campus: everything the
+roads bound — North Torrey Pines Road, La Jolla Village Drive, Genesee,
+I-5. A third and fourth source joined, each again used only for what it
+is good at. UC San Diego's own facilities GIS supplies the massing —
+one polygon per MASS, so Sankofa is a 64 m tower plus a mid and a base,
+Geisel is built from its real per-floor polygons, and the Pepper Canyon
+West towers stand at 70 and 67 m as the tallest things on campus. USDA
+NAIP aerial imagery (public domain) supplies the colours: a 6 m terrain
+colour grid, every roof, every surveyed ground polygon.
+
+The 2014 LiDAR remains the referee for everything it saw and is
+overruled for everything built after it flew — it "measured" Sankofa at
+8.4 m, the parking lot the tower replaced. Heights reconcile per mass.
+
+Free roam (F) goes anywhere from eye level to 900 m up, with a
+logarithmic velocity slider and teleport to any of 360+ named places.
+Labels (L) name every building in view, depth-tested so a hidden
+building keeps its name to itself. Fallen Star hangs off the Jacobs
+Hall tower corner at its published 10 degrees, baby blue with a brick
+chimney; the Sun God and the Warren Bear stand where they stand.

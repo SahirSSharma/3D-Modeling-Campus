@@ -1,0 +1,187 @@
+{
+ "_": "Campus landmarks researched 2026-08-03 (Stuart Collection pages, press, aerials) for campus-landmarks.js. Fallen Star position was independently georeferenced - Wikipedia's coordinate is ~400 m off.",
+ "fallenStar": {
+  "lat": 32.881452,
+  "lng": -117.235356,
+  "host": "Jacobs Hall",
+  "corner": "SW",
+  "width": 4.57,
+  "depth": 5.49,
+  "height": 4.5,
+  "tiltDeg": 10,
+  "ridgeAzimuthDeg": 60,
+  "overhang": 2.7,
+  "walls": "#a7c4db",
+  "trim": "#f5f5f0",
+  "roof": "#4a4a4a",
+  "chimney": "#8b4a3b",
+  "garden": {
+   "w": 9,
+   "d": 13.5
+  }
+ },
+ "landmarks": [
+  {
+   "name": "Sun God",
+   "lat": 32.878572,
+   "lng": -117.239735,
+   "kind": "statue",
+   "height_m": 8.8,
+   "description": "Giant fantastical bird by Niki de Saint Phalle standing on a ~4.5 m concrete arch. Body is white fiberglass covered in bright multicolored splotches (red, blue, yellow, green); short wide wings spread upward, round head with a flat beak, rainbow-feathered chest. Arch is plain grey concrete, roughly a squared U. Bird itself ~4.3 m tall. Low-poly: grey arch + plump bird body + two fan wings, vertex-painted confetti colors on white.",
+   "prominence": "iconic"
+  },
+  {
+   "name": "Fallen Star",
+   "lat": 32.881388,
+   "lng": -117.235349,
+   "kind": "structure",
+   "height_m": 5,
+   "description": "Do Ho Suh's small blue New England cottage perched at a tilt on the corner of the roof of 7-story Jacobs Hall (roof ~29 m up), cantilevered over the edge as if crash-landed. Powder-blue clapboard walls, white door/window trim, dark grey pitched roof, red brick chimney, tiny rooftop garden with hedges around it. Low-poly: simple gabled house box ~5 m tall rotated ~10 deg off the building's grid and pitched ~5 deg, hanging over the roof parapet's northeast corner.",
+   "prominence": "iconic"
+  },
+  {
+   "name": "Snake Path",
+   "lat": 32.881126,
+   "lng": -117.236591,
+   "kind": "path",
+   "height_m": 0.3,
+   "description": "Alexis Smith's 171 m long, 3 m wide winding footpath shaped like a serpent, running from Warren Mall (east end 32.881275,-117.235907) up the hillside to the Geisel Library terrace (west end 32.881024,-117.237041). Surface is hexagonal slate tiles in a scale pattern: mottled green, grey, and tan. Head (with eyes) at the top near Geisel; tail at the bottom; mid-path it coils around a small walled 'Garden of Eden' with fruit trees and passes an oversized granite book. Low-poly: a flat S-curving ribbon with green/grey checker texture, slightly raised, widening to a spade-shaped head.",
+   "prominence": "iconic"
+  },
+  {
+   "name": "Silent Tree",
+   "lat": 32.880379,
+   "lng": -117.237559,
+   "kind": "sculpture",
+   "height_m": 7.5,
+   "description": "Terry Allen's dead eucalyptus tree wrapped entirely in dull grey lead sheet, standing on Library Walk just south of Geisel Library. Bare branching trunk, no leaves, metallic matte grey with visible panel seams. Classic meeting spot. Low-poly: a leafless tree of 5-8 tapering cylinders, uniform gunmetal grey.",
+   "prominence": "notable"
+  },
+  {
+   "name": "Trees (Talking Tree)",
+   "lat": 32.879824,
+   "lng": -117.238028,
+   "kind": "sculpture",
+   "height_m": 7.5,
+   "description": "Second of Terry Allen's three lead-clad eucalyptus trunks, hidden in the living eucalyptus grove southwest of Geisel; plays spoken poems and stories from concealed speakers. Same look as Silent Tree: bare grey-lead branching trunk among tall living trees. Low-poly: identical grey leafless tree, surrounded by normal green eucalyptus.",
+   "prominence": "minor"
+  },
+  {
+   "name": "Trees (Singing Tree)",
+   "lat": 32.879887,
+   "lng": -117.2388,
+   "kind": "sculpture",
+   "height_m": 7.5,
+   "description": "Third Terry Allen lead-covered eucalyptus, ~70 m west of the Talking Tree in the same grove; emits songs. Matte grey leafless trunk with lead panel seams. Low-poly: same grey tree model reused.",
+   "prominence": "minor"
+  },
+  {
+   "name": "Bear (Warren Bear)",
+   "lat": 32.881972,
+   "lng": -117.234113,
+   "kind": "sculpture",
+   "height_m": 7.2,
+   "description": "Tim Hawkinson's teddy-bear built from eight huge rounded granite boulders (~180 tons), sitting upright in the Jacobs School engineering courtyard between CSE, EBU1, and the Bioengineering building. Light speckled grey-tan granite; one giant egg boulder for the body, sphere head, four smaller boulders as arms/legs, two small ears. This is what students call the Warren Bear. Low-poly: 8-10 smooth grey spheres/ovoids stacked into a seated teddy bear.",
+   "prominence": "iconic"
+  },
+  {
+   "name": "La Jolla Project (Stonehenge)",
+   "lat": 32.872771,
+   "lng": -117.240224,
+   "kind": "sculpture",
+   "height_m": 2.4,
+   "description": "Richard Fleischner's 71 blocks of pink and grey granite scattered across the Revelle College lawn south of Galbraith Hall, some stacked into post-and-lintel doorways, arches, and benches up to ~2.4 m tall \u2014 hence the 'Stonehenge' nickname. Low-poly: a dozen clusters of rectangular blocks, alternating warm pink-beige and cool grey granite, on flat green grass.",
+   "prominence": "notable"
+  },
+  {
+   "name": "Triton Statue",
+   "lat": 32.879315,
+   "lng": -117.236143,
+   "kind": "statue",
+   "height_m": 3,
+   "description": "Manuelita Brown's bronze King Triton on the plaza at the east entrance of Price Center, muscular merman rising from a wave, trident in hand, on a low stone base. Dark brown-green patinated bronze. Photo spot for grads. Low-poly: dark bronze torso with raised trident, fish-tail base merging into a wave wedge, grey plinth.",
+   "prominence": "notable"
+  },
+  {
+   "name": "READ/WRITE/THINK/DREAM",
+   "lat": 32.880846,
+   "lng": -117.237573,
+   "kind": "sculpture",
+   "height_m": 6,
+   "description": "John Baldessari's artwork forming the main east entrance of Geisel Library: a row of tall glass doors and windows in saturated primary colors (red, blue, yellow, green panes) with the words READ, WRITE, THINK, DREAM, plus large photographic panels inside. Low-poly: the library's ground-level entry wall as a strip of vivid colored glass rectangles under the concrete tower.",
+   "prominence": "notable"
+  },
+  {
+   "name": "Geisel Library",
+   "lat": 32.881233,
+   "lng": -117.2378,
+   "kind": "structure",
+   "height_m": 33,
+   "description": "The campus icon: an 8-level brutalist 'lantern' \u2014 a concrete pedestal with four massive splayed diagonal piers holding five progressively larger-then-smaller glass floors, widest in the middle, like a spaceship or tree canopy. Raw grey concrete piers, dark tinted glass bands with narrow concrete floor slabs. Low-poly: stepped stack of square glass floors (widths ~small/large/largest/large/small) on 4 angled concrete legs.",
+   "prominence": "iconic"
+  },
+  {
+   "name": "Vices and Virtues",
+   "lat": 32.88071,
+   "lng": -117.234977,
+   "kind": "sculpture",
+   "height_m": 2.1,
+   "description": "Bruce Nauman's band of 2.1 m tall neon words wrapping the top parapet of the Powell Structural Systems Laboratory (crown sits ~25 m up): seven vices superimposed on seven virtues (FAITH/LUST, HOPE/ENVY...) flashing in bright alternating neon colors \u2014 red, blue, green, yellow, pink. Visible at night across campus. Low-poly: a glowing multicolored letter-band strip around the top of a plain concrete box building.",
+   "prominence": "notable"
+  },
+  {
+   "name": "Two Running Violet V Forms",
+   "lat": 32.878666,
+   "lng": -117.238822,
+   "kind": "sculpture",
+   "height_m": 7.6,
+   "description": "Robert Irwin's two V-shaped runs of blue-violet plastic-coated chain-link fence held ~7.6 m in the air on slim stainless steel poles, threading between eucalyptus trunks in the grove west of Library Walk. Translucent purple-blue shimmer against the trees. Low-poly: two long thin semi-transparent violet ribbons in a shallow V plan, on skinny silver posts among eucalyptus.",
+   "prominence": "notable"
+  },
+  {
+   "name": "What Hath God Wrought",
+   "lat": 32.875609,
+   "lng": -117.24074,
+   "kind": "sculpture",
+   "height_m": 60.6,
+   "description": "Mark Bradford's 199 ft white steel pole \u2014 the tallest structure on campus \u2014 rising from Revelle College plaza, topped with a light that blinks 'What hath God wrought' in Morse code at night. Looks like an impossibly tall slender flagpole. Low-poly: a single thin white tapering cylinder with a small blinking white light cap.",
+   "prominence": "notable"
+  },
+  {
+   "name": "KAHNOP - TO TELL A STORY",
+   "lat": 32.878778,
+   "lng": -117.23302,
+   "kind": "path",
+   "height_m": 0.1,
+   "description": "Ann Hamilton's ~240 m long granite walkway east of Pepper Canyon, on the route from the trolley station into campus, its pale grey stone pavers carved with raised lines of text (Kumeyaay and English words). Low-poly: a flat light-grey stone ribbon path with subtle darker text striping.",
+   "prominence": "minor"
+  },
+  {
+   "name": "Theodor Seuss Geisel Memorial (Dr. Seuss statue)",
+   "lat": 32.880786,
+   "lng": -117.237813,
+   "kind": "statue",
+   "height_m": 3,
+   "description": "Bronze of Dr. Seuss seated at his drafting desk with a 2 m Cat in the Hat standing beside him, on the terrace just west of the Geisel Library entrance. Dark brown bronze on a low grey plinth. Low-poly: seated figure at a small desk plus a tall thin cat figure with stovepipe hat, all one bronze color.",
+   "prominence": "minor"
+  },
+  {
+   "name": "Green Table",
+   "lat": 32.878564,
+   "lng": -117.242088,
+   "kind": "sculpture",
+   "height_m": 0.9,
+   "description": "Jenny Holzer's leaf-green granite picnic table and benches engraved with texts, in a grove near Peterson Hall on Ridge Walk. Low-poly: a simple picnic table, solid muted green stone.",
+   "prominence": "minor"
+  },
+  {
+   "name": "Sun God Lawn reference - Untitled (Asher fountain)",
+   "lat": 32.878957,
+   "lng": -117.236256,
+   "kind": "sculpture",
+   "height_m": 1,
+   "description": "Michael Asher's granite drinking fountain shaped like a commercial office fountain, oddly alone on the plaza north of Price Center. Speckled grey granite box. Low-poly: a knee-high grey rectangular block with a basin notch.",
+   "prominence": "minor"
+  }
+ ]
+}

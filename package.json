@@ -9,9 +9,12 @@
     "build:osm": "node scripts/build-campus-3d.mjs",
     "build:lidar": "node scripts/build-campus-lidar.mjs",
     "check": "node scripts/build-campus-3d.mjs --check && node scripts/build-campus-lidar.mjs --check",
-    "serve": "node scripts/serve.mjs"
+    "serve": "node scripts/serve.mjs",
+    "build:arcgis": "node scripts/build-campus-arcgis.mjs",
+    "build:colors": "node scripts/build-campus-colors.mjs"
   },
   "devDependencies": {
-    "laz-perf": "^0.0.7"
+    "laz-perf": "^0.0.7",
+    "@playwright/test": "^1.48.0"
   }
 }

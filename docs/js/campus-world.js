@@ -16,71 +16,30 @@
 // McGill and Biology roughly half their real height. See the header of
 // scripts/build-campus-lidar.mjs for the full reckoning.
 //
+// A third source joined later:
+//
+//   app/data/campus-arcgis.json UC San Diego's own facilities GIS — the actual
+//                               POLYGONS of every sidewalk, lawn, road and
+//                               fountain, and the real floor count per
+//                               building. Where the university has surveyed
+//                               its own ground, that beats our reconstruction;
+//                               scripts/build-campus-arcgis.mjs is the pull.
+//
 // Nothing here knows anything about walking or gameplay. It makes the world and
 // hands back a height field; campus-walk.js moves through it.
 import * as THREE from "../vendor/three/three.module.min.js";
+import { prepareGround } from "./campus-ground.js";
 
 /* Campus on a clear morning: bleached concrete, tan and off-white stucco,
    eucalyptus. Buildings pick from the palette by a hash of position so a given
    building is the same colour on every visit — a skyline that reshuffles itself
    reads as broken even when nobody can say why. */
-const BUILDING_COLORS = [0xd9d2c5, 0xcfc6b6, 0xe0dad0, 0xc6bcab, 0xd2cabb, 0xbfb5a4];
 const ROOF_COLOR = 0xa8a094;
 const GROUND_COLOR = 0x93a06d;
 const PLAZA_COLOR = 0xcac4b6;
 const PATH_COLOR = 0xc9c4b8;
 const ASPHALT_COLOR = 0x8e8b86;
 const WATER_COLOR = 0x6f9fb5;
-
-const hash = (x, z) => Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1;
-
-/* Storey height and window bay width, in metres. Everything about how big a
-   building LOOKS comes from these: a blank wall gives the eye nothing to
-   measure against, so a 12 m building and a 30 m building are the same object
-   at different distances. Floor lines are what makes a massing model readable. */
-const STOREY = 3.6;
-const BAY = 3.2;
-
-/**
- * A facade, drawn once into a canvas and tiled across every wall.
- *
- * Procedural rather than an image file for two reasons: nothing external can
- * be fetched under the site's CSP, and a tile generated here is guaranteed to
- * line up with the STOREY and BAY constants that the rest of the massing
- * assumes. ExtrudeGeometry's default UV generator emits side-wall UVs in world
- * units, so setting repeat to 1/BAY and 1/STOREY lands exactly one window bay
- * per bay and one band per storey, at any building size, with no per-building
- * UV work.
- */
-function facadeTexture() {
-  const S = 64;
-  const canvas = document.createElement("canvas");
-  canvas.width = canvas.height = S;
-  const ctx = canvas.getContext("2d");
-
-  // Concrete field. The material colour tints this, so it is deliberately pale.
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, S, S);
-
-  // The window band: one horizontal run per storey, inset from the floor line.
-  ctx.fillStyle = "#8d97a1";
-  ctx.fillRect(4, 14, S - 8, 30);
-
-  // Mullions, splitting the band into panes.
-  ctx.fillStyle = "#ffffff";
-  for (let x = 4; x < S - 4; x += 14) ctx.fillRect(x, 14, 4, 30);
-
-  // Spandrel shadow under each band, which is what actually reads as a floor
-  // line from across a plaza.
-  ctx.fillStyle = "rgba(0,0,0,0.16)";
-  ctx.fillRect(0, 44, S, 5);
-
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-  tex.repeat.set(1 / BAY, 1 / STOREY);
-  tex.anisotropy = 4;
-  return tex;
-}
 
 /* Draped surfaces are lifted this far off the terrain and biased in depth, so
    a path never fights the ground it is painted on. Both are needed: the offset
@@ -105,7 +64,7 @@ const drapeMaterial = (color) =>
  * Bilinear rather than nearest: at 3 m cells, nearest-neighbour sampling makes
  * a walker climb invisible 10 cm stairs the whole way across campus.
  */
-export function createTerrain(scene, lidar) {
+export function createTerrain(scene, lidar, colors) {
   const { x0, z0, cell, cols, rows, z: heights } = lidar.terrain;
 
   const heightAt = (x, zz) => {
@@ -138,7 +97,36 @@ export function createTerrain(scene, lidar) {
   geo.computeVertexNormals();
   geo.translate(x0 + ((cols - 1) * cell) / 2, 0, z0 + ((rows - 1) * cell) / 2);
 
-  const mesh = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ color: GROUND_COLOR }));
+  /* The ground wears its aerial photograph. campus-colors.json carries a 6 m
+     palette-indexed colour grid sampled from NAIP imagery; painting it as
+     vertex colours turns the terrain from one invented green into the real
+     patchwork — chaparral canyons, lawns, lots — for one material and zero
+     texture memory. Index 255 means "no imagery there": keep the old green. */
+  let material;
+  if (colors?.terrain?.idx) {
+    const ct = colors.terrain;
+    const idx = Uint8Array.from(atob(ct.idx), (ch) => ch.charCodeAt(0));
+    const palette = ct.palette.map((hex) => new THREE.Color(hex));
+    const fallback = new THREE.Color(GROUND_COLOR);
+    const rgb = new Float32Array(pos.count * 3);
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i);
+      const z = pos.getZ(i);
+      const cc = Math.max(0, Math.min(ct.cols - 1, Math.round((x - ct.x0) / ct.cell)));
+      const rr = Math.max(0, Math.min(ct.rows - 1, Math.round((z - ct.z0) / ct.cell)));
+      const k = idx[rr * ct.cols + cc];
+      const col = k === 255 ? fallback : palette[k] || fallback;
+      rgb[i * 3] = col.r;
+      rgb[i * 3 + 1] = col.g;
+      rgb[i * 3 + 2] = col.b;
+    }
+    geo.setAttribute("color", new THREE.BufferAttribute(rgb, 3));
+    material = new THREE.MeshLambertMaterial({ vertexColors: true });
+  } else {
+    material = new THREE.MeshLambertMaterial({ color: GROUND_COLOR });
+  }
+
+  const mesh = new THREE.Mesh(geo, material);
   scene.add(mesh);
   return { mesh, heightAt };
 }
@@ -148,8 +136,10 @@ export function createTerrain(scene, lidar) {
 export function createScene() {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0xbcd8ea);
-  /* The data stops at the edge of the LiDAR box; haze hides the cut. */
-  scene.fog = new THREE.Fog(0xc4dcec, 140, 460);
+  /* The data stops at the edge of the LiDAR box; haze hides the cut. Far
+     enough out that Geisel — 300 m from Sun God Lawn and the landmark the
+     whole north half of the walk steers by — reads through it. */
+  scene.fog = new THREE.Fog(0xc4dcec, 170, 640);
 
   scene.add(new THREE.HemisphereLight(0xdfefff, 0x7d8a63, 1.7));
 
@@ -167,119 +157,148 @@ export function createScene() {
 }
 
 /* --------------------------------------------------------------- buildings */
-
-/**
- * Extrude each OSM footprint to its MEASURED height.
- *
- * Buildings are sunk to the lowest ground under their own footprint and raised
- * to their measured roof. On a slope that means a wall face taller than the
- * quoted height, which is correct — the quoted height is roof above grade at
- * the centre, and a building on a hill really is taller on its downhill side.
- */
-export function createBuildings(scene, campus, lidar, heightAt) {
-  const facade = facadeTexture();
-  const materials = BUILDING_COLORS.map(
-    (color) => new THREE.MeshLambertMaterial({ color, map: facade })
-  );
-  const roofMaterial = new THREE.MeshLambertMaterial({ color: ROOF_COLOR });
-  const group = new THREE.Group();
-  let measured = 0;
-
-  for (const b of campus.buildings) {
-    const ring = b.p;
-    let lowest = Infinity;
-    let centreX = 0;
-    let centreZ = 0;
-    for (const [x, z] of ring) {
-      lowest = Math.min(lowest, heightAt(x, z));
-      centreX += x;
-      centreZ += z;
-    }
-    centreX /= ring.length;
-    centreZ /= ring.length;
-
-    /* Measured beats tagged beats guessed. b.h is OSM's answer and stays only
-       where LiDAR saw too few returns to be sure. */
-    const lidarHeight = b.n ? lidar.heights[b.n] : undefined;
-    if (lidarHeight !== undefined) measured++;
-    const height = lidarHeight ?? b.h;
-    const roofY = heightAt(centreX, centreZ) + height;
-    const baseY = lowest - 1.5; // buried a little so no gap opens on a slope
-    const extrude = Math.max(1, roofY - baseY);
-
-    const shape = new THREE.Shape();
-    shape.moveTo(ring[0][0], ring[0][1]);
-    for (let i = 1; i < ring.length; i++) shape.lineTo(ring[i][0], ring[i][1]);
-    shape.closePath();
-
-    const geo = new THREE.ExtrudeGeometry(shape, { depth: extrude, bevelEnabled: false });
-    geo.rotateX(Math.PI / 2);
-    geo.translate(0, baseY + extrude, 0);
-
-    const pick = Math.floor(hash(ring[0][0], ring[0][1]) * materials.length);
-    /* ORDER MATTERS AND IS NOT THE OBVIOUS ONE. ExtrudeGeometry emits material
-       group 0 for the LIDS (roof and underside) and group 1 for the SIDE WALLS.
-       Passing [wall, roof] therefore paints the roof colour onto every wall —
-       which is why the whole campus rendered as identical grey cardboard no
-       matter what the per-building palette said, and why a facade texture put
-       on the wall material was nowhere to be seen. */
-    const mesh = new THREE.Mesh(geo, [roofMaterial, materials[pick]]);
-    mesh.userData.name = b.n || null;
-    mesh.userData.measured = lidarHeight !== undefined;
-    group.add(mesh);
-  }
-
-  scene.add(group);
-  return { group, measured, total: campus.buildings.length };
-}
+/* Buildings moved to campus-massing.js: the university's own multi-mass
+   extrusions + Geisel's floor stack + aerial roof colours outgrew the simple
+   one-footprint extruder that used to live here. */
 
 /* ---------------------------------------------------------------- surfaces */
 
-/** Plazas, water and green space, draped over the terrain. */
-export function createSurfaces(scene, campus, heightAt) {
+/* The scored-concrete texture: faint expansion-joint lines every tile, the
+   grid Revelle Plaza is recognised by from the air (and every real sidewalk
+   carries at a smaller pitch). Applied in world units via the surface UVs. */
+function scoringTexture() {
+  const S = 64;
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = S;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, S, S);
+  ctx.fillStyle = "rgba(0,0,0,0.16)";
+  ctx.fillRect(0, 0, S, 2);
+  ctx.fillRect(0, 0, 2, S);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.anisotropy = 4;
+  return tex;
+}
+
+/**
+ * The ground cover: UCSD's surveyed polygons, each tinted with its own
+ * colour sampled from NAIP aerial imagery, merged into ONE mesh per kind —
+ * 4,000+ polygons over the full campus as six draw calls, not four thousand.
+ * OSM's plazas and lawns remain the fallback when the survey is absent.
+ */
+export function createSurfaces(scene, campus, heightAt, arcgis, colors) {
   const group = new THREE.Group();
-  const mats = {
-    plaza: drapeMaterial(PLAZA_COLOR),
-    green: drapeMaterial(0x8faa63),
-    water: new THREE.MeshLambertMaterial({ color: WATER_COLOR, side: THREE.DoubleSide }),
+  const DEFAULTS = {
+    plaza: "#cac4b6", walk: "#c9c4b8", road: "#8e8b86",
+    green: "#8faa63", court: "#5e8a7e", water: "#6f9fb5",
+  };
+  const buckets = new Map(); // kind -> { pos: [], col: [], uv: [] }
+
+  const addSurface = (rings, kind, hex) => {
+    const outer = rings[0];
+    if (!outer || outer.length < 3) return;
+    /* Triangulated by hand (ShapeUtils under the hood) so the vertices can
+       carry the polygon's aerial tint and drape onto the terrain in one
+       pass. Y is negated into shape space and back — see the old note about
+       Revelle Plaza rendering across campus when this sign is dropped. */
+    const contour = outer.map(([x, z]) => new THREE.Vector2(x, -z));
+    const holes = rings.slice(1).filter((r) => r.length >= 3)
+      .map((r) => r.map(([x, z]) => new THREE.Vector2(x, -z)));
+    let tris;
+    try {
+      tris = THREE.ShapeUtils.triangulateShape(contour, holes);
+    } catch {
+      return; // one degenerate survey polygon must not cost the campus
+    }
+    const verts = contour.concat(...holes);
+    /* COLOUR HYGIENE. The aerial photographs ground truthfully — including
+       the tree shading ON it. A lawn sampled under a eucalyptus crown comes
+       back near-black, and Revelle Plaza rendered as dark asphalt because
+       its polygons were sampled in shadow. So the sample is blended toward
+       the kind's daylight colour, harder the darker it is: a shadowed sample
+       keeps its hue but not its gloom, and anything nearly black is treated
+       as "the photo saw a tree, not the ground". Water always leans blue —
+       an aerial of a fountain basin mostly sees its concrete rim. */
+    const base = new THREE.Color(DEFAULTS[kind] || DEFAULTS.plaza);
+    let color = base;
+    if (hex && kind !== "water") {
+      const sampled = new THREE.Color(hex);
+      const lum = 0.299 * sampled.r + 0.587 * sampled.g + 0.114 * sampled.b;
+      if (lum >= 0.13) {
+        const keep = lum < 0.3 ? 0.4 : 0.7;
+        color = sampled.clone().lerp(base, 1 - keep);
+      }
+    } else if (hex && kind === "water") {
+      color = new THREE.Color(hex).lerp(base, 0.65);
+    }
+    const lift = kind === "water" ? DRAPE + 0.12 : kind === "green" ? DRAPE - 0.02 : DRAPE;
+    if (!buckets.has(kind)) buckets.set(kind, { pos: [], col: [], uv: [] });
+    const b = buckets.get(kind);
+    /* A fountain is a BASIN, not a puddle: water rides 0.35 m up on a rim so
+       it reads as the raised concrete basin it is. Everything else drapes. */
+    const rim = kind === "water" ? 0.35 : 0;
+    for (const tri of tris) {
+      for (const vi of tri) {
+        const x = verts[vi].x;
+        const z = -verts[vi].y;
+        b.pos.push(x, heightAt(x, z) + lift + rim, z);
+        b.col.push(color.r, color.g, color.b);
+        b.uv.push(x / 3, z / 3); // scoring joints every 3 m, world-aligned
+      }
+    }
+    if (rim) {
+      /* The basin wall: a quad strip from the raised water edge to the
+         ground, concrete-coloured. */
+      const wall = new THREE.Color("#b9b2a4");
+      for (let i = 0; i < outer.length; i++) {
+        const [ax, az] = outer[i];
+        const [bx, bz] = outer[(i + 1) % outer.length];
+        const ay = heightAt(ax, az);
+        const by = heightAt(bx, bz);
+        const quad = [
+          [ax, ay + lift + rim, az], [bx, by + lift + rim, bz], [ax, ay - 0.2, az],
+          [bx, by + lift + rim, bz], [bx, by - 0.2, bz], [ax, ay - 0.2, az],
+        ];
+        for (const [qx, qy, qz] of quad) {
+          b.pos.push(qx, qy, qz);
+          b.col.push(wall.r, wall.g, wall.b);
+          b.uv.push(qx / 3, qz / 3);
+        }
+      }
+    }
   };
 
-  for (const s of campus.surfaces || []) {
-    const ring = s.p;
-    if (!ring || ring.length < 3) continue;
-    /* NOTE THE NEGATED Z.
-     *
-     * A Shape is drawn in the XY plane and rotateX(-90°) lays it flat, which
-     * maps the shape's Y onto world -Z — so feeding it (x, z) directly mirrors
-     * the polygon to the far side of the origin. Revelle Plaza and its fountain
-     * were being drawn hundreds of metres away across campus, which is why
-     * standing in the middle of the plaza put you on grass while the label
-     * cheerfully announced "Revelle Plaza".
-     *
-     * Negating here rather than rotating the other way is deliberate: rotateX(+90°)
-     * would place the polygon correctly but leave its normals pointing at the
-     * ground, and a down-facing surface gets lit by the hemisphere light's
-     * GROUND colour — the same mistake that once rendered campus concrete as
-     * dark olive. */
-    const shape = new THREE.Shape();
-    shape.moveTo(ring[0][0], -ring[0][1]);
-    for (let i = 1; i < ring.length; i++) shape.lineTo(ring[i][0], -ring[i][1]);
-    shape.closePath();
-
-    const geo = new THREE.ShapeGeometry(shape);
-    geo.rotateX(-Math.PI / 2);
-    /* Drape: every vertex is pushed down onto the measured ground rather than
-       left on a flat sheet, so a plaza follows the grade it was built on. */
-    const pos = geo.attributes.position;
-    const lift = s.kind === "water" ? DRAPE + 0.12 : DRAPE;
-    for (let i = 0; i < pos.count; i++) {
-      pos.setY(i, heightAt(pos.getX(i), pos.getZ(i)) + lift);
+  if (arcgis?.ground?.length) {
+    for (const piece of prepareGround(arcgis)) {
+      addSurface(piece.rings, piece.kind, colors?.ground?.[piece.src]);
     }
-    geo.computeVertexNormals();
+  } else {
+    for (const s of campus.surfaces || []) {
+      if (s.p && s.p.length >= 3) addSurface([s.p], s.kind, null);
+    }
+  }
 
-    const mesh = new THREE.Mesh(geo, mats[s.kind] || mats.plaza);
-    mesh.userData.name = s.n || null;
-    group.add(mesh);
+  const scoring = scoringTexture();
+  for (const [kind, b] of buckets) {
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(b.pos, 3));
+    geo.setAttribute("color", new THREE.Float32BufferAttribute(b.col, 3));
+    geo.setAttribute("uv", new THREE.Float32BufferAttribute(b.uv, 2));
+    const normals = new Float32Array(b.pos.length);
+    for (let i = 1; i < normals.length; i += 3) normals[i] = 1;
+    geo.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
+    const mat = new THREE.MeshLambertMaterial({
+      vertexColors: true,
+      side: THREE.DoubleSide,
+      polygonOffset: true,
+      polygonOffsetFactor: -4,
+      polygonOffsetUnits: -8,
+      /* Only pavement is scored; lawns and water read as surfaces, not tiles. */
+      ...(kind === "walk" || kind === "plaza" ? { map: scoring } : {}),
+    });
+    group.add(new THREE.Mesh(geo, mat));
   }
 
   scene.add(group);
@@ -377,7 +396,11 @@ export function createTrees(scene, lidar, heightAt) {
 
   trees.forEach(([x, z, h, r], i) => {
     const ground = heightAt(x, z);
-    const crownR = Math.max(1.2, Math.min(r, (h - CLEARANCE) / 2));
+    /* The crown floor scales with height: a 25 m eucalyptus in a tight row
+       gets a small measured spread, and rendering it with the same 1.2 m
+       knob as a sapling made a bare pole ending in open sky. */
+    const minCrown = Math.max(1.2, Math.min(2.8, h * 0.13));
+    const crownR = Math.max(minCrown, Math.min(r, (h - CLEARANCE) / 2));
     const trunkH = Math.max(CLEARANCE, h - 2 * crownR);
 
     scale.set(1, trunkH, 1);
@@ -393,8 +416,6 @@ export function createTrees(scene, lidar, heightAt) {
 
   trunks.instanceMatrix.needsUpdate = true;
   leaves.instanceMatrix.needsUpdate = true;
-  /* Grouped rather than added loose, so the whole canopy can be hidden in one
-     move — trees are the layer most often in the way when checking a building. */
   const group = new THREE.Group();
   group.add(trunks, leaves);
   scene.add(group);
