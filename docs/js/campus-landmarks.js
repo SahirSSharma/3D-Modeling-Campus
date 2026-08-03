@@ -346,6 +346,346 @@ function buildBear(lm, toLocal, heightAt) {
   return g;
 }
 
+/* ------------------------------------------------- shared low-poly plumbing */
+
+/**
+ * Concatenate a few boxes into one geometry. Not a general merge — position
+ * and normal only, non-indexed — which is all a Lambert box needs, and it
+ * turns a bench (seat, back, two legs) into a single instanced draw.
+ */
+function weld(...geos) {
+  const parts = geos.map((g) => (g.index ? g.toNonIndexed() : g));
+  const out = new THREE.BufferGeometry();
+  for (const name of ["position", "normal"]) {
+    const total = parts.reduce((n, p) => n + p.attributes[name].array.length, 0);
+    const arr = new Float32Array(total);
+    let at = 0;
+    for (const p of parts) { arr.set(p.attributes[name].array, at); at += p.attributes[name].array.length; }
+    out.setAttribute(name, new THREE.BufferAttribute(arr, 3));
+  }
+  return out;
+}
+
+/**
+ * One instanced copy of `geo` per `[x, y, z, yaw, scaleY]`.
+ *
+ * These pieces are on screen from most of the walk and have no distance
+ * culling of their own, so everything that repeats — a trellis slat, a folded
+ * plate, an arcade column — is one draw call rather than sixty.
+ */
+function instanced(geo, mat, transforms) {
+  const mesh = new THREE.InstancedMesh(geo, mat, transforms.length);
+  const m = new THREE.Matrix4();
+  const q = new THREE.Quaternion();
+  const e = new THREE.Euler();
+  const p = new THREE.Vector3();
+  const s = new THREE.Vector3();
+  transforms.forEach(([x, y, z, yaw = 0, scaleY = 1], i) => {
+    p.set(x, y, z);
+    q.setFromEuler(e.set(0, yaw, 0));
+    s.set(1, scaleY, 1);
+    mesh.setMatrixAt(i, m.compose(p, q, s));
+  });
+  mesh.instanceMatrix.needsUpdate = true;
+  return mesh;
+}
+
+const box = (w, h, d, x = 0, y = 0, z = 0) => {
+  const g = new THREE.BoxGeometry(w, h, d);
+  g.translate(x, y, z);
+  return g;
+};
+
+/* A bearing in compass degrees, as the yaw that puts local +X along it.
+   Local +X maps to (cos y, 0, -sin y), and bearing B points at
+   (sin B, 0, -cos B), so y = 90° - B — the same convention Fallen Star's
+   ridge azimuth already uses. */
+const yawForBearing = (deg) => ((90 - deg) * Math.PI) / 180;
+
+/**
+ * Revelle Plaza's ring fountain, and the flagpole beside it.
+ *
+ * The plaza is the first thing the walk crosses and this is the only object
+ * in it, so it carries more than its size: an 8 m charcoal ring with one
+ * aerating jet. The basin measures very nearly black in W:f0035 — the darkest
+ * thing on a plaza of pale concrete — and the JSON entry carries the daylight
+ * lift of that reading, with the raw sample written down beside it.
+ */
+function buildFountain(lm, toLocal, heightAt) {
+  const c = lm.colors || {};
+  const f = lm.fountain || {};
+  const g = new THREE.Group();
+  const [x, z] = toLocal(lm.lat, lm.lng);
+  const y = heightAt(x, z);
+  const r = (f.diameter_m || 8) / 2;
+  const rim = f.rimHeight_m || 0.55;
+
+  const basin = new THREE.Mesh(new THREE.CylinderGeometry(r, r, rim, 28), lambert(c.basin));
+  basin.position.set(x, y + rim / 2, z);
+  g.add(basin);
+
+  /* Water a hand's width down from the rim, so the ring reads as a lip you
+     could sit on rather than a disc painted on the plaza. */
+  const water = new THREE.Mesh(new THREE.CircleGeometry(r - 0.4, 24), lambert(c.water));
+  water.rotation.x = -Math.PI / 2;
+  water.position.set(x, y + rim - 0.09, z);
+  g.add(water);
+
+  /* ONE jet, aerated: a foam plume that flares as it rises, with the ball of
+     spray at its top. W:f0034 and W:f0035 both show a single stalk — this is
+     not a fan of nozzles and should never grow into one. Scaled off the basin
+     in W:f0035, where the plume is about a quarter of the 8 m basin across at
+     the top: a narrow pencil of water is the wrong picture. */
+  const jetH = f.jetHeight_m || 2.2;
+  const flare = r * 0.21;
+  const foam = lambert(c.foam);
+  const jet = new THREE.Mesh(new THREE.CylinderGeometry(flare, 0.12, jetH, 10), foam);
+  jet.position.set(x, y + rim + jetH / 2, z);
+  const crown = new THREE.Mesh(new THREE.SphereGeometry(flare * 1.1, 9, 6), foam);
+  crown.position.set(x, y + rim + jetH, z);
+  crown.scale.y = 0.42;
+  g.add(jet, crown);
+
+  const fp = lm.flagpole || {};
+  const poleH = fp.height_m || 15;
+  const fz = z - (fp.north_m || 12);
+  const fy = heightAt(x, fz);
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.15, poleH, 8), lambert(c.pole));
+  pole.position.set(x, fy + poleH / 2, fz);
+  g.add(pole);
+
+  /* The flag as three flat slabs — field, lower stripes, canton. It flies at
+     the top of a 15 m pole, which is small enough on screen that anything
+     more than the three colours is wasted. */
+  const flagY = fy + poleH - 0.95;
+  const field = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.0, 1.9), lambert(c.flagWhite));
+  field.position.set(x, flagY, fz + 1.05);
+  const lower = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.42, 1.9), lambert(c.flagRed));
+  lower.position.set(x + 0.02, flagY - 0.29, fz + 1.05);
+  const canton = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.5, 0.76), lambert(c.flagBlue));
+  canton.position.set(x - 0.02, flagY + 0.25, fz + 0.48);
+  g.add(field, lower, canton);
+  return g;
+}
+
+/**
+ * A pergola swing-bench station: black steel trellis, pale slat roof, bench
+ * swings hanging under it and fixed benches beside them.
+ *
+ * Built from the spec block rather than the name, so the second station — and
+ * any station added later — needs data, not code. Both are authored along
+ * local +X and yawed onto the walk they line, which is why the two entries
+ * differ by one bearing and one length.
+ */
+function buildPergola(lm, toLocal, heightAt) {
+  const c = lm.colors || {};
+  const p = lm.pergola || {};
+  const L = p.length_m || 24;
+  const D = p.depth_m || 3.6;
+  const H = p.height_m || 3.1;
+  const [cx, cz] = toLocal(lm.lat, lm.lng);
+  const g = new THREE.Group();
+  g.position.set(cx, heightAt(cx, cz), cz);
+  g.rotation.y = yawForBearing(p.bearingDeg || 0);
+
+  const frame = lambert(c.frame);
+  const roof = lambert(c.roof);
+  const seat = lambert(c.bench);
+
+  const bays = Math.max(2, Math.round(L / (p.postEvery_m || 4.2)));
+  const posts = [];
+  for (let i = 0; i <= bays; i++) {
+    const px = -L / 2 + (L * i) / bays;
+    posts.push([px, H / 2, -D / 2], [px, H / 2, D / 2]);
+  }
+  g.add(instanced(box(0.16, H, 0.16), frame, posts));
+  for (const side of [-1, 1]) {
+    const beam = new THREE.Mesh(new THREE.BoxGeometry(L, 0.24, 0.18), frame);
+    beam.position.set(0, H - 0.12, (side * D) / 2);
+    g.add(beam);
+  }
+
+  /* Slats run across the depth, not along the run — it is the shadow they
+     throw on the paving that identifies this thing at fifty metres. */
+  const slats = [];
+  for (let sx = -L / 2 + 0.2; sx <= L / 2 - 0.2; sx += 0.42) slats.push([sx, H + 0.06, 0]);
+  g.add(instanced(box(0.09, 0.07, D + 0.5), roof, slats));
+
+  /* One welded unit per swing (seat, back, two rods) and per bench (seat,
+     back, two legs): four boxes each, one draw call each. */
+  const rod = H - 0.24 - 0.55;   // beam underside down to a seat you can sit on
+  const swingUnit = weld(
+    box(1.7, 0.09, 0.52, 0, 0, 0),
+    box(1.7, 0.44, 0.07, 0, 0.24, -0.26),
+    box(0.05, rod, 0.05, -0.8, rod / 2, 0),
+    box(0.05, rod, 0.05, 0.8, rod / 2, 0)
+  );
+  const swings = [];
+  const nSwings = p.swings || 3;
+  for (let i = 0; i < nSwings; i++) {
+    swings.push([-L / 2 + (L * (i + 0.5)) / nSwings, 0.55, 0]);
+  }
+  g.add(instanced(swingUnit, seat, swings));
+
+  const benchUnit = weld(
+    box(2.0, 0.09, 0.5, 0, 0.45, 0),
+    box(2.0, 0.42, 0.07, 0, 0.7, -0.22),
+    box(0.1, 0.45, 0.44, -0.85, 0.22, 0),
+    box(0.1, 0.45, 0.44, 0.85, 0.22, 0)
+  );
+  const benches = [];
+  const nBench = p.benches || 2;
+  for (let i = 0; i < nBench; i++) {
+    benches.push([-L / 2 + (L * (i + 0.5)) / nBench, 0, D / 2 - 0.55]);
+  }
+  g.add(instanced(benchUnit, seat, benches));
+  return g;
+}
+
+/**
+ * Drop the vertices that only bend a footprint by a degree or two.
+ *
+ * Surveyed rings carry them everywhere, and they matter: Bonner Hall's west
+ * wall is one 82 m plane in the world and four collinear segments in the
+ * data, so a search for "the longest west edge" found a 39 m fragment and
+ * hung a third of an arcade on it.
+ */
+function simplifyRing(ring, tolDeg = 6) {
+  const n = ring.length;
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const p = ring[(i - 1 + n) % n];
+    const c = ring[i];
+    const q = ring[(i + 1) % n];
+    const a = Math.atan2(c[1] - p[1], c[0] - p[0]);
+    const b = Math.atan2(q[1] - c[1], q[0] - c[0]);
+    const turn = Math.abs((((b - a + Math.PI) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI) - Math.PI);
+    if (turn > (tolDeg * Math.PI) / 180) out.push(c);
+  }
+  return out.length >= 3 ? out : ring;
+}
+
+/**
+ * The longest wall of `ring` whose own outward normal points along `dir`.
+ *
+ * Wanted because the folded-plate canopy is not a position, it is a LINE: the
+ * west arcade of two buildings. Storing that line as coordinates would let it
+ * drift the first time the massing was rebuilt, so it is derived from the
+ * host footprint every load instead.
+ *
+ * Scored on the WALL'S normal, not on where its midpoint sits. Mayer Hall's
+ * south wall has a midpoint west of the building's centre, so a midpoint test
+ * picked it over the real west face and laid the arcade across the end of the
+ * building — pointing the right way and 90° wrong.
+ */
+function facingEdge(ring, dir) {
+  const r = simplifyRing(ring);
+  let cx = 0;
+  let cz = 0;
+  for (const [x, z] of r) { cx += x; cz += z; }
+  cx /= r.length;
+  cz /= r.length;
+  let best = null;
+  let score = 0;
+  for (let i = 0; i < r.length; i++) {
+    const a = r[i];
+    const b = r[(i + 1) % r.length];
+    const ex = b[0] - a[0];
+    const ez = b[1] - a[1];
+    const len = Math.hypot(ex, ez);
+    if (len < 1) continue;
+    let nx = -ez / len;
+    let nz = ex / len;
+    if (nx * ((a[0] + b[0]) / 2 - cx) + nz * ((a[1] + b[1]) / 2 - cz) < 0) { nx = -nx; nz = -nz; }
+    const facing = nx * dir[0] + nz * dir[1];
+    if (facing < 0.8) continue;              // within ~36° of square-on, or it is another wall
+    if (len * facing > score) { score = len * facing; best = [a, b]; }
+  }
+  return best;
+}
+
+/**
+ * Mayer and Bonner's folded-plate eave: a run of literal triangular concrete
+ * prisms on slender round columns, along the west face of each host.
+ *
+ * The prisms are the point. Every other building on this walk can be a box
+ * with a facade tile on it; this one cannot, because the shape IS the
+ * landmark, and a flat cream band where the folds should be reads as a
+ * different building.
+ */
+function buildFoldedPlate(lm, roofTopOf, heightAt) {
+  const c = lm.colors || {};
+  const k = lm.canopy || {};
+  const dir = CORNER_DIR[lm.facing] || CORNER_DIR.W;
+  const D = k.depth_m || 2.5;
+  const H = k.height_m || 4.2;
+  const pitch = k.pitch_m || 2.4;
+  const rise = k.rise_m || 0.9;
+  const out = new THREE.Group();
+
+  const plate = lambert(c.plate);
+  const soffit = lambert(c.soffit);
+  const column = lambert(c.column);
+
+  /* One prism, authored across local X with its ridge running out along +Z:
+     the fold repeats ALONG the arcade, which is the way round the footage
+     shows it. */
+  const wedge = new THREE.Shape();
+  wedge.moveTo(-pitch / 2, 0);
+  wedge.lineTo(pitch / 2, 0);
+  wedge.lineTo(0, rise);
+  wedge.closePath();
+  const prism = new THREE.ExtrudeGeometry(wedge, { depth: D, bevelEnabled: false });
+
+  for (const name of lm.hosts || []) {
+    const host = roofTopOf(name);
+    const edge = host?.ring && facingEdge(host.ring, dir);
+    if (!edge) continue;
+    let [a, b] = edge;
+    let ax = b[0] - a[0];
+    let az = b[1] - a[1];
+    const len = Math.hypot(ax, az);
+    if (len < pitch * 2) continue;
+    ax /= len;
+    az /= len;
+    /* Yawing local +X onto the edge forces local +Z to (-az, ax). Run the
+       edge the other way when that would push the canopy into the building. */
+    if (-az * dir[0] + ax * dir[1] < 0) { ax = -ax; az = -az; }
+    const mx = (a[0] + b[0]) / 2;
+    const mz = (a[1] + b[1]) / 2;
+    const base = heightAt(mx, mz);
+
+    const strip = new THREE.Group();
+    strip.position.set(mx, base, mz);
+    strip.rotation.y = Math.atan2(-az, ax);
+
+    const folds = [];
+    const n = Math.floor(len / pitch);
+    for (let i = 0; i < n; i++) folds.push([-len / 2 + (i + 0.5) * pitch, H, 0]);
+    strip.add(instanced(prism, plate, folds));
+
+    const lid = new THREE.Mesh(new THREE.BoxGeometry(n * pitch, 0.14, D), soffit);
+    lid.position.set(0, H - 0.07, D / 2);
+    strip.add(lid);
+    out.add(strip);
+
+    /* Columns stand on the ground they actually meet, so the arcade follows
+       the grade instead of floating where the mid-span happened to be. */
+    const every = k.columnEvery_m || 4.8;
+    const posts = [];
+    for (let d = -len / 2 + every / 2; d < len / 2; d += every) {
+      const px = mx + ax * d - az * (D - 0.4);
+      const pz = mz + az * d + ax * (D - 0.4);
+      const py = heightAt(px, pz);
+      posts.push([px, py, pz, 0, base + H - 0.1 - py]);
+    }
+    const shaft = new THREE.CylinderGeometry(k.columnRadius_m || 0.16, k.columnRadius_m || 0.16, 1, 8);
+    shaft.translate(0, 0.5, 0);
+    out.add(instanced(shaft, column, posts));
+  }
+  return out;
+}
+
 /**
  * Place every landmark worth geometry. `roofTopOf(name)` lets roof-mounted
  * pieces (Fallen Star) sit on the measured building they belong to.
@@ -357,9 +697,15 @@ export function createLandmarks(scene, data, { origin, heightAt, roofTopOf }) {
   ];
   const group = new THREE.Group();
   if (data.fallenStar) group.add(buildFallenStar(data.fallenStar, toLocal, roofTopOf));
+  /* Sculptures dispatch on their name because each is one specific object.
+     The built pieces dispatch on the SPEC BLOCK they carry instead, so a
+     second pergola station — or a third — is a data edit, not a code edit. */
   for (const lm of data.landmarks || []) {
     if (lm.name === "Sun God") group.add(buildSunGod(lm, toLocal, heightAt));
     else if (/Warren Bear/.test(lm.name)) group.add(buildBear(lm, toLocal, heightAt));
+    else if (lm.fountain) group.add(buildFountain(lm, toLocal, heightAt));
+    else if (lm.pergola) group.add(buildPergola(lm, toLocal, heightAt));
+    else if (lm.canopy) group.add(buildFoldedPlate(lm, roofTopOf, heightAt));
   }
   scene.add(group);
   return group;

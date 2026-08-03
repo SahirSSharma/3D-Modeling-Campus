@@ -31,6 +31,12 @@ const LANDMARKS = JSON.parse(
   readFileSync(path.join(ROOT, "docs/data/campus-landmarks.json"), "utf8")
 );
 const RENDERER = readFileSync(path.join(ROOT, "docs/js/campus-landmarks.js"), "utf8");
+const CAMPUS = JSON.parse(readFileSync(path.join(ROOT, "docs/data/campus-3d.json"), "utf8"));
+
+/* The walk itself, so a structure claimed to be "on the route" can be checked
+   against the route rather than against a description of it. */
+const { buildGraph, routeThrough } = await import(path.join(ROOT, "docs/js/campus-route.js"));
+const WALK = routeThrough(CAMPUS, buildGraph(CAMPUS), ["Argo Hall", "Revelle Plaza", "Peterson Hall"]);
 
 const HEX = /^#[0-9a-f]{6}$/i;
 const sunGod = LANDMARKS.landmarks.find((l) => l.name === "Sun God");
@@ -129,6 +135,11 @@ describe("the measured landmark colours", () => {
     ["Triton Statue", "bronze", "#3d4650"],
     ["Vices and Virtues", "host", "#8b8d89"],
     ["Vices and Virtues", "frame", "#7d4a45"],
+    ["Revelle Plaza Fountain", "basin", "#3a3437"],
+    ["Pergola Swings (Ridge Walk at Muir Field)", "frame", "#3a3634"],
+    ["Pergola Swings (Ridge Walk at Muir Field)", "roof", "#c9c2b2"],
+    ["Pergola Swings (Ridge Walk at Muir Field)", "bench", "#8a8378"],
+    ["Mayer/Bonner Folded-Plate Canopy", "plate", "#d8d4c6"],
   ];
   for (const [name, part, hex] of measured) {
     test(`${name}: ${part} stays at the measured ${hex}`, () => {
@@ -182,7 +193,140 @@ describe("Fallen Star hangs off the corner the aerials show", () => {
   });
 });
 
-/* ----------------------------------------------------------- 5. THE GUARD */
+/* --------------------------------- 5. the one-off structures on the route */
+
+describe("the structures the walk actually passes", () => {
+  const o = CAMPUS.origin;
+  const local = (lm) => [
+    (lm.lng - o.lng) * o.mPerDegLng,
+    -(lm.lat - o.lat) * o.mPerDegLat,
+  ];
+  const byName = (n) => LANDMARKS.landmarks.find((l) => l.name === n);
+  const PERGOLAS = LANDMARKS.landmarks.filter((l) => l.pergola);
+  const metresFromWalk = (x, z) =>
+    Math.min(...WALK.points.map((p) => Math.hypot(p.x - x, p.z - z)));
+
+  test("each one carries the spec block its builder dispatches on", () => {
+    /* createLandmarks picks a builder by the presence of these blocks, not by
+       name — so a missing block is a landmark that silently does not render,
+       which is the failure this file exists to make loud. */
+    for (const [name, block, fields] of [
+      ["Revelle Plaza Fountain", "fountain", ["diameter_m", "rimHeight_m", "jetHeight_m"]],
+      ["Mayer/Bonner Folded-Plate Canopy", "canopy",
+        ["depth_m", "height_m", "pitch_m", "rise_m", "columnEvery_m", "columnRadius_m"]],
+    ]) {
+      const lm = byName(name);
+      assert.ok(lm, `${name} is no longer in the file`);
+      assert.ok(lm[block], `${name} has no ${block} block — nothing will build it`);
+      for (const f of fields) {
+        assert.ok(lm[block][f] > 0, `${name}.${block}.${f} is ${lm[block][f]}`);
+      }
+    }
+    assert.equal(PERGOLAS.length, 2, "there are two pergola stations, not one");
+    for (const lm of PERGOLAS) {
+      for (const f of ["length_m", "depth_m", "height_m", "postEvery_m", "swings", "benches"]) {
+        assert.ok(lm.pergola[f] > 0, `${lm.name}.pergola.${f} is ${lm.pergola[f]}`);
+      }
+      assert.ok(lm.pergola.bearingDeg >= 0 && lm.pergola.bearingDeg < 360,
+        `${lm.name} has bearing ${lm.pergola.bearingDeg}`);
+    }
+  });
+
+  test("every part the builders paint has a colour", () => {
+    const parts = {
+      "Revelle Plaza Fountain": ["basin", "water", "foam", "pole", "flagRed", "flagWhite", "flagBlue"],
+      "Mayer/Bonner Folded-Plate Canopy": ["plate", "soffit", "column"],
+    };
+    for (const [name, keys] of Object.entries(parts)) {
+      for (const k of keys) {
+        assert.match(byName(name).colors?.[k] ?? "", HEX, `${name} has no ${k} colour`);
+      }
+    }
+    for (const lm of PERGOLAS) {
+      for (const k of ["frame", "roof", "bench"]) {
+        assert.match(lm.colors?.[k] ?? "", HEX, `${lm.name} has no ${k} colour`);
+      }
+    }
+  });
+
+  test("the two pergola stations are the same furniture, twice", () => {
+    /* W:f0013–f0014 and W:f0026–f0027 show one design repeated. If the two
+       palettes ever drift apart they stop reading as a family, which is the
+       entire reason both are worth building. */
+    const [a, b] = PERGOLAS;
+    assert.deepEqual(a.colors, b.colors, "the stations have been painted differently");
+  });
+
+  test("the fountain stands inside the plaza the walk crosses", () => {
+    const lm = byName("Revelle Plaza Fountain");
+    const [x, z] = local(lm);
+    const plaza = CAMPUS.surfaces.find((s) => s.n === "Revelle Plaza");
+    assert.ok(plaza, "Revelle Plaza is no longer a surface");
+    let inside = false;
+    const ring = plaza.p;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const [xi, zi] = ring[i];
+      const [xj, zj] = ring[j];
+      if ((zi > z) !== (zj > z) && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) inside = !inside;
+    }
+    assert.ok(inside, `the fountain is at (${x.toFixed(1)}, ${z.toFixed(1)}), outside the plaza ring`);
+    /* And on the surveyed OSM point, not near it. */
+    const surveyed = CAMPUS.places["Revelle Plaza Fountain"];
+    assert.ok(surveyed, "campus-3d.json no longer carries the surveyed fountain point");
+    assert.ok(Math.hypot(surveyed.x - x, surveyed.z - z) < 1,
+      "the fountain has drifted off the surveyed point");
+    /* The flagpole beside it stays beside it — and inside the plaza. */
+    assert.ok(Math.abs(lm.flagpole.north_m) < 25, "the flagpole has wandered off the fountain");
+    assert.ok(lm.flagpole.height_m > 8 && lm.flagpole.height_m < 25,
+      `a ${lm.flagpole.height_m} m flagpole is not the one in W:f0035`);
+  });
+
+  test("both pergola stations stand beside the route, not somewhere near it", () => {
+    for (const lm of PERGOLAS) {
+      const [x, z] = local(lm);
+      const d = metresFromWalk(x, z);
+      assert.ok(d < 15, `${lm.name} is ${d.toFixed(1)} m from the walk — you would never see it`);
+      assert.ok(d > 2, `${lm.name} is ${d.toFixed(1)} m from the walk — you would walk through it`);
+    }
+    /* The two are stations on one walk, not two views of the same bench. */
+    const [a, b] = PERGOLAS.map(local);
+    assert.ok(Math.hypot(a[0] - b[0], a[1] - b[1]) > 100, "the stations are on top of each other");
+  });
+
+  test("the folded-plate canopy has hosts with a west face to run along", () => {
+    /* The canopy is a LINE, not a point: the builder takes the west edge of
+       each host's footprint at load. A renamed or vanished host renders
+       nothing at all, and nothing else would say so. */
+    const lm = byName("Mayer/Bonner Folded-Plate Canopy");
+    assert.deepEqual(lm.hosts, ["Bonner Hall", "Mayer Hall"]);
+    assert.equal(lm.facing, "W");
+    const block = RENDERER.match(/CORNER_DIR = \{([\s\S]*?)\};/);
+    const dirs = [...block[1].matchAll(/\b([NSEW]{1,2}):\s*\[/g)].map((m) => m[1]);
+    assert.ok(dirs.includes(lm.facing), `facing "${lm.facing}" is not in the renderer's CORNER_DIR`);
+
+    for (const name of lm.hosts) {
+      const host = CAMPUS.buildings.find((b) => b.n === name);
+      assert.ok(host, `${name} is no longer in the massing — the canopy would vanish`);
+      const cx = host.p.reduce((s, p) => s + p[0], 0) / host.p.length;
+      let best = 0;
+      for (let i = 0; i < host.p.length; i++) {
+        const a = host.p[i];
+        const b = host.p[(i + 1) % host.p.length];
+        if ((a[0] + b[0]) / 2 >= cx) continue;                  // east half: not the arcade
+        if (Math.abs(b[0] - a[0]) > Math.abs(b[1] - a[1])) continue; // not a north-south face
+        best = Math.max(best, Math.hypot(b[0] - a[0], b[1] - a[1]));
+      }
+      assert.ok(best > lm.canopy.pitch_m * 4,
+        `${name}'s west face is only ${best.toFixed(1)} m — too short to carry the arcade`);
+    }
+    /* And that west face is the side the walk goes up. */
+    const [x, z] = local(lm);
+    assert.ok(metresFromWalk(x, z) < 25,
+      "the canopy's mid-span is not on the stretch of walk the footage shows it from");
+  });
+});
+
+/* ----------------------------------------------------------- 6. THE GUARD */
 
 test("no landmark colour is hard-coded in the renderer", () => {
   /* Everything above the landmarks divider is label chrome — the yellow tab

@@ -130,6 +130,14 @@ walking tour (Nov 2023, clear noon) and a 10-minute drone tour (Nov 2022, marine
   six frame-measured zeniths), carried by a camera-following dome; the sun sits at November's
   ~35°, the hemisphere ground bounce is pavement-grey instead of olive, and lit-vs-shade
   contrast matches the ~2× luminance drop the frames measure.
+- **The furniture** (`docs/js/campus-details.js`): in 340 frames no object appears more often
+  than the black lamp post with its banner pair, so the walks now carry them — placed
+  deterministically along the named majors at the footage's 18 m rhythm, banner colours by
+  zone, plus the perforated bench blocks lining Library Walk, the royal-blue emergency towers,
+  and chrome-yellow hydrants. One-offs the route passes — the Revelle Plaza ring fountain and
+  flagpole, the Ridge Walk pergola swing stations, the Mayer/Bonner folded-plate canopy — live
+  in `campus-landmarks.json` with frame-measured colour blocks. `tests/campus-details.test.mjs`
+  keeps every placement out of the buildings and on its rhythm.
 
 ```
 docs/            the site — GitHub Pages serves this directly, no build step

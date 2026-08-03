@@ -20,6 +20,7 @@ import { buildGraph, routeThrough } from "./campus-route.js";
 import { createBuildings } from "./campus-massing.js";
 import { createMarkings } from "./campus-markings.js";
 import { createLabels, createLandmarks } from "./campus-landmarks.js";
+import { createDetails } from "./campus-details.js";
 import { createMinimap } from "./campus-minimap.js";
 import {
   createExplore, scaleAtmosphere, EYE, sliderToSpeed, speedToSlider,
@@ -509,6 +510,7 @@ export async function boot() {
      draw when the GIS file is absent. */
   if (!arcgis?.ground?.length) world.createPaths(scene, campus, heightAt);
   const trees = world.createTrees(scene, lidar, heightAt);
+  const details = createDetails(scene, campus, heightAt);
 
   labels = createLabels(scene, massInfo);
   /* A click on the minimap teleports you to that spot: free roam, same
@@ -703,6 +705,7 @@ export async function boot() {
       buildings: built.group,
       ground: surfaces,
       trees: trees.group,
+      details: details.group,
       labels: labels.group,
       ...(landmarksGroup ? { landmarks: landmarksGroup } : {}),
     },

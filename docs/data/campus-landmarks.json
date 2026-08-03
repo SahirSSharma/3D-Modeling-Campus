@@ -210,6 +210,106 @@
    "prominence": "minor"
   },
   {
+   "name": "Revelle Plaza Fountain",
+   "lat": 32.874656,
+   "lng": -117.240787,
+   "kind": "structure",
+   "height_m": 15,
+   "colors": {
+    "basin": "#3a3437",
+    "water": "#202b31",
+    "foam": "#dfe6e9",
+    "pole": "#e4e6e3",
+    "flagRed": "#b22234",
+    "flagWhite": "#f2f2ef",
+    "flagBlue": "#3c3b6e"
+   },
+   "fountain": {
+    "diameter_m": 8,
+    "rimHeight_m": 0.55,
+    "jetHeight_m": 2.2
+   },
+   "flagpole": {
+    "height_m": 15,
+    "north_m": 12
+   },
+   "description": "The centrepiece of Revelle Plaza, and the thing the walk aims at once it leaves Argo: a low ring basin about 8 m across with a single white aerating jet standing in the middle of it, and the tall US flagpole a dozen metres off its north side. Measured W:f0035 (and corroborated W:f0034, W:f0036): the basin is BLACK - a charcoal basalt that samples #151217 raw in the frame, which is the darkest thing on the plaza and the reason the fountain reads as a hole in the concrete rather than an ornament. The rendered #3a3437 is that reading lifted to daylight, a very dark warm charcoal rather than the literal near-black. The jet samples #a5b1b6 backlit and is rendered as lifted white foam - a single column that flares as it rises, not a fan of nozzles. Position is the surveyed OSM point 'Revelle Plaza Fountain' inside the plaza polygon both the router and the walk cross. The flagpole stand-off is parallax between W:f0034 and W:f0035, which puts it 12-17 m from the basin on the side away from the cafe umbrellas; the flag's own red/white/blue are the canonical US flag colours, NOT measurements - at this distance the flag is a handful of sky-mixed pixels. Low-poly: charcoal rim cylinder, dark water disc, one flaring foam cone, white pole with a small flag box.",
+   "prominence": "notable"
+  },
+  {
+   "name": "Pergola Swings (Ridge Walk at Muir Field)",
+   "lat": 32.879013,
+   "lng": -117.240173,
+   "kind": "structure",
+   "height_m": 3.1,
+   "colors": {
+    "frame": "#3a3634",
+    "roof": "#c9c2b2",
+    "bench": "#8a8378"
+   },
+   "pergola": {
+    "length_m": 26,
+    "depth_m": 3.6,
+    "height_m": 3.1,
+    "bearingDeg": 0,
+    "postEvery_m": 4.2,
+    "swings": 3,
+    "benches": 2
+   },
+   "description": "One of a pair of identical rest stations the walk passes: a long black steel post-and-beam trellis with a flat roof of pale timber slats, three hanging bench swings on rods under it and fixed grey benches alongside. Measured W:f0013-f0014, where the run stands at the edge of the mown Muir field with the walk on its other side. Every reading in those frames is against the sun, so the steel samples #0c090a to #2f3036 and the slats read as silhouette: the frame black #3a3634 and the lit timber #c9c2b2 are the daylight values, and the benches #8a8378 with them. Placed on the east side of Ridge Walk at the field's edge, beside the route between Muir and Peterson. Low-poly: two rows of posts, two beams, a rack of slats, three swing seats on rods, two fixed benches.",
+   "prominence": "minor"
+  },
+  {
+   "name": "Pergola Swings (Revelle Walk)",
+   "lat": 32.876806,
+   "lng": -117.240729,
+   "kind": "structure",
+   "height_m": 3.1,
+   "colors": {
+    "frame": "#3a3634",
+    "roof": "#c9c2b2",
+    "bench": "#8a8378"
+   },
+   "pergola": {
+    "length_m": 22,
+    "depth_m": 3.6,
+    "height_m": 3.1,
+    "bearingDeg": 354,
+    "postEvery_m": 4.2,
+    "swings": 3,
+    "benches": 2
+   },
+   "description": "The second station of the same furniture family, on the Revelle stretch of the walk north of Bonner Hall. Measured W:f0026 (seen up the walk) and W:f0027 (standing in it, a swing seat hanging on its rods a metre from the lens). Same black steel frame, same pale slat roof, same grey benches as the Muir station - which is the point: it is a repeat, and repeats are what make a campus legible. It sits in the planted median between the bike lane and the pedestrian walk, so the route passes within a few metres of it. The colours are the Muir station's daylight values; both frames here are backlit too.",
+   "prominence": "minor"
+  },
+  {
+   "name": "Mayer/Bonner Folded-Plate Canopy",
+   "lat": 32.87578,
+   "lng": -117.240629,
+   "kind": "structure",
+   "height_m": 5.2,
+   "hosts": [
+    "Bonner Hall",
+    "Mayer Hall"
+   ],
+   "facing": "W",
+   "colors": {
+    "plate": "#d8d4c6",
+    "soffit": "#bcb6a6",
+    "column": "#cdc7b8"
+   },
+   "canopy": {
+    "depth_m": 2.5,
+    "height_m": 4.2,
+    "pitch_m": 2.4,
+    "rise_m": 0.9,
+    "columnEvery_m": 4.8,
+    "columnRadius_m": 0.16
+   },
+   "description": "The Revelle silhouette, and the one piece of building shape on this walk that a flat wall cannot fake: a continuous eave of literal triangular concrete prisms - a folded plate - running the length of the Mayer and Bonner arcade on slender round columns, cream #d8d4c6. Measured W:f0022-f0023, where the prisms are the whole top-right of the frame; both readings are of the shaded underside (#4a4a3b, #585351) so the cream is the daylight value. The line it runs along is not stored here: the builder takes the WEST edge of each host's own footprint out of campus-3d.json, so the canopy stays welded to the buildings if the massing ever moves. The two hosts present one unbroken west face about 160 m long, which is the whole east side of the Revelle stretch the route walks. Low-poly: one instanced prism per 2.4 m of run with a column every 4.8 m.",
+   "prominence": "notable"
+  },
+  {
    "name": "Sun God Lawn reference - Untitled (Asher fountain)",
    "lat": 32.878957,
    "lng": -117.236256,
