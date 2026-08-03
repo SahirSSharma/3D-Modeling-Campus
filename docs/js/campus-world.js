@@ -18,12 +18,11 @@
 //                               scripts/build-campus-arcgis.mjs is the pull.
 //
 //   app/data/campus-boundary.json   the official campus boundary polygon (OSM)
-//   app/data/textures/              current Google satellite imagery, cut on
-//                                   the terrain's own chunk grid at build time
 //
-// Inside the boundary the ground wears the real imagery; outside it the campus
-// keeps its stylized look, and the boundary itself is drawn as a dashed line —
-// so the surveyed edge of campus is visible in-world, not just implied.
+// Current-epoch satellite imagery is a SOURCE here, never a texture: it feeds
+// the build-time pipelines (colours, markings, cross-checks) and the accuracy
+// audits, but the world itself stays modeled. The boundary is drawn in-world
+// as a dashed line, so the surveyed edge of campus is visible, not implied.
 //
 // The split matters because the first version of this file took heights from
 // OSM too, and OSM was wrong about nearly every building on this walk. See the
@@ -33,9 +32,7 @@
 // hands back a height field; campus-walk.js moves through it.
 import * as THREE from "../vendor/three/three.module.min.js";
 import { prepareGround } from "./campus-ground.js";
-import {
-  makeHeightSampler, chunkGrid, pointInRings, rectIntersectsRings,
-} from "./campus-terrain.js";
+import { makeHeightSampler, chunkGrid } from "./campus-terrain.js";
 
 /* Campus on a clear morning: bleached concrete, tan and off-white stucco,
    eucalyptus. Buildings pick from the palette by a hash of position so a given
@@ -63,44 +60,23 @@ const drapeMaterial = (color) =>
 
 /* ------------------------------------------------------------------ terrain */
 
-/* The boundary polygon and the imagery manifest, fetched once and shared by
-   everything that needs them. Either file may legitimately be absent (a
-   checkout that has not run build-campus-satellite.mjs); everything below
-   degrades to the stylized look in that case rather than failing. */
+/* The boundary polygon, fetched once and shared by everything that needs it.
+   The file may legitimately be absent (a checkout that has not run
+   build-campus-satellite.mjs); everything below degrades to no boundary line
+   rather than failing. */
 let overlayPromise = null;
 function overlayData() {
   if (!overlayPromise) {
-    const load = (rel) =>
-      fetch(new URL(rel, import.meta.url))
-        .then((r) => (r.ok ? r.json() : null))
-        .catch(() => null);
-    overlayPromise = Promise.all([
-      load("../data/campus-boundary.json"),
-      load("../data/textures/manifest.json"),
-    ]).then(([boundary, manifest]) => ({ boundary, manifest }));
+    overlayPromise = fetch(new URL("../data/campus-boundary.json", import.meta.url))
+      .then((r) => (r.ok ? r.json() : null))
+      .catch(() => null)
+      .then((boundary) => ({ boundary }));
   }
   return overlayPromise;
 }
 
-/* Set by createTerrain; lets surfaces and paths ask "will there be real
-   imagery under this point?" without re-deriving the grid. The answer is
-   decided from the manifest, not from what has finished downloading — the
-   stylized stand-ins must come off where the photograph is COMING, or the
-   rebuild would race the texture loads. */
+/* Set by createTerrain; the boundary ribbon uses it to stay on real ground. */
 let ground = null;
-const liveChunkRects = new Map(); // "ci,ri" -> the chunk rect of THIS terrain
-const chunkMatchesLive = (c) => {
-  const live = liveChunkRects.get(`${c.ci},${c.ri}`);
-  return !!live && live.x0 === c.x0 && live.z0 === c.z0 && live.x1 === c.x1 && live.z1 === c.z1;
-};
-const onImagery = (x, z, rings, manifest) => {
-  if (!ground?.inGrid(x, z)) return false;
-  if (!pointInRings(x, z, rings)) return false;
-  for (const c of manifest.chunks) {
-    if (x >= c.x0 && x < c.x1 && z >= c.z0 && z < c.z1) return chunkMatchesLive(c);
-  }
-  return false;
-};
 
 /**
  * The bare-earth height field, as measured.
@@ -196,13 +172,15 @@ export function createTerrain(scene, lidar, colors) {
     geo.setAttribute("position", new THREE.Float32BufferAttribute(position, 3));
     geo.setAttribute("normal", new THREE.Float32BufferAttribute(normal, 3));
     geo.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+    if (rgb.length === position.length) {
+      geo.setAttribute("color", new THREE.Float32BufferAttribute(rgb, 3));
+    }
     geo.setIndex(index);
-    const material = colorAt
+    const material = colorAt && rgb.length === position.length
       ? new THREE.MeshLambertMaterial({ vertexColors: true })
       : new THREE.MeshLambertMaterial({ color: GROUND_COLOR });
     const mesh = new THREE.Mesh(geo, material);
     mesh.userData.chunk = chunk;
-    liveChunkRects.set(`${chunk.ci},${chunk.ri}`, chunk);
     chunkMeshes.push(mesh);
     group.add(mesh);
   }
@@ -210,7 +188,6 @@ export function createTerrain(scene, lidar, colors) {
   group.add(buildApron(terrain, h));
   scene.add(group);
 
-  applySatellite(chunkMeshes);
   addBoundaryLine(scene, heightAt);
 
   /* `coverage` is the rect that actually has ground mesh under it (grid +
@@ -265,57 +242,6 @@ function buildApron(terrain, h) {
     geo,
     new THREE.MeshLambertMaterial({ color: GROUND_COLOR, side: THREE.DoubleSide })
   );
-}
-
-/**
- * Drape the satellite chunks over the terrain, nearest to the spawn first so
- * the ground under you is real before the far corner loads. Each texture
- * replaces its chunk's NAIP vertex colours as it arrives. A manifest entry is
- * honoured only when its rect matches the live chunk grid exactly — a stale
- * manifest built against an older terrain must fall back to the stylized
- * ground, never drape imagery at the wrong coordinates.
- */
-async function applySatellite(chunkMeshes) {
-  const { boundary, manifest } = await overlayData();
-  if (!manifest?.chunks?.length || !boundary?.rings?.length) return;
-  const START = { x: -20, z: 374 }; // the spawn hangs over Argo Hall
-  const jobs = [];
-  for (const entry of manifest.chunks) {
-    const mesh = chunkMeshes.find(
-      (m) => m.userData.chunk.ci === entry.ci && m.userData.chunk.ri === entry.ri
-    );
-    if (!mesh) continue;
-    if (!chunkMatchesLive(entry)) continue;
-    const c = mesh.userData.chunk;
-    if (!rectIntersectsRings(c.x0, c.z0, c.x1, c.z1, boundary.rings)) continue;
-    const d = Math.hypot((entry.x0 + entry.x1) / 2 - START.x, (entry.z0 + entry.z1) / 2 - START.z);
-    jobs.push({ entry, mesh, d });
-  }
-  jobs.sort((a, b) => a.d - b.d);
-
-  const loader = new THREE.TextureLoader();
-  for (const { entry, mesh } of jobs) {
-    await new Promise((resolve) => {
-      loader.load(
-        new URL(`../data/textures/${entry.file}`, import.meta.url).href,
-        (tex) => {
-          tex.colorSpace = THREE.SRGBColorSpace;
-          tex.anisotropy = 4;
-          tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
-          mesh.material.dispose();
-          mesh.material = new THREE.MeshLambertMaterial({ map: tex });
-          texturedChunks.push(entry);
-          /* The imagery credit belongs on screen exactly as long as the
-             imagery itself does. */
-          const credit = document.getElementById("walk-imagery");
-          if (credit) credit.hidden = false;
-          resolve();
-        },
-        undefined,
-        () => resolve() // a missing chunk keeps its stylized colours
-      );
-    });
-  }
 }
 
 /**
@@ -429,12 +355,6 @@ function scoringTexture() {
  * colour sampled from NAIP aerial imagery, merged into ONE mesh per kind —
  * 4,000+ polygons over the full campus as six draw calls, not four thousand.
  * OSM's plazas and lawns remain the fallback when the survey is absent.
- *
- * Where the ground wears real satellite imagery, the stylized stand-ins come
- * OFF: a tinted polygon painted over the real photographed paving would hide
- * exactly the detail the imagery was brought in to show. Once the boundary
- * and the texture manifest have loaded, the group is rebuilt without any
- * piece whose centre sits on imagery; everything else keeps its colour.
  */
 export function createSurfaces(scene, campus, heightAt, arcgis, colors) {
   const group = new THREE.Group();
@@ -569,12 +489,6 @@ export function createSurfaces(scene, campus, heightAt, arcgis, colors) {
   };
 
   build(null);
-  overlayData().then(({ boundary, manifest }) => {
-    if (!boundary?.rings?.length || !manifest?.chunks?.length) return;
-    for (const child of group.children) child.geometry.dispose();
-    group.clear();
-    build((x, z) => onImagery(x, z, boundary.rings, manifest));
-  });
   scene.add(group);
   return group;
 }
@@ -592,15 +506,6 @@ export function createSurfaces(scene, campus, heightAt, arcgis, colors) {
 export function createPaths(scene, campus, heightAt) {
   const group = new THREE.Group();
   buildPaths(group, campus, heightAt, null);
-  /* Same deal as the surfaces: a stylized ribbon on top of the photographed
-     walkway hides the real crosswalks and paving. Segments over imagery are
-     dropped once the boundary is known; the network outside it stays. */
-  overlayData().then(({ boundary, manifest }) => {
-    if (!boundary?.rings?.length || !manifest?.chunks?.length) return;
-    for (const child of group.children) child.geometry.dispose();
-    group.clear();
-    buildPaths(group, campus, heightAt, (x, z) => onImagery(x, z, boundary.rings, manifest));
-  });
   scene.add(group);
   return group;
 }
