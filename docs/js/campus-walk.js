@@ -373,12 +373,35 @@ function updateChrome() {
 
 /* ------------------------------------------------------------------- boot */
 
+/* Adaptive resolution: if a machine cannot hold a walkable frame rate at the
+   current render scale, trade pixels for motion until it can. A campus you
+   cannot move through is worthless at any sharpness. */
+let perfAcc = 0;
+let perfN = 0;
+function adapt(dt) {
+  perfAcc += dt;
+  perfN++;
+  if (perfAcc < 2.5) return;
+  const fps = perfN / perfAcc;
+  perfAcc = 0;
+  perfN = 0;
+  const ratio = renderer.getPixelRatio();
+  if (fps < 24 && ratio > 0.7) {
+    renderer.setPixelRatio(Math.max(0.7, ratio - 0.25));
+    resize();
+  } else if (fps > 50 && ratio < Math.min(1.5, devicePixelRatio)) {
+    renderer.setPixelRatio(Math.min(Math.min(1.5, devicePixelRatio), ratio + 0.25));
+    resize();
+  }
+}
+
 function frame(now) {
   requestAnimationFrame(frame);
   const dt = Math.min(0.05, (now - state.lastTime) / 1000 || 0);
   state.lastTime = now;
   update(dt);
   labels?.update(camera);
+  adapt(dt);
   renderer.render(scene, camera);
 }
 
@@ -444,7 +467,7 @@ export async function boot() {
 
   const canvas = document.getElementById("walk-canvas");
   renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-  renderer.setPixelRatio(Math.min(2, devicePixelRatio));
+  renderer.setPixelRatio(Math.min(1.5, devicePixelRatio)); // full-viewport 2x on a 5K display is pure fill-rate pain
 
   scene = world.createScene();
   camera = new THREE.PerspectiveCamera(68, 1, 0.4, 900);

@@ -70,8 +70,9 @@ describe("the surveyed ground plane", () => {
         return Math.max(maxx - minx, maxz - minz);
       };
       /* The whole point of tiling: no draped piece may span more ground than
-         one tile, or it bridges dips in the terrain. */
-      assert.ok(span(p.rings[0]) <= 29, `a ground piece spans ${span(p.rings[0]).toFixed(0)} m`);
+         one tile, or it bridges dips in the terrain. 42 m (was 28) after the
+         full-campus perf pass — coarser drape, quarter the vertices. */
+      assert.ok(span(p.rings[0]) <= 43, `a ground piece spans ${span(p.rings[0]).toFixed(0)} m`);
       assert.ok(Math.abs(ringArea(p.rings[0])) > 0.5, "a degenerate sliver survived tiling");
     }
   });

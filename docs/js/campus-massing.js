@@ -205,7 +205,9 @@ export function createBuildings(scene, { campus, lidar, arcgis, colors, facades,
 
     const wallHex = facades?.[m.name] || WALL_PALETTE[Math.floor(hash(outer[0][0], outer[0][1]) * WALL_PALETTE.length)];
     const roofHex = q(m.roof);
-    const key = `${wallHex}|${roofHex}`;
+    /* Chunked by 500 m so buildings behind the camera or past the fog can be
+       culled — one campus-wide merge drew every building every frame. */
+    const key = `${wallHex}|${roofHex}|${Math.floor(cx / 500)}:${Math.floor(cz / 500)}`;
     if (!buckets.has(key)) buckets.set(key, { lids: [], walls: [] });
     splitIntoBucket(geo, buckets.get(key));
     built++;
@@ -251,7 +253,7 @@ export function createBuildings(scene, { campus, lidar, arcgis, colors, facades,
   const group = new THREE.Group();
   const roofMats = new Map();
   for (const [key, bucket] of buckets) {
-    const [wallHex, roofHex] = key.split("|");
+    const [wallHex, roofHex] = key.split("|");  // third segment is the spatial chunk
     if (!wallMats.has(wallHex)) {
       wallMats.set(wallHex, new THREE.MeshLambertMaterial({ color: new THREE.Color(wallHex), map: facade }));
     }
