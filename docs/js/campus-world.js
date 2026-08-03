@@ -75,6 +75,29 @@ function overlayData() {
   return overlayPromise;
 }
 
+/* Measured per-polygon colour, sampled at build time from the georeferenced
+   satellite chunks (0.125–0.25 m/px — fine enough to see one sidewalk, not
+   the lawn beside it). Keys are geometry hashes — `g:<kind>:<cx>,<cz>` /
+   `s:<kind>:<cx>,<cz>`, centroid = outer-ring vertex average rounded to the
+   metre — recomputed here so the lookup survives any data rebuild. The file
+   may be absent (or this may run under Node in tests): everything degrades
+   to the NAIP/palette colours below. Keep keyOf in sync with
+   scripts/build-campus-truecolor.mjs and campus-massing.js. */
+const TRUECOLOR = await (async () => {
+  try {
+    const r = await fetch(new URL("../data/campus-truecolor.json", import.meta.url));
+    return r.ok ? await r.json() : null;
+  } catch {
+    return null;
+  }
+})();
+
+const keyOf = (ring) => {
+  let sx = 0, sz = 0;
+  for (const p of ring) { sx += p[0]; sz += p[1]; }
+  return `${Math.round(sx / ring.length)},${Math.round(sz / ring.length)}`;
+};
+
 /* Set by createTerrain; the boundary ribbon uses it to stay on real ground. */
 let ground = null;
 
@@ -368,7 +391,7 @@ export function createSurfaces(scene, campus, heightAt, arcgis, colors) {
     };
     const buckets = new Map(); // kind|cell -> { pos: [], col: [], uv: [] }
 
-    const addSurface = (rings, kind, hex) => {
+    const addSurface = (rings, kind, hex, measured) => {
       const outer = rings[0];
       if (!outer || outer.length < 3) return;
       if (skip) {
@@ -400,14 +423,19 @@ export function createSurfaces(scene, campus, heightAt, arcgis, colors) {
          the kind's daylight colour, harder the darker it is: a shadowed sample
          keeps its hue but not its gloom, and anything nearly black is treated
          as "the photo saw a tree, not the ground". Water always leans blue —
-         an aerial of a fountain basin mostly sees its concrete rim. */
+         an aerial of a fountain basin mostly sees its concrete rim.
+
+         MEASURED colours (campus-truecolor.json) went through shadow
+         rejection and the taste-guard clamp at build time, so they are
+         trusted harder — but a lawn fully under eucalyptus canopy still
+         medians dark and still gets pulled toward daylight. */
       const base = new THREE.Color(DEFAULTS[kind] || DEFAULTS.plaza);
       let color = base;
       if (hex && kind !== "water") {
         const sampled = new THREE.Color(hex);
         const lum = 0.299 * sampled.r + 0.587 * sampled.g + 0.114 * sampled.b;
         if (lum >= 0.13) {
-          const keep = lum < 0.3 ? 0.4 : 0.7;
+          const keep = measured ? (lum < 0.3 ? 0.5 : 0.85) : lum < 0.3 ? 0.4 : 0.7;
           color = sampled.clone().lerp(base, 1 - keep);
         }
       } else if (hex && kind === "water") {
@@ -455,12 +483,25 @@ export function createSurfaces(scene, campus, heightAt, arcgis, colors) {
     };
 
     if (arcgis?.ground?.length) {
+      /* Per-polygon measured colour, resolved once by geometry key; the NAIP
+         sample stays as the fallback where the imagery could not answer
+         (construction zones, off coverage, all-shadow). */
+      let trueGround = null;
+      if (TRUECOLOR?.surfaces) {
+        trueGround = arcgis.ground.map((g) => {
+          const outer = g.r[0].map(([x, z]) => [x / 10, z / 10]);
+          return TRUECOLOR.surfaces[`g:${g.k}:${keyOf(outer)}`] || null;
+        });
+      }
       for (const piece of prepareGround(arcgis)) {
-        addSurface(piece.rings, piece.kind, colors?.ground?.[piece.src]);
+        const measured = trueGround?.[piece.src] || null;
+        addSurface(piece.rings, piece.kind, measured || colors?.ground?.[piece.src], !!measured);
       }
     } else {
       for (const s of campus.surfaces || []) {
-        if (s.p && s.p.length >= 3) addSurface([s.p], s.kind, null);
+        if (!s.p || s.p.length < 3) continue;
+        const measured = TRUECOLOR?.surfaces?.[`s:${s.kind}:${keyOf(s.p)}`] || null;
+        addSurface([s.p], s.kind, measured, !!measured);
       }
     }
 
