@@ -1,23 +1,25 @@
 {
- "_": "Campus landmarks researched 2026-08-03 (Stuart Collection pages, press, aerials) for campus-landmarks.js. Fallen Star position was independently georeferenced - Wikipedia's coordinate is ~400 m off.",
+ "_": "Campus landmarks researched 2026-08-03 (Stuart Collection pages, press, aerials) for campus-landmarks.js. Fallen Star position was independently georeferenced - Wikipedia's coordinate is ~400 m off. Colours re-measured 2026-08-03 from 4K walk (W:fNNNN) and drone (D:fNNNN) footage; every hex below is a measurement with its frame named in the description, lifted to daylight where the drone frame was overcast or dusk.",
  "fallenStar": {
   "lat": 32.881452,
   "lng": -117.235356,
   "host": "Jacobs Hall",
   "corner": "SW",
+  "cornerEvidence": "D:f0034-f0036. The cottage is NOT on a corner of the main block: Jacobs Hall's south face is a comb of slender concrete stair towers, and the house sits on one of them with building mass on both sides. The georeferenced point lands 3.7 m off that south face at x=546 in local metres, west of the footprint's mid-span (504..605) - south-west, agreeing with this tag. The prose in the Fallen Star landmark entry used to say 'northeast corner' and was wrong.",
   "width": 4.57,
   "depth": 5.49,
   "height": 4.5,
   "tiltDeg": 10,
   "ridgeAzimuthDeg": 60,
   "overhang": 2.7,
-  "walls": "#a7c4db",
+  "walls": "#cdd8e2",
   "trim": "#f5f5f0",
-  "roof": "#4a4a4a",
+  "roof": "#5d646a",
   "chimney": "#8b4a3b",
   "garden": {
    "w": 9,
-   "d": 13.5
+   "d": 13.5,
+   "color": "#5f7a3f"
   }
  },
  "landmarks": [
@@ -27,7 +29,19 @@
    "lng": -117.239735,
    "kind": "statue",
    "height_m": 8.8,
-   "description": "Giant fantastical bird by Niki de Saint Phalle standing on a ~4.5 m concrete arch. Body is white fiberglass covered in bright multicolored splotches (red, blue, yellow, green); short wide wings spread upward, round head with a flat beak, rainbow-feathered chest. Arch is plain grey concrete, roughly a squared U. Bird itself ~4.3 m tall. Low-poly: grey arch + plump bird body + two fan wings, vertex-painted confetti colors on white.",
+   "colors": {
+    "body": "#efe9da",
+    "head": "#c33b2a",
+    "beak": "#8f2a3c",
+    "crest": "#d9a832",
+    "discRed": "#c33b2a",
+    "discBlue": "#2a5fa8",
+    "discGold": "#d9a832",
+    "discGreen": "#3f8a4f",
+    "arch": "#3a4a2c",
+    "archCap": "#cfcabc"
+   },
+   "description": "Niki de Saint Phalle's great bird, repainted from footage. The earlier reading had the body sprayed all over with small bright blotches, and that is wrong in the way that matters: the colour arrives as a handful of very large deliberate motifs on white. Measured D:f0100-f0101 (close aerial) and W:f0059 (eye level, sunlit): WHITE body; a scarlet head with a blue crown band and a big hooked beak a shade darker and more purple than the head itself; and behind the head a gold sunburst crest of about nine tapered spikes radiating up and out in a fan. One big concentric disc on the chest (red outer ring, blue ring, gold sun-centre) and one oval target on each outstretched wing (red, green and gold rings around a blue-red core); feet and legs painted in the same red/blue/yellow/green family. It stands on a low arch that is completely blanketed in ivy - a dark green mass with an arched opening beneath it, not the bare grey concrete assumed before; only the cap the bird stands on shows pale concrete. Bird ~4.3 m over a ~4.5 m arch. Low-poly: ivy piers + ivy lintel + pale cap, white body and wings, scarlet head, gold spike fan, and coaxial ring discs that read from either side.",
    "prominence": "iconic"
   },
   {
@@ -36,7 +50,7 @@
    "lng": -117.235349,
    "kind": "structure",
    "height_m": 5,
-   "description": "Do Ho Suh's small blue New England cottage perched at a tilt on the corner of the roof of 7-story Jacobs Hall (roof ~29 m up), cantilevered over the edge as if crash-landed. Powder-blue clapboard walls, white door/window trim, dark grey pitched roof, red brick chimney, tiny rooftop garden with hedges around it. Low-poly: simple gabled house box ~5 m tall rotated ~10 deg off the building's grid and pitched ~5 deg, hanging over the roof parapet's northeast corner.",
+   "description": "Do Ho Suh's small blue New England cottage perched at a tilt on Jacobs Hall (roof ~29 m up), cantilevered over the edge as if crash-landed. Measured D:f0034-f0036: powder-blue clapboard walls, white door/window trim, grey shingle pitched roof (lighter and bluer than the near-black the file used to carry), red brick chimney. It sits on one of the slender concrete stair towers that comb the building's SOUTH face - not on a corner of the main block, which is why it has building on both sides of it in the aerials - and hangs off that tower's south-WEST corner, with the rooftop garden (lawn, shrubs, a purple-leaf tree, ivy spilling over the tower edge) filling the rest of the tower roof inboard of the house. Low-poly: simple gabled house box ~5 m tall rotated ~10 deg off the building's grid and pitched ~10 deg over the drop. The rendered spec - position, corner, tilt, dimensions and every colour - lives in the top-level fallenStar block, not here.",
    "prominence": "iconic"
   },
   {
@@ -54,7 +68,10 @@
    "lng": -117.237559,
    "kind": "sculpture",
    "height_m": 7.5,
-   "description": "Terry Allen's dead eucalyptus tree wrapped entirely in dull grey lead sheet, standing on Library Walk just south of Geisel Library. Bare branching trunk, no leaves, metallic matte grey with visible panel seams. Classic meeting spot. Low-poly: a leafless tree of 5-8 tapering cylinders, uniform gunmetal grey.",
+   "colors": {
+    "lead": "#5a5450"
+   },
+   "description": "Terry Allen's dead eucalyptus tree wrapped entirely in dull grey lead sheet, standing on Library Walk just south of Geisel Library. Bare branching trunk, no leaves, matte lead grey with visible panel seams - measured W:f0151, a warm-neutral gunmetal rather than a blue steel. Classic meeting spot. Low-poly: a leafless tree of 5-8 tapering cylinders, uniform lead grey.",
    "prominence": "notable"
   },
   {
@@ -63,6 +80,9 @@
    "lng": -117.238028,
    "kind": "sculpture",
    "height_m": 7.5,
+   "colors": {
+    "lead": "#5a5450"
+   },
    "description": "Second of Terry Allen's three lead-clad eucalyptus trunks, hidden in the living eucalyptus grove southwest of Geisel; plays spoken poems and stories from concealed speakers. Same look as Silent Tree: bare grey-lead branching trunk among tall living trees. Low-poly: identical grey leafless tree, surrounded by normal green eucalyptus.",
    "prominence": "minor"
   },
@@ -72,6 +92,9 @@
    "lng": -117.2388,
    "kind": "sculpture",
    "height_m": 7.5,
+   "colors": {
+    "lead": "#5a5450"
+   },
    "description": "Third Terry Allen lead-covered eucalyptus, ~70 m west of the Talking Tree in the same grove; emits songs. Matte grey leafless trunk with lead panel seams. Low-poly: same grey tree model reused.",
    "prominence": "minor"
   },
@@ -81,7 +104,10 @@
    "lng": -117.234113,
    "kind": "sculpture",
    "height_m": 7.2,
-   "description": "Tim Hawkinson's teddy-bear built from eight huge rounded granite boulders (~180 tons), sitting upright in the Jacobs School engineering courtyard between CSE, EBU1, and the Bioengineering building. Light speckled grey-tan granite; one giant egg boulder for the body, sphere head, four smaller boulders as arms/legs, two small ears. This is what students call the Warren Bear. Low-poly: 8-10 smooth grey spheres/ovoids stacked into a seated teddy bear.",
+   "colors": {
+    "granite": "#b2ad94"
+   },
+   "description": "Tim Hawkinson's teddy-bear built from eight huge rounded granite boulders (~180 tons), sitting upright in the Jacobs School engineering courtyard between CSE, EBU1, and the Bioengineering building. Warm grey-tan granite, measured twice (W:f0108 eye level, D:f0053 aerial) - a touch warmer and duller than the neutral the model was using; one giant egg boulder for the body, sphere head, four smaller boulders as arms/legs, two small ears. This is what students call the Warren Bear. Low-poly: 8-10 smooth grey spheres/ovoids stacked into a seated teddy bear.",
    "prominence": "iconic"
   },
   {
@@ -99,7 +125,10 @@
    "lng": -117.236143,
    "kind": "statue",
    "height_m": 3,
-   "description": "Manuelita Brown's bronze King Triton on the plaza at the east entrance of Price Center, muscular merman rising from a wave, trident in hand, on a low stone base. Dark brown-green patinated bronze. Photo spot for grads. Low-poly: dark bronze torso with raised trident, fish-tail base merging into a wave wedge, grey plinth.",
+   "colors": {
+    "bronze": "#3d4650"
+   },
+   "description": "Manuelita Brown's bronze King Triton on the plaza at the east entrance of Price Center, muscular merman rising from a wave, trident in hand, on a low stone base. Measured D:f0026 (and D:f0128 on the King Triton at the amphitheatre base, #3f4245): the patina reads dark blue-black, not brown-green. Photo spot for grads. Low-poly: dark bronze torso with raised trident, fish-tail base merging into a wave wedge, grey plinth.",
    "prominence": "notable"
   },
   {
@@ -126,7 +155,13 @@
    "lng": -117.234977,
    "kind": "sculpture",
    "height_m": 2.1,
-   "description": "Bruce Nauman's band of 2.1 m tall neon words wrapping the top parapet of the Powell Structural Systems Laboratory (crown sits ~25 m up): seven vices superimposed on seven virtues (FAITH/LUST, HOPE/ENVY...) flashing in bright alternating neon colors \u2014 red, blue, green, yellow, pink. Visible at night across campus. Low-poly: a glowing multicolored letter-band strip around the top of a plain concrete box building.",
+   "colors": {
+    "host": "#8b8d89",
+    "frame": "#7d4a45",
+    "neonRed": "#d14c70",
+    "neonGreen": "#4f805e"
+   },
+   "description": "Bruce Nauman's band of 2.1 m tall neon words wrapping the top parapet of the Powell Structural Systems Laboratory (crown sits ~25 m up): seven vices superimposed on seven virtues (FAITH/LUST, HOPE/ENVY...) flashing in alternating neon colors. Measured D:f0033, which corrects two things: the host is a plain GREY board-formed concrete box, not an oxblood one, and the crown is an OPEN OXIDE-RED steel frame - an airy lattice you can see sky through, carrying the tubes and running down the building's corners as red columns. The letters are hot pink-red and mint green (daylight readings; at night they are far brighter). NOT YET RENDERED by campus-landmarks.js - the grey box belongs to campus-facades.json, and the red crown + letter band is future work. Low-poly when built: an open red steel frame band around the parapet with a glowing letter strip inside it.",
    "prominence": "notable"
   },
   {

@@ -25,8 +25,13 @@ import * as THREE from "../vendor/three/three.module.min.js";
 
 const STOREY = 3.6;
 const BAY = 3.2;
-const WALL_PALETTE = ["#d9d2c5", "#cfc6b6", "#e0dad0", "#c6bcab", "#d2cabb", "#bfb5a4"];
-const ROOF_FALLBACK = "#a8a094";
+/* Unnamed buildings pick from this family. Footage-corrected cooler: the
+   campus's anonymous mid-rises are grey-white concrete and stucco, not the
+   warm beiges of the first guess. */
+const WALL_PALETTE = ["#d6d3ca", "#cbc9c0", "#dedcd4", "#c2c0b6", "#d0cec6", "#b9b7ae"];
+/* Nearly every flat roof the drone saw is white TPO membrane; the truecolor
+   pipeline usually answers, but the fallback must be white-family, not tan. */
+const ROOF_FALLBACK = "#d9dbd5";
 
 const hash = (x, z) => Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1;
 
@@ -58,22 +63,119 @@ function guardRoof(hex) {
   return `#${c.getHexString()}`;
 }
 
-/** One facade tile shared by every wall — see the original note in
-    campus-world.js: generated so ExtrudeGeometry's world-unit UVs land one
-    window bay per BAY and one band per STOREY. */
-function facadeTexture() {
+/** Facade tiles, one per STYLE. The old single tile (horizontal window band)
+    was wrong for most of what the walk route actually passes — four analysis
+    agents independently flagged "vertical fins, not horizontal bands" for the
+    brutalist spine. Each tile is drawn white-on-grey and MULTIPLIES the wall
+    colour, so one texture serves every building of its style; UVs land one
+    bay per BAY and one band per STOREY as before. Styles come from
+    campus-facades.json `styles`; unknown/absent styles get the classic band. */
+function makeTile(draw) {
   const S = 64;
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = S;
   const ctx = canvas.getContext("2d");
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, S, S);
-  ctx.fillStyle = "#8d97a1";
-  ctx.fillRect(4, 14, S - 8, 30);
-  ctx.fillStyle = "#ffffff";
-  for (let x = 4; x < S - 4; x += 14) ctx.fillRect(x, 14, 4, 30);
-  ctx.fillStyle = "rgba(0,0,0,0.16)";
-  ctx.fillRect(0, 44, S, 5);
+  draw(ctx, S);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(1 / BAY, 1 / STOREY);
+  tex.anisotropy = 4;
+  return tex;
+}
+
+function facadeTiles() {
+  return {
+    /* The classic: one window band per storey, mullioned. */
+    band: makeTile((ctx, S) => {
+      ctx.fillStyle = "#8d97a1";
+      ctx.fillRect(4, 14, S - 8, 30);
+      ctx.fillStyle = "#ffffff";
+      for (let x = 4; x < S - 4; x += 14) ctx.fillRect(x, 14, 4, 30);
+      ctx.fillStyle = "rgba(0,0,0,0.16)";
+      ctx.fillRect(0, 44, S, 5);
+    }),
+    /* Vertical concrete fins over recessed dark glass — AP&M, Tioga, Tenaya,
+       Mandler, Muir Biology's louver bands. */
+    fins: makeTile((ctx, S) => {
+      ctx.fillStyle = "#5a626b";
+      ctx.fillRect(0, 4, S, S - 10);
+      ctx.fillStyle = "#ffffff";
+      for (let x = 0; x < S; x += 8) ctx.fillRect(x, 4, 5, S - 10);
+      ctx.fillStyle = "rgba(0,0,0,0.14)";
+      ctx.fillRect(0, S - 6, S, 6);
+    }),
+    /* Deep egg-crate grid, dark cells, strong self-shadow — McGill,
+       Galbraith. Reads ~40% darker than its base colour, as the footage
+       measures. */
+    eggcrate: makeTile((ctx, S) => {
+      ctx.fillStyle = "#4e555c";
+      ctx.fillRect(0, 0, S, S);
+      ctx.fillStyle = "#ffffff";
+      for (let x = 0; x < S; x += 16) ctx.fillRect(x, 0, 6, S);
+      for (let y = 0; y < S; y += 16) ctx.fillRect(0, y, S, 6);
+    }),
+    /* Full curtain wall: glass field, thin mullions. The wall colour IS the
+       glass tone here (Tata, Franklin Antonio). */
+    glass: makeTile((ctx, S) => {
+      ctx.fillStyle = "rgba(255,255,255,0.55)";
+      for (let x = 0; x < S; x += 10) ctx.fillRect(x, 0, 1.5, S);
+      ctx.fillRect(0, 30, S, 2);
+      ctx.fillStyle = "rgba(0,0,0,0.12)";
+      ctx.fillRect(0, 0, S, 3);
+    }),
+    /* Continuous dark ribbon glazing between spandrels — Mayer/Bonner lab
+       wings, CSE's panel field: a horizontal ribbon with no vertical
+       divisions, distinct from punched windows. */
+    ribbon: makeTile((ctx, S) => {
+      ctx.fillStyle = "#4d4a44";
+      ctx.fillRect(0, 16, S, 26);
+      ctx.fillStyle = "rgba(0,0,0,0.1)";
+      ctx.fillRect(0, 46, S, 4);
+    }),
+    /* Open-air balcony void per floor in a white frame — Seventh and
+       Marshall towers, Urey's end slots. */
+    balcony: makeTile((ctx, S) => {
+      ctx.fillStyle = "#2e2c30";
+      ctx.fillRect(8, 12, S - 16, 34);
+      ctx.fillStyle = "rgba(255,255,255,0.5)";
+      ctx.fillRect(8, 40, S - 16, 4); // rail line across the void
+    }),
+    /* Horizontal reveal lines, few or no windows — Peterson's banded blank
+       panels, Price Center's stripe read at distance, Warren Lecture Hall. */
+    bands: makeTile((ctx, S) => {
+      ctx.fillStyle = "rgba(0,0,0,0.18)";
+      ctx.fillRect(0, 20, S, 3);
+      ctx.fillRect(0, 44, S, 5);
+      ctx.fillStyle = "rgba(0,0,0,0.07)";
+      ctx.fillRect(0, 0, S, 8);
+    }),
+    /* Near-featureless: board-formed concrete and service walls. */
+    blank: makeTile((ctx, S) => {
+      ctx.fillStyle = "rgba(0,0,0,0.08)";
+      ctx.fillRect(0, 30, S, 2);
+    }),
+  };
+}
+
+/* Geisel gets its own tile: the white fascia ribbon outlining every stepped
+   tier over a sky-blue glass band over concrete — the single strongest
+   modelling cue in the drone footage. Colours are baked (the material stays
+   white) because no single wall colour can carry a three-tone facade. */
+function geiselTexture(accents) {
+  const S = 64;
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = S;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = accents?.glass || "#7e9fb1";
+  ctx.fillRect(0, 0, S, S);
+  ctx.fillStyle = "rgba(20,24,28,0.25)";
+  for (let x = 0; x < S; x += 9) ctx.fillRect(x, 8, 2, S - 16);
+  ctx.fillStyle = accents?.trim || "#e8e9e2";
+  ctx.fillRect(0, 0, S, 9); // the fascia ribbon at every tier edge
+  ctx.fillStyle = "#b0aca2";
+  ctx.fillRect(0, S - 7, S, 7); // concrete sill
   const tex = new THREE.CanvasTexture(canvas);
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
   tex.repeat.set(1 / BAY, 1 / STOREY);
@@ -216,14 +318,20 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
 export function createBuildings(scene, { campus, lidar, arcgis, colors, facades, heightAt }) {
   const masses = assembleMasses({ campus, lidar, arcgis, colors });
 
+  /* facades is the whole campus-facades.json object; older callers/tests may
+     still hand in the flat walls map, which keeps working. */
+  const walls = facades?.walls || facades || {};
+  const styles = facades?.styles || {};
+  const accents = facades?.accents || {};
+
   /* Geisel's floor stack renders separately below. */
   const geisel = arcgis?.geiselFloors || [];
   const geiselPlace = campus.places["Geisel Library"];
 
   /* -------- extrude into merged material buckets -------- */
-  const facade = facadeTexture();
-  const wallMats = new Map();
-  const buckets = new Map(); // wallHex|roofHex -> { lids: [], walls: [] }
+  const tiles = facadeTiles();
+  const wallMats = new Map(); // `${wallHex}|${style}` -> material
+  const buckets = new Map(); // wallHex|roofHex|style|chunk -> { lids: [], walls: [] }
   const q = (hex) => { // quantise roofs so buckets stay few
     if (!hex) return ROOF_FALLBACK;
     const n = parseInt(hex.slice(1), 16);
@@ -277,14 +385,15 @@ export function createBuildings(scene, { campus, lidar, arcgis, colors, facades,
     const trueRoof = guardRoof(
       TRUECOLOR?.roofs?.[`${m.src === "gis" ? "m" : "b"}:${Math.round(cx)},${Math.round(cz)}`]
     );
-    const roofHex = q(trueRoof || m.roof);
-    let wallHex = facades?.[m.name] || WALL_PALETTE[Math.floor(hash(outer[0][0], outer[0][1]) * WALL_PALETTE.length)];
-    if (trueRoof && !facades?.[m.name]) {
+    const roofHex = q(accents[m.name]?.roof || trueRoof || m.roof);
+    let wallHex = walls[m.name] || WALL_PALETTE[Math.floor(hash(outer[0][0], outer[0][1]) * WALL_PALETTE.length)];
+    if (trueRoof && !walls[m.name]) {
       wallHex = `#${new THREE.Color(wallHex).lerp(new THREE.Color(roofHex), 0.12).getHexString()}`;
     }
+    const style = styles[m.name] || "band";
     /* Chunked by 500 m so buildings behind the camera or past the fog can be
        culled — one campus-wide merge drew every building every frame. */
-    const key = `${wallHex}|${roofHex}|${Math.floor(cx / 500)}:${Math.floor(cz / 500)}`;
+    const key = `${wallHex}|${roofHex}|${style}|${Math.floor(cx / 500)}:${Math.floor(cz / 500)}`;
     if (!buckets.has(key)) buckets.set(key, { lids: [], walls: [] });
     splitIntoBucket(geo, buckets.get(key));
     built++;
@@ -299,10 +408,12 @@ export function createBuildings(scene, { campus, lidar, arcgis, colors, facades,
     }
   }
 
-  /* Geisel: stack the real floors on the real forecourt grade. */
+  /* Geisel: stack the real floors on the real forecourt grade. The walls ride
+     the dedicated three-tone tile (white fascia / glass band / concrete), so
+     the material colour stays white and the roof is the measured deck grey. */
   if (geisel.length && geiselPlace) {
     const base = heightAt(geiselPlace.x, geiselPlace.z);
-    const bucketKey = `${facades?.["Geisel Library"] || "#cfc9bd"}|#8f8a82`;
+    const bucketKey = `#ffffff|${q(accents["Geisel Library"]?.roof || "#9c9488")}|geisel|0:0`;
     if (!buckets.has(bucketKey)) buckets.set(bucketKey, { lids: [], walls: [] });
     const bucket = buckets.get(bucketKey);
     let top = base;
@@ -330,15 +441,19 @@ export function createBuildings(scene, { campus, lidar, arcgis, colors, facades,
   const group = new THREE.Group();
   const roofMats = new Map();
   for (const [key, bucket] of buckets) {
-    const [wallHex, roofHex] = key.split("|");  // third segment is the spatial chunk
-    if (!wallMats.has(wallHex)) {
-      wallMats.set(wallHex, new THREE.MeshLambertMaterial({ color: new THREE.Color(wallHex), map: facade }));
+    const [wallHex, roofHex, style] = key.split("|"); // fourth segment is the spatial chunk
+    const matKey = `${wallHex}|${style}`;
+    if (!wallMats.has(matKey)) {
+      const map = style === "geisel"
+        ? geiselTexture(accents["Geisel Library"])
+        : tiles[style] || tiles.band;
+      wallMats.set(matKey, new THREE.MeshLambertMaterial({ color: new THREE.Color(wallHex), map }));
     }
     if (!roofMats.has(roofHex)) {
       roofMats.set(roofHex, new THREE.MeshLambertMaterial({ color: new THREE.Color(roofHex) }));
     }
     const geo = mergeBucket(bucket);
-    if (geo) group.add(new THREE.Mesh(geo, [roofMats.get(roofHex), wallMats.get(wallHex)]));
+    if (geo) group.add(new THREE.Mesh(geo, [roofMats.get(roofHex), wallMats.get(matKey)]));
   }
   scene.add(group);
   return { group, info, masses: built, drawCalls: buckets.size };

@@ -103,9 +103,33 @@ not measurements — they shipped NTPLLN as bungalows and The Jeannie at tree-ca
   (Scholars Parking, under the Sixth College green) never extrude.
 - `tests/campus-epoch.test.mjs` pins every one of these classes so a rebuild cannot regress.
 
----
+### The colours, measured off footage
 
-## Layout
+Satellite imagery sees roofs and ground; it cannot see a wall, a tree trunk, or the sky. For
+those, the measurement source is two 4K videos of the real campus — a 53-minute eye-level
+walking tour (Nov 2023, clear noon) and a 10-minute drone tour (Nov 2022, marine layer) —
+340 extracted frames, each colour below median-sampled from sunlit pixels, never eyeballed:
+
+- **Facades** (`docs/data/campus-facades.json`): per-building wall colours corrected from the
+  earlier web-research impressions to frame measurements, and the file grew `styles` (which
+  facade tile a building wears — vertical fins, egg-crate, curtain glass, ribbon glazing,
+  open balconies, blank bands) and `accents` (trim/glass/panel/roof tones for the multi-material
+  buildings). Eye-level frames win facades; drone frames win roofs. `tests/campus-facades.test.mjs`
+  keeps every entry keyed to a building the data actually ships.
+- **Ground families** (`docs/js/campus-world.js`): the big pavement family is neutral-to-cool
+  grey (`#aaaea8`), not beige — six independent frame samples of Ridge Walk, Library Walk and
+  Warren Mall converge there. Roads split darker (`#5e6163`) from worn path asphalt. Lawns are
+  three families, chosen per polygon from the aerial sample itself: dry turf, irrigated turf,
+  and the tan bark duff under the eucalyptus groves — a grove floor is bark, not lawn.
+- **Trees** (`docs/js/campus-species.js`): species from the LiDAR's own numbers — tall-and-narrow
+  is a eucalyptus (pale bare trunk, small olive crown high up), short-and-broad is a torrey-pine
+  umbrella, the middling round crowns split between the lawn species. Frame-sampled foliage and
+  trunk hues per species, deterministic per tree, with the stressed near-brown canyon crowns the
+  November footage shows. `tests/campus-species.test.mjs` pins the rules.
+- **Sky and light**: the measured sky is a gradient (zenith `#3a7cc8` over horizon `#b5d2e6` —
+  six frame-measured zeniths), carried by a camera-following dome; the sun sits at November's
+  ~35°, the hemisphere ground bounce is pavement-grey instead of olive, and lit-vs-shade
+  contrast matches the ~2× luminance drop the frames measure.
 
 ```
 docs/            the site — GitHub Pages serves this directly, no build step

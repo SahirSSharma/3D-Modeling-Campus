@@ -33,17 +33,19 @@
 import * as THREE from "../vendor/three/three.module.min.js";
 import { prepareGround } from "./campus-ground.js";
 import { makeHeightSampler, chunkGrid } from "./campus-terrain.js";
+import { SPECIES, treeSpecies, treeTint } from "./campus-species.js";
 
-/* Campus on a clear morning: bleached concrete, tan and off-white stucco,
-   eucalyptus. Buildings pick from the palette by a hash of position so a given
-   building is the same colour on every visit — a skyline that reshuffles itself
-   reads as broken even when nobody can say why. */
-const ROOF_COLOR = 0xa8a094;
+/* Campus on a clear November noon, as the 4K footage measures it: the big
+   pavement family is neutral-to-cool light grey, NOT the beige the first
+   palette guessed — six independent frame samples of Ridge Walk, Library Walk
+   and Warren Mall converge on the greys below. GROUND_COLOR stays the baked
+   satellite fallback (campus-textures.test.mjs pins it to the manifest); the
+   walked world barely sees it. */
 const GROUND_COLOR = 0x93a06d;
-const PLAZA_COLOR = 0xcac4b6;
-const PATH_COLOR = 0xc9c4b8;
-const ASPHALT_COLOR = 0x8e8b86;
-const WATER_COLOR = 0x6f9fb5;
+const PLAZA_COLOR = 0xb3b2a8;
+const PATH_COLOR = 0xaaaea8;
+const ASPHALT_COLOR = 0x8e8b86; // worn path asphalt, measured right 4×
+const WATER_COLOR = 0x4a80a8; // real water reads deeper blue than a swatch
 
 /* Draped surfaces are lifted this far off the terrain and biased in depth, so
    a path never fights the ground it is painted on. Both are needed: the offset
@@ -327,24 +329,77 @@ async function addBoundaryLine(scene, heightAt) {
 
 export function createScene() {
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xbcd8ea);
+  /* The footage sky is a GRADIENT — six frame-measured zeniths converge on
+     #3a7cc8 over a #b5d2e6 horizon; the old flat 0xbcd8ea matched only the
+     horizon, so looking up was looking at haze. The dome below carries the
+     gradient; the background colour remains as the fallback behind it. */
+  scene.background = new THREE.Color(0xa9cbe4);
   /* Initial values only — campus-explore.js's scaleAtmosphere retunes fog and
      draw distance with altitude every time the camera climbs. */
-  scene.fog = new THREE.Fog(0xc4dcec, 170, 640);
+  scene.fog = new THREE.Fog(0xc0d6e4, 180, 640);
+  scene.add(skyDome());
 
-  scene.add(new THREE.HemisphereLight(0xdfefff, 0x7d8a63, 1.7));
+  /* November light, as measured: lit pavement #b0b4b1 against #525b5c in
+     shade is a ~2× luminance drop with a BLUE shift — so the sun carries more
+     of the scene and the ambient less, the hemisphere sky term leans blue,
+     and the ground bounce is pavement-grey, not the old olive that tinted
+     every shadow green. */
+  scene.add(new THREE.HemisphereLight(0xcfe4f8, 0x9aa0a0, 1.35));
 
-  const sun = new THREE.DirectionalLight(0xfff3e0, 1.9);
-  sun.position.set(-90, 140, 60);
+  /* The sun sits LOW — this is San Diego in November, ~35° at noon — so the
+     south faces light up and the north faces genuinely fall into shade. */
+  const sun = new THREE.DirectionalLight(0xfff3e0, 2.25);
+  sun.position.set(-90, 76, 60);
   scene.add(sun);
 
   /* Weak fill from the opposite side. With one sun every face turned away from
-     it falls back to the hemisphere term and campus reads as flat grey slabs. */
-  const fill = new THREE.DirectionalLight(0xd8e6f2, 0.65);
+     it falls back to the hemisphere term and campus reads as flat grey slabs.
+     Weaker than it was: shaded faces should stay visibly cooler and darker. */
+  const fill = new THREE.DirectionalLight(0xd8e6f2, 0.45);
   fill.position.set(110, 70, -80);
   scene.add(fill);
 
   return scene;
+}
+
+/* The measured sky: zenith #3a7cc8 falling to #b5d2e6 at the horizon, with
+   the last degrees below eye level held at the pale tone so hilltops never
+   silhouette against a hard edge. A camera-following dome rather than a
+   shader background so it works with the stock Lambert pipeline, ignores fog,
+   and costs one draw call. Radius sits inside the eye-level far plane (1100);
+   onBeforeRender re-centres it, so no matter how high the explore mode
+   climbs, the sky never clips. */
+function skyDome() {
+  const ZENITH = new THREE.Color(0x3a7cc8);
+  const HORIZON = new THREE.Color(0xb5d2e6);
+  const geo = new THREE.SphereGeometry(1000, 24, 12);
+  const pos = geo.attributes.position;
+  const rgb = new Float32Array(pos.count * 3);
+  const c = new THREE.Color();
+  for (let i = 0; i < pos.count; i++) {
+    const t = Math.max(0, pos.getY(i) / 1000); // 0 at/below horizon, 1 at zenith
+    c.copy(HORIZON).lerp(ZENITH, Math.pow(t, 0.85));
+    rgb[i * 3] = c.r;
+    rgb[i * 3 + 1] = c.g;
+    rgb[i * 3 + 2] = c.b;
+  }
+  geo.setAttribute("color", new THREE.BufferAttribute(rgb, 3));
+  const dome = new THREE.Mesh(
+    geo,
+    new THREE.MeshBasicMaterial({
+      vertexColors: true,
+      side: THREE.BackSide,
+      fog: false,
+      depthWrite: false,
+    })
+  );
+  dome.renderOrder = -1; // draw first; everything else paints over it
+  dome.frustumCulled = false;
+  dome.onBeforeRender = (renderer, sc, camera) => {
+    dome.position.copy(camera.position);
+    dome.updateMatrixWorld();
+  };
+  return dome;
 }
 
 /* --------------------------------------------------------------- buildings */
@@ -385,9 +440,18 @@ export function createSurfaces(scene, campus, heightAt, arcgis, colors) {
   const matByKind = new Map();
 
   const build = (skip) => {
+    /* Footage-measured daylight families. Roads split darker from paths —
+       streets measured #5a5a5c–#6b6f70, worn campus paths #807b72–#8f8e83.
+       `green` is the DRY campus turf; the irrigated and bark-duff variants
+       are chosen per polygon from the sampled colour below. */
     const DEFAULTS = {
-      plaza: "#cac4b6", walk: "#c9c4b8", road: "#8e8b86",
-      green: "#8faa63", court: "#5e8a7e", water: "#6f9fb5",
+      plaza: "#b3b2a8", walk: "#aaaea8", road: "#5e6163",
+      green: "#75833f", court: "#5e8a7e", water: "#4a80a8",
+    };
+    const GREEN_BASES = {
+      dry: new THREE.Color("#75833f"),
+      irrigated: new THREE.Color("#6d8a35"),
+      duff: new THREE.Color("#a68f76"), // eucalyptus-grove floors are bark, not lawn
     };
     const buckets = new Map(); // kind|cell -> { pos: [], col: [], uv: [] }
 
@@ -429,7 +493,19 @@ export function createSurfaces(scene, campus, heightAt, arcgis, colors) {
          rejection and the taste-guard clamp at build time, so they are
          trusted harder — but a lawn fully under eucalyptus canopy still
          medians dark and still gets pulled toward daylight. */
-      const base = new THREE.Color(DEFAULTS[kind] || DEFAULTS.plaza);
+      let base = new THREE.Color(DEFAULTS[kind] || DEFAULTS.plaza);
+      /* Lawns are not one green. The footage shows three families — dry turf,
+         irrigated turf, and the tan bark duff under the eucalyptus groves —
+         and the aerial sample already knows which this is: a tan sample is
+         duff (greenness ~0), a rich saturated sample is irrigated. Choosing
+         the BASE per sample keeps the class fixed for every grove on campus,
+         not just the ones someone noticed. */
+      if (kind === "green" && hex) {
+        const s = new THREE.Color(hex);
+        const greenness = s.g - (s.r + s.b) / 2;
+        base = greenness < 0.015 ? GREEN_BASES.duff
+          : greenness > 0.06 ? GREEN_BASES.irrigated : GREEN_BASES.dry;
+      }
       let color = base;
       if (hex && kind !== "water") {
         const sampled = new THREE.Color(hex);
@@ -439,7 +515,9 @@ export function createSurfaces(scene, campus, heightAt, arcgis, colors) {
           color = sampled.clone().lerp(base, 1 - keep);
         }
       } else if (hex && kind === "water") {
-        color = new THREE.Color(hex).lerp(base, 0.65);
+        /* Keep half the sample: a cobalt fountain and an aqua pool must not
+           collapse into one municipal blue. */
+        color = new THREE.Color(hex).lerp(base, 0.5);
       }
       const lift = kind === "water" ? DRAPE + 0.12 : kind === "green" ? DRAPE - 0.02 : DRAPE;
       /* Chunked by 500 m cell as well as kind: one campus-wide merged mesh can
@@ -628,50 +706,88 @@ export function createTrees(scene, lidar, heightAt) {
   const trees = lidar.trees || [];
   if (!trees.length) return { count: 0 };
 
-  const trunkGeo = new THREE.CylinderGeometry(0.22, 0.34, 1, 5);
-  const leafGeo = new THREE.IcosahedronGeometry(1, 0);
-  const trunkMat = new THREE.MeshLambertMaterial({ color: 0x8a7259 });
-  const leafMat = new THREE.MeshLambertMaterial({ color: 0x5f7a44 });
+  /* Three silhouettes, coloured per instance from the species table
+     (campus-species.js — every hue frame-sampled from the footage):
+       tall     — bare pale pole, small high olive crown (eucalyptus)
+       umbrella — short dark trunk, broad flattened near-black crown (pine)
+       round    — the conventional lawn tree (sycamore, jacaranda, fig)
+     The form is most of the recognition: a eucalyptus is a pole with a tuft,
+     a torrey pine is a low table of shade, and no shared geometry can play
+     both. */
+  const FORMS = {
+    tall: { crownAspect: 1.2, crownOfH: 0.30, trunkTaper: [0.16, 0.26] },
+    umbrella: { crownAspect: 0.55, crownOfH: 0.75, trunkTaper: [0.3, 0.44] },
+    round: { crownAspect: 1.05, crownOfH: 0.5, trunkTaper: [0.22, 0.34] },
+  };
 
-  const trunks = new THREE.InstancedMesh(trunkGeo, trunkMat, trees.length);
-  const leaves = new THREE.InstancedMesh(leafGeo, leafMat, trees.length);
+  /* Bucket instances by form first — InstancedMesh needs its count up front. */
+  const byForm = { tall: [], umbrella: [], round: [] };
+  for (const t of trees) {
+    const species = treeSpecies(t[0], t[1], t[2], t[3]);
+    byForm[SPECIES[species].form].push({ t, species });
+  }
+
+  /* You walk UNDER a tree, not through one. Crowns are sized so their underside
+     always clears head height. For a flattened crown the underside sits
+     crownR*aspect below centre, so the cap works on the VERTICAL radius —
+     a pine's table of shade widens, but never onto your head. */
+  const CLEARANCE = 2.4;
+
+  const group = new THREE.Group();
   const m = new THREE.Matrix4();
   const q = new THREE.Quaternion();
   const scale = new THREE.Vector3();
   const pos = new THREE.Vector3();
+  const col = new THREE.Color();
 
-  /* You walk UNDER a tree, not through one. Crowns are sized so their underside
-     always clears head height: a crown of radius r centred to put its top at
-     the measured height h has its underside at h - 2r, so r is capped at
-     (h - CLEARANCE) / 2. Without that cap a broad, short canopy reached the
-     ground and the walk went straight into a solid green wall — which is
-     exactly what it did on the first pass out of Argo Hall. */
-  const CLEARANCE = 2.4;
+  for (const [form, list] of Object.entries(byForm)) {
+    if (!list.length) continue;
+    const f = FORMS[form];
+    const trunkGeo = new THREE.CylinderGeometry(f.trunkTaper[0], f.trunkTaper[1], 1, 5);
+    const leafGeo = new THREE.IcosahedronGeometry(1, form === "umbrella" ? 1 : 0);
+    /* White base; the real colour rides per instance so one mesh can carry a
+       stressed canyon eucalyptus and a lush lawn one. */
+    const trunkMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+    const leafMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+    const trunks = new THREE.InstancedMesh(trunkGeo, trunkMat, list.length);
+    const leaves = new THREE.InstancedMesh(leafGeo, leafMat, list.length);
 
-  trees.forEach(([x, z, h, r], i) => {
-    const ground = heightAt(x, z);
-    /* The crown floor scales with height: a 25 m eucalyptus in a tight row
-       gets a small measured spread, and rendering it with the same 1.2 m
-       knob as a sapling made a bare pole ending in open sky. */
-    const minCrown = Math.max(1.2, Math.min(2.8, h * 0.13));
-    const crownR = Math.max(minCrown, Math.min(r, (h - CLEARANCE) / 2));
-    const trunkH = Math.max(CLEARANCE, h - 2 * crownR);
+    list.forEach(({ t: [x, z, h, r], species }, i) => {
+      const ground = heightAt(x, z);
+      const minCrown = Math.max(1.2, Math.min(2.8, h * 0.13));
+      const wantCrown = form === "tall" ? Math.min(r, h * f.crownOfH) : r;
+      const maxVert = (h - CLEARANCE) / 2;
+      const crownR = Math.max(minCrown, Math.min(wantCrown, maxVert / f.crownAspect));
+      const crownV = crownR * f.crownAspect; // vertical half-extent
+      /* The crown CENTRE sits at crownOfH of the tree's height band for the
+         form: a eucalyptus tuft rides near the top of its pole, a pine's
+         table sits low. Clamped so top ≤ h and underside ≥ clearance. */
+      const centre = Math.min(h - crownV, Math.max(CLEARANCE + crownV, h * (form === "umbrella" ? 0.62 : 0.85)));
+      const trunkH = centre; // trunk reaches into the crown; no gap can open
 
-    scale.set(1, trunkH, 1);
-    pos.set(x, ground + trunkH / 2, z);
-    m.compose(pos, q, scale);
-    trunks.setMatrixAt(i, m);
+      const { leaf, trunk } = treeTint(species, x, z);
+      scale.set(1, trunkH, 1);
+      pos.set(x, ground + trunkH / 2, z);
+      m.compose(pos, q, scale);
+      trunks.setMatrixAt(i, m);
+      col.setRGB(trunk[0], trunk[1], trunk[2]);
+      trunks.setColorAt(i, col);
 
-    scale.set(crownR, crownR * 1.1, crownR);
-    pos.set(x, ground + trunkH + crownR, z);
-    m.compose(pos, q, scale);
-    leaves.setMatrixAt(i, m);
-  });
+      scale.set(crownR, crownV, crownR);
+      pos.set(x, ground + centre, z);
+      m.compose(pos, q, scale);
+      leaves.setMatrixAt(i, m);
+      col.setRGB(leaf[0], leaf[1], leaf[2]);
+      leaves.setColorAt(i, col);
+    });
 
-  trunks.instanceMatrix.needsUpdate = true;
-  leaves.instanceMatrix.needsUpdate = true;
-  const group = new THREE.Group();
-  group.add(trunks, leaves);
+    trunks.instanceMatrix.needsUpdate = true;
+    leaves.instanceMatrix.needsUpdate = true;
+    if (trunks.instanceColor) trunks.instanceColor.needsUpdate = true;
+    if (leaves.instanceColor) leaves.instanceColor.needsUpdate = true;
+    group.add(trunks, leaves);
+  }
+
   scene.add(group);
   return { count: trees.length, group };
 }
