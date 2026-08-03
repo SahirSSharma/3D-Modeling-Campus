@@ -18,7 +18,7 @@ Two sources, each used only for the thing it is actually good at.
 |---|---|---|
 | **OpenStreetMap** | footprint outlines, paths, plazas, names, the campus boundary | anything vertical |
 | **USGS 3DEP aerial LiDAR** | every height, the ground surface, every tree | anything about what a thing *is* |
-| **Google satellite imagery** | what the ground *looks like* inside the campus boundary | geometry — nothing is measured off it |
+| **Google satellite imagery** | a build-time SOURCE only: per-polygon measured colours, the painted sports markings, the accuracy cross-checks | rendering — no photograph ever drapes the world |
 
 OSM is very good in plan and close to useless in elevation. Of ~320 buildings in this area, 38
 carried a height tag, and the tagged ones were not reliably right either. Checked afterwards against
@@ -28,7 +28,7 @@ LiDAR:
 |---|---|---|
 | Argo Hall | 22.8 m | **18.4 m** |
 | Blake Hall | 15.6 m | **12.4 m** |
-| Mandeville Center | 15 m | **10.7 m** |
+| Mandeville Center | 15 m | **20.9 m** |
 | McGill Hall | 12 m | **25.1 m** |
 | Student Center | 12 m | **8.6 m** |
 | Revelle Commons | 10 m | **7.5 m** |
@@ -43,28 +43,65 @@ The LiDAR survey (`CA_SanDiegoQL2_2014`) classifies ground and lumps everything 
 It asks *"is this point above ground, and does it stand inside a footprint OSM already drew?"*
 That division of labour is the whole design.
 
-### The photoreal ground
+### The measured ground
 
-Inside the official campus boundary — the dashed polygon OSM draws around the university — the
-terrain wears current Google satellite imagery, reprojected from Web Mercator tiles onto the
-site's local metre grid and cut into chunks that match the terrain mesh exactly
-(`docs/js/campus-terrain.js` is the single source of that chunk rule). Field markings, plaza
-paving and crosswalks are all legible; sports fields and the big plazas get zoom 20, everything
-else zoom 19. Outside the boundary — the terrain sheet runs well past it into the rest of
-La Jolla — the ground keeps its stylized NAIP-coloured look, so the photo→stylized cut IS the
-surveyed campus edge, pixel-exact, and the boundary itself is drawn in-world and on the minimap
-as a dashed dark-navy line. Stylized ground polygons and path ribbons come OFF wherever the
-photograph is coming, so the imagery's own paving and crosswalks stay visible.
+The world stays MODELED — crisp vector geometry in true measured colours; no photograph is ever
+pasted on the terrain. The satellite imagery works upstream instead: 87 georeferenced chunks
+(0.125–0.25 m/px, reprojected from Web Mercator onto the site's local metre grid,
+`docs/data/textures/`) are read at BUILD TIME as a measurement source. `build-campus-truecolor.mjs`
+samples every surveyed ground polygon and every roof from them into `campus-truecolor.json`;
+`build-campus-markings.mjs` fits the painted sports markings off the same pixels; the accuracy
+audits cross-check against them. In the renderer the terrain carries NAIP vertex colours — the
+real patchwork of chaparral, lawns and lots — refined polygon-by-polygon with the measured
+colours wherever the fine imagery could answer. The official campus boundary is drawn in-world
+and on the minimap as a dashed dark-navy line, so the surveyed edge of campus is visible, not
+implied.
 
-**Epochs do not match, on purpose.** The imagery is current; every height and the ground surface
-are the 2014 LiDAR survey (reconciled per mass against the university GIS for what was built
-after the survey flew). Where campus changed since 2014, the picture shows today and the
-geometry shows the survey. Nothing here blends the two: heights are never read off the imagery.
+### The painted lines, as geometry
 
-One honest caveat about what you will actually see: **a faint tiled "© Google" watermark is
-burned into the tiles themselves.** That is inherent to the Map Tiles 2D product at these zooms
-and is left as-is; the on-screen attribution is the separate "Imagery © Google" credit, shown
-whenever the imagery is.
+Every sports surface carries its real markings, drawn as vectors, not photographed:
+`scripts/build-campus-markings.mjs` fits each facility's painted layout — centre, orientation,
+true extent — to the white paint in the georeferenced chunks (template fit on a local-contrast
+whiteness field, hard-bounded coordinate descent), then emits regulation line sets at the fitted
+frame into `docs/data/campus-markings.json`: soccer touchlines, boxes, arcs and 9.15 m centre
+circles; full tennis and basketball line sets; the track's nine 1.22 m lanes (its north bend
+runs past the imagery's edge, so the oval is closed with the 400 m identity) plus its modeled
+running surface — a terracotta annulus and green infield, both colours measured off the chunks.
+The Muir Field trident is traced straight off the turf as a simplified silhouette polygon. The
+Northview tennis banks tilt ~2.5° off the campus grid and their courts stagger, so each court
+is fitted individually from the university survey's own pad polygons. Each facility records
+`fitError_m` (mean perpendicular offset to the paint) and `fitCoverage` (the fraction of the
+emitted line actually lying ON paint — the metric that catches a rotated misfit the offset
+metric cannot); the build refuses fits past 0.5 m or under the coverage gate. `docs/js/campus-markings.js`
+drapes the result as merged meshes. The heavily faded ghost sets, a few unfittable one-offs,
+and Warren Field — whose overlapping painted generations disagree with each other by metres, so
+no single regulation set can lie on all of them — are deliberately left unpainted: better
+absent than wrong.
+
+**Epochs do not match, on purpose.** The source imagery is current; every height and the ground
+surface are the 2014 LiDAR survey (reconciled per mass against the university GIS for what was
+built after the survey flew). Where campus changed since 2014, the measured colours and
+markings show today and the geometry shows the survey — except where the imagery caught
+2023–24 construction, where the colour pipeline skips it and the model keeps its palette.
+Nothing here blends the two: heights are never read off the imagery.
+
+**The epoch rule, enforced (2026-08-03).** The 2014 flight predates a decade of construction,
+and its returns off the trees, lots and demolished predecessors that occupied those sites are
+not measurements — they shipped NTPLLN as bungalows and The Jeannie at tree-canopy height. So:
+
+- `scripts/build-campus-lidar.mjs` keeps a `POST_2014_SITES` list; those names emit **no**
+  LiDAR height and no part heights, ever. (No newer public survey exists: the only USGS 3DEP
+  datasets over campus are the 2014 QL2, the 2002-05 Scripps strips, and the 2016 coastal
+  El Niño flight — all pre-construction for every affected building.)
+- Post-2014 buildings take the university GIS massing where it exists, their own OSM tags where
+  those match Street View floor counts, and otherwise an entry in `ESTIMATED_POST_2014` in
+  `scripts/build-campus-3d.mjs` — floors × storey from 2025 Street View, declared in the build
+  script, never silently in the data.
+- Sites still being built (the Triton Center block by Price Center) render their **current**
+  build state from the `UNDER_CONSTRUCTION` table, not the finished project; demolished
+  buildings (Friend's Thrift Shop) are excluded outright; fully underground structures
+  (Scholars Parking, under the Sixth College green) never extrude.
+- `tests/campus-epoch.test.mjs` pins every one of these classes so a rebuild cannot regress.
 
 ---
 
@@ -75,7 +112,7 @@ docs/            the site — GitHub Pages serves this directly, no build step
   index.html     standalone page + development panel
   js/
     campus-walk.js      the walk: movement, cameras, HUD, boot
-    campus-world.js     the world: terrain + satellite drape, surfaces, paths, trees, boundary
+    campus-world.js     the world: terrain (NAIP vertex colours), surfaces, paths, trees, boundary
     campus-massing.js   buildings: the university GIS's per-mass extrusions
     campus-explore.js   free roam: position, hover, the velocity model (no DOM)
     campus-minimap.js   the minimap: aerial underlay, boundary ring, click-to-teleport
@@ -88,9 +125,11 @@ docs/            the site — GitHub Pages serves this directly, no build step
     campus-lidar.json      measured heights, terrain grid, trees
     campus-arcgis.json     the university GIS: masses + ground polygons
     campus-colors.json     NAIP aerial colours: terrain grid, roofs, ground
+    campus-truecolor.json  measured colours from the Google chunks (see below)
     campus-facades.json    facade palettes
     campus-landmarks.json  placed landmarks
     campus-boundary.json   the campus boundary polygon, local metres
+    campus-markings.json   sports-surface markings, fitted to the imagery
     textures/              satellite ground chunks + manifest.json
   vendor/three/  three.js r169, vendored
 scripts/
@@ -98,7 +137,9 @@ scripts/
   build-campus-lidar.mjs     USGS LiDAR -> docs/data/campus-lidar.json
   build-campus-arcgis.mjs    university GIS -> docs/data/campus-arcgis.json
   build-campus-colors.mjs    NAIP -> docs/data/campus-colors.json
+  build-campus-truecolor.mjs textures/ chunks -> docs/data/campus-truecolor.json
   build-campus-satellite.mjs boundary + Google tiles -> boundary json, textures/
+  build-campus-markings.mjs  textures/ chunks -> docs/data/campus-markings.json
   audit-accuracy.mjs         R2 cross-source audit -> scripts/reports/
   serve.mjs                  static server for docs/
 tests/
@@ -106,6 +147,8 @@ tests/
   campus-arcgis.test.mjs   the survey layer: masses, ground polygons, colours
   campus-gameplay.test.mjs the removed footway, spawn, speed cap, minimap arithmetic
   campus-textures.test.mjs the satellite layer: manifest vs grid vs boundary, ground coverage
+  campus-truecolor.test.mjs the measured-colour layer: keys resolve, gamut holds, turf beats pavement
+  campus-markings.test.mjs the painted lines: bounds, widths, 9.15 m circles, 9 lanes
 ```
 
 ## Running it
@@ -131,9 +174,9 @@ All three write into `docs/data/`, so a rebuild is a normal reviewable diff.
 any output) and uses the Map Tiles API's 2D satellite session. It builds only the terrain
 chunks that touch the boundary polygon (87 of 132 over the full campus), fetches only tiles
 that touch it too, hard-caps itself at 3,500 tile requests per run (a full rebuild uses
-~2,600), and caches raw tiles under `.cache/` so a rerun refetches nothing. Pixels outside the
-boundary are baked to the surrounding NAIP aerial colours at build time, which is how the
-renderer gets a pixel-exact boundary with no per-frame clipping.
+~2,600), and caches raw tiles under `.cache/` so a rerun refetches nothing. The chunks it
+writes are the SOURCE imagery for the colour and markings pipelines above — they never render
+in-world.
 
 ## Controls
 
@@ -207,8 +250,9 @@ geometry). It will fold back into TritonPlan once it stands up on its own.
 
 - Building outlines, paths, plazas and the campus boundary: © OpenStreetMap contributors, **ODbL**.
 - Heights, terrain and trees: **USGS 3DEP** LiDAR (`CA_SanDiegoQL2_2014`), public domain.
-- Ground textures inside the boundary: **Imagery © Google** (Map Tiles API), current epoch —
-  credited on screen whenever the imagery is. Heights remain 2014 LiDAR; see the epoch note above.
+- Measured colours and fitted markings derive at build time from **Imagery © Google**
+  (Map Tiles API), current epoch; no tile imagery renders in-world. Heights remain 2014 LiDAR;
+  see the epoch note above.
 - three.js r169, MIT.
 
 Unofficial and not affiliated with, endorsed by, or operated by any university. Not a navigation
@@ -223,6 +267,19 @@ Geisel is built from its real per-floor polygons, and the Pepper Canyon
 West towers stand at 70 and 67 m as the tallest things on campus. USDA
 NAIP aerial imagery (public domain) supplies the colours: a 6 m terrain
 colour grid, every roof, every surveyed ground polygon.
+
+Where the georeferenced satellite chunks under `docs/data/textures/`
+reach (0.125–0.25 m/px against NAIP's ~0.6), the colours are re-measured
+per polygon from them — the imagery stays a build-time SOURCE, never a
+texture. `build-campus-truecolor.mjs` masks each surveyed surface and
+each roof (edges eroded, harder with height, so walls and shadows stay
+out), rejects shadow pixels, takes the per-channel median in linear
+light, and clamps the result into the site's palette family so one bad
+sample can never ship a neon roof. Keys are geometry hashes (outer-ring
+centroid, not array index), so the file survives data rebuilds; a moved
+footprint just falls back to the NAIP/palette colour. Chunks over the
+flagged 2023–24 construction sites are skipped — the model there keeps
+its palette rather than inheriting a dirt lot.
 
 The 2014 LiDAR remains the referee for everything it saw and is
 overruled for everything built after it flew — it "measured" Sankofa at
