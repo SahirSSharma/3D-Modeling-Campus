@@ -65,6 +65,9 @@
     .then((walk) => {
       document.getElementById('walk-loading').hidden = true;
       wireDevPanel(walk);
+      /* The automated verification harness reads layer/status through this;
+         it is the same object the dev panel gets. */
+      window.campusWalk = walk;
     })
     .catch((err) => {
       /* A blank blue rectangle is the worst possible failure here: it looks

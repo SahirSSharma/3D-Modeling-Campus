@@ -21,6 +21,9 @@ import { createBuildings } from "./campus-massing.js";
 import { createMarkings } from "./campus-markings.js";
 import { createLabels, createLandmarks } from "./campus-landmarks.js";
 import { createDetails } from "./campus-details.js";
+import { createAthletics } from "./campus-athletics.js";
+import { createRecreation } from "./campus-recreation.js";
+import { createMuirField } from "./campus-muir-field.js";
 import { createMinimap } from "./campus-minimap.js";
 import {
   createExplore, scaleAtmosphere, EYE, sliderToSpeed, speedToSlider,
@@ -512,6 +515,21 @@ export async function boot() {
   const trees = world.createTrees(scene, lidar, heightAt);
   const details = createDetails(scene, campus, heightAt);
 
+  /* The Muir athletics zone, 1:1 with the aerial references: the Main Gym
+     vault roof and Natatorium skylight, the courts' nets/hoops/rigs, and
+     Muir Field's overlays. All three modules no-op quietly on missing data;
+     one parent group so the dev panel can drop the whole zone at once. */
+  const markingsData = await optional(new URL("../data/campus-markings.json", import.meta.url));
+  const athleticsZone = new THREE.Group();
+  for (const made of [
+    createAthletics(scene, { campus, heightAt, massInfo }),
+    createRecreation(scene, { campus, arcgis, markings: markingsData, heightAt }),
+    createMuirField(scene, { markings: markingsData, heightAt }),
+  ]) {
+    if (made?.group) athleticsZone.add(made.group); // add() reparents out of scene
+  }
+  scene.add(athleticsZone);
+
   labels = createLabels(scene, massInfo);
   /* A click on the minimap teleports you to that spot: free roam, same
      heading, same height over the ground. The minimap owns the pixel→metre
@@ -706,6 +724,7 @@ export async function boot() {
       ground: surfaces,
       trees: trees.group,
       details: details.group,
+      athletics: athleticsZone,
       labels: labels.group,
       ...(landmarksGroup ? { landmarks: landmarksGroup } : {}),
     },
