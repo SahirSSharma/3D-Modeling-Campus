@@ -203,6 +203,41 @@ function heightOf(tags, area) {
    vertex, not just the two ends. */
 const keyOf = (pt) => `${pt[0]},${pt[1]}`;
 
+/* Ways removed from the network ON PURPOSE. These are dropped at build time so
+   a future rebuild cannot quietly resurrect them, and the router simply never
+   sees them — A* finds its way around, which is the point.
+
+   1025633000 — the direct footway between Argo Hall and Peterson Hall (the
+   94 m concrete way running north from Ridge Walk at (64.5,-119.8) local to
+   (44.3,-31)). Removed 2026-08-03 by request; the Argo → Peterson route now
+   goes round via the diverging walkway east of it (~785 m instead of 795 m). */
+const EXCLUDED_WAYS = new Set([1025633000]);
+
+/* Belt and braces for the exclusion above: way ids can churn if an OSM editor
+   splits or replaces the way, so the shipped file is ALSO checked
+   geometrically. A path is the excluded Argo–Peterson footway if its polyline
+   passes within tolerance of BOTH of these interior points (local metres) —
+   two anchors far apart on the way, so a mere crossing path can never match. */
+const EXCLUDED_PATH_ANCHORS = [
+  [64.5, -106.7],
+  [45.0, -40.1],
+];
+
+function matchesExcludedAnchors(pts, tol = 1.0) {
+  const segDist = (p, a, b) => {
+    const vx = b[0] - a[0], vz = b[1] - a[1];
+    const t = Math.max(0, Math.min(1,
+      ((p[0] - a[0]) * vx + (p[1] - a[1]) * vz) / (vx * vx + vz * vz || 1)));
+    return Math.hypot(p[0] - (a[0] + vx * t), p[1] - (a[1] + vz * t));
+  };
+  return EXCLUDED_PATH_ANCHORS.every((anchor) => {
+    for (let i = 1; i < pts.length; i++) {
+      if (segDist(anchor, pts[i - 1], pts[i]) < tol) return true;
+    }
+    return false;
+  });
+}
+
 function build(elements) {
   const buildings = [];
   const paths = [];
@@ -210,8 +245,10 @@ function build(elements) {
 
   for (const el of elements) {
     if (el.type !== "way" || !el.geometry?.length) continue;
+    if (EXCLUDED_WAYS.has(el.id)) continue;
     const tags = el.tags || {};
     const pts = el.geometry.map((g) => project(g.lat, g.lon));
+    if (tags.highway && matchesExcludedAnchors(pts)) continue;
 
     if (tags.building) {
       // Closed ring; drop the duplicated last vertex OSM uses to close it.
@@ -316,6 +353,14 @@ async function main() {
     const need = ["Argo Hall", "Peterson Hall"];
     const missing = need.filter((n) => !data.places[n]);
     if (missing.length) { console.error("missing anchors:", missing.join(", ")); process.exit(1); }
+    const stray = data.paths.filter((p) => matchesExcludedAnchors(p.p));
+    if (stray.length) {
+      console.error(
+        `${stray.length} shipped path(s) match the excluded Argo–Peterson footway — ` +
+        "the way id may have churned in OSM; update EXCLUDED_WAYS in this script and rebuild"
+      );
+      process.exit(1);
+    }
     console.log("campus-3d.json OK —", summarize(data));
     return;
   }
