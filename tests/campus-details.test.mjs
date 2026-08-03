@@ -23,6 +23,9 @@ test("the lamp rows exist at the footage's rhythm, and nothing exploded", () => 
   assert.ok(d.benches.length > 4, `only ${d.benches.length} benches on Library Walk`);
   assert.ok(d.towers.length > 3, `only ${d.towers.length} emergency towers`);
   assert.ok(d.hydrants.length > 8, `only ${d.hydrants.length} hydrants`);
+  assert.ok(d.trash.length > 8, `only ${d.trash.length} trash pairs`);
+  assert.ok(d.racks.length > 4, `only ${d.racks.length} bike-rack rows`);
+  assert.ok(d.kiosks.length > 3, `only ${d.kiosks.length} wayfinding kiosks`);
 });
 
 test("banners ride every second lamp and carry real zone colours", () => {
@@ -43,7 +46,7 @@ test("nothing stands inside a building footprint", () => {
     return ins;
   };
   const offenders = [];
-  const all = [...d.lamps, ...d.benches, ...d.towers, ...d.hydrants];
+  const all = [...d.lamps, ...d.benches, ...d.towers, ...d.hydrants, ...d.trash, ...d.racks, ...d.kiosks];
   for (const { x, z } of all) {
     for (const b of campus.buildings) {
       if (b.p?.length >= 3 && inRing(x, z, b.p)) {
@@ -62,7 +65,7 @@ test("placement is deterministic", () => {
 });
 
 test("no two placements pile onto the same spot", () => {
-  const all = [...d.lamps, ...d.benches, ...d.towers, ...d.hydrants];
+  const all = [...d.lamps, ...d.benches, ...d.towers, ...d.hydrants, ...d.trash, ...d.racks, ...d.kiosks];
   const close = [];
   for (let i = 0; i < all.length; i++) {
     for (let j = i + 1; j < all.length; j++) {

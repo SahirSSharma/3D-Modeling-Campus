@@ -33,6 +33,9 @@ const LAMP_EVERY = 18; // m; the footage rhythm is 15–20 m
 const BENCH_EVERY = 12;
 const TOWER_EVERY = 275;
 const HYDRANT_EVERY = 95;
+const TRASH_EVERY = 60; // paired enclosures at plaza edges, ~every 50 m
+const RACK_EVERY = 130; // a loaded rack row wherever paths meet buildings
+const KIOSK_EVERY = 210; // navy wayfinding pylons at junction rhythm
 
 /* Colours, all frame-measured (§6 of the correction plan). */
 export const DETAIL_COLORS = {
@@ -40,6 +43,9 @@ export const DETAIL_COLORS = {
   bench: "#9b9f9a",
   tower: "#1a4a8c",
   hydrant: "#d8c22a",
+  trash: "#33363a",
+  rack: "#2c2c2e",
+  kiosk: "#1c2b4a",
 };
 
 /** Point-in-ring, with a bbox prefilter built once per building. */
@@ -83,6 +89,9 @@ export function placeDetails(campus) {
   const benches = [];
   const towers = [];
   const hydrants = [];
+  const trash = [];
+  const racks = [];
+  const kiosks = [];
   /* Two clearance rules. Same-kind spacing keeps the rhythm honest where
      the named majors arrive as many overlapping OSM ways (Ridge Walk is 21
      path entries); the small global guard only stops two DIFFERENT things
@@ -113,6 +122,9 @@ export function placeDetails(campus) {
     let nextBench = path.n === "Library Walk" ? BENCH_EVERY / 2 : Infinity;
     let nextTower = TOWER_EVERY / 2;
     let nextHydrant = HYDRANT_EVERY / 3;
+    let nextTrash = TRASH_EVERY / 2;
+    let nextRack = RACK_EVERY / 2;
+    let nextKiosk = KIOSK_EVERY / 3;
     let flip = 1;
     for (let i = 0; i < path.p.length - 1; i++) {
       const [ax, az] = path.p[i];
@@ -162,10 +174,34 @@ export function placeDetails(campus) {
         }
         nextHydrant += HYDRANT_EVERY;
       }
+      while (nextTrash <= along + len) {
+        const [x, z] = drop(nextTrash, 3.1);
+        if (!inBuilding(x, z) && clear(x, z) && !nearSame(trash, x, z, 30)) {
+          trash.push({ x, z, rot });
+          placed.push([x, z]);
+        }
+        nextTrash += TRASH_EVERY;
+      }
+      while (nextRack <= along + len) {
+        const [x, z] = drop(nextRack, -4.4);
+        if (!inBuilding(x, z) && clear(x, z) && !nearSame(racks, x, z, 70)) {
+          racks.push({ x, z, rot });
+          placed.push([x, z]);
+        }
+        nextRack += RACK_EVERY;
+      }
+      while (nextKiosk <= along + len) {
+        const [x, z] = drop(nextKiosk, 2.2);
+        if (!inBuilding(x, z) && clear(x, z) && !nearSame(kiosks, x, z, 120)) {
+          kiosks.push({ x, z, rot });
+          placed.push([x, z]);
+        }
+        nextKiosk += KIOSK_EVERY;
+      }
       along += len;
     }
   }
-  return { lamps, benches, towers, hydrants };
+  return { lamps, benches, towers, hydrants, trash, racks, kiosks };
 }
 
 /* ------------------------------------------------------------- rendering */
@@ -251,9 +287,49 @@ export function createDetails(scene, campus, heightAt) {
     (h) => ({ x: h.x, y: heightAt(h.x, h.z) + 0.28, z: h.z })
   ));
 
+  /* Trash/recycle pairs: two charcoal sheet-metal boxes shoulder to
+     shoulder, angled tops left to the imagination at this budget. */
+  for (const side of [-0.55, 0.55]) {
+    group.add(instanced(
+      new THREE.BoxGeometry(0.72, 1.15, 0.72), lambert(DETAIL_COLORS.trash), d.trash,
+      (t) => ({
+        x: t.x + Math.cos(t.rot) * side,
+        y: heightAt(t.x, t.z) + 0.57,
+        z: t.z - Math.sin(t.rot) * side,
+        rot: t.rot,
+      })
+    ));
+  }
+
+  /* Bike racks: a loaded row of inverted-U hoops reads, from eye level, as
+     a run of thin dark slabs — six per station along the path direction. */
+  for (let k = 0; k < 6; k++) {
+    const at = (k - 2.5) * 0.9;
+    group.add(instanced(
+      new THREE.BoxGeometry(0.08, 0.78, 0.72), lambert(DETAIL_COLORS.rack), d.racks,
+      (r) => ({
+        x: r.x + Math.sin(r.rot) * at,
+        y: heightAt(r.x, r.z) + 0.39,
+        z: r.z + Math.cos(r.rot) * at,
+        rot: r.rot,
+      })
+    ));
+  }
+
+  /* Wayfinding kiosks: the navy double-sided pylon with its pale map panel. */
+  group.add(instanced(
+    new THREE.BoxGeometry(1.1, 2.5, 0.18), lambert(DETAIL_COLORS.kiosk), d.kiosks,
+    (k) => ({ x: k.x, y: heightAt(k.x, k.z) + 1.25, z: k.z, rot: k.rot })
+  ));
+  group.add(instanced(
+    new THREE.BoxGeometry(0.8, 1.1, 0.2), lambert("#d8dbd4"), d.kiosks,
+    (k) => ({ x: k.x, y: heightAt(k.x, k.z) + 1.35, z: k.z, rot: k.rot })
+  ));
+
   scene.add(group);
   return { group, counts: {
     lamps: d.lamps.length, banners: withBanners.length * 2,
     benches: d.benches.length, towers: d.towers.length, hydrants: d.hydrants.length,
+    trash: d.trash.length * 2, racks: d.racks.length * 6, kiosks: d.kiosks.length,
   } };
 }
