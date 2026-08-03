@@ -18,6 +18,7 @@ import * as world from "./campus-world.js";
 import { THREE } from "./campus-world.js";
 import { buildGraph, routeThrough } from "./campus-route.js";
 import { createBuildings } from "./campus-massing.js";
+import { createMarkings } from "./campus-markings.js";
 import { createLabels, createLandmarks } from "./campus-landmarks.js";
 import { createMinimap } from "./campus-minimap.js";
 import {
@@ -500,6 +501,9 @@ export async function boot() {
   const built = createBuildings(scene, { campus, lidar, arcgis, colors, facades: facades?.walls, heightAt });
   massInfo = built.info;
   const surfaces = world.createSurfaces(scene, campus, heightAt, arcgis, colors);
+  /* The painted lines of every sports surface — measured from imagery,
+     drawn as geometry. Quiet no-op when the data file is absent. */
+  createMarkings(scene, heightAt);
   /* With the surveyed ground plane, the sidewalk POLYGONS are the paths;
      ribbons guessed from OSM centrelines would just z-fight them. They still
      draw when the GIS file is absent. */
