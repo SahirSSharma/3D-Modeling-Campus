@@ -30,6 +30,7 @@
 // muirFieldSpec() is pure, so the tests run the exact placement the renderer
 // uses. Missing or malformed data is a quiet no-op, as everywhere else here.
 import * as THREE from "../vendor/three/three.module.min.js";
+import { OVERLAY, overlayLift, applyOverlayDepth } from "./campus-overlay.js";
 
 /* Measured off "CleanShot 2026-08-03 at 12.54.53" (full-field, 0.0977 m/px)
    and confirmed against the wider "12.53.45" frame, whose tennis-court
@@ -245,13 +246,13 @@ export function muirFieldSpec({ width_m, length_m } = MUIR_NOMINAL) {
 
 /* ------------------------------------------------------------- rendering */
 
-/* The paint sits one notch in front of campus-markings.js's own lines
-   (-6/-12) so a crossing never flickers, and the turf drape sits between the
-   terrain's green (-4/-8) and the markings' surfaces (-5/-10) so every
-   painted line still wins over it. Lifts follow the same order: the ground
-   drapes at 0.04–0.06, this turf at 0.055, all paint at 0.105. */
-const DRAPE_LIFT = 0.055;
-const PAINT_LIFT = 0.105;
+/* Rungs of the shared decal-stack ladder (campus-overlay.js): the turf
+   carpet paints after the ground, the field's painted lines paint after
+   every carpet/pad, and the wordmarks/trident-adjacent fills paint last of
+   all, ordered by renderOrder rather than by lift — exact at any altitude. */
+const DRAPE_LIFT = overlayLift("carpet");
+const PAINT_LIFT = overlayLift("paint");
+const LOGO_LIFT = overlayLift("logo");
 const MAX_SEG = 6; // long runs are subdivided so the paint follows the ground
 
 /** The bounds quad as a frame: metres, a point map, and the heading of +u. */
@@ -312,14 +313,21 @@ function fill(out, poly, heightAt, lift) {
   }
 }
 
-/** A drape quad, subdivided so a big one still follows the terrain. */
+/** A drape quad, subdivided so a big one still follows the terrain.
+    `c` walks the quad's own PERIMETER in order (c0->c1->c2->c3), unlike
+    ribbon()'s start/end-pair vertex order below — so it needs the OTHER
+    diagonal (c0-c2) to keep both triangles wound the same way. Splitting it
+    along c1-c2 instead (as a copy of ribbon()'s index pattern once did)
+    winds the two triangles of every OTHER cell backwards, and every one of
+    those triangles reads as a hole once anything depth-tests against it:
+    exactly the chevron field this ladder was built to end. */
 function grid(out, frame, heightAt, lift, cells = 12) {
   for (let i = 0; i < cells; i++) {
     for (let j = 0; j < cells; j++) {
       const c = [[i, j], [i + 1, j], [i + 1, j + 1], [i, j + 1]]
         .map(([a, b]) => frame.at(a / cells, b / cells))
         .map(([x, z]) => [x, heightAt(x, z) + lift, z]);
-      out.push(...c[0], ...c[2], ...c[1], ...c[1], ...c[2], ...c[3]);
+      out.push(...c[0], ...c[1], ...c[2], ...c[0], ...c[2], ...c[3]);
     }
   }
 }
@@ -397,7 +405,7 @@ export function createMuirField(scene, { markings, heightAt } = {}) {
     const pts = el.uv.map(world);
     switch (el.type) {
       case "turf-drape":
-        grid(bucket("drape", el.colour), frame, heightAt, DRAPE_LIFT);
+        grid(bucket("carpet", el.colour), frame, heightAt, DRAPE_LIFT);
         break;
       case "diamond-arc":
       case "diamond-chord":
@@ -408,7 +416,9 @@ export function createMuirField(scene, { markings, heightAt } = {}) {
         break;
       case "wordmark-strip":
       case "triangle":
-        fill(bucket("paint", el.colour), pts, heightAt, PAINT_LIFT);
+        /* Filled shapes, not lines — the wordmarks and arrowheads join the
+           logo rung, same family as campus-markings.js's own logo fills. */
+        fill(bucket("logo", el.colour), pts, heightAt, LOGO_LIFT);
         break;
       case "goal": {
         /* Two posts, a crossbar, and a shallow back frame raked to the net. */
@@ -455,13 +465,13 @@ export function createMuirField(scene, { markings, heightAt } = {}) {
     /* UNLIT, for the reason campus-markings.js records: a lit DoubleSide
        fill whose triangulation winds back-facing gets lit by the hemisphere's
        GROUND term and renders near-black. */
-    group.add(new THREE.Mesh(geo, new THREE.MeshBasicMaterial({
-      color: colour,
-      side: THREE.DoubleSide,
-      polygonOffset: true,
-      polygonOffsetFactor: family === "drape" ? -4.5 : -6.5,
-      polygonOffsetUnits: family === "drape" ? -9 : -13,
-    })));
+    const mat = applyOverlayDepth(
+      new THREE.MeshBasicMaterial({ color: colour, side: THREE.DoubleSide }),
+      family
+    );
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.renderOrder = OVERLAY[family].renderOrder;
+    group.add(mesh);
   }
 
   return group;

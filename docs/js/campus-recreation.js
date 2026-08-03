@@ -23,6 +23,7 @@
 // the paint it belongs to; if the markings never load, they simply do not
 // appear, exactly as the paint does not.
 import * as THREE from "../vendor/three/three.module.min.js";
+import { OVERLAY, overlayLift, applyOverlayDepth } from "./campus-overlay.js";
 
 /* Every colour is the median of a rect sampled from the aerials. */
 export const REC_COLORS = {
@@ -46,12 +47,10 @@ export const REC_COLORS = {
   table: "#8d8377",
 };
 
-/* Pads sit above the terrain drape (0.06 / -4 / -8 in campus-world.js) and
-   below the painted lines (0.10 / -6 / -12 in campus-markings.js), so the
-   paint always wins the depth fight over the surface it is painted on. */
-const PAD_LIFT = 0.075;
-const COURT_LIFT = 0.085;
-const PAD_OFFSET = { factor: -5, units: -10 };
+/* Aprons sit on the "pad" rung and court surfaces on the "carpet" rung of
+   the shared decal-stack ladder (campus-overlay.js — see padGroup below), so
+   the painted lines campus-markings.js draws on top always win the depth
+   fight, ordered by renderOrder rather than by how close the lifts sit. */
 const MAX_SEG = 6; // pads are subdivided so they follow bending ground
 
 /* Rects measured off "CleanShot 2026-08-03 at 12.55.08" (the courts/sand
@@ -309,8 +308,9 @@ function padQuad(out, corners, heightAt, lift) {
 
 const rectCorners = (r) => [[r.x0, r.z0], [r.x1, r.z0], [r.x1, r.z1], [r.x0, r.z1]];
 
-/** One merged, depth-biased mesh per pad colour. */
-function padGroup(pads, heightAt, lift) {
+/** One merged, decal-stacked mesh per pad colour, on the given ladder rung. */
+function padGroup(pads, heightAt, rung) {
+  const lift = overlayLift(rung);
   const buckets = new Map();
   for (const p of pads) {
     if (!buckets.has(p.colour)) buckets.set(p.colour, []);
@@ -320,13 +320,13 @@ function padGroup(pads, heightAt, lift) {
   for (const [colour, positions] of buckets) {
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
-    group.add(new THREE.Mesh(geo, new THREE.MeshBasicMaterial({
-      color: colour,
-      side: THREE.DoubleSide,
-      polygonOffset: true,
-      polygonOffsetFactor: PAD_OFFSET.factor,
-      polygonOffsetUnits: PAD_OFFSET.units,
-    })));
+    const mat = applyOverlayDepth(
+      new THREE.MeshBasicMaterial({ color: colour, side: THREE.DoubleSide }),
+      rung
+    );
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.renderOrder = OVERLAY[rung].renderOrder;
+    group.add(mesh);
   }
   return group;
 }
@@ -360,11 +360,11 @@ export function createRecreation(scene, { campus, arcgis, markings, heightAt } =
   group.add(padGroup([
     ...r.tennisPads, ...r.basketballPads,
     r.sandPad, r.barPad, r.terracePad,
-  ], heightAt, PAD_LIFT));
+  ], heightAt, "pad"));
   group.add(padGroup([
     ...r.tennisCourts, ...r.basketballCourts,
     ...r.terraceMats, r.turfLane,
-  ], heightAt, COURT_LIFT));
+  ], heightAt, "carpet"));
 
   /* --- the sand pit's low concrete edge. */
   const s = r.sandPad;

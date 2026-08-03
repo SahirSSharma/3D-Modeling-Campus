@@ -34,6 +34,7 @@ import * as THREE from "../vendor/three/three.module.min.js";
 import { prepareGround } from "./campus-ground.js";
 import { makeHeightSampler, chunkGrid } from "./campus-terrain.js";
 import { SPECIES, treeSpecies, treeTint } from "./campus-species.js";
+import { OVERLAY, overlayLift, applyOverlayDepth } from "./campus-overlay.js";
 
 /* Campus on a clear November noon, as the 4K footage measures it: the big
    pavement family is neutral-to-cool light grey, NOT the beige the first
@@ -47,18 +48,16 @@ const PATH_COLOR = 0xaaaea8;
 const ASPHALT_COLOR = 0x8e8b86; // worn path asphalt, measured right 4×
 const WATER_COLOR = 0x4a80a8; // real water reads deeper blue than a swatch
 
-/* Draped surfaces are lifted this far off the terrain and biased in depth, so
-   a path never fights the ground it is painted on. Both are needed: the offset
-   handles the general case, the depth bias handles grazing angles. */
-const DRAPE = 0.06;
+/* Draped surfaces sit on the "ground" rung of the shared decal-stack ladder
+   (campus-overlay.js) — a small lift for eye-level parallax, plus
+   renderOrder + depthWrite:false so a path never fights the ground it is
+   painted on, at ANY altitude the depth buffer can resolve. */
+const DRAPE = overlayLift("ground");
 const drapeMaterial = (color) =>
-  new THREE.MeshLambertMaterial({
-    color,
-    side: THREE.DoubleSide,
-    polygonOffset: true,
-    polygonOffsetFactor: -4,
-    polygonOffsetUnits: -8,
-  });
+  applyOverlayDepth(
+    new THREE.MeshLambertMaterial({ color, side: THREE.DoubleSide }),
+    "ground"
+  );
 
 /* ------------------------------------------------------------------ terrain */
 
@@ -277,7 +276,9 @@ function buildApron(terrain, h) {
 async function addBoundaryLine(scene, heightAt) {
   const { boundary } = await overlayData();
   if (!boundary?.rings?.length) return;
-  const DASH = 7, GAP = 5, STEP = 1.75, HALF = 0.7, LIFT = 0.15;
+  /* A dashed line drawn on the ground is exactly what the "paint" rung is
+     for — the SPEC's own preference for crosswalk-style dashes. */
+  const DASH = 7, GAP = 5, STEP = 1.75, HALF = 0.7, LIFT = overlayLift("paint");
   /* Only where ground exists: a ribbon drawn past the apron would hang at
      edge-clamped height over nothing. The minimap draws the full ring
      regardless. */
@@ -315,14 +316,13 @@ async function addBoundaryLine(scene, heightAt) {
   const normals = new Float32Array(position.length);
   for (let i = 1; i < normals.length; i += 3) normals[i] = 1;
   geo.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
-  const mat = new THREE.MeshBasicMaterial({
-    color: 0x1e2f6e,
-    side: THREE.DoubleSide,
-    polygonOffset: true,
-    polygonOffsetFactor: -4,
-    polygonOffsetUnits: -8,
-  });
-  scene.add(new THREE.Mesh(geo, mat));
+  const mat = applyOverlayDepth(
+    new THREE.MeshBasicMaterial({ color: 0x1e2f6e, side: THREE.DoubleSide }),
+    "paint"
+  );
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.renderOrder = OVERLAY.paint.renderOrder;
+  scene.add(mesh);
 }
 
 /* ---------------------------------------------------------------- lighting */
@@ -519,7 +519,10 @@ export function createSurfaces(scene, campus, heightAt, arcgis, colors) {
            collapse into one municipal blue. */
         color = new THREE.Color(hex).lerp(base, 0.5);
       }
-      const lift = kind === "water" ? DRAPE + 0.12 : kind === "green" ? DRAPE - 0.02 : DRAPE;
+      /* Water is a raised basin, not a decal-stack rung — its own lift, kept
+         clear of the ground ladder. Every other surface (including green,
+         no special case any more) shares the ground rung's exact lift. */
+      const lift = kind === "water" ? DRAPE + 0.12 : DRAPE;
       /* Chunked by 500 m cell as well as kind: one campus-wide merged mesh can
          never be frustum-culled, so every frame drew every sidewalk on campus.
          Chunks let the far side of the mesa drop out at eye level. */
@@ -593,17 +596,26 @@ export function createSurfaces(scene, campus, heightAt, arcgis, colors) {
       for (let i = 1; i < normals.length; i += 3) normals[i] = 1;
       geo.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
       if (!matByKind.has(kind)) {
-        matByKind.set(kind, new THREE.MeshLambertMaterial({
+        const base = new THREE.MeshLambertMaterial({
           vertexColors: true,
           side: THREE.DoubleSide,
-          polygonOffset: true,
-          polygonOffsetFactor: -4,
-          polygonOffsetUnits: -8,
           /* Only pavement is scored; lawns and water read as surfaces, not tiles. */
           ...(kind === "walk" || kind === "plaza" ? { map: scoring } : {}),
-        }));
+        });
+        /* Water is a raised basin, genuinely 3D — it keeps depthWrite:true
+           and stays OUT of the decal stack, at the terrain's own renderOrder
+           0. Every other kind joins the "ground" rung. */
+        matByKind.set(kind, kind === "water"
+          ? Object.assign(base, {
+              polygonOffset: true,
+              polygonOffsetFactor: OVERLAY.ground.polygonOffsetFactor,
+              polygonOffsetUnits: OVERLAY.ground.polygonOffsetUnits,
+            })
+          : applyOverlayDepth(base, "ground"));
       }
-      group.add(new THREE.Mesh(geo, matByKind.get(kind)));
+      const mesh = new THREE.Mesh(geo, matByKind.get(kind));
+      if (kind !== "water") mesh.renderOrder = OVERLAY.ground.renderOrder;
+      group.add(mesh);
     }
   };
 
@@ -687,7 +699,9 @@ function buildPaths(group, campus, heightAt, skip) {
     const normals = new Float32Array(positions.length);
     for (let i = 1; i < normals.length; i += 3) normals[i] = 1;
     geo.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
-    group.add(new THREE.Mesh(geo, drapeMaterial(color)));
+    const mesh = new THREE.Mesh(geo, drapeMaterial(color));
+    mesh.renderOrder = OVERLAY.ground.renderOrder;
+    group.add(mesh);
   }
 }
 

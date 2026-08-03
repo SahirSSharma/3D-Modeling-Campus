@@ -12,12 +12,14 @@
 // a handful of draw calls. The file being absent must never take the walk
 // down: everything resolves to a quiet no-op.
 import * as THREE from "../vendor/three/three.module.min.js";
+import { OVERLAY, overlayLift, applyOverlayDepth } from "./campus-overlay.js";
 
 const MARKINGS_URL = new URL("../data/campus-markings.json", import.meta.url);
 
-/* Paint sits above the draped court/lawn polygons (DRAPE = 0.06 in
-   campus-world.js) and below the water's raised basin (+0.18). */
-const LIFT = 0.1;
+/* Painted lines sit on the shared decal-stack ladder's "paint" rung
+   (campus-overlay.js) — after every pad and carpet surface, ordered by
+   renderOrder rather than by how close the lifts happen to sit. */
+const LIFT = overlayLift("paint");
 /* Ground can bend between samples; long line runs are subdivided so the
    paint follows it. Same idea as campus-ground.js's EDGE. */
 const MAX_SEG = 6;
@@ -62,9 +64,9 @@ function ribbon(out, pts, half, heightAt) {
 }
 
 /** Triangulate a filled polygon (the trident, the track's surfaces) onto the
-    ground, honouring holes (the track ring is an annulus) and a per-marking
-    lift (surfaces sit UNDER the painted lines). */
-function fill(out, poly, heightAt, holes = [], lift = LIFT + 0.01) {
+    ground, honouring holes (the track ring is an annulus) at the caller's
+    chosen ladder-rung lift (surfaces sit UNDER the painted lines). */
+function fill(out, poly, heightAt, holes = [], lift = overlayLift("logo")) {
   const contour = poly.map(([x, z]) => new THREE.Vector2(x, -z));
   const holeVecs = holes
     .filter((h) => h && h.length >= 3)
@@ -118,9 +120,16 @@ export function createMarkings(scene, heightAt) {
     .catch(() => null)
     .then((data) => {
       if (!data?.facilities?.length) return;
-      /* Three depth families, merged per colour within each: SURFACES (the
-         track ring and infield) under everything, then logo fills, then the
-         painted lines on top. */
+      /* Three families, each merged per colour and pinned to its own rung of
+         the shared decal-stack ladder (campus-overlay.js): SURFACES (the
+         track ring and infield) on "pad", painted LINES on "paint", and
+         LOGO fills (the trident) on "logo" — ordered by renderOrder, not by
+         how close the lifts sit. A marking's per-record `lift` field from the
+         data is no longer read as a world lift: every marking in a family
+         shares that family's rung, which is what fixed the surface-fills-
+         equal-ground collision (they defaulted to 0.04, exactly the old
+         ground lift). */
+      const FAMILY_RUNG = { surface: "pad", line: "paint", logo: "logo" };
       const buckets = new Map(); // `${family}|${colour}` -> positions[]
       const put = (family, colour) => {
         const key = `${family}|${colour}`;
@@ -131,9 +140,9 @@ export function createMarkings(scene, heightAt) {
         for (const mk of facility.markings || []) {
           const colour = mk.colour || "#f4f4f0";
           if (mk.kind === "fill" && mk.surface) {
-            fill(put("surface", colour), mk.poly, heightAt, mk.holes || [], mk.lift ?? 0.04);
+            fill(put("surface", colour), mk.poly, heightAt, mk.holes || [], overlayLift("pad"));
           } else if (mk.kind === "fill") {
-            fill(put("logo", colour), mk.poly, heightAt, mk.holes || [], mk.lift ?? LIFT + 0.01);
+            fill(put("logo", colour), mk.poly, heightAt, mk.holes || [], overlayLift("logo"));
           } else {
             const half = Math.max(0.025, (mk.width_m || 0.12) / 2);
             for (const line of markingToPolylines(mk)) {
@@ -144,6 +153,7 @@ export function createMarkings(scene, heightAt) {
       }
       for (const [key, positions] of buckets) {
         const [family, colour] = key.split("|");
+        const rung = FAMILY_RUNG[family];
         const geo = new THREE.BufferGeometry();
         geo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
         /* UNLIT, deliberately. Paint is flat presentation colour, and lit
@@ -152,16 +162,16 @@ export function createMarkings(scene, heightAt) {
            and is lit by the hemisphere's GROUND term — which is exactly how
            the navy trident rendered as a near-black splat. Basic material
            renders the stated colour, both faces, always. */
-        const mat = new THREE.MeshBasicMaterial({
-          color: family === "logo" ? sceneToneLogo(colour) : colour,
-          side: THREE.DoubleSide,
-          polygonOffset: true,
-          /* Surfaces bias between the terrain drape (-4/-8) and the paint
-             (-6/-12) so lines always win the depth fight over their surface. */
-          polygonOffsetFactor: family === "surface" ? -5 : -6,
-          polygonOffsetUnits: family === "surface" ? -10 : -12,
-        });
-        group.add(new THREE.Mesh(geo, mat));
+        const mat = applyOverlayDepth(
+          new THREE.MeshBasicMaterial({
+            color: family === "logo" ? sceneToneLogo(colour) : colour,
+            side: THREE.DoubleSide,
+          }),
+          rung
+        );
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.renderOrder = OVERLAY[rung].renderOrder;
+        group.add(mesh);
       }
     });
 
