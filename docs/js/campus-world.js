@@ -18,7 +18,18 @@
 //
 // Nothing here knows anything about walking or gameplay. It makes the world and
 // hands back a height field; campus-walk.js moves through it.
+//
+// A third source joins the two above when its files exist:
+//
+//   app/data/campus-boundary.json   the official campus boundary polygon (OSM)
+//   app/data/textures/              current Google satellite imagery, cut on
+//                                   the terrain's own chunk grid at build time
+//
+// Inside the boundary the ground wears the real imagery; outside it the campus
+// keeps its stylized look, and the boundary itself is drawn as a dashed line —
+// so the surveyed edge of campus is visible in-world, not just implied.
 import * as THREE from "../vendor/three/three.module.min.js";
+import { makeHeightSampler, chunkGrid, pointInRings, APRON_REACH } from "./campus-ground.js";
 
 /* Campus on a clear morning: bleached concrete, tan and off-white stucco,
    eucalyptus. Buildings pick from the palette by a hash of position so a given
@@ -97,6 +108,30 @@ const drapeMaterial = (color) =>
 
 /* ------------------------------------------------------------------ terrain */
 
+/* The boundary polygon and the imagery manifest, fetched once and shared by
+   everything that needs them. Either file may legitimately be absent (a
+   checkout that has not run build-campus-satellite.mjs); everything below
+   degrades to the stylized look in that case rather than failing. */
+let overlayPromise = null;
+function overlayData() {
+  if (!overlayPromise) {
+    const load = (rel) =>
+      fetch(new URL(rel, import.meta.url))
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null);
+    overlayPromise = Promise.all([
+      load("../data/campus-boundary.json"),
+      load("../data/textures/manifest.json"),
+    ]).then(([boundary, manifest]) => ({ boundary, manifest }));
+  }
+  return overlayPromise;
+}
+
+/* Set by createTerrain; lets surfaces and paths ask "is there real imagery
+   under this point?" without re-deriving the grid. */
+let ground = null;
+const onImagery = (x, z, rings) => ground?.inGrid(x, z) && pointInRings(x, z, rings);
+
 /**
  * The bare-earth height field, as measured.
  *
@@ -104,43 +139,224 @@ const drapeMaterial = (color) =>
  * has to sit ON this — buildings, trees, the walkway, the walker's own eyes.
  * Bilinear rather than nearest: at 3 m cells, nearest-neighbour sampling makes
  * a walker climb invisible 10 cm stairs the whole way across campus.
+ *
+ * The sampler comes from campus-ground.js and CLAMPS to the nearest edge
+ * sample outside the LiDAR grid — the old fallback answered 0 (datum level)
+ * out there, which left every building beyond the grid hanging in mid-air.
+ * The mesh is built in chunks on the texture grid, plus a flat apron that
+ * carries the clamped edge height out under everything OSM knows about, so
+ * nothing rendered stands past the edge of the ground.
  */
 export function createTerrain(scene, lidar) {
-  const { x0, z0, cell, cols, rows, z: heights } = lidar.terrain;
+  const terrain = lidar.terrain;
+  ground = makeHeightSampler(terrain);
+  const { heightAt } = ground;
+  const { x0, z0, cell, cols, rows, z: heights } = terrain;
+  const clampIdx = (v, hi) => (v < 0 ? 0 : v > hi ? hi : v);
+  const h = (r, c) => heights[clampIdx(r, rows - 1) * cols + clampIdx(c, cols - 1)] / 10;
 
-  const heightAt = (x, zz) => {
-    const fx = (x - x0) / cell;
-    const fz = (zz - z0) / cell;
-    const c = Math.floor(fx);
-    const r = Math.floor(fz);
-    if (c < 0 || c >= cols - 1 || r < 0 || r >= rows - 1) return 0;
-    const tx = fx - c;
-    const tz = fz - r;
-    const h = (rr, cc) => heights[rr * cols + cc] / 10; // decimetres -> metres
-    const top = h(r, c) * (1 - tx) + h(r, c + 1) * tx;
-    const bottom = h(r + 1, c) * (1 - tx) + h(r + 1, c + 1) * tx;
-    return top * (1 - tz) + bottom * tz;
-  };
-
-  const geo = new THREE.PlaneGeometry(
-    (cols - 1) * cell, (rows - 1) * cell, cols - 1, rows - 1
-  );
-  geo.rotateX(-Math.PI / 2);
-  const pos = geo.attributes.position;
-  for (let i = 0; i < pos.count; i++) {
-    /* PlaneGeometry lays vertices out row-major from -w/2,-h/2; after the
-       rotation that is +x east and +z south, which is the same frame the data
-       is in, so the index maps straight across. */
-    const c = i % cols;
-    const r = Math.floor(i / cols);
-    pos.setY(i, heights[r * cols + c] / 10);
+  const group = new THREE.Group();
+  const chunkMeshes = [];
+  for (const chunk of chunkGrid(terrain)) {
+    const cw = chunk.c1 - chunk.c0;
+    const ch = chunk.r1 - chunk.r0;
+    const position = [];
+    const normal = [];
+    const uv = [];
+    for (let r = chunk.r0; r <= chunk.r1; r++) {
+      for (let c = chunk.c0; c <= chunk.c1; c++) {
+        position.push(x0 + c * cell, h(r, c), z0 + r * cell);
+        /* Central differences over the WHOLE grid, not per chunk, so lighting
+           cannot crease along a chunk seam. */
+        const nx = -(h(r, c + 1) - h(r, c - 1)) / (2 * cell);
+        const nz = -(h(r + 1, c) - h(r - 1, c)) / (2 * cell);
+        const inv = 1 / Math.hypot(nx, 1, nz);
+        normal.push(nx * inv, inv, nz * inv);
+        /* Texture row 0 is the chunk's north edge; with the loader's default
+           flipY that is v = 1. */
+        uv.push((c - chunk.c0) / cw, 1 - (r - chunk.r0) / ch);
+      }
+    }
+    const index = [];
+    const stride = cw + 1;
+    for (let r = 0; r < ch; r++) {
+      for (let c = 0; c < cw; c++) {
+        const a = r * stride + c;
+        index.push(a, a + stride, a + 1, a + 1, a + stride, a + stride + 1);
+      }
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(position, 3));
+    geo.setAttribute("normal", new THREE.Float32BufferAttribute(normal, 3));
+    geo.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+    geo.setIndex(index);
+    const mesh = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ color: GROUND_COLOR }));
+    mesh.userData.chunk = chunk;
+    chunkMeshes.push(mesh);
+    group.add(mesh);
   }
-  geo.computeVertexNormals();
-  geo.translate(x0 + ((cols - 1) * cell) / 2, 0, z0 + ((rows - 1) * cell) / 2);
 
-  const mesh = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ color: GROUND_COLOR }));
-  scene.add(mesh);
-  return { mesh, heightAt };
+  group.add(buildApron(terrain, h));
+  scene.add(group);
+
+  applySatellite(chunkMeshes);
+  addBoundaryLine(scene, heightAt);
+
+  /* `coverage` is the rect that actually has ground mesh under it (grid +
+     apron). Callers that put the player somewhere — the minimap teleport —
+     clamp into it, so nobody ever stands over the void past the apron. */
+  return { mesh: group, heightAt, coverage: ground.coverage };
+}
+
+/**
+ * Flat ground out to APRON_REACH past the LiDAR grid, at the clamped edge
+ * height. Inner vertices reuse the exact edge samples, so no crack can open
+ * against the terrain chunks; outward the height is constant, which is also
+ * exactly what the clamped sampler answers out there — so a building placed
+ * on the apron and the ground under it agree by construction.
+ */
+function buildApron(terrain, h) {
+  const { x0, z0, cell, cols, rows } = terrain;
+  const x1 = x0 + (cols - 1) * cell;
+  const z1 = z0 + (rows - 1) * cell;
+  const R = APRON_REACH;
+  const position = [];
+  const quad = (ax, ay, az, bx, by, bz, cx, cy, cz, dx, dy, dz) => {
+    position.push(ax, ay, az, cx, cy, cz, bx, by, bz, bx, by, bz, cx, cy, cz, dx, dy, dz);
+  };
+  for (let c = 0; c < cols - 1; c++) {
+    const xa = x0 + c * cell;
+    const xb = xa + cell;
+    quad(xa, h(0, c), z0 - R, xb, h(0, c + 1), z0 - R, xa, h(0, c), z0, xb, h(0, c + 1), z0);
+    quad(xa, h(rows - 1, c), z1, xb, h(rows - 1, c + 1), z1,
+         xa, h(rows - 1, c), z1 + R, xb, h(rows - 1, c + 1), z1 + R);
+  }
+  for (let r = 0; r < rows - 1; r++) {
+    const za = z0 + r * cell;
+    const zb = za + cell;
+    quad(x0 - R, h(r, 0), za, x0, h(r, 0), za, x0 - R, h(r + 1, 0), zb, x0, h(r + 1, 0), zb);
+    quad(x1, h(r, cols - 1), za, x1 + R, h(r, cols - 1), za,
+         x1, h(r + 1, cols - 1), zb, x1 + R, h(r + 1, cols - 1), zb);
+  }
+  quad(x0 - R, h(0, 0), z0 - R, x0, h(0, 0), z0 - R, x0 - R, h(0, 0), z0, x0, h(0, 0), z0);
+  quad(x1, h(0, cols - 1), z0 - R, x1 + R, h(0, cols - 1), z0 - R,
+       x1, h(0, cols - 1), z0, x1 + R, h(0, cols - 1), z0);
+  quad(x0 - R, h(rows - 1, 0), z1, x0, h(rows - 1, 0), z1,
+       x0 - R, h(rows - 1, 0), z1 + R, x0, h(rows - 1, 0), z1 + R);
+  quad(x1, h(rows - 1, cols - 1), z1, x1 + R, h(rows - 1, cols - 1), z1,
+       x1, h(rows - 1, cols - 1), z1 + R, x1 + R, h(rows - 1, cols - 1), z1 + R);
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(position, 3));
+  const normals = new Float32Array(position.length);
+  for (let i = 1; i < normals.length; i += 3) normals[i] = 1;
+  geo.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
+  return new THREE.Mesh(
+    geo,
+    new THREE.MeshLambertMaterial({ color: GROUND_COLOR, side: THREE.DoubleSide })
+  );
+}
+
+/**
+ * Drape the satellite chunks over the terrain, nearest to the walk's start
+ * first so the ground you are standing on is real before the far corner
+ * loads. Each texture replaces its chunk's flat colour as it arrives.
+ */
+async function applySatellite(chunkMeshes) {
+  const { manifest } = await overlayData();
+  if (!manifest?.chunks?.length) return;
+  const START = { x: -20, z: 374 }; // the walk starts by Argo Hall
+  const jobs = [];
+  for (const entry of manifest.chunks) {
+    const mesh = chunkMeshes.find(
+      (m) => m.userData.chunk.ci === entry.ci && m.userData.chunk.ri === entry.ri
+    );
+    if (!mesh) continue;
+    const d = Math.hypot((entry.x0 + entry.x1) / 2 - START.x, (entry.z0 + entry.z1) / 2 - START.z);
+    jobs.push({ entry, mesh, d });
+  }
+  jobs.sort((a, b) => a.d - b.d);
+
+  const loader = new THREE.TextureLoader();
+  for (const { entry, mesh } of jobs) {
+    await new Promise((resolve) => {
+      loader.load(
+        new URL(`../data/textures/${entry.file}`, import.meta.url).href,
+        (tex) => {
+          tex.colorSpace = THREE.SRGBColorSpace;
+          tex.anisotropy = 4;
+          tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+          mesh.material.map = tex;
+          mesh.material.color.set(0xffffff);
+          mesh.material.needsUpdate = true;
+          /* The imagery credit belongs on screen exactly as long as the
+             imagery itself does. */
+          const credit = document.getElementById("walk-imagery");
+          if (credit) credit.hidden = false;
+          resolve();
+        },
+        undefined,
+        () => resolve() // a missing chunk keeps its stylized colour
+      );
+    });
+  }
+}
+
+/**
+ * The campus boundary, drawn in-world as a dashed dark-navy ribbon a hand's
+ * width above the ground — the same convention OSM's own map uses for the
+ * dashed university edge, so the line reads as "the boundary" at a glance.
+ */
+async function addBoundaryLine(scene, heightAt) {
+  const { boundary } = await overlayData();
+  if (!boundary?.rings?.length) return;
+  const DASH = 7, GAP = 5, STEP = 1.75, HALF = 0.7, LIFT = 0.15;
+  /* Only where ground exists. The ring reaches far past the apron (east
+     campus, the far north and south lobes), and a ribbon drawn out there
+     hangs at edge-clamped height over nothing — invisible from the walk but
+     plainly wrong at 250 m/s. The minimap draws the full ring regardless. */
+  const cov = ground?.coverage;
+  const onGround = (x, z) =>
+    !cov || (x >= cov.x0 && x <= cov.x1 && z >= cov.z0 && z <= cov.z1);
+  const position = [];
+  for (const ring of boundary.rings) {
+    /* Resample the ring at STEP, then keep only the dashed-on spans. */
+    let carry = 0;
+    for (let i = 1; i < ring.length; i++) {
+      const [ax, az] = ring[i - 1];
+      const [bx, bz] = ring[i];
+      const len = Math.hypot(bx - ax, bz - az);
+      if (len < 0.01) continue;
+      const ux = (bx - ax) / len;
+      const uz = (bz - az) / len;
+      for (let s = 0; s < len; s += STEP) {
+        const e = Math.min(len, s + STEP);
+        if ((carry + s) % (DASH + GAP) >= DASH) continue;
+        if (!onGround(ax + ux * s, az + uz * s) || !onGround(ax + ux * e, az + uz * e)) continue;
+        const px = -uz * HALF;
+        const pz = ux * HALF;
+        const q = [
+          [ax + ux * s + px, az + uz * s + pz], [ax + ux * s - px, az + uz * s - pz],
+          [ax + ux * e + px, az + uz * e + pz], [ax + ux * e - px, az + uz * e - pz],
+        ].map(([x, z]) => [x, heightAt(x, z) + LIFT, z]);
+        position.push(...q[0], ...q[2], ...q[1], ...q[1], ...q[2], ...q[3]);
+      }
+      carry += len;
+    }
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(position, 3));
+  const normals = new Float32Array(position.length);
+  for (let i = 1; i < normals.length; i += 3) normals[i] = 1;
+  geo.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
+  const mat = new THREE.MeshBasicMaterial({
+    color: 0x1e2f6e,
+    side: THREE.DoubleSide,
+    polygonOffset: true,
+    polygonOffsetFactor: -4,
+    polygonOffsetUnits: -8,
+  });
+  scene.add(new THREE.Mesh(geo, mat));
 }
 
 /* ---------------------------------------------------------------- lighting */
@@ -148,8 +364,11 @@ export function createTerrain(scene, lidar) {
 export function createScene() {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0xbcd8ea);
-  /* The data stops at the edge of the LiDAR box; haze hides the cut. */
-  scene.fog = new THREE.Fog(0xc4dcec, 140, 460);
+  /* Haze. It used to start at 140 m to hide the raw cut at the edge of the
+     LiDAR box; the ground apron now carries the terrain out past everything
+     OSM knows about, so the fog can sit further back and let the imagery and
+     the boundary line read from a distance. */
+  scene.fog = new THREE.Fog(0xc4dcec, 220, 850);
 
   scene.add(new THREE.HemisphereLight(0xdfefff, 0x7d8a63, 1.7));
 
@@ -235,9 +454,28 @@ export function createBuildings(scene, campus, lidar, heightAt) {
 
 /* ---------------------------------------------------------------- surfaces */
 
-/** Plazas, water and green space, draped over the terrain. */
+/** Plazas, water and green space, draped over the terrain.
+ *
+ * Where the ground wears real imagery, the stylized stand-ins come OFF: a
+ * flat beige polygon painted over the real photographed paving would hide
+ * exactly the detail the imagery was brought in to show. So once the boundary
+ * and the texture manifest have loaded, the group is rebuilt without any
+ * surface whose centre sits on imagery; outside the boundary (and off the
+ * texture sheet) everything keeps its stylized colour. */
 export function createSurfaces(scene, campus, heightAt) {
   const group = new THREE.Group();
+  buildSurfaces(group, campus, heightAt, null);
+  overlayData().then(({ boundary, manifest }) => {
+    if (!boundary?.rings?.length || !manifest?.chunks?.length) return;
+    for (const child of group.children) child.geometry.dispose();
+    group.clear();
+    buildSurfaces(group, campus, heightAt, (x, z) => onImagery(x, z, boundary.rings));
+  });
+  scene.add(group);
+  return group;
+}
+
+function buildSurfaces(group, campus, heightAt, skip) {
   const mats = {
     plaza: drapeMaterial(PLAZA_COLOR),
     green: drapeMaterial(0x8faa63),
@@ -247,6 +485,16 @@ export function createSurfaces(scene, campus, heightAt) {
   for (const s of campus.surfaces || []) {
     const ring = s.p;
     if (!ring || ring.length < 3) continue;
+    /* KNOWN LIMIT: the decision is per-polygon by centroid, so a surface that
+       straddles the texture-sheet edge is dropped whole and its off-sheet tail
+       (up to ~27 m, ten surfaces today) shows plain apron instead of stylized
+       colour. Clipping a polygon against the sheet edge is real geometry work;
+       until it is done, the tail is a cosmetic gap at the data edge only. */
+    if (skip) {
+      let cx = 0, cz = 0;
+      for (const [x, z] of ring) { cx += x; cz += z; }
+      if (skip(cx / ring.length, cz / ring.length)) continue;
+    }
     /* NOTE THE NEGATED Z.
      *
      * A Shape is drawn in the XY plane and rotateX(-90°) lays it flat, which
@@ -281,9 +529,6 @@ export function createSurfaces(scene, campus, heightAt) {
     mesh.userData.name = s.n || null;
     group.add(mesh);
   }
-
-  scene.add(group);
-  return group;
 }
 
 /* ------------------------------------------------------------------- paths */
@@ -297,6 +542,22 @@ export function createSurfaces(scene, campus, heightAt) {
  * OSM `highway` and `surface` tags.
  */
 export function createPaths(scene, campus, heightAt) {
+  const group = new THREE.Group();
+  buildPaths(group, campus, heightAt, null);
+  /* Same deal as the surfaces: a stylized ribbon on top of the photographed
+     walkway hides the real crosswalks and paving. Segments over imagery are
+     dropped once the boundary is known; the network outside it stays. */
+  overlayData().then(({ boundary, manifest }) => {
+    if (!boundary?.rings?.length || !manifest?.chunks?.length) return;
+    for (const child of group.children) child.geometry.dispose();
+    group.clear();
+    buildPaths(group, campus, heightAt, (x, z) => onImagery(x, z, boundary.rings));
+  });
+  scene.add(group);
+  return group;
+}
+
+function buildPaths(group, campus, heightAt, skip) {
   const buckets = new Map(); // colour -> positions[]
 
   for (const path of campus.paths || []) {
@@ -308,13 +569,11 @@ export function createPaths(scene, campus, heightAt) {
     if (!buckets.has(color)) buckets.set(color, []);
     const out = buckets.get(color);
 
-    for (let i = 0; i < pts.length - 1; i++) {
-      const [ax, az] = pts[i];
-      const [bx, bz] = pts[i + 1];
+    const emit = (ax, az, bx, bz) => {
       const dx = bx - ax;
       const dz = bz - az;
       const len = Math.hypot(dx, dz);
-      if (len < 0.01) continue;
+      if (len < 0.01) return;
       const nx = (-dz / len) * half;
       const nz = (dx / len) * half;
       const quad = [
@@ -324,10 +583,32 @@ export function createPaths(scene, campus, heightAt) {
       // two triangles, wound so the front face points at the sky
       out.push(...quad[0], ...quad[2], ...quad[1]);
       out.push(...quad[1], ...quad[2], ...quad[3]);
+    };
+
+    for (let i = 0; i < pts.length - 1; i++) {
+      const [ax, az] = pts[i];
+      const [bx, bz] = pts[i + 1];
+      const dx = bx - ax;
+      const dz = bz - az;
+      const len = Math.hypot(dx, dz);
+      if (len < 0.01) continue;
+      if (!skip) { emit(ax, az, bx, bz); continue; }
+      /* The imagery decision is made every ~6 m rather than once per segment.
+         A single midpoint test dropped whole 40 m segments that merely
+         STARTED on the texture sheet (a bare strip on the apron with neither
+         imagery nor overlay), and kept whole segments that merely ENDED off
+         it (a beige quad over real paving). Subdividing bounds the error at
+         the sheet edge to a few metres either way. */
+      const n = Math.max(1, Math.ceil(len / 6));
+      for (let k = 0; k < n; k++) {
+        const t0 = k / n;
+        const t1 = (k + 1) / n;
+        if (skip(ax + dx * (t0 + t1) / 2, az + dz * (t0 + t1) / 2)) continue;
+        emit(ax + dx * t0, az + dz * t0, ax + dx * t1, az + dz * t1);
+      }
     }
   }
 
-  const group = new THREE.Group();
   for (const [color, positions] of buckets) {
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
@@ -336,8 +617,6 @@ export function createPaths(scene, campus, heightAt) {
     geo.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
     group.add(new THREE.Mesh(geo, drapeMaterial(color)));
   }
-  scene.add(group);
-  return group;
 }
 
 /* ------------------------------------------------------------------- trees */
