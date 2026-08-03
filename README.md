@@ -137,7 +137,18 @@ walking tour (Nov 2023, clear noon) and a 10-minute drone tour (Nov 2022, marine
   and chrome-yellow hydrants. One-offs the route passes — the Revelle Plaza ring fountain and
   flagpole, the Ridge Walk pergola swing stations, the Mayer/Bonner folded-plate canopy — live
   in `campus-landmarks.json` with frame-measured colour blocks. `tests/campus-details.test.mjs`
-  keeps every placement out of the buildings and on its rhythm.
+  keeps every placement out of the buildings and on its rhythm. 
+
+- **The Muir athletics zone** (`docs/js/campus-athletics.js`, `campus-recreation.js`,
+  `campus-muir-field.js`): built 1:1 from seven aerial reference captures — the Main Gym's
+  eleven pale barrel vaults with their transverse walkway seams, the Natatorium's white
+  skylight grid with the lap-lane blues reading through the glass and the spa on its
+  terracotta deck, both tennis pads in their real two-block identity (green-on-red west,
+  blue-on-grey east) with nets and light poles, basketball hoops, the sand volleyball courts
+  and their nets, Triton Bar Park's calisthenics rigs on black rubber, the rec terrace's mats
+  and canopy tents, parked cars in Gymnasium Lot, and John Muir Field's dark turf with its
+  softball fans, wordmark strips, goals and end netting. Every colour median-sampled from the
+  captures; each module's placement rules are pinned by its own test file.
 
 ```
 docs/            the site — GitHub Pages serves this directly, no build step
