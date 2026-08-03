@@ -498,7 +498,7 @@ export async function boot() {
 
   const terrain = world.createTerrain(scene, lidar, colors);
   heightAt = terrain.heightAt;
-  const built = createBuildings(scene, { campus, lidar, arcgis, colors, facades: facades?.walls, heightAt });
+  const built = createBuildings(scene, { campus, lidar, arcgis, colors, facades, heightAt });
   massInfo = built.info;
   const surfaces = world.createSurfaces(scene, campus, heightAt, arcgis, colors);
   /* The painted lines of every sports surface — measured from imagery,

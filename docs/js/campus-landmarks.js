@@ -6,10 +6,14 @@
 // becoming a diagram. Toggled with L.
 //
 // LANDMARKS. Low-poly models of the campus sculptures everyone steers by,
-// from researched positions and dimensions (app/data/campus-landmarks.json).
+// from researched positions and dimensions (docs/data/campus-landmarks.json).
+// Colours are DATA, not literals in here: every hex comes from the `colors`
+// block of the landmark it belongs to, because these were guessed once and
+// the guesses were wrong — the Sun God was built as a red bird with a gold
+// head on a white arch, which is the real statue almost exactly inverted.
 // Fallen Star gets the full treatment — the blue cottage really does hang
-// off the SW corner of Jacobs Hall's roof at a 10° tilt, and this file
-// builds it plank by plank from the published numbers.
+// off a south-west corner of Jacobs Hall at a 10° tilt, and this file builds
+// it plank by plank from the published numbers.
 import * as THREE from "../vendor/three/three.module.min.js";
 
 /* ------------------------------------------------------------------ labels */
@@ -103,6 +107,42 @@ export function createLabels(scene, info) {
 
 const lambert = (color) => new THREE.MeshLambertMaterial({ color });
 
+/* Outboard unit direction per corner tag, in the world's axes: +x east,
+   +z south. `corner: "SW"` means the piece hangs west and south. */
+export const CORNER_DIR = {
+  NE: [1, -1], NW: [-1, -1], SE: [1, 1], SW: [-1, 1],
+  N: [0, -1], S: [0, 1], E: [1, 0], W: [-1, 0],
+};
+
+/* How far from the surveyed point we will look for a corner to hang off. */
+const CORNER_SNAP_M = 15;
+
+/**
+ * The vertex of `ring` furthest in the corner's outboard direction, searched
+ * only near the surveyed point.
+ *
+ * Two things this fixes over sweeping the whole ring for its most south-west
+ * vertex. First, "south-west" was arithmetic in here while the JSON carried a
+ * `corner` field that nothing read, so the data could disagree with the
+ * renderer and no one would know. Second, an unbounded sweep will happily
+ * move the house to the far end of whatever mass it is handed: it works today
+ * because roofTopOf resolves "Jacobs Hall" to the 7-storey tower, whose SW
+ * corner is also the vertex nearest the survey — hand it the 4-storey
+ * footprint instead and the same code puts the cottage 30 m away, on a wing
+ * the aerials (D:f0034–f0036) plainly show it is not on.
+ */
+function snapToCorner(ring, x, z, corner) {
+  const [ex, ez] = CORNER_DIR[corner] || CORNER_DIR.SW;
+  let best = null;
+  let score = -Infinity;
+  for (const [vx, vz] of ring) {
+    if (Math.hypot(vx - x, vz - z) > CORNER_SNAP_M) continue;
+    const s = vx * ex + vz * ez;
+    if (s > score) { score = s; best = [vx, vz]; }
+  }
+  return best;
+}
+
 /**
  * Fallen Star: the 3/4-scale cottage on Jacobs Hall's roof. Dimensions,
  * corner, tilt, cantilever, ridge bearing and colours all from the research
@@ -152,30 +192,30 @@ function buildFallenStar(fs, toLocal, roofTopOf) {
   door.position.set(-D / 2 - 0.03, 0.8, 0);
   g.add(door);
 
-  /* Perch it: the SW corner of the host TOWER's roof, cantilevered outboard,
-     leaning ~10° with the low side over the drop. The corner comes from the
-     rendered mass itself rather than the researched lat/lng — a georeferenced
-     point can miss by a wing; the building's own corner cannot. */
+  /* Perch it: the tagged corner of the host TOWER's roof, cantilevered
+     outboard, leaning ~10° with the low side over the drop. The surveyed
+     point puts it on the right tower; the ring sharpens it to that tower's
+     own corner. */
+  const [ex, ez] = CORNER_DIR[fs.corner] || CORNER_DIR.SW;
   const host = roofTopOf(fs.host);
   let [x, z] = toLocal(fs.lat, fs.lng);
   const roofY = host?.topY ?? 30;
-  if (host?.ring) {
-    let best = -Infinity;
-    for (const [vx, vz] of host.ring) {
-      const sw = vz - vx; // south is +z, west is -x: maximise both
-      if (sw > best) { best = sw; x = vx + 1.2 - fs.overhang; z = vz - 1.6; }
-    }
+  const corner = host?.ring && snapToCorner(host.ring, x, z, fs.corner);
+  if (corner) {
+    x = corner[0] + ex * (fs.overhang - 1.2);
+    z = corner[1] - ez * 1.6;
   }
   g.position.set(x, roofY, z);
   g.rotation.y = ((90 - fs.ridgeAzimuthDeg) * Math.PI) / 180;
   g.rotation.z = (-fs.tiltDeg * Math.PI) / 180;
 
-  /* The garden strip NE of the house: lawn + the S-curve of scaled bricks. */
+  /* The garden fills the rest of the tower roof, inboard of the house —
+     opposite whichever way the house hangs: lawn + the S-curve of bricks. */
   const lawn = new THREE.Mesh(
     new THREE.BoxGeometry(fs.garden.d, 0.12, fs.garden.w),
-    lambert("#5f7a3f")
+    lambert(fs.garden.color)
   );
-  lawn.position.set(x + 6.5, roofY + 0.06, z - 5);
+  lawn.position.set(x - ex * 6.5, roofY + 0.06, z - ez * 5);
   lawn.rotation.y = ((90 - fs.ridgeAzimuthDeg) * Math.PI) / 180;
 
   const out = new THREE.Group();
@@ -183,26 +223,103 @@ function buildFallenStar(fs, toLocal, roofTopOf) {
   return out;
 }
 
-/** Sun God: the white arch with the great bird — a nod, not a replica. */
+/**
+ * Sun God: a white bird under a gold sunburst, on an arch buried in ivy.
+ *
+ * Built from D:f0101 (close aerial) and W:f0059 (eye level, sunlit). What
+ * the footage settles, and what the model had backwards: the BODY is white
+ * and the HEAD is scarlet, not the other way round; the colour on the body
+ * is not confetti but four or five very large concentric discs; the crest is
+ * a fan of gold spikes radiating from behind the head; and the arch is not
+ * pale concrete at all — it is a green mass, grown over with ivy, showing
+ * concrete only on the cap the bird stands on.
+ */
 function buildSunGod(lm, toLocal, heightAt) {
+  const c = lm.colors || {};
   const g = new THREE.Group();
   const [x, z] = toLocal(lm.lat, lm.lng);
   const y = heightAt(x, z);
-  const arch = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.9, 4.4, 8), lambert("#e8e4da"));
-  arch.position.set(x, y + 2.2, z);
-  const body = new THREE.Mesh(new THREE.SphereGeometry(1.5, 10, 8), lambert("#e8524a"));
-  body.position.set(x, y + 5.6, z);
-  body.scale.set(0.8, 1.15, 0.6);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.62, 8, 8), lambert("#f2b02f"));
-  head.position.set(x, y + 7.3, z);
-  const wingMat = lambert("#3f7fc1");
+
+  /* The arch, ~4.5 m: two ivy piers under an ivy lintel, capped in concrete.
+     The opening between the piers is the dark arch you walk under. */
+  const ivy = lambert(c.arch);
   for (const side of [-1, 1]) {
-    const wing = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.5, 0.28), wingMat);
-    wing.position.set(x + side * 1.9, y + 6.1, z);
-    wing.rotation.z = side * 0.5;
-    g.add(wing);
+    const pier = new THREE.Mesh(new THREE.BoxGeometry(1.3, 3.4, 1.9), ivy);
+    pier.position.set(x + side * 1.75, y + 1.7, z);
+    g.add(pier);
   }
-  g.add(arch, body, head);
+  const lintel = new THREE.Mesh(new THREE.BoxGeometry(4.8, 0.8, 1.9), ivy);
+  lintel.position.set(x, y + 3.8, z);
+  const cap = new THREE.Mesh(new THREE.BoxGeometry(5.1, 0.3, 2.1), lambert(c.archCap));
+  cap.position.set(x, y + 4.35, z);
+  g.add(lintel, cap);
+
+  /* The bird, ~4.3 m from its feet to the tips of the crest. */
+  const base = y + 4.5;
+  const white = lambert(c.body);
+  const body = new THREE.Mesh(new THREE.SphereGeometry(1.2, 10, 8), white);
+  body.position.set(x, base + 1.55, z);
+  body.scale.set(0.85, 1.2, 0.62);
+  g.add(body);
+
+  /* Concentric rings as coaxial cylinders of increasing length: the inner
+     rings poke out past the outer ones, so one stack reads as a target from
+     either side of the statue — and the statue has no fixed front. */
+  const disc = (dx, dy, dz, r, thick, rings) => {
+    rings.forEach((color, i) => {
+      const rr = r * (1 - i / rings.length);
+      const ring = new THREE.Mesh(
+        new THREE.CylinderGeometry(rr, rr, thick + i * 0.09, 12), lambert(color)
+      );
+      ring.rotation.x = Math.PI / 2;
+      ring.position.set(x + dx, base + dy, z + dz);
+      g.add(ring);
+    });
+  };
+  const target = [c.discRed, c.discGreen, c.discGold, c.discBlue];
+
+  for (const side of [-1, 1]) {
+    const wing = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.15, 0.26), white);
+    wing.position.set(x + side * 1.75, base + 1.85, z);
+    wing.rotation.z = side * 0.28;
+    g.add(wing);
+    disc(side * 1.75, 1.85, 0, 0.46, 0.34, target);
+  }
+  // chest: red/blue rings around a gold sun-centre, on both faces
+  for (const face of [-1, 1]) {
+    disc(0, 1.6, face * 0.66, 0.52, 0.2, [c.discRed, c.discBlue, c.discGold]);
+  }
+
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.62, 8, 8), lambert(c.head));
+  head.position.set(x, base + 3.2, z);
+  /* Nose-down, not straight out: a cone pointed at the viewer is a dot, and
+     the beak is the second thing you recognise the bird by. */
+  const beak = new THREE.Mesh(new THREE.ConeGeometry(0.32, 1.05, 6), lambert(c.beak));
+  beak.position.set(x, base + 2.95, z + 0.78);
+  beak.rotation.x = Math.PI * 0.68;
+  g.add(head, beak);
+
+  /* The crest: gold spikes fanning up and out from behind the head, longest
+     at the top, splaying to nearly horizontal at the ends. */
+  const gold = lambert(c.crest);
+  const SPIKES = 9;
+  for (let i = 0; i < SPIKES; i++) {
+    const a = -1.25 + (2.5 * i) / (SPIKES - 1);
+    const len = 0.95 - 0.22 * Math.abs(a);
+    const spike = new THREE.Mesh(new THREE.ConeGeometry(0.12, len, 5), gold);
+    const r = 0.5 + len / 2;
+    spike.position.set(x + Math.sin(a) * r, base + 3.2 + Math.cos(a) * r, z - 0.18);
+    spike.rotation.z = -a;
+    g.add(spike);
+  }
+
+  // feet: the painted claws gripping the cap
+  const claws = [c.discRed, c.discBlue, c.discGreen, c.discGold];
+  claws.forEach((color, i) => {
+    const foot = new THREE.Mesh(new THREE.SphereGeometry(0.26, 6, 5), lambert(color));
+    foot.position.set(x + (i - 1.5) * 0.42, base + 0.2, z + (i % 2 ? 0.3 : -0.3));
+    g.add(foot);
+  });
   return g;
 }
 
@@ -211,7 +328,7 @@ function buildBear(lm, toLocal, heightAt) {
   const g = new THREE.Group();
   const [x, z] = toLocal(lm.lat, lm.lng);
   const y = heightAt(x, z);
-  const stone = lambert("#b9b2a6");
+  const stone = lambert(lm.colors?.granite);
   const put = (dx, dy, dz, r, squash = 1) => {
     const m = new THREE.Mesh(new THREE.SphereGeometry(r, 8, 7), stone);
     m.position.set(x + dx, y + dy, z + dz);
