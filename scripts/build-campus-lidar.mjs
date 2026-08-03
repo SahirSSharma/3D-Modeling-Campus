@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Build app/data/campus-lidar.json — measured campus geometry from aerial LiDAR.
+// Build docs/data/campus-lidar.json — measured campus geometry from aerial LiDAR.
 //
 // WHY THIS EXISTS. campus-3d.json gets footprint OUTLINES from OpenStreetMap,
 // and OSM is genuinely good at those. It is not good at anything in the third
@@ -49,11 +49,12 @@ const require = createRequire(path.join(REPO_ROOT, "package.json"));
 
 const EPT = "https://s3-us-west-2.amazonaws.com/usgs-lidar-public/CA_SanDiegoQL2_2014";
 
-/* The walk this is for — Argo Hall, across Revelle Plaza, up onto Ridge Walk —
-   plus enough margin that the buildings framing it are complete and the skyline
-   behind it is real. Widening this costs download time and file size in
-   proportion; it is not free. */
-const AREA = { south: 32.8725, north: 32.8815, west: -117.2432, east: -117.2378 };
+/* The whole main campus, bounded by the roads that bound it: North Torrey
+   Pines Road west, La Jolla Village Drive south, Genesee Avenue north-east,
+   I-5 east. Same box as build-campus-3d.mjs — the terrain must exist under
+   every footprint OSM delivers. ~50 million returns; the build streams them
+   (see the fold() note) precisely because this box is 9x the old corridor. */
+const AREA = { south: 32.8655, north: 32.8905, west: -117.2540, east: -117.2215 };
 
 /* Terrain sample spacing, metres. The ground here moves by about 7 m over the
    whole walk, so this is not about hills — it is about the plaza sitting a step
@@ -204,19 +205,13 @@ async function build() {
   const { createLazPerf } = require("laz-perf");
   const laz = await createLazPerf();
 
-  let points = [];
-  let done = 0;
-  for (const key of tiles) {
-    points = points.concat(await readTile(laz, key));
-    if (++done % 10 === 0) process.stdout.write(`  ${done}/${tiles.length} tiles\r`);
-  }
-  console.log(`  ${points.length.toLocaleString()} points inside the area          `);
-
-  const ground = points.filter((p) => p[3] === GROUND);
-  const above = points.filter((p) => p[3] !== GROUND);
-  console.log(`  ${ground.length.toLocaleString()} ground, ${above.length.toLocaleString()} above-ground`);
-
-  /* ---- terrain: bare earth, as a grid in local metres ---- */
+  /* ---- terrain frame first: every point STREAMS into it ----
+     The full campus is ~50 million returns. The corridor-era version held
+     every point in one array and filtered it twice; at this scale that is
+     gigabytes of JS arrays and an OOM at the end of a half-hour download.
+     Nothing here actually needs the points twice — ground returns fold into
+     the grid, above-ground returns fold into per-footprint roof lists and a
+     per-cell canopy maximum, and the point is forgotten. */
   const corners = [
     mercToLocal(BOX.minx, BOX.miny), mercToLocal(BOX.maxx, BOX.miny),
     mercToLocal(BOX.minx, BOX.maxy), mercToLocal(BOX.maxx, BOX.maxy),
@@ -230,14 +225,90 @@ async function build() {
 
   const sum = new Float64Array(cols * rows);
   const hits = new Uint32Array(cols * rows);
-  for (const p of ground) {
-    const [lx, lz] = mercToLocal(p[0], p[1]);
-    const c = Math.round((lx - x0) / TERRAIN_CELL);
-    const r = Math.round((lz - z0) / TERRAIN_CELL);
-    if (c < 0 || c >= cols || r < 0 || r >= rows) continue;
-    sum[r * cols + c] += p[2];
-    hits[r * cols + c]++;
+
+  /* Measurement targets — every footprint AND every part of a multi-mass
+     building — spatially hashed so each return tests only nearby rings. */
+  const targets = [];
+  const hostByIndex = new Map();
+  campus.buildings.forEach((b, bi) => {
+    const add = (ringLocal, key, name) => {
+      const ring = ringLocal.map(([x, z]) => localToMerc(x, z));
+      const xs = ring.map((p) => p[0]);
+      const ys = ring.map((p) => p[1]);
+      const bb = {
+        minx: Math.min(...xs), maxx: Math.max(...xs),
+        miny: Math.min(...ys), maxy: Math.max(...ys),
+      };
+      if (bb.maxx < BOX.minx || bb.minx > BOX.maxx || bb.maxy < BOX.miny || bb.maxy > BOX.maxy) return null;
+      const t = { key, name, ring, bb, roofs: [] };
+      targets.push(t);
+      return t;
+    };
+    const host = add(b.p, `b${bi}`, b.n || null);
+    if (host) { host.isHost = true; host.bi = bi; hostByIndex.set(bi, host); }
+    (b.parts || []).forEach((part, pi) => {
+      const t = add(part.p, `${bi}/${pi}`, null);
+      if (t) t.bi = bi;
+    });
+  });
+  const HCELL = 60; // mercator metres per hash cell
+  const hcell = new Map();
+  for (const t of targets) {
+    for (let hx = Math.floor(t.bb.minx / HCELL); hx <= Math.floor(t.bb.maxx / HCELL); hx++) {
+      for (let hy = Math.floor(t.bb.miny / HCELL); hy <= Math.floor(t.bb.maxy / HCELL); hy++) {
+        const k = `${hx}:${hy}`;
+        if (!hcell.has(k)) hcell.set(k, []);
+        hcell.get(k).push(t);
+      }
+    }
   }
+
+  /* Canopy: the highest above-ground return per 3 m cell, as ABSOLUTE
+     elevation — ground is only knowable after the whole grid exists. */
+  const canopyMax = new Map();
+
+  let groundN = 0;
+  let aboveN = 0;
+  const fold = (pts) => {
+    for (const p of pts) {
+      if (p[3] === GROUND) {
+        groundN++;
+        const [lx, lz] = mercToLocal(p[0], p[1]);
+        const c = Math.round((lx - x0) / TERRAIN_CELL);
+        const r = Math.round((lz - z0) / TERRAIN_CELL);
+        if (c < 0 || c >= cols || r < 0 || r >= rows) continue;
+        sum[r * cols + c] += p[2];
+        hits[r * cols + c]++;
+      } else {
+        aboveN++;
+        const bucket = hcell.get(`${Math.floor(p[0] / HCELL)}:${Math.floor(p[1] / HCELL)}`);
+        if (bucket) {
+          for (const t of bucket) {
+            if (p[0] < t.bb.minx || p[0] > t.bb.maxx || p[1] < t.bb.miny || p[1] > t.bb.maxy) continue;
+            if (pointInRing(p[0], p[1], t.ring)) t.roofs.push(p[2]);
+          }
+        }
+        const [lx, lz] = mercToLocal(p[0], p[1]);
+        const k = `${Math.round(lx / TERRAIN_CELL)}:${Math.round(lz / TERRAIN_CELL)}`;
+        const prev = canopyMax.get(k);
+        if (!prev || p[2] > prev.zmax) canopyMax.set(k, { x: lx, z: lz, zmax: p[2] });
+      }
+    }
+  };
+
+  /* Six tiles in flight: the fetch dominates and parallelises; the decode is
+     synchronous WASM with no await inside it, so decodes cannot interleave. */
+  let cursor = 0;
+  let done = 0;
+  await Promise.all(Array.from({ length: 6 }, async () => {
+    while (cursor < tiles.length) {
+      const key = tiles[cursor++];
+      fold(await readTile(laz, key));
+      if (++done % 25 === 0) process.stdout.write(`  ${done}/${tiles.length} tiles\r`);
+    }
+  }));
+  console.log(`  ${groundN.toLocaleString()} ground, ${aboveN.toLocaleString()} above-ground          `);
+
   const grid = new Float64Array(cols * rows).fill(NaN);
   for (let i = 0; i < grid.length; i++) if (hits[i]) grid[i] = sum[i] / hits[i];
   fillHoles(grid, cols, rows);
@@ -246,7 +317,7 @@ async function build() {
      than 130 m up, where float precision starts to matter. */
   const datum = Math.round(percentile([...grid].filter(Number.isFinite), 0.5) * 10) / 10;
 
-  /* ---- building heights: measured, per OSM footprint ---- */
+  /* ---- heights: measured, per footprint and per part ---- */
   const groundAt = (lx, lz) => {
     const c = Math.round((lx - x0) / TERRAIN_CELL);
     const r = Math.round((lz - z0) / TERRAIN_CELL);
@@ -255,53 +326,79 @@ async function build() {
     return Number.isFinite(v) ? v : null;
   };
 
-  const heights = {};
-  const measured = [];
-  for (const b of campus.buildings) {
-    const ring = b.p.map(([x, z]) => localToMerc(x, z));
-    const xs = ring.map((p) => p[0]);
-    const ys = ring.map((p) => p[1]);
-    const bb = { minx: Math.min(...xs), maxx: Math.max(...xs), miny: Math.min(...ys), maxy: Math.max(...ys) };
-    if (bb.maxx < BOX.minx || bb.minx > BOX.maxx || bb.maxy < BOX.miny || bb.miny > BOX.maxy) continue;
-
-    const roofs = [];
-    for (const p of above) {
-      if (p[0] < bb.minx || p[0] > bb.maxx || p[1] < bb.miny || p[1] > bb.maxy) continue;
-      if (pointInRing(p[0], p[1], ring)) roofs.push(p[2]);
+  /* Grade is read around the PERIMETER, never under the roof. The laser
+     cannot see ground beneath a building, so the cell under the centroid is
+     hole-fill — an average of whatever surrounds the footprint, which beside
+     a canyon is the canyon. Geisel measured "40.3 m" exactly this way: its
+     real roof minus a grade 14 m below its real forecourt, borrowed from the
+     ravine to its north. */
+  const rimBase = (ring) => {
+    const rim = [];
+    for (const [mx, my] of ring) {
+      const [lx, lz] = mercToLocal(mx, my);
+      const g = groundAt(lx, lz);
+      if (g !== null) rim.push(g);
     }
-    /* Too few returns to trust — a narrow building under tree cover, usually.
-       Left out entirely so the renderer keeps its OSM value rather than
-       adopting a number derived from nine points. */
-    if (roofs.length < 25) continue;
+    return rim.length ? percentile(rim, 0.5) : null;
+  };
 
-    const [cx, cz] = mercToLocal((bb.minx + bb.maxx) / 2, (bb.miny + bb.maxy) / 2);
-    const base = groundAt(cx, cz);
+  /* 98th percentile, not max: a single bird should not add three metres.
+     BUT a roof is a PLANE and a tree is a TAIL — when a eucalyptus overhangs
+     a low building the returns split into a dense band at the real roof and
+     a sparse tail up the crown, and the 98th lands in the tree (the
+     one-storey wooden Student Center "measured" 23.5 m this way). When the
+     75th and 98th disagree by more than a storey and a half, the roof plane
+     is the honest answer. */
+  const roofOf = (roofs) => {
+    const p98 = percentile(roofs, 0.98);
+    const p75 = percentile(roofs, 0.75);
+    return p98 - p75 > 5 ? p75 : p98;
+  };
+
+  const heights = {};
+  const partHeights = {};
+  const measured = [];
+  const baseByBuilding = new Map();
+  for (const t of targets) {
+    if (!t.isHost) continue;
+    /* Too few returns to trust — a narrow building under tree cover,
+       usually. Left out entirely so the renderer keeps its OSM value rather
+       than adopting a number derived from nine points. */
+    if (t.roofs.length < 25) continue;
+    const base = rimBase(t.ring);
     if (base === null) continue;
-    /* 98th percentile, not max: a single bird or a survey artefact should not
-       add three metres to a building. */
-    const roof = percentile(roofs, 0.98);
-    const h = Math.round((roof - base) * 10) / 10;
-    if (h < 2 || h > 70) continue;
-    measured.push({ n: b.n, h, pts: roofs.length });
-    if (b.n) heights[b.n] = h;
+    baseByBuilding.set(t.bi, base);
+    const h = Math.round((roofOf(t.roofs) - base) * 10) / 10;
+    /* Cap raised from 70: Sankofa, the Eighth College tower, really is ~80 m
+       and the old cap silently dropped the tallest building on campus. */
+    if (h < 2 || h > 90) continue;
+    measured.push({ n: t.name, h, pts: t.roofs.length });
+    if (t.name) heights[t.name] = h;
+  }
+  /* Parts share their host's grade — a tower wing and its podium stand on
+     the same ground even when the wing's own perimeter is all rooftop. */
+  for (const t of targets) {
+    if (t.isHost || t.roofs.length < 12) continue;
+    const base = baseByBuilding.get(t.bi) ?? rimBase(t.ring);
+    if (base === null) continue;
+    const h = Math.round((roofOf(t.roofs) - base) * 10) / 10;
+    if (h < 2 || h > 90) continue;
+    partHeights[t.key] = h;
   }
 
-  /* ---- trees: above-ground returns that stand outside every footprint ---- */
-  const footprints = campus.buildings.map((b) => b.p.map(([x, z]) => localToMerc(x, z)));
-  const canopy = new Map(); // grid cell -> max height above ground
-  for (const p of above) {
-    const [lx, lz] = mercToLocal(p[0], p[1]);
-    const base = groundAt(lx, lz);
-    if (base === null) continue;
-    const h = p[2] - base;
+  /* ---- trees: canopy maxima that stand outside every footprint ---- */
+  const canopy = [];
+  for (const { x: lx, z: lz, zmax } of canopyMax.values()) {
+    const g = groundAt(lx, lz);
+    if (g === null) continue;
+    const h = zmax - g;
     if (h < TREE_MIN_HEIGHT || h > 40) continue;
-    if (footprints.some((ring) => pointInRing(p[0], p[1], ring))) continue;
-    const key = `${Math.round(lx / TERRAIN_CELL)}:${Math.round(lz / TERRAIN_CELL)}`;
-    const prev = canopy.get(key);
-    if (!prev || h > prev.h) canopy.set(key, { x: lx, z: lz, h, base });
-    else prev.n = (prev.n || 1) + 1;
+    const [mx, my] = localToMerc(lx, lz);
+    const bucket = hcell.get(`${Math.floor(mx / HCELL)}:${Math.floor(my / HCELL)}`);
+    if (bucket && bucket.some((t) => t.isHost && pointInRing(mx, my, t.ring))) continue;
+    canopy.push({ x: lx, z: lz, h });
   }
-  const trees = clusterCanopy([...canopy.values()]);
+  const trees = clusterCanopy(canopy);
 
   const out = {
     _: "Generated by scripts/build-campus-lidar.mjs from USGS 3DEP LiDAR (CA_SanDiegoQL2_2014, public domain). Do not hand-edit.",
@@ -314,6 +411,7 @@ async function build() {
       z: Array.from(grid, (v) => (Number.isFinite(v) ? Math.round((v - datum) * 10) : 0)),
     },
     heights,
+    partHeights,
     trees: trees.map((t) => [
       Math.round(t.x * 10) / 10,
       Math.round(t.z * 10) / 10,
