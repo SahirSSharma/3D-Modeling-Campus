@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Campus Walk</title>
+<meta name="description" content="A walk across a real campus, built from aerial LiDAR and OpenStreetMap." />
+<meta name="color-scheme" content="light" />
+<link rel="stylesheet" href="css/campus-walk.css" />
+</head>
+<body>
+
+<canvas id="walk-canvas"></canvas>
+
+<div class="walk-title">
+  <h1>Campus Walk</h1>
+  <p>Argo Hall &rarr; Revelle Plaza &rarr; Ridge Walk. Every height measured from aerial LiDAR.</p>
+</div>
+
+<div class="walk-here" id="walk-here"></div>
+
+<!-- Development panel. Hidden with H, and gone entirely below 780 px. Layer
+     toggles are the single most useful tool here: almost every rendering fault
+     so far was invisible until the thing in front of it could be switched off. -->
+<aside class="walk-dev" id="walk-dev">
+  <h2>Scene</h2>
+  <div class="walk-dev-rows" id="walk-stats">loading&hellip;</div>
+  <div class="walk-layers" id="walk-layers"></div>
+</aside>
+
+<div class="walk-bar">
+  <button type="button" class="walk-btn" id="walk-play">Pause</button>
+  <button type="button" class="walk-btn" id="walk-toggle"><span id="walk-view">Eye level</span></button>
+  <span class="walk-distance" id="walk-distance">&nbsp;</span>
+  <span class="walk-hint">drag to look &middot; W/S move &middot; shift run &middot; 1 eye &middot; 2 shoulder &middot; R restart &middot; H panel</span>
+</div>
+<div class="walk-progress-track"><div class="walk-progress" id="walk-progress"></div></div>
+
+<div class="walk-loading" id="walk-loading">
+  <div>Building the campus&hellip;</div>
+  <small>323 building footprints, a 170&times;334 terrain grid and 812 trees, from about
+    3.3&nbsp;million LiDAR returns.</small>
+</div>
+
+<script type="module">
+  import { boot } from './js/campus-walk.js';
+
+  boot()
+    .then((walk) => {
+      document.getElementById('walk-loading').hidden = true;
+      wireDevPanel(walk);
+    })
+    .catch((err) => {
+      /* A blank blue rectangle is the worst possible failure here: it looks
+         like a slow load, forever. Say what actually broke. */
+      console.error('Campus Walk failed to start', err);
+      const el = document.getElementById('walk-loading');
+      el.innerHTML =
+        `<div>Campus Walk could not start.</div><small>${err.message}. It needs a browser with WebGL.</small>`;
+      el.hidden = false;
+    });
+
+  function wireDevPanel(walk) {
+    const panel = document.getElementById('walk-dev');
+    const stats = document.getElementById('walk-stats');
+    const layerBar = document.getElementById('walk-layers');
+
+    for (const [name, object] of Object.entries(walk.layers)) {
+      if (!object) continue;
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'walk-btn on';
+      b.textContent = name;
+      b.addEventListener('click', () => {
+        object.visible = !object.visible;
+        b.classList.toggle('on', object.visible);
+      });
+      layerBar.appendChild(b);
+    }
+
+    addEventListener('keydown', (e) => {
+      if (e.key === 'h' || e.key === 'H') panel.hidden = !panel.hidden;
+    });
+
+    /* Frame time is measured over a rolling second rather than per frame: a
+       per-frame number flickers too fast to read and tells you nothing about
+       whether the scene is actually holding up. */
+    let frames = 0;
+    let since = performance.now();
+    let fps = 0;
+    const tick = () => {
+      frames++;
+      const now = performance.now();
+      if (now - since >= 1000) {
+        fps = Math.round((frames * 1000) / (now - since));
+        frames = 0;
+        since = now;
+        const s = walk.status();
+        stats.innerHTML = [
+          `fps      <b>${fps}</b>`,
+          `along    <b>${s.s.toFixed(0)}</b> / ${s.total.toFixed(0)} m`,
+          `ground   <b>${s.ground.toFixed(1)}</b> m`,
+          `heading  <b>${((s.heading % 360) + 360) % 360 | 0}</b>&deg;`,
+          `view     <b>${s.view}</b>`,
+          `near     <b>${s.near ? s.near.name : '—'}</b>`,
+          s.near && s.near.height ? `measured <b>${s.near.height}</b> m` : '',
+        ].filter(Boolean).join('<br>');
+      }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+
+    console.info(
+      `Campus Walk — ${walk.metres} m · ${walk.measured}/${walk.buildings} buildings at ` +
+      `measured height · ${walk.trees} trees · ${walk.landmarks} landmarks on route`
+    );
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,185 @@
+/* Campus Walk — standalone.
+ *
+ * Self-contained on purpose. This site is the experience and nothing else: no
+ * portal chrome, no navigation, no borrowed stylesheet. Every token it needs is
+ * declared here, so the page cannot quietly depend on a variable that only
+ * exists in another project — which is exactly what happened when the first
+ * copy was lifted across still referencing TritonPlan's --gold and --teal.
+ */
+
+:root {
+  --ink: #0d1b22;
+  --hud: rgba(8, 26, 34, 0.82);
+  --hud-line: rgba(255, 255, 255, 0.16);
+  --accent: #ffc63d;
+  --muted: rgba(255, 255, 255, 0.6);
+  --font: ui-sans-serif, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;              /* the canvas IS the page */
+  background: #bcd8ea;
+  color: #fff;
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+
+#walk-canvas {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  cursor: grab;
+  touch-action: none;            /* drag-to-look must not scroll the page */
+}
+#walk-canvas:active { cursor: grabbing; }
+
+/* ------------------------------------------------------------------ titles */
+
+/* The sky is pale, so white-on-sky was barely legible in the top-left corner
+   where the title sits. A scrim rather than a darker text colour, because the
+   camera can point at anything and the backdrop is not predictable. */
+.walk-title {
+  position: fixed;
+  top: 18px; left: 20px;
+  pointer-events: none;
+  padding: 10px 14px;
+  border-radius: 4px;
+  background: var(--hud);
+  border-left: 3px solid var(--accent);
+  backdrop-filter: blur(6px);
+}
+.walk-title h1 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: 0.2px;
+}
+.walk-title p {
+  margin: 3px 0 0;
+  font-size: 11.5px;
+  color: var(--muted);
+  max-width: 40ch;
+  line-height: 1.5;
+}
+
+/* What you are passing, and what it measured. The height is the claim this
+   whole project makes, so it stays on screen to be checked against the
+   building standing in front of you. */
+.walk-here {
+  position: fixed;
+  left: 50%; top: 26px;
+  transform: translate(-50%, -8px);
+  padding: 8px 20px;
+  background: var(--hud);
+  border-left: 3px solid var(--accent);
+  border-radius: 2px;
+  font-size: 14px;
+  letter-spacing: 0.2px;
+  opacity: 0;
+  transition: opacity 0.28s ease, transform 0.28s ease;
+  white-space: nowrap;
+  pointer-events: none;
+  backdrop-filter: blur(6px);
+}
+.walk-here.show { opacity: 1; transform: translate(-50%, 0); }
+.walk-h { color: var(--accent); font-family: var(--mono); font-size: 12px; margin-left: 8px; }
+
+/* -------------------------------------------------------------- bottom bar */
+
+.walk-bar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  background: linear-gradient(rgba(8, 26, 34, 0), rgba(8, 26, 34, 0.85));
+  font-size: 12px;
+}
+
+.walk-btn {
+  font: 600 12px var(--font);
+  padding: 7px 15px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid var(--hud-line);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.walk-btn:hover { background: rgba(255, 255, 255, 0.28); }
+.walk-btn.on { background: var(--accent); color: var(--ink); border-color: transparent; }
+
+.walk-distance { font-family: var(--mono); font-size: 12px; letter-spacing: 0.2px; }
+.walk-hint { margin-left: auto; color: var(--muted); font-size: 11px; }
+
+.walk-progress-track {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.18);
+}
+.walk-progress { height: 100%; width: 0; background: var(--accent); transition: width 0.1s linear; }
+
+/* --------------------------------------------------------------- dev panel */
+
+.walk-dev {
+  position: fixed;
+  top: 18px; right: 18px;
+  width: 214px;
+  background: var(--hud);
+  border: 1px solid var(--hud-line);
+  border-radius: 4px;
+  padding: 12px;
+  font-size: 11px;
+  backdrop-filter: blur(6px);
+}
+.walk-dev h2 {
+  margin: 0 0 9px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.3px;
+  color: var(--muted);
+  font-weight: 600;
+}
+.walk-dev-rows {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  line-height: 1.75;
+  color: rgba(255, 255, 255, 0.85);
+}
+.walk-dev-rows b { color: var(--accent); font-weight: 500; }
+.walk-layers { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+.walk-layers .walk-btn { padding: 4px 9px; font-size: 10.5px; }
+.walk-dev[hidden] { display: none; }
+
+/* ----------------------------------------------------------------- loading */
+
+.walk-loading {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #bcd8ea;
+  color: #1d3d4c;
+  font-size: 13px;
+  text-align: center;
+  padding: 0 24px;
+}
+.walk-loading small { color: #4a6b78; font-size: 11.5px; max-width: 46ch; line-height: 1.6; }
+.walk-loading[hidden] { display: none; }
+
+@media (max-width: 780px) {
+  .walk-dev { display: none; }
+  .walk-hint { display: none; }
+  .walk-title p { display: none; }
+  .walk-here { font-size: 12px; top: 16px; }
+}
