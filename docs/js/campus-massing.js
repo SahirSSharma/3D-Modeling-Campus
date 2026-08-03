@@ -30,6 +30,34 @@ const ROOF_FALLBACK = "#a8a094";
 
 const hash = (x, z) => Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1;
 
+/* Measured roof colour, sampled at build time from the georeferenced
+   satellite chunks — finer than NAIP, edge-eroded so walls and their shadows
+   stay out of the median. Keys are geometry hashes (`m:`/`b:` + outer-ring
+   vertex-average centroid, rounded to the metre) recomputed here, so the
+   lookup survives a data rebuild and simply misses — falling back to the
+   NAIP colour, then the palette — when a footprint moved. May be absent, and
+   fetch() has no file:// under Node tests: both degrade to null. Keep the
+   key rule in sync with scripts/build-campus-truecolor.mjs. */
+const TRUECOLOR = await (async () => {
+  try {
+    const r = await fetch(new URL("../data/campus-truecolor.json", import.meta.url));
+    return r.ok ? await r.json() : null;
+  } catch {
+    return null;
+  }
+})();
+
+/* TASTE GUARD (defence in depth — the build already clamps): keep any
+   measured roof inside the site's palette family so one bad sample can never
+   ship a neon roof. Mirrors GAMUT in build-campus-truecolor.mjs. */
+function guardRoof(hex) {
+  if (!hex) return null;
+  const c = new THREE.Color(hex);
+  const hsl = c.getHSL({});
+  c.setHSL(hsl.h, Math.min(hsl.s, 0.55), Math.min(0.85, Math.max(0.2, hsl.l)));
+  return `#${c.getHexString()}`;
+}
+
 /** One facade tile shared by every wall — see the original note in
     campus-world.js: generated so ExtrudeGeometry's world-unit UVs land one
     window bay per BAY and one band per STOREY. */
@@ -70,6 +98,23 @@ const centroidOf = (ring) => {
   return [x / ring.length, z / ring.length];
 };
 
+/** Is this OSM ring already represented by the university's massing?
+ *
+ *  Centroid-in-one-ring alone is not enough: a courtyard building's centroid
+ *  falls in the gap between the massing rings (Rya, Vela, Price Center all
+ *  did), so its OSM copy rendered INSIDE the real massing. A ring counts as
+ *  covered when its centroid sits in any massing ring OR a majority of its
+ *  vertices do — the union test catches the courtyard cases without ever
+ *  un-suppressing a building the centroid test already caught. */
+const ringCoveredBy = (ring, coveredRings) => {
+  const inAny = (x, z) => coveredRings.some((r) => inRing(x, z, r));
+  const [cx, cz] = centroidOf(ring);
+  if (inAny(cx, cz)) return true;
+  let inside = 0;
+  for (const [x, z] of ring) if (inAny(x, z)) inside++;
+  return inside / ring.length > 0.5;
+};
+
 /* LiDAR ≈ GIS -> the measurement wins; either far taller -> see header. */
 function reconcile(gisH, lidarH) {
   if (!lidarH) return gisH;
@@ -80,14 +125,11 @@ function reconcile(gisH, lidarH) {
 }
 
 /**
- * Assemble the full mass list, then extrude every mass into per-material
- * buckets and merge — ~1,400 masses render as a few dozen draw calls, not
- * three thousand.
- *
- * Returns { group, info } where info maps building name -> { x, z, topY, h }
- * for labels and callouts.
+ * Assemble the full mass list — the university's massing first, then every
+ * OSM building (or building part) the massing does not already represent.
+ * Pure data, no THREE: the tests run this in Node against the shipped files.
  */
-export function createBuildings(scene, { campus, lidar, arcgis, colors, facades, heightAt }) {
+export function assembleMasses({ campus, lidar, arcgis, colors }) {
   const masses = [];
   const covered = []; // massing rings, to suppress the OSM copy underneath
 
@@ -102,34 +144,40 @@ export function createBuildings(scene, { campus, lidar, arcgis, colors, facades,
       gisH: m.h,
       levels: m.levels,
       roof: colors?.massing?.[i] || null,
+      src: "gis",
     });
   });
 
-  /* -------- 2. Geisel's floor stack -------- */
-  const geisel = arcgis?.geiselFloors || [];
-  const geiselPlace = campus.places["Geisel Library"];
-
-  /* -------- 3. OSM buildings the inventory does not cover -------- */
+  /* -------- 2. OSM buildings the inventory does not cover -------- */
   const skipOsm = new Set(["Geisel Library"]);
   campus.buildings.forEach((b, i) => {
     if (b.n && skipOsm.has(b.n)) return;
-    const [cx, cz] = centroidOf(b.p);
-    if (covered.some((ring) => inRing(cx, cz, ring))) return;
     const fac = arcgis?.buildings?.[b.n];
     const lidarH = b.n ? lidar.heights[b.n] : null;
-    const parts = (b.parts || []).filter((_, pi) => lidar.partHeights?.[`${i}/${pi}`] || _.h);
+    /* Parts keep their ORIGINAL index: lidar.partHeights is keyed by it, and
+       filtering first shifted every part after a dropped one onto the wrong
+       measured height (Tapestry's second part resolved undefined). */
+    const parts = (b.parts || [])
+      .map((part, pi) => ({ part, pi }))
+      .filter(({ part, pi }) => lidar.partHeights?.[`${i}/${pi}`] || part.h);
     if (parts.length >= 2) {
-      parts.forEach((part, pi) => {
+      /* Suppression is per PART here — the parts are what renders. Rya and
+         Vela's outer-ring centroids fall in the paseo between the towers, but
+         every part-box sits ON the university's PCW massing and must yield. */
+      for (const { part, pi } of parts) {
+        if (ringCoveredBy(part.p, covered)) continue;
         masses.push({
           rings: [part.p],
           name: b.n || null,
           gisH: lidar.partHeights?.[`${i}/${pi}`] ?? part.h,
           levels: null,
           roof: colors?.buildings?.[i] || null,
+          src: "osm",
         });
-      });
+      }
       return;
     }
+    if (ringCoveredBy(b.p, covered)) return;
     masses.push({
       rings: [b.p],
       name: b.n || null,
@@ -137,6 +185,7 @@ export function createBuildings(scene, { campus, lidar, arcgis, colors, facades,
       lidarDone: true, // height above is already reconciled for OSM entries
       levels: fac?.levels ?? null,
       roof: colors?.buildings?.[i] || null,
+      src: "osm",
     });
   });
 
@@ -153,6 +202,23 @@ export function createBuildings(scene, { campus, lidar, arcgis, colors, facades,
     if (host) m.name = host.n;
   }
   for (const m of masses) if (m.h === undefined) m.h = m.gisH;
+  return masses;
+}
+
+/**
+ * Assemble the full mass list, then extrude every mass into per-material
+ * buckets and merge — ~1,400 masses render as a few dozen draw calls, not
+ * three thousand.
+ *
+ * Returns { group, info } where info maps building name -> { x, z, topY, h }
+ * for labels and callouts.
+ */
+export function createBuildings(scene, { campus, lidar, arcgis, colors, facades, heightAt }) {
+  const masses = assembleMasses({ campus, lidar, arcgis, colors });
+
+  /* Geisel's floor stack renders separately below. */
+  const geisel = arcgis?.geiselFloors || [];
+  const geiselPlace = campus.places["Geisel Library"];
 
   /* -------- extrude into merged material buckets -------- */
   const facade = facadeTexture();
@@ -203,8 +269,19 @@ export function createBuildings(scene, { campus, lidar, arcgis, colors, facades,
       for (let i = 0; i < uv.count; i++) uv.setY(i, uv.getY(i) * scaleV);
     }
 
-    const wallHex = facades?.[m.name] || WALL_PALETTE[Math.floor(hash(outer[0][0], outer[0][1]) * WALL_PALETTE.length)];
-    const roofHex = q(m.roof);
+    /* Roof: measured truecolor by geometry key first, NAIP second, palette
+       last. Walls stay palette-derived — imagery cannot see a wall — but
+       tint gently toward the measured roof so a mass reads as one building.
+       The tint is a pure function of (wall pick, quantised roof), so the
+       bucket count cannot grow. */
+    const trueRoof = guardRoof(
+      TRUECOLOR?.roofs?.[`${m.src === "gis" ? "m" : "b"}:${Math.round(cx)},${Math.round(cz)}`]
+    );
+    const roofHex = q(trueRoof || m.roof);
+    let wallHex = facades?.[m.name] || WALL_PALETTE[Math.floor(hash(outer[0][0], outer[0][1]) * WALL_PALETTE.length)];
+    if (trueRoof && !facades?.[m.name]) {
+      wallHex = `#${new THREE.Color(wallHex).lerp(new THREE.Color(roofHex), 0.12).getHexString()}`;
+    }
     /* Chunked by 500 m so buildings behind the camera or past the fog can be
        culled — one campus-wide merge drew every building every frame. */
     const key = `${wallHex}|${roofHex}|${Math.floor(cx / 500)}:${Math.floor(cz / 500)}`;

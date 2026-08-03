@@ -84,9 +84,16 @@ const MIN_FOOTPRINT_M2 = 60;
 /* Tag filters go before the bounding box. Overpass answers 406 rather than a
    syntax error if you interleave them the other way, which is a memorable
    twenty minutes to lose. */
+/* Relations included since 2026-08-03: OSM maps a building as a multipolygon
+   RELATION whenever it has a courtyard or was drawn from several ways, and
+   this box turned out to hold 27 of them — the Faculty Club, the whole Rady
+   School cluster, the Supercomputer Center, EBU2, Pepper Canyon Hall, the
+   Conrad Prebys Music Center. A ways-only pull shipped a campus where every
+   one of those was an empty lawn. */
 const QUERY = `[out:json][timeout:180];
 (
   way["building"](${BBOX});
+  relation["building"](${BBOX});
   way["building:part"](${BBOX});
   way["highway"~"^(footway|path|pedestrian|steps|cycleway|living_street|service)$"](${BBOX});
   way["amenity"="fountain"](${BBOX});
@@ -165,20 +172,61 @@ const KNOWN_HEIGHTS = {
   "Pacific Hall": 18,
   "Mayer Hall": 20,
   "Applied Physics and Mathematics": 24,
-  /* Tenaya is the twin of Tioga Hall — both ten-storey Muir residence towers.
-     Tioga happens to carry building:levels=10 and arrived at 37 m; Tenaya
-     carries nothing and arrived at 7 m, a bungalow where a high-rise stands. */
-  "Tenaya Hall": 34,
+  /* NOT Tioga's twin after all: a targeted 2014-LiDAR re-sample (2026-08-03)
+     puts Tenaya's tower roof plane at 27.6 m, max 28.0 — it is the ~8-storey
+     tower to Tioga's ten. The earlier 34 here was an eyeball match to Tioga. */
+  "Tenaya Hall": 28,
   "Solis Hall": 10,
   "Theodore and Adele Shank Theatre": 14,
+  /* Gabled single-storey club; targeted LiDAR puts the dining-hall ridge at
+     ~6.5 m (p98 lands in the overhanging eucalyptus, so the tag-free area
+     guess of 16 m was more than double the real building). */
+  "Ida and Cecil Green Faculty Club": 7,
 };
+
+/* THE ESTIMATED TABLE — post-2014 buildings with no measurable height.
+   The 2014 flight predates every one of these, no facilities massing covers
+   their parcel, and the newer-EPT probe came back empty (2026-08-03: the only
+   USGS 3DEP datasets over this campus are CA_SanDiegoQL2_2014, the 2002-05
+   Scripps strips, and the 2016 coastal El Niño survey — all pre-construction).
+   So each height is floors x storey from Street View floor counts (2025-02
+   panos, .cache/qa evidence), declared HERE and never silently in the data.
+   Buildings whose OSM tag already agrees with the SV floor count (Mosaic 26.4,
+   The Jeannie 8.4, SSPEB, Arts and Humanities) need no entry. */
+const ESTIMATED_POST_2014 = {
+  "Tapestry": 23,             // 6 residential floors (sv_tapestry.jpg)
+  "Catalyst": 37,             // 10-floor tower on pilotis (sv_catalyst.jpg)
+  "Kaleidoscope": 21,         // 6-7 residential floors (sv_kaleidoscope.jpg); OSM's 16 was an area guess
+  "Viterbi Family Vision Research Center": 18, // 4 clinic/lab floors (sv/viterbi_site.jpg); OSM's 27.5 was a guess ~30% tall
+};
+
+/* THE UNDER-CONSTRUCTION TABLE — sites where what stands TODAY is a partial
+   frame, not the finished building. The Triton Center block south of Price
+   Center: the 2014 LiDAR "heights" there were returns off the DEMOLISHED
+   predecessor buildings (old International Center block), and the OSM
+   footprints describe the finished project. 2025 Street View
+   (.cache/qa/core/sv-triton-center.jpg, McCarthy fencing, steel frames) is
+   the source for the current build state. Refresh when the site tops out. */
+const UNDER_CONSTRUCTION = {
+  "The Strauss": 19,                              // ~6 erected frame decks
+  "Student Success Building": 16,                 // ~5 levels, partially clad
+  "Student Health and Well-Being Building": 13,   // ~4 frame levels
+  "Triton Alumni and Welcome Center": 10,         // ~3 frame levels
+};
+
+/* Demolished with the old International Center to clear the Triton Center
+   site (2025 Street View: .cache/qa/core/sv-thrift-site.jpg shows the fenced
+   pit where the cottage stood). OSM still maps it; the world must not. */
+const DEMOLISHED = new Set(["Friend's Thrift Shop"]);
 
 /* Height, in the order we actually trust the evidence: a value we have checked
    by eye beats a tag, a tag beats a guess, and the guess scales with footprint
    area because big-plan buildings here do tend to be the tall ones. Clamped at
    60 m so one bad tag cannot put a skyscraper on Library Walk. */
 function heightOf(tags, area) {
-  const known = KNOWN_HEIGHTS[tags.name];
+  const uc = UNDER_CONSTRUCTION[tags.name];
+  if (uc) return uc; // current build state beats the finished-project tags
+  const known = KNOWN_HEIGHTS[tags.name] ?? ESTIMATED_POST_2014[tags.name];
   if (known) return known;
   const explicit = parseFloat(tags.height);
   /* Clamp raised from 60 m: the Eighth College tower (Sankofa) really is the
@@ -205,6 +253,106 @@ function heightOf(tags, area) {
    ids. Junctions mid-way matter too, so the runtime splits on any repeated
    vertex, not just the two ends. */
 const keyOf = (pt) => `${pt[0]},${pt[1]}`;
+
+/* Names corrected at intake, because the label a student reads comes from the
+   OSM name and these are the ones OSM gets wrong (zone audit 2026-08-03):
+   - "Pangea" is the parking structure; the buildings under this label are the
+     Marshall lower apartments, which no student has ever called Pangea.
+   - "64 North" is the venue's own signage; "Sixty Four North" is nobody's.
+   - CMRR was renamed by the university (Memory, not Magnetic — the facilities
+     data in this repo already carries the current name).
+   - Thornton has been "Jacobs Medical Center — Thornton Pavilion" since 2016.
+   - "Lodge" gets the GIS name; a bare "Lodge" is ambiguous campus-wide.
+   - "Otterson Hall Rady School of Management" / "Engineering II" become the
+     names students actually search for. */
+const RENAMES = {
+  "Pangea Residence Halls": "Marshall Lower Apartments",
+  "Sixty Four North": "64 North",
+  "Center for Magnetic Recording Research": "Center for Memory and Recording Research",
+  "The John M and Sally B Thornton Hospital": "Thornton Pavilion",
+  "Lodge": "Pepper Canyon Apartments Lodge",
+  "Otterson Hall Rady School of Management": "Otterson Hall",
+  "Engineering II": "Engineering Building Unit 2 (EBU2)",
+};
+
+/* The Pepper Canyon apartment blocks are OSM-named as bare numbers ("400",
+   "1800"). A student says "Pepper Canyon 400", and the university GIS name is
+   a superstring of the number — so the prefix goes on at build time. Scoped
+   to the Pepper Canyon parcel so a numeric name elsewhere is left alone. */
+const PC_APARTMENTS = { x0: 940, x1: 1110, z0: -150, z1: 100 };
+function fixName(name, ring) {
+  if (!name) return name;
+  if (RENAMES[name]) return RENAMES[name];
+  if (/^\d+$/.test(name) && ring) {
+    const c = centroid(ring);
+    if (c[0] > PC_APARTMENTS.x0 && c[0] < PC_APARTMENTS.x1 &&
+        c[1] > PC_APARTMENTS.z0 && c[1] < PC_APARTMENTS.z1) {
+      return `Pepper Canyon Apartments ${name}`;
+    }
+  }
+  return name;
+}
+
+/* A structure that is entirely below grade must not extrude. The Scholars
+   Parking Structure is the canonical case: OSM tags it building=parking +
+   location=underground + layer=-1, the 2014 LiDAR "measures" 5.9 m of the old
+   Camp Matthews surface, and the result was a solid slab across the whole
+   Sixth College lawn — the open green half the college hangs out on. */
+const isUnderground = (tags) =>
+  tags.location === "underground" ||
+  tags.parking === "underground" ||
+  (tags.building === "parking" && parseFloat(tags.layer) < 0);
+
+/* Footprints removed ON PURPOSE, keyed by centroid because they are unnamed
+   (so no LiDAR referee ever applies) and way ids churn. Two 4-vertex OSM
+   "buildings" stand in the open P206 parking lot east of Mandeville; the 2025
+   satellite chunk and Street View both show bare striped stalls — likely
+   pre-mapping of planned solar canopies. Verified 2026-08-03. */
+const EXCLUDED_BUILDING_ANCHORS = [
+  [273.0, 23.1],
+  [293.6, 22.9],
+];
+const isExcludedBuilding = (ring) => {
+  const c = centroid(ring);
+  return EXCLUDED_BUILDING_ANCHORS.some((a) => Math.hypot(c[0] - a[0], c[1] - a[1]) < 12);
+};
+
+/* Anchors a student navigates by that no single OSM footprint carries: the
+   college-level names (anchored on member buildings), the trolley station
+   platform (no building to hang a name on), and the underground Scholars
+   garage whose footprint is deliberately not extruded above. */
+const SEEDED_PLACES = {
+  "Thurgood Marshall College": { x: -160, z: -590 },
+  "Eleanor Roosevelt College": { x: -69.5, z: -655.3 },
+  "International House": { x: -75.6, z: -688 },
+  "Eighth College": { x: -99.4, z: 608.5 },
+  "UC San Diego Central Campus Trolley Station": { x: 875, z: -75 },
+  "Scholars Parking Structure": { x: -36.1, z: -259.4 },
+};
+
+/** Stitch a multipolygon relation's outer members into closed rings (already
+    projected). Members arrive as open or closed polylines; joining shared
+    endpoints rebuilds each outer loop. Inner rings (courtyards) are dropped —
+    buildings ship as single rings, same as every way-sourced footprint. */
+function stitchOuters(members) {
+  const segs = members
+    .filter((m) => m.role === "outer" && m.geometry?.length >= 2)
+    .map((m) => m.geometry.map((g) => project(g.lat, g.lon)));
+  const rings = [];
+  while (segs.length) {
+    let ring = segs.shift();
+    let guard = 0;
+    while (keyOf(ring[0]) !== keyOf(ring[ring.length - 1]) && guard++ < 400) {
+      const end = keyOf(ring[ring.length - 1]);
+      const idx = segs.findIndex((s) => keyOf(s[0]) === end || keyOf(s[s.length - 1]) === end);
+      if (idx === -1) break;
+      const s = segs.splice(idx, 1)[0];
+      ring = ring.concat((keyOf(s[0]) === end ? s : s.slice().reverse()).slice(1));
+    }
+    if (keyOf(ring[0]) === keyOf(ring[ring.length - 1]) && ring.length >= 4) rings.push(ring.slice(0, -1));
+  }
+  return rings;
+}
 
 /* Ways removed from the network ON PURPOSE. These are dropped at build time so
    a future rebuild cannot quietly resurrect them, and the router simply never
@@ -246,8 +394,13 @@ function build(elements) {
   const paths = [];
   const surfaces = [];
   const looseParts = [];
+  const relations = [];
 
   for (const el of elements) {
+    if (el.type === "relation" && el.tags?.building && el.members?.length) {
+      relations.push(el); // processed after ways, so nesting can be checked
+      continue;
+    }
     if (el.type !== "way" || !el.geometry?.length) continue;
     if (EXCLUDED_WAYS.has(el.id)) continue;
     const tags = el.tags || {};
@@ -270,13 +423,17 @@ function build(elements) {
     }
 
     if (tags.building) {
+      if (isUnderground(tags)) continue; // below grade — nothing to extrude
+      if (DEMOLISHED.has(tags.name)) continue; // stood in 2014, gone today
       // Closed ring; drop the duplicated last vertex OSM uses to close it.
       const ring = pts.slice(0, -1);
       if (ring.length < 3) continue;
+      if (isExcludedBuilding(ring)) continue;
       const area = areaOf(ring);
       if (area < MIN_FOOTPRINT_M2) continue;
       const b = { h: heightOf(tags, area), p: ring };
-      if (tags.name) b.n = tags.name;
+      const name = fixName(tags.name, ring);
+      if (name) b.n = name;
       buildings.push(b);
     } else if (tags.amenity === "fountain" || tags.natural === "water") {
       /* Revelle Plaza's fountain is the thing you actually steer by when you
@@ -325,6 +482,32 @@ function build(elements) {
     }
     return ins;
   };
+
+  /* Relation-mapped buildings, after every way so nesting can be checked.
+     Per relation: the largest outer ring carries the name (one place anchor
+     per name, and the LiDAR pass measures the named ring), smaller outers
+     ship unnamed. A ring whose centroid already sits inside a shipped
+     footprint is nested mapping (roof furniture on a garage) and is dropped. */
+  let relRings = 0;
+  for (const el of relations) {
+    const tags = el.tags || {};
+    if (isUnderground(tags)) continue;
+    if (DEMOLISHED.has(tags.name)) continue;
+    const rings = stitchOuters(el.members)
+      .filter((r) => areaOf(r) >= MIN_FOOTPRINT_M2 && !isExcludedBuilding(r))
+      .sort((a, b) => areaOf(b) - areaOf(a));
+    rings.forEach((ring, i) => {
+      const c = centroid(ring);
+      if (buildings.some((b) => inRing(c, b.p))) return;
+      const b = { h: heightOf(tags, areaOf(ring)), p: ring };
+      const name = i === 0 ? fixName(tags.name, ring) : null;
+      if (name) b.n = name;
+      buildings.push(b);
+      relRings++;
+    });
+  }
+  if (relations.length) console.log(`  ${relRings} rings from ${relations.length} building relations`);
+
   let attached = 0;
   for (const part of looseParts) {
     const c = centroid(part.p);
@@ -361,6 +544,12 @@ function build(elements) {
     places[p.n] = { x: c[0], z: c[1] };
   }
 
+  /* Hand-seeded anchors last, and only where no real footprint claimed the
+     name — these fill wayfinding gaps, they never override the map. */
+  for (const [n, pt] of Object.entries(SEEDED_PLACES)) {
+    if (!places[n]) places[n] = { x: pt.x, z: pt.z };
+  }
+
   return {
     _: "Generated by scripts/build-campus-3d.mjs from OpenStreetMap (ODbL). Do not hand-edit.",
     origin: { lat: LAT0, lng: LNG0, mPerDegLat: M_PER_DEG_LAT, mPerDegLng: round1(M_PER_DEG_LNG) },
@@ -391,9 +580,45 @@ async function main() {
   if (CHECK) {
     if (!existsSync(OUT)) { console.error("missing", OUT); process.exit(1); }
     const data = JSON.parse(readFileSync(OUT, "utf8"));
-    const need = ["Argo Hall", "Peterson Hall"];
+    /* Otterson and the Faculty Club are relation-mapped in OSM — if either
+       vanishes, the relation pull regressed to the ways-only extraction that
+       shipped a campus with no Rady School. */
+    const need = ["Argo Hall", "Peterson Hall", "Otterson Hall", "Ida and Cecil Green Faculty Club"];
     const missing = need.filter((n) => !data.places[n]);
     if (missing.length) { console.error("missing anchors:", missing.join(", ")); process.exit(1); }
+    /* The verified phantoms must stay gone: the underground Scholars garage
+       (Sixth College lawn) and the two boxes in the open P206 lot. */
+    const inRingChk = (pt, ring) => {
+      let ins = false;
+      for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+        const [xi, zi] = ring[i];
+        const [xj, zj] = ring[j];
+        if (zi > pt[1] !== zj > pt[1] && pt[0] < ((xj - xi) * (pt[1] - zi)) / (zj - zi) + xi) ins = !ins;
+      }
+      return ins;
+    };
+    for (const spot of [[-36.1, -259.4], ...EXCLUDED_BUILDING_ANCHORS]) {
+      const hit = data.buildings.find((b) => inRingChk(spot, b.p));
+      if (hit) {
+        console.error(`phantom footprint back at (${spot}): ${hit.n || "unnamed"} h=${hit.h}`);
+        process.exit(1);
+      }
+    }
+    /* Demolished buildings must stay demolished, and an under-construction
+       site must never quietly revert to its finished-project height. */
+    for (const n of DEMOLISHED) {
+      if (data.buildings.some((b) => b.n === n)) {
+        console.error(`demolished building back on the map: ${n}`);
+        process.exit(1);
+      }
+    }
+    for (const [n, h] of Object.entries(UNDER_CONSTRUCTION)) {
+      const b = data.buildings.find((x) => x.n === n);
+      if (b && b.h !== h) {
+        console.error(`${n} shipped at ${b.h} m; the documented build state is ${h} m`);
+        process.exit(1);
+      }
+    }
     const stray = data.paths.filter((p) => matchesExcludedAnchors(p.p));
     if (stray.length) {
       console.error(

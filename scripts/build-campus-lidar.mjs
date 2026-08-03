@@ -65,6 +65,52 @@ const TERRAIN_CELL = 3;
    vegetation rather than a kerb or a parked car. */
 const TREE_MIN_HEIGHT = 3.5;
 
+/* THE EPOCH RULE, ENFORCED. The flight is from 2014; a footprint whose
+   building went up after it still collects returns — from the trees, lots and
+   older structures that stood there — and those "measurements" shipped whole
+   neighbourhoods at bungalow height (NTPLLN, 2020, "measured" 6-10 m) or
+   inflated a low pavilion to the height of the trees it replaced (The
+   Jeannie, "18.2 m"). LiDAR must never claim to have measured a building
+   that did not exist, so these names emit NO height and NO part heights;
+   the renderer falls through to the OSM/GIS value. */
+const POST_2014_SITES = new Set([
+  // NTPLLN (2020) + neighbours
+  "Mosaic", "Tapestry", "Catalyst", "The Jeannie", "Kaleidoscope",
+  "Social Sciences Public Engagement Building", "Arts and Humanities",
+  "Design & Innovation Building", "Franklin Antonio Hall",
+  // Theatre District LLN (2023)
+  "Pulse", "Sankofa", "Podemos", "Azad",
+  // Pepper Canyon West (2023)
+  "Rya", "Vela",
+  // Ridge Walk North LLN / Eighth College (2023)
+  "Alianza", "Umoja", "Coalition", "Malk Hall",
+  // East Campus (2024)
+  "Viterbi Family Vision Research Center",
+  // Triton Center (still under construction 2026): the 2014 returns here are
+  // off the DEMOLISHED predecessor block, which is the same lie twice over.
+  "The Strauss", "Student Success Building",
+  "Student Health and Well-Being Building", "Triton Alumni and Welcome Center",
+]);
+
+/* Hand-audited stats where the automatic roofOf() percentile choice is
+   demonstrably wrong for a PRE-2014 building (verified against a targeted
+   re-sample of the same EPT, 2026-08-03):
+   - Tenaya Hall: tower roof plane p98 27.6 (max 28.0); roofOf's tree-guard
+     took p75 = the low wing and shipped 22.4.
+   - Mandeville Center: auditorium fly volume p98 20.9; p75 = the gallery
+     roofs shipped 10.7.
+   - Faculty Club: gable ridge ~6.5 at p90; p98 12.4 is overhanging
+     eucalyptus, and the tree-guard's p75 4.6 misses the ridge.
+   - Stewart Commons Annex: null — the 16 m stat was LiDAR bleed from the
+     Tenaya tower over a 1-storey service sliver.
+   A null here means "measured, but not trustworthy: emit nothing". */
+const HAND_AUDITED = {
+  "Tenaya Hall": 27.6,
+  "Mandeville Center": 20.9,
+  "Ida and Cecil Green Faculty Club": 6.5,
+  "Stewart Commons Annex": null,
+};
+
 const R = 6378137;
 const toX = (lng) => (lng * Math.PI * R) / 180;
 const toY = (lat) => R * Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360));
@@ -373,12 +419,20 @@ async function build() {
        and the old cap silently dropped the tallest building on campus. */
     if (h < 2 || h > 90) continue;
     measured.push({ n: t.name, h, pts: t.roofs.length });
-    if (t.name) heights[t.name] = h;
+    if (!t.name) continue;
+    if (POST_2014_SITES.has(t.name)) continue; // building postdates the flight
+    if (t.name in HAND_AUDITED) {
+      if (HAND_AUDITED[t.name] !== null) heights[t.name] = HAND_AUDITED[t.name];
+      continue;
+    }
+    heights[t.name] = h;
   }
   /* Parts share their host's grade — a tower wing and its podium stand on
      the same ground even when the wing's own perimeter is all rooftop. */
   for (const t of targets) {
     if (t.isHost || t.roofs.length < 12) continue;
+    const hostName = campus.buildings[t.bi]?.n;
+    if (hostName && POST_2014_SITES.has(hostName)) continue; // same epoch rule
     const base = baseByBuilding.get(t.bi) ?? rimBase(t.ring);
     if (base === null) continue;
     const h = Math.round((roofOf(t.roofs) - base) * 10) / 10;
