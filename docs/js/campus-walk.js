@@ -14,6 +14,7 @@ import { THREE } from "./campus-world.js";
 import { buildGraph, routeThrough } from "./campus-route.js";
 import { createBuildings } from "./campus-massing.js";
 import { createLabels, createLandmarks } from "./campus-landmarks.js";
+import { createMinimap } from "./campus-minimap.js";
 import {
   createExplore, scaleAtmosphere, EYE, sliderToSpeed, speedToSlider,
 } from "./campus-explore.js";
@@ -46,6 +47,7 @@ const state = {
 let scene, camera, renderer, route, campus, lidar, heightAt, walker, explore, landmarks = [];
 let massInfo = new Map(); // building name -> { x, z, topY, h } from the massing
 let labels = null;
+let minimap = { update() {} };
 
 /* --------------------------------------------------------------- geometry */
 
@@ -401,6 +403,8 @@ function frame(now) {
   state.lastTime = now;
   update(dt);
   labels?.update(camera);
+  if (state.mode === "free") minimap.update(explore.x, explore.z, explore.yaw);
+  else { const p = sampleRoute(state.s); minimap.update(p.x, p.z, p.heading + state.yaw); }
   adapt(dt);
   renderer.render(scene, camera);
 }
@@ -484,6 +488,7 @@ export async function boot() {
   const trees = world.createTrees(scene, lidar, heightAt);
 
   labels = createLabels(scene, massInfo);
+  minimap = createMinimap(document.getElementById("walk-minimap"), { colors, lidar, route });
   let landmarksGroup = null;
   if (landmarkData) {
     landmarksGroup = createLandmarks(scene, landmarkData, {
@@ -553,7 +558,14 @@ export async function boot() {
      passes a fraction of it. */
   const tp = document.getElementById("walk-teleport");
   if (tp) {
-    for (const name of Object.keys(placeable).sort()) {
+    /* NAMES only. The full-campus OSM pull brought in address-labelled
+       buildings ("965 University Center", "3750 Convoy Street") that filled
+       the menu with what read as random numbers. A teleport destination is a
+       place a student can SAY. */
+    const sayable = Object.keys(placeable)
+      .filter((n) => /[a-zA-Z].*[a-zA-Z].*[a-zA-Z]/.test(n) && !/^\d/.test(n))
+      .sort();
+    for (const name of sayable) {
       const opt = document.createElement("option");
       opt.value = name;
       opt.textContent = name;
@@ -616,6 +628,10 @@ export async function boot() {
     },
     places: () => campus.places,
   };
+
+  /* Free roam is the DEFAULT: the campus is the product now, and the rail
+     is one tour of it. "Back to the walk" (or R) starts the guided walk. */
+  setMode("free");
 
   state.lastTime = performance.now();
   frame(performance.now());

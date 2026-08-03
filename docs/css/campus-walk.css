@@ -204,3 +204,16 @@ html, body {
 }
 .walk-speedbox input[type="range"] { width: 110px; accent-color: #ffcd00; }
 #walk-speed-val { font-variant-numeric: tabular-nums; min-width: 56px; opacity: 0.9; }
+
+/* The minimap: the aerial photo with you on it. Quiet corner instrument. */
+#walk-minimap {
+  position: fixed;
+  right: 14px;
+  bottom: 64px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: #20262b;
+  opacity: 0.92;
+  border-radius: 3px;
+  z-index: 5;
+}
+@media (max-width: 780px) { #walk-minimap { display: none; } }

@@ -22,7 +22,7 @@ const HOVER_MAX = 900; // the whole 3 km campus fits in frame from up here
    (1–2 m/s) need fine control and drone speeds do not, and a linear slider
    spends 97% of its travel on speeds nobody can steer at. */
 const SPEED_MIN = 0.6;
-const SPEED_RATIO = 100; // max = min * ratio
+const SPEED_RATIO = 250; // max = min * ratio -> 150 m/s at full slider
 export const sliderToSpeed = (t) => SPEED_MIN * Math.pow(SPEED_RATIO, Math.max(0, Math.min(1, t)));
 export const speedToSlider = (v) => Math.log(v / SPEED_MIN) / Math.log(SPEED_RATIO);
 
