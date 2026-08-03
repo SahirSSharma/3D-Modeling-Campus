@@ -1,26 +1,21 @@
 // The two roofs that make the Muir athletics zone recognisable from the air.
 //
 // From the ground, Main Gym and the Natatorium are two flat-topped boxes; from
-// any overlook — and in every aerial of this campus — they are the opposite of
-// flat. Main Gym is a field of eleven pale barrel vaults running east to west,
-// each one separated from the next by a hard shadow line, the whole field cut
-// twice by a thin transverse walkway. The Natatorium is a weathered grey-green
-// deck with a white structural skylight punched through the middle, and under
-// that glass the pool reads straight through: banded light and dark blue, lap
-// lanes running north to south.
+// any overlook they are the opposite of flat. Main Gym is a field of pale
+// barrel vaults running east to west, each cut from the next by a hard shadow
+// line and a T-flange cap, the whole field crossed twice by a transverse
+// walkway. The Natatorium is a weathered grey-green deck with a white
+// structural skylight punched through the middle, pool reading straight
+// through: banded light and dark blue, lap lanes running north to south.
 //
-// Neither is modelled anywhere in the university's data. The facilities
-// massing gives both buildings as single extrusions (and reconciles the
-// Natatorium up to Main Gym's LiDAR height, since OSM draws the two as one
-// footprint joined by a link corridor). So this module works the other way
-// round: it SPLITS that joined footprint at its neck, then builds the two
-// signature roofs onto the blocks it recovers.
+// Neither is modelled anywhere in the university's data — both buildings ship
+// as one joined extrusion over a link corridor — so this module SPLITS that
+// footprint at its neck, then builds the two signature roofs it recovers.
 //
-// Every colour below is a median of a pixel rect on a Google aerial — the
-// rects are named in the constant comments so the next person can re-measure.
-// athleticsSpec() is pure data in, data out, so the tests run the same
-// placement the renderer does; createAthletics() turns it into three merged
-// draw calls.
+// Every colour is a median of a pixel rect on a Google aerial, named in the
+// constant comments so the next person can re-measure. athleticsSpec() is
+// pure data in, data out, so the tests run the same placement the renderer
+// does; createAthletics() turns it into three merged draw calls.
 import * as THREE from "../vendor/three/three.module.min.js";
 
 /* Sampled from two aerials: the Main Gym roof closeup (884x846) and the
@@ -48,6 +43,18 @@ const VAULT_SEG = 8;
 const VAULT_INSET = 0.7; // fascia strip at the gable ends
 const WALKWAY_AT = [0.16, 0.82];
 const WALKWAY_W = 1.5;
+/* The roof alternates CRISPLY, edges anti-phase: deep on one edge runs near
+   full to the other, its neighbour flips. Deep cycles i%3, shallow i%2 —
+   period-6 beat, ≥4 vault lengths distinct, no RNG/Date. */
+const DEEP_INSET = [4.6, 5.4, 6.0]; // m, cycles by i % 3
+const SHALLOW_INSET = [0.2, 0.6]; // m, cycles by i % 2
+const startInset = (i) => (i % 2 === 0 ? DEEP_INSET[i % 3] : SHALLOW_INSET[i % 2]);
+const endInset = (i) => (i % 2 === 0 ? SHALLOW_INSET[i % 2] : DEEP_INSET[i % 3]);
+const FLANGE_OUT = 2.4, FLANGE_IN = 1.0, FLANGE_WIDEN = 0.9; // m — dominant flat-topped T-cap
+function endFlange(v, edge, dir, rMin, rMax) {
+  const from = dir > 0 ? edge - FLANGE_IN : edge - FLANGE_OUT, to = dir > 0 ? edge + FLANGE_OUT : edge + FLANGE_IN;
+  return { at: v.at, from: Math.max(rMin, from), to: Math.min(rMax, to), halfW: v.halfW + FLANGE_WIDEN };
+}
 
 /* Natatorium closeup, roof bbox 199,180-1072,894 at 21.5 px/m: the skylight's
    fourteen ribs run 359..900 px across and 300..770 px down, centred both
@@ -209,32 +216,32 @@ function vaultField(block) {
      flips on a metre of noise; prefer east-west unless the footprint is
      decisively deeper than wide. */
   const alongX = w >= d - 3;
-  const span = alongX ? d : w;      // across the vaults
-  const length = alongX ? w : d;    // along one vault
+  const span = alongX ? d : w; // across the vaults
   const count = Math.min(13, Math.max(9, Math.round(span / VAULT_PITCH)));
   const pitch = span / count;
   const rise = pitch * VAULT_RISE;
-  const from = (alongX ? r.x0 : r.z0) + VAULT_INSET;
-  const to = (alongX ? r.x1 : r.z1) - VAULT_INSET;
+  const rectMin = alongX ? r.x0 : r.z0, rectMax = alongX ? r.x1 : r.z1;
+  const axisMin = rectMin + VAULT_INSET, axisMax = rectMax - VAULT_INSET;
   const base = alongX ? r.z0 : r.x0;
+  const cap = 0.4 * (axisMax - axisMin); // never shrink a vault below 60% of the envelope
 
   const vaults = [];
   for (let i = 0; i < count; i++) {
-    vaults.push({ at: base + (i + 0.5) * pitch, halfW: pitch / 2 - 0.12, from, to });
+    let s = startInset(i), e = endInset(i);
+    if (s + e > cap) { const k = cap / (s + e); s *= k; e *= k; }
+    const at = base + (i + 0.5) * pitch, halfW = pitch / 2 - 0.12, from = axisMin + s, to = axisMax - e;
+    const flanges = [endFlange({ at, halfW }, from, -1, rectMin, rectMax), endFlange({ at, halfW }, to, 1, rectMin, rectMax)];
+    vaults.push({ at, halfW, from, to, flanges });
   }
   return {
     rect: r,
     axis: alongX ? "x" : "z",
-    count,
-    pitch,
-    rise,
-    length: to - from,
-    span,
-    vaults,
-    walkways: WALKWAY_AT.map((t) => ({ at: from + t * (to - from), width: WALKWAY_W })),
+    count, pitch, rise, span, vaults,
+    length: axisMax - axisMin,
+    walkways: WALKWAY_AT.map((t) => ({ at: axisMin + t * (axisMax - axisMin), width: WALKWAY_W })),
     /* How much of the real footprint the vault field lands on. Under 0.7 and
        the field has slid off the building; over 1.6 and it has run past it. */
-    coverage: ((to - from) * span) / block.area,
+    coverage: ((axisMax - axisMin) * span) / block.area,
     area: block.area,
   };
 }
@@ -376,6 +383,10 @@ function addVault(soup, v, { axis, rise }, y, colors) {
       soup.tri(c, flip ? b : a, flip ? a : b, colors.vaultFlank);
     }
   }
+  const capY1 = y + rise; // T-flange top flush with the crest — flat bright top vs. the falling
+  // curve is what makes the T read from above; box() needs no axis-swap
+  for (const f of v.flanges || [])
+    soup.box(...(axis === "x" ? [f.from, f.at - f.halfW, f.to, f.at + f.halfW] : [f.at - f.halfW, f.from, f.at + f.halfW, f.to]), y, capY1, colors.vault);
 }
 
 /**

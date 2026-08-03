@@ -125,3 +125,48 @@ test("the massing ring is used for the block it actually covers", () => {
 test("the spec is deterministic", () => {
   assert.deepEqual(athleticsSpec(campus), spec);
 });
+
+test("vault lengths vary — the roof is not eleven identical bars", () => {
+  const lengths = spec.gym.vaults.map((v) => +(v.to - v.from).toFixed(3));
+  const distinct = new Set(lengths);
+  assert.ok(distinct.size >= 4, `only ${distinct.size} distinct vault lengths: ${lengths.join(", ")}`);
+});
+
+test("every vault ends in a T-flange cap, wider than the vault and short", () => {
+  const g = spec.gym;
+  const r = g.rect;
+  const [rMin, rMax] = g.axis === "x" ? [r.x0, r.x1] : [r.z0, r.z1];
+  for (const v of g.vaults) {
+    assert.equal(v.flanges.length, 2, "a vault does not have exactly two flanges");
+    for (const f of v.flanges) {
+      assert.ok(f.halfW > v.halfW, "a flange is not wider than its vault");
+      const run = f.to - f.from;
+      assert.ok(run > 0 && run <= 4, `flange run ${run.toFixed(2)}m is not a short cap`);
+      assert.ok(f.from >= rMin - 0.01 && f.to <= rMax + 0.01, "a flange runs off the block rect");
+    }
+  }
+});
+
+test("the vault field is deterministic across calls", () => {
+  const a = athleticsSpec(campus).gym.vaults;
+  const b = athleticsSpec(campus).gym.vaults;
+  assert.deepEqual(a, b, "the same roof should build every visit");
+});
+
+test("the stagger rhythm is bounded and actually reads as alternating in/out", () => {
+  const g = spec.gym;
+  const axisMin = Math.min(...g.vaults.map((v) => v.from));
+  const axisMax = Math.max(...g.vaults.map((v) => v.to));
+  const startInsets = g.vaults.map((v) => v.from - axisMin);
+  const endInsets = g.vaults.map((v) => axisMax - v.to);
+  for (const inset of [...startInsets, ...endInsets]) {
+    assert.ok(inset >= -0.01 && inset <= 7.01, `stagger inset ${inset.toFixed(2)}m is outside the 0-7m rhythm`);
+  }
+  assert.ok(
+    startInsets.some((s) => s >= 2) || endInsets.some((e) => e >= 2),
+    "no vault end is inset enough for the rhythm to actually read"
+  );
+  for (const v of g.vaults) {
+    assert.ok(v.to - v.from >= 0.6 * g.length, "a vault shrank below 60% of the envelope");
+  }
+});
