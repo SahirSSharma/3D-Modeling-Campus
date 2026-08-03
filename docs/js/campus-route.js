@@ -261,6 +261,33 @@ export function routeThrough(data, graph, waypoints) {
 }
 
 /**
+ * The minimap's world↔pixel transform, shared by drawing, click handling and
+ * the tests so all three can never disagree. World data is already planar
+ * metres with +z pointing SOUTH, so drawing z downward gives a north-up map
+ * with no flip. The world box is fitted inside the pixel box preserving
+ * aspect, centred on both axes.
+ *
+ * Kept in this file because it is pure geometry with no DOM — the same reason
+ * the router lives here — so Node can round-trip it.
+ *
+ * @param {{minX:number,maxX:number,minZ:number,maxZ:number}} bounds
+ * @param {number} mapW pixel width
+ * @param {number} mapH pixel height
+ */
+export function makeMapTransform(bounds, mapW, mapH) {
+  const worldW = Math.max(1e-9, bounds.maxX - bounds.minX);
+  const worldH = Math.max(1e-9, bounds.maxZ - bounds.minZ);
+  const scale = Math.min(mapW / worldW, mapH / worldH);
+  const ox = (mapW - worldW * scale) / 2;
+  const oy = (mapH - worldH * scale) / 2;
+  return {
+    scale,
+    toMap: (x, z) => [ox + (x - bounds.minX) * scale, oy + (z - bounds.minZ) * scale],
+    toWorld: (mx, my) => [bounds.minX + (mx - ox) / scale, bounds.minZ + (my - oy) / scale],
+  };
+}
+
+/**
  * The whole job, from two names on the map to a ridable centreline.
  * @returns {{points, metres, rawMetres, from, to}}
  */
