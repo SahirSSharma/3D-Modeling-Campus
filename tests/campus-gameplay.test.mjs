@@ -30,6 +30,9 @@ const { buildGraph, routeBetween, routeThrough, makeMapTransform } = await impor
 const { SPAWN_ALTITUDE_M, MAX_SPEED_MPS } = await import(
   path.join(ROOT, "docs/js/campus-walk.js")
 );
+const { createExplore, sliderToSpeed } = await import(
+  path.join(ROOT, "docs/js/campus-explore.js")
+);
 
 const GRAPH = buildGraph(CAMPUS);
 
@@ -134,24 +137,48 @@ describe("spawn altitude and speed cap are the promised numbers", () => {
   test("the spawn hangs 110 m over Argo Hall", () => {
     assert.equal(SPAWN_ALTITUDE_M, 110);
     assert.ok(CAMPUS.places["Argo Hall"], "Argo Hall must exist to spawn over");
-    /* The runtime must actually use the constant against ground height —
-       pinned to the source so a hardcoded copy cannot drift. */
+    /* Free roam holds `hover` metres over the ground beneath you, so the
+       spawn IS ground-at-Argo + SPAWN_ALTITUDE_M. Pinned to the source so a
+       hardcoded copy cannot drift: boot must enter at Argo and set the hover
+       from the constant. */
     const src = readFileSync(path.join(ROOT, "docs/js/campus-walk.js"), "utf8");
-    assert.match(src, /heightAt\(argo\.x,\s*argo\.z\)\s*\+\s*SPAWN_ALTITUDE_M/,
-      "spawn y must be ground at Argo + SPAWN_ALTITUDE_M");
+    assert.match(src, /explore\.enterAt\(argo\.x,\s*argo\.z/,
+      "boot must spawn free roam at Argo Hall");
+    assert.match(src, /explore\.hover\s*=\s*SPAWN_ALTITUDE_M/,
+      "spawn height must come from SPAWN_ALTITUDE_M, not a copy of it");
   });
 
-  test("top speed is exactly 250 m/s and the curve is capped by it", () => {
+  test("top speed is exactly 250 m/s, reachable, and a hard cap", () => {
     assert.equal(MAX_SPEED_MPS, 250);
-    const src = readFileSync(path.join(ROOT, "docs/js/campus-walk.js"), "utf8");
-    const uses = src.match(/MAX_SPEED_MPS/g) || [];
-    assert.ok(uses.length >= 2, "MAX_SPEED_MPS must be used, not just exported");
+    /* Reachable: the slider's top IS the cap. */
+    assert.ok(Math.abs(sliderToSpeed(1) - MAX_SPEED_MPS) < 1e-9,
+      `full slider gives ${sliderToSpeed(1)} m/s, not ${MAX_SPEED_MPS}`);
+    /* A cap: shift on top of the full slider must not pass it. One second of
+       simulated movement may cover at most MAX_SPEED_MPS metres. */
+    const flat = { x0: -5000, z0: -5000, cell: 10, cols: 1001, rows: 1001 };
+    const ex = createExplore({
+      campus: { places: {} },
+      lidar: { terrain: flat },
+      heightAt: () => 0,
+    });
+    ex.enterAt(0, 0, 0);
+    ex.speed = sliderToSpeed(1);
+    const held = new Set(["w", "shift"]);
+    let travelled = 0;
+    for (let i = 0; i < 100; i++) {
+      const before = { x: ex.x, z: ex.z };
+      ex.update(0.01, held);
+      travelled += Math.hypot(ex.x - before.x, ex.z - before.z);
+    }
+    assert.ok(travelled <= MAX_SPEED_MPS + 1e-6,
+      `shift at full slider covered ${travelled.toFixed(1)} m in 1 s — the cap leaks`);
+    assert.ok(travelled > MAX_SPEED_MPS * 0.99,
+      `full slider only covered ${travelled.toFixed(1)} m in 1 s — 250 is not reachable`);
   });
 
   test("walking pace on the ground is untouched", () => {
     const src = readFileSync(path.join(ROOT, "docs/js/campus-walk.js"), "utf8");
     assert.match(src, /WALK_SPEED = 1\.45/);
-    assert.match(src, /FAST_SPEED = 4\.2/);
   });
 });
 

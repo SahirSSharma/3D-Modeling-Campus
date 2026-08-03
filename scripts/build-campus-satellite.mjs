@@ -12,7 +12,7 @@
 //                                    Mercator tiles onto the site's local
 //                                    metre grid, cut on the same chunk grid
 //                                    the renderer cuts the terrain mesh on
-//                                    (docs/js/campus-ground.js is the single
+//                                    (docs/js/campus-terrain.js is the single
 //                                    source of that rule).
 //
 //   docs/data/textures/manifest.json each chunk's exact local-space rect.
@@ -34,7 +34,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   chunkGrid, pointInRings, rectIntersectsRings,
-} from "../docs/js/campus-ground.js";
+} from "../docs/js/campus-terrain.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BOUNDARY_OUT = path.join(ROOT, "docs/data/campus-boundary.json");
@@ -44,6 +44,36 @@ const CHECK = process.argv.includes("--check");
 
 const CAMPUS = JSON.parse(fs.readFileSync(path.join(ROOT, "docs/data/campus-3d.json"), "utf8"));
 const LIDAR = JSON.parse(fs.readFileSync(path.join(ROOT, "docs/data/campus-lidar.json"), "utf8"));
+/* Optional: the NAIP colour grid. Outside the boundary the chunk pixels are
+   painted with it, so a chunk that straddles the boundary blends into the
+   NAIP-coloured terrain around it instead of ringing the campus in flat
+   invented green. Absent, the flat colour is the fallback. */
+let NAIP = null;
+try {
+  const colors = JSON.parse(
+    fs.readFileSync(path.join(ROOT, "docs/data/campus-colors.json"), "utf8")
+  );
+  if (colors?.terrain?.idx) {
+    const ct = colors.terrain;
+    NAIP = {
+      ...ct,
+      idx: Uint8Array.from(Buffer.from(ct.idx, "base64")),
+      rgb: ct.palette.map((hex) => [
+        parseInt(hex.slice(1, 3), 16),
+        parseInt(hex.slice(3, 5), 16),
+        parseInt(hex.slice(5, 7), 16),
+      ]),
+    };
+  }
+} catch { /* no colour grid in this checkout */ }
+
+function outsideFill(x, z) {
+  if (!NAIP) return GROUND_RGB;
+  const cc = Math.max(0, Math.min(NAIP.cols - 1, Math.round((x - NAIP.x0) / NAIP.cell)));
+  const rr = Math.max(0, Math.min(NAIP.rows - 1, Math.round((z - NAIP.z0) / NAIP.cell)));
+  const k = NAIP.idx[rr * NAIP.cols + cc];
+  return k === 255 ? GROUND_RGB : NAIP.rgb[k] || GROUND_RGB;
+}
 const { lat: LAT0, lng: LNG0, mPerDegLat: M_LAT, mPerDegLng: M_LNG } = CAMPUS.origin;
 
 /* Local metres <-> WGS84, the same flat projection the data was built with. */
@@ -353,7 +383,8 @@ async function buildChunk(sharp, chunk, zoom, rings, key) {
       let inside = false;
       for (let i = 0; i < cuts.length && cuts[i] < x; i++) inside = !inside;
       if (!inside) {
-        out[o] = GROUND_RGB[0]; out[o + 1] = GROUND_RGB[1]; out[o + 2] = GROUND_RGB[2];
+        const [fr, fg, fb] = outsideFill(x, z);
+        out[o] = fr; out[o + 1] = fg; out[o + 2] = fb;
         continue;
       }
       const sxx = sx[px];
@@ -398,10 +429,18 @@ async function build() {
   }
 
   fs.mkdirSync(TEX_DIR, { recursive: true });
+  /* Old chunk files from a previous grid must not survive as orphans. */
+  for (const f of fs.readdirSync(TEX_DIR)) {
+    if (f.startsWith("chunk_")) fs.unlinkSync(path.join(TEX_DIR, f));
+  }
   const fine = fineAreas();
   const chunks = chunkGrid(LIDAR.terrain);
   const manifest = [];
   for (const chunk of chunks) {
+    /* Chunks that never touch the boundary polygon get no imagery at all —
+       the renderer keeps its NAIP-coloured terrain there. Only intersecting
+       chunks are built and listed. */
+    if (!rectIntersectsRings(chunk.x0, chunk.z0, chunk.x1, chunk.z1, rings)) continue;
     const rect = [chunk.x0, chunk.z0, chunk.x1, chunk.z1];
     const zoom = fine.some((a) => rectsTouch(a, rect)) ? FINE_ZOOM : BASE_ZOOM;
     const entry = await buildChunk(sharp, chunk, zoom, rings, key);
@@ -439,9 +478,20 @@ function check() {
   const [f, l] = [pts[0], pts[pts.length - 1]];
   if (f[0] !== l[0] || f[1] !== l[1]) throw new Error("boundary: ring not closed");
   const manifest = JSON.parse(fs.readFileSync(path.join(TEX_DIR, "manifest.json"), "utf8"));
-  const expected = chunkGrid(LIDAR.terrain);
+  const expected = chunkGrid(LIDAR.terrain).filter((c) =>
+    rectIntersectsRings(c.x0, c.z0, c.x1, c.z1, boundary.rings)
+  );
   if (manifest.chunks.length !== expected.length) {
-    throw new Error(`manifest: ${manifest.chunks.length} chunks, terrain wants ${expected.length}`);
+    throw new Error(
+      `manifest: ${manifest.chunks.length} chunks, terrain ∩ boundary wants ${expected.length}`
+    );
+  }
+  for (const want of expected) {
+    const got = manifest.chunks.find((c) => c.ci === want.ci && c.ri === want.ri);
+    if (!got) throw new Error(`manifest: chunk ${want.ci},${want.ri} missing`);
+    for (const k of ["x0", "z0", "x1", "z1"]) {
+      if (got[k] !== want[k]) throw new Error(`manifest: chunk ${want.ci},${want.ri} ${k} drifted`);
+    }
   }
   let bytes = 0;
   for (const c of manifest.chunks) {

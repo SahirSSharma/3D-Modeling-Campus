@@ -26,12 +26,12 @@ LiDAR:
 
 | Building | OSM / guessed | LiDAR measured |
 |---|---|---|
-| Argo Hall | 22.8 m | **18.5 m** |
-| Blake Hall | 15.6 m | **12.7 m** |
-| Mandeville Center | 15 m | **23.6 m** |
+| Argo Hall | 22.8 m | **18.4 m** |
+| Blake Hall | 15.6 m | **12.4 m** |
+| Mandeville Center | 15 m | **10.7 m** |
 | McGill Hall | 12 m | **25.1 m** |
-| Student Center | 12 m | **23.5 m** |
-| Revelle Commons | 10 m | **7.4 m** |
+| Student Center | 12 m | **8.6 m** |
+| Revelle Commons | 10 m | **7.5 m** |
 
 (The measured column is read from the shipped `docs/data/campus-lidar.json`; a test fails if this
 table ever drifts from the data again.)
@@ -48,26 +48,23 @@ That division of labour is the whole design.
 Inside the official campus boundary — the dashed polygon OSM draws around the university — the
 terrain wears current Google satellite imagery, reprojected from Web Mercator tiles onto the
 site's local metre grid and cut into chunks that match the terrain mesh exactly
-(`docs/js/campus-ground.js` is the single source of that chunk rule). Field markings, plaza
+(`docs/js/campus-terrain.js` is the single source of that chunk rule). Field markings, plaza
 paving and crosswalks are all legible; sports fields and the big plazas get zoom 20, everything
-else zoom 19. Outside the boundary the campus keeps its stylized look — the contrast is the
-point, and the boundary itself is drawn in-world and on the minimap as a dashed dark-navy line.
+else zoom 19. Outside the boundary — the terrain sheet runs well past it into the rest of
+La Jolla — the ground keeps its stylized NAIP-coloured look, so the photo→stylized cut IS the
+surveyed campus edge, pixel-exact, and the boundary itself is drawn in-world and on the minimap
+as a dashed dark-navy line. Stylized ground polygons and path ribbons come OFF wherever the
+photograph is coming, so the imagery's own paving and crosswalks stay visible.
 
 **Epochs do not match, on purpose.** The imagery is current; every height and the ground surface
-are the 2014 LiDAR survey. Where campus changed since 2014 — construction sites are plainly
-visible in the imagery around Revelle — the picture shows today and the geometry shows the
-survey. Nothing here blends the two: heights are never read off the imagery.
+are the 2014 LiDAR survey (reconciled per mass against the university GIS for what was built
+after the survey flew). Where campus changed since 2014, the picture shows today and the
+geometry shows the survey. Nothing here blends the two: heights are never read off the imagery.
 
-Two honest caveats about what you will actually see:
-
-- **The visible photo→stylized cut is the LiDAR sheet edge, not the boundary.** The whole LiDAR
-  terrain sheet lies inside the campus boundary ring, so every terrain pixel wears imagery and the
-  transition to the stylized look happens where the measured terrain ends. Pushing imagery out to
-  the true boundary needs a wider LiDAR download (`AREA` in `scripts/build-campus-lidar.mjs`) —
-  until then, the dashed navy line (in-world and on the minimap) is what marks the boundary.
-- **A faint tiled "© Google" watermark is burned into the tiles themselves.** That is inherent to
-  the Map Tiles 2D product at these zooms and is left as-is; the on-screen attribution is the
-  separate "Imagery © Google" credit, shown whenever the imagery is.
+One honest caveat about what you will actually see: **a faint tiled "© Google" watermark is
+burned into the tiles themselves.** That is inherent to the Map Tiles 2D product at these zooms
+and is left as-is; the on-screen attribution is the separate "Imagery © Google" credit, shown
+whenever the imagery is.
 
 ---
 
@@ -77,25 +74,38 @@ Two honest caveats about what you will actually see:
 docs/            the site — GitHub Pages serves this directly, no build step
   index.html     standalone page + development panel
   js/
-    campus-walk.js    the walk: movement, cameras, HUD, minimap
-    campus-world.js   the world: terrain, massing, surfaces, paths, trees
-    campus-route.js   A* over the real footpath graph (no DOM, no three.js)
-    campus-ground.js  ground rules shared by renderer, build and tests (no DOM)
+    campus-walk.js      the walk: movement, cameras, HUD, boot
+    campus-world.js     the world: terrain + satellite drape, surfaces, paths, trees, boundary
+    campus-massing.js   buildings: the university GIS's per-mass extrusions
+    campus-explore.js   free roam: position, hover, the velocity model (no DOM)
+    campus-minimap.js   the minimap: aerial underlay, boundary ring, click-to-teleport
+    campus-landmarks.js labels + placed landmarks (Fallen Star, Sun God…)
+    campus-route.js     A* over the real footpath graph (no DOM, no three.js)
+    campus-ground.js    the surveyed ground polygons: clip + tile at load (no DOM)
+    campus-terrain.js   height sampler, chunk grid, boundary rings (no DOM)
   data/
-    campus-3d.json         OSM footprints, paths, plazas          (~243 KB)
-    campus-lidar.json      measured heights, terrain grid, trees  (~205 KB)
+    campus-3d.json         OSM footprints, paths, plazas
+    campus-lidar.json      measured heights, terrain grid, trees
+    campus-arcgis.json     the university GIS: masses + ground polygons
+    campus-colors.json     NAIP aerial colours: terrain grid, roofs, ground
+    campus-facades.json    facade palettes
+    campus-landmarks.json  placed landmarks
     campus-boundary.json   the campus boundary polygon, local metres
-    textures/              satellite ground chunks + manifest.json (~4 MB)
+    textures/              satellite ground chunks + manifest.json
   vendor/three/  three.js r169, vendored
 scripts/
   build-campus-3d.mjs        Overpass -> docs/data/campus-3d.json
   build-campus-lidar.mjs     USGS LiDAR -> docs/data/campus-lidar.json
+  build-campus-arcgis.mjs    university GIS -> docs/data/campus-arcgis.json
+  build-campus-colors.mjs    NAIP -> docs/data/campus-colors.json
   build-campus-satellite.mjs boundary + Google tiles -> boundary json, textures/
+  audit-accuracy.mjs         R2 cross-source audit -> scripts/reports/
   serve.mjs                  static server for docs/
 tests/
   campus-walk.test.mjs     the invariants that have actually broken
+  campus-arcgis.test.mjs   the survey layer: masses, ground polygons, colours
   campus-gameplay.test.mjs the removed footway, spawn, speed cap, minimap arithmetic
-  campus-textures.test.mjs the satellite layer: manifest tiling, boundary ring, ground coverage
+  campus-textures.test.mjs the satellite layer: manifest vs grid vs boundary, ground coverage
 ```
 
 ## Running it
@@ -118,34 +128,40 @@ npm run build:satellite  # boundary polygon + satellite ground chunks
 All three write into `docs/data/`, so a rebuild is a normal reviewable diff.
 
 `build:satellite` reads `GOOGLE_MAPS_API_KEY` from `.env` (never committed, never written into
-any output) and uses the Map Tiles API's 2D satellite session. It fetches only tiles that touch
-the boundary polygon, hard-caps itself at 3,500 tile requests per run (a full rebuild uses
-~365), and caches raw tiles under `.cache/` so a rerun refetches nothing. Pixels outside the
-boundary are baked to the stylized ground colour at build time, which is how the renderer gets
-a pixel-exact boundary with no per-frame clipping.
+any output) and uses the Map Tiles API's 2D satellite session. It builds only the terrain
+chunks that touch the boundary polygon (87 of 132 over the full campus), fetches only tiles
+that touch it too, hard-caps itself at 3,500 tile requests per run (a full rebuild uses
+~2,600), and caches raw tiles under `.cache/` so a rerun refetches nothing. Pixels outside the
+boundary are baked to the surrounding NAIP aerial colours at build time, which is how the
+renderer gets a pixel-exact boundary with no per-frame clipping.
 
 ## Controls
 
-You spawn **110 m above Argo Hall**, holding altitude — fly mode has no gravity, so nothing
-moves until you do. `F` drops you onto the walking rail; `F` again lifts you back off it.
+You spawn in free roam, hanging **110 m above Argo Hall** and holding that height over the
+ground — nothing moves until you do. The guided walk (Argo → Revelle Plaza → Peterson) is one
+press of `F` away.
 
 | | |
 |---|---|
 | drag | look around |
-| `W` / `S` | move — along the walk on the ground, along your view direction in the air |
-| `shift` | run on the ground; in the air, wind up to **250 m/s** |
-| `Q` / `E` | (fly) straight up / down |
-| `F` | toggle fly ↔ walk (landing snaps to the nearest point of the route) |
-| `1` / `2` | eye level / over the shoulder |
-| minimap click/tap | teleport there, standing at ground + eye height (clamped to where ground mesh exists) |
-| `M` | enlarge the minimap into a campus overview (clicks still teleport) |
+| `W`/`A`/`S`/`D` | move where you are looking (strafe in free roam) |
+| `Q` / `E` | (free roam) sink / climb — eye level to 900 m up |
+| velocity slider | both modes pace themselves by it — logarithmic, 0.6 up to **250 m/s** |
+| `shift` | faster, but never past the 250 m/s cap |
+| `F` | toggle free roam ↔ the guided walk (rejoins at the nearest point) |
+| `1` / `2` | (guided walk) eye level / over the shoulder |
+| minimap click/tap | teleport there — same heading, same height over the ground |
+| teleport menu | jump to any of 360+ named places |
+| `L` | building labels on/off |
 | `R` | back to the start of the walk, on foot |
 | `space` | pause / resume the auto-walk (on the ground) |
 | `H` | show or hide the development panel |
 
-The minimap (bottom right) draws the footprints, paths, the walked route in blue and — when
-`docs/data/campus-boundary.json` has been generated — the official campus boundary as a dashed
-dark-navy ring. The file is optional by contract: without it the map simply has no boundary line.
+The minimap (top right) is the NAIP aerial itself, with the guided walk in gold, you as the
+white dot with a view wedge, and — when `docs/data/campus-boundary.json` has been generated —
+the official campus boundary as a dashed dark-navy ring over the surrounding La Jolla ground.
+The file is optional by contract: without it the map simply has no boundary line and clicks
+still teleport.
 
 One path is missing on purpose: the direct footway between Argo Hall and Peterson Hall was
 removed from the shipped data **and** blacklisted in `scripts/build-campus-3d.mjs`
@@ -197,3 +213,24 @@ geometry). It will fold back into TritonPlan once it stands up on its own.
 
 Unofficial and not affiliated with, endorsed by, or operated by any university. Not a navigation
 aid.
+
+FULL CAMPUS (2026-08-03). The corridor became the campus: everything the
+roads bound — North Torrey Pines Road, La Jolla Village Drive, Genesee,
+I-5. A third and fourth source joined, each again used only for what it
+is good at. UC San Diego's own facilities GIS supplies the massing —
+one polygon per MASS, so Sankofa is a 64 m tower plus a mid and a base,
+Geisel is built from its real per-floor polygons, and the Pepper Canyon
+West towers stand at 70 and 67 m as the tallest things on campus. USDA
+NAIP aerial imagery (public domain) supplies the colours: a 6 m terrain
+colour grid, every roof, every surveyed ground polygon.
+
+The 2014 LiDAR remains the referee for everything it saw and is
+overruled for everything built after it flew — it "measured" Sankofa at
+8.4 m, the parking lot the tower replaced. Heights reconcile per mass.
+
+Free roam (F) goes anywhere from eye level to 900 m up, with a
+logarithmic velocity slider and teleport to any of 360+ named places.
+Labels (L) name every building in view, depth-tested so a hidden
+building keeps its name to itself. Fallen Star hangs off the Jacobs
+Hall tower corner at its published 10 degrees, baby blue with a brick
+chimney; the Sun God and the Warren Bear stand where they stand.

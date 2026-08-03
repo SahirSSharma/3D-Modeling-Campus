@@ -361,15 +361,16 @@ async function auditEpochGaps() {
 /* -------------------------------------------------------- 4 HEIGHT REGRESSION */
 
 function auditHeightRegression() {
-  // The README "measured" column as committed (README.md lines 26-33).
-  const readmeTable = {
-    "Argo Hall": 18.3,
-    "Blake Hall": 12.4,
-    "Mandeville Center": 25.2,
-    "McGill Hall": 25.5,
-    "Student Center": 23.3,
-    "Revelle Commons": 7.5,
-  };
+  /* The README "measured" column, parsed LIVE from README.md — a hardcoded
+     copy here reported drift forever after the README itself was fixed.
+     Rows look like: | Argo Hall | 22.8 m | **18.4 m** | */
+  const readme = fs.readFileSync(new URL("../README.md", import.meta.url), "utf8");
+  const readmeTable = {};
+  for (const m of readme.matchAll(
+    /^\|\s*([^|]+?)\s*\|\s*[\d.]+\s*m\s*\|\s*\*\*([\d.]+)\s*m\*\*\s*\|/gm
+  )) {
+    readmeTable[m[1]] = Number(m[2]);
+  }
   const details = [];
   let allPresent = true;
   for (const [name, readmeVal] of Object.entries(readmeTable)) {

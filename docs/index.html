@@ -14,10 +14,13 @@
 
 <div class="walk-title">
   <h1>Campus Walk</h1>
-  <p>Argo Hall &rarr; Revelle Plaza &rarr; Ridge Walk. Every height measured from aerial LiDAR.</p>
+  <p>The whole campus, North Torrey Pines Road to I-5. Massing from the university's own GIS,
+     heights from aerial LiDAR, colours from aerial photography. You spawn roaming free; the guided walk is one keypress away. L labels.</p>
 </div>
 
 <div class="walk-here" id="walk-here"></div>
+
+<canvas id="walk-minimap" width="230" height="210" aria-label="Minimap"></canvas>
 
 <!-- Development panel. Hidden with H, and gone entirely below 780 px. Layer
      toggles are the single most useful tool here: almost every rendering fault
@@ -35,15 +38,23 @@
 <div class="walk-bar">
   <button type="button" class="walk-btn" id="walk-play">Pause</button>
   <button type="button" class="walk-btn" id="walk-toggle"><span id="walk-view">Eye level</span></button>
+  <button type="button" class="walk-btn" id="walk-mode">Free roam</button>
+  <select class="walk-select" id="walk-teleport" aria-label="Teleport to a place">
+    <option value="">Teleport to&hellip;</option>
+  </select>
+  <label class="walk-speedbox" for="walk-speed">speed
+    <input type="range" id="walk-speed" min="0" max="1000" value="200" />
+    <span id="walk-speed-val">1.5 m/s</span>
+  </label>
   <span class="walk-distance" id="walk-distance">&nbsp;</span>
-  <span class="walk-hint">drag to look &middot; W/S move &middot; shift run &middot; 1 eye &middot; 2 shoulder &middot; R restart &middot; H panel</span>
+  <span class="walk-hint" id="walk-hint">drag to look &middot; W/S move &middot; F free roam &middot; L labels &middot; 1 eye &middot; 2 shoulder &middot; R restart &middot; H panel</span>
 </div>
 <div class="walk-progress-track"><div class="walk-progress" id="walk-progress"></div></div>
 
 <div class="walk-loading" id="walk-loading">
   <div>Building the campus&hellip;</div>
-  <small>323 building footprints, a 170&times;334 terrain grid and 812 trees, from about
-    3.3&nbsp;million LiDAR returns.</small>
+  <small>1,800+ building masses, a 1014&times;923 terrain grid, 4,335 surveyed ground polygons and 12,659 trees,
+    from about 41&nbsp;million LiDAR returns and an aerial photograph of the whole campus.</small>
 </div>
 
 <script type="module">
@@ -115,8 +126,8 @@
     requestAnimationFrame(tick);
 
     console.info(
-      `Campus Walk — ${walk.metres} m · ${walk.measured}/${walk.buildings} buildings at ` +
-      `measured height · ${walk.trees} trees · ${walk.landmarks} landmarks on route`
+      `Campus Walk — ${walk.metres} m walk · ${walk.masses} building masses in ${walk.drawCalls} draw calls · ` +
+      `${walk.ground} ground polygons · ${walk.trees} trees`
     );
   }
 </script>

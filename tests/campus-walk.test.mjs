@@ -37,22 +37,11 @@ const { buildGraph, routeThrough, routeBetween } = await import(
 
 const GRAPH = buildGraph(CAMPUS);
 
-/* The walk, as described: out of Argo, across the plaza, onto Ridge Walk. */
+/* The walk, as described: out of Argo, across the plaza, up Ridge Walk to
+   Peterson Hall — a real dorm-to-lecture errand with a real destination. */
 const START = "Argo Hall";
 const VIA = "Revelle Plaza";
-
-function ridgeWalkDestination() {
-  const plaza = CAMPUS.places[VIA];
-  const ridge = CAMPUS.paths.filter((p) => p.n === "Ridge Walk").flatMap((p) => p.p);
-  const target = { x: plaza.x, z: plaza.z - 300 };
-  let best = null;
-  let bestD = Infinity;
-  for (const [x, z] of ridge) {
-    const d = Math.hypot(x - target.x, z - target.z);
-    if (d < bestD) { bestD = d; best = { x, z, name: "Ridge Walk" }; }
-  }
-  return best;
-}
+const DEST = "Peterson Hall";
 
 function insideRing(pt, ring) {
   let inside = false;
@@ -160,26 +149,24 @@ describe("building heights come from LiDAR, not from tags", () => {
   });
 
   test("the tall buildings really are the tall ones", () => {
-    /* A sanity check that each measurement is attached to the right footprint.
-       If heights were ever mis-joined to buildings, this scrambles. */
-    const tall = Object.entries(LIDAR.heights)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 12)
-      .map(([n]) => n);
-    const expected = ["Urey Hall", "Pacific Hall", "Applied Physics and Mathematics"];
-    const found = expected.filter((n) => tall.includes(n));
-    assert.ok(
-      found.length >= 2,
-      `expected the science towers among the tallest; got ${tall.slice(0, 6).join(", ")}`
-    );
+    /* A sanity check that each measurement is attached to the right
+       footprint — direct pins, because at full-campus scale a rank order
+       churns with every hospital and hotel at the boundary. */
+    const bands = {
+      "Urey Hall": [26, 34], "Tioga Hall": [32, 39],
+      "Geisel Library": [32, 40], "Applied Physics and Mathematics": [29, 36],
+    };
+    for (const [name, [lo, hi]] of Object.entries(bands)) {
+      const h = LIDAR.heights[name];
+      assert.ok(h >= lo && h <= hi, `${name} measured ${h} m — expected ${lo}–${hi}`);
+    }
   });
 });
 
 /* ------------------------------------------------------------ 2. the walk */
 
-describe(`the walk: ${START} → ${VIA} → Ridge Walk`, () => {
-  const end = ridgeWalkDestination();
-  const walk = routeThrough(CAMPUS, GRAPH, [START, VIA, end]);
+describe(`the walk: ${START} → ${VIA} → ${DEST}`, () => {
+  const walk = routeThrough(CAMPUS, GRAPH, [START, VIA, DEST]);
   const plaza = CAMPUS.surfaces.find((s) => s.n === VIA);
 
   test("Revelle Plaza is mapped as a surface, with its fountain", () => {
@@ -206,14 +193,37 @@ describe(`the walk: ${START} → ${VIA} → Ridge Walk`, () => {
     assert.ok(inside >= 10, `only ${inside} route points fall inside Revelle Plaza`);
   });
 
-  test("is a plausible length and reaches Ridge Walk", () => {
-    assert.ok(walk.metres > 200, `walk is only ${walk.metres} m`);
-    assert.ok(walk.metres < 900, `walk is ${walk.metres} m — it is wandering`);
+  test("is the length of the real walk and ends at Peterson Hall", () => {
+    /* Google-Maps-style walking distance for this pair is a bit over 700 m —
+       about a ten-minute walk. A collapse below 600 m means the route found a
+       shortcut through something; growth past 950 m means it is wandering. */
+    assert.ok(walk.metres > 600, `walk is only ${walk.metres} m — it found a shortcut`);
+    assert.ok(walk.metres < 950, `walk is ${walk.metres} m — it is wandering`);
+    const dest = CAMPUS.places[DEST];
     const last = walk.points[walk.points.length - 1];
     assert.ok(
-      Math.hypot(last.x - end.x, last.z - end.z) < 60,
-      "the walk does not end on Ridge Walk"
+      Math.hypot(last.x - dest.x, last.z - dest.z) < 60,
+      `the walk does not end at ${DEST}`
     );
+  });
+
+  test("rides Ridge Walk north, as a person would", () => {
+    /* The promise in the page copy. Ridge Walk's vertices are known, so count
+       how much of the route lies on them: if the router ever reroutes through
+       Muir's service paths, this collapses. */
+    const ridge = new Set();
+    for (const p of CAMPUS.paths) {
+      if (p.n !== "Ridge Walk") continue;
+      for (const [x, z] of p.p) ridge.add(`${Math.round(x)}:${Math.round(z)}`);
+    }
+    const onRidge = walk.points.filter(
+      (p) => ridge.has(`${Math.round(p.x)}:${Math.round(p.z)}`)
+    ).length;
+    assert.ok(onRidge >= 8, `only ${onRidge} route points touch Ridge Walk`);
+  });
+
+  test("the destination is measured, not guessed", () => {
+    assert.ok(LIDAR.heights[DEST], `${DEST} has no LiDAR-measured height`);
   });
 
   test("never walks through a building", () => {
@@ -244,13 +254,14 @@ describe("the ground is a surface, not a sheet with holes", () => {
   });
 
   test("the relief is real but not a mountain range", () => {
-    /* Revelle to Ridge Walk climbs about 7 m. Near zero means the terrain
-       silently flattened; huge means the datum broke. */
+    /* The full campus runs from the mesa top down the canyons to nearly sea
+       level at the I-5 corner — a genuine ~135 m of relief. Near zero means
+       the terrain silently flattened; past 160 the datum broke. */
     let lo = Infinity;
     let hi = -Infinity;
     for (const v of z) { const m = v / 10; if (m < lo) lo = m; if (m > hi) hi = m; }
-    assert.ok(hi - lo > 3, `terrain spans only ${(hi - lo).toFixed(1)} m — it has gone flat`);
-    assert.ok(hi - lo < 90, `terrain spans ${(hi - lo).toFixed(1)} m — the datum is wrong`);
+    assert.ok(hi - lo > 40, `terrain spans only ${(hi - lo).toFixed(1)} m — it has gone flat`);
+    assert.ok(hi - lo < 160, `terrain spans ${(hi - lo).toFixed(1)} m — the datum is wrong`);
   });
 
   test("trees are placed and measured", () => {
@@ -266,11 +277,10 @@ describe("the ground is a surface, not a sheet with holes", () => {
 /* ---------------------------------------------------------------- 4. guard */
 
 describe("GUARD: the walk agrees with the rest of the site", () => {
-  test("class buildings sit where app/webreg/data/buildings.json says", () => {
-    /* buildings.json is an INDEPENDENT list of campus buildings with their
-       own coordinates, carried over as a fixture precisely so this check has
-       a second opinion to argue with. If the two drift, one of them is
-       putting a building somewhere it is not. Compared against footprint centroids, so tens of metres is expected
+  test("class buildings sit where tests/fixtures/buildings.json says", () => {
+    /* campus-3d.json and buildings.json come from different pulls. If they
+       drift, the Campus Map pins a building somewhere the walk does not put
+       it. Compared against footprint centroids, so tens of metres is expected
        — a large building's centroid is legitimately far from its door. */
     const mismatches = [];
     let compared = 0;
@@ -286,14 +296,20 @@ describe("GUARD: the walk agrees with the rest of the site", () => {
     assert.deepEqual(mismatches, [], mismatches.join("; "));
   });
 
-  test("the LiDAR area actually covers the walk", () => {
+  test("the LiDAR area actually covers the walk and its skyline", () => {
     const { area } = LIDAR;
-    const plaza = CAMPUS.places[VIA];
-    const lat = CAMPUS.origin.lat - plaza.z / CAMPUS.origin.mPerDegLat;
-    const lng = CAMPUS.origin.lng + plaza.x / CAMPUS.origin.mPerDegLng;
-    assert.ok(
-      lat > area.south && lat < area.north && lng > area.west && lng < area.east,
-      "Revelle Plaza falls outside the LiDAR area — heights there would be guesses"
-    );
+    /* Geisel and Center Hall are here because they are the skyline you steer
+       by on Ridge Walk — both sat outside the first LiDAR box and rendered at
+       sea level, invisible below the terrain. */
+    for (const name of [VIA, DEST, "Geisel Library", "Center Hall"]) {
+      const place = CAMPUS.places[name];
+      assert.ok(place, `${name} missing from campus places`);
+      const lat = CAMPUS.origin.lat - place.z / CAMPUS.origin.mPerDegLat;
+      const lng = CAMPUS.origin.lng + place.x / CAMPUS.origin.mPerDegLng;
+      assert.ok(
+        lat > area.south && lat < area.north && lng > area.west && lng < area.east,
+        `${name} falls outside the LiDAR area — heights there would be guesses`
+      );
+    }
   });
 });

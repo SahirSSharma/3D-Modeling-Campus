@@ -1,146 +1,123 @@
-// Ground geometry rules shared by the renderer, the satellite build script and
-// the tests. No DOM, no three.js — this file must stay importable from Node.
+// The measured ground plane: shared geometry helpers.
 //
-// Three things live here because three different callers must agree on them
-// exactly:
+// UCSD's facilities GIS ships the campus ground as polygons — sidewalks,
+// lawns, roads, fountains — and scripts/build-campus-arcgis.mjs stores them
+// nearly verbatim, clipped to the LiDAR box, as decimetre integers. Everything
+// that INFLATES the data (cutting big polygons into tiles, adding vertices so
+// a drape can bend) happens here at load time instead: the same 250 KB file
+// would be 3 MB with this baked in, and the loop below runs in milliseconds.
 //
-//   makeHeightSampler  the ONE way ground height is read. The old sampler in
-//                      campus-world.js answered 0 (datum level, 123.9 m
-//                      absolute) for any query outside the LiDAR grid, which
-//                      is how 261 of 323 buildings came to hang in mid-air at
-//                      the data edge. Outside the grid the honest answer is
-//                      "the same as the nearest measured edge", so that is
-//                      what this returns.
-//
-//   chunkGrid          how the terrain splits into texture chunks. The build
-//                      script cuts the imagery on this grid and the renderer
-//                      cuts the mesh on it; if the two ever computed it
-//                      separately they would drift.
-//
-//   pointInRings       whether a point is inside the campus boundary polygon.
-//                      Decides which pixels get imagery at build time and
-//                      which stylized overlays are hidden at run time.
+// Used by the renderer in the browser and by the build/check scripts in Node,
+// which is why there is no THREE and no DOM in this file.
 
-/** Terrain-sample blocks per texture chunk edge. 85 cells x 3 m = 255 m. */
-export const CHUNK_CELLS = 85;
+/* Any draped triangle spanning more than TILE metres can bridge a dip in the
+   terrain; any edge longer than EDGE has no vertex to bend at. Both bounded
+   here. */
+const TILE = 42;
+const EDGE = 10;
+export const MIN_AREA = 3; // m²; smaller fragments are clipping noise
 
-/** How far, in metres, the flat ground apron extends past the LiDAR grid.
- *  Chosen to reach beyond every OSM footprint in campus-3d.json (the farthest
- *  building vertex sits ~447 m outside the grid, north of it), so everything
- *  rendered has ground under it — and the test suite fails the moment a data
- *  rebuild brings in a footprint past the apron. */
-export const APRON_REACH = 520;
-
-/**
- * Bilinear height sampler over the LiDAR grid, clamped to the nearest edge
- * sample outside it. `terrain` is campus-lidar.json's `terrain` object:
- * { x0, z0, cell, cols, rows, z: [decimetres...] }.
- */
-export function makeHeightSampler(terrain) {
-  const { x0, z0, cell, cols, rows, z: heights } = terrain;
-  const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
-
-  const heightAt = (x, zz) => {
-    /* Clamp into the last valid bilinear cell rather than bailing out. A query
-       past the edge lands ON the edge, so ground continues flat outward
-       instead of snapping to datum level. */
-    const fx = clamp((x - x0) / cell, 0, cols - 1);
-    const fz = clamp((zz - z0) / cell, 0, rows - 1);
-    const c = Math.min(cols - 2, Math.floor(fx));
-    const r = Math.min(rows - 2, Math.floor(fz));
-    const tx = fx - c;
-    const tz = fz - r;
-    const h = (rr, cc) => heights[rr * cols + cc] / 10; // decimetres -> metres
-    const top = h(r, c) * (1 - tx) + h(r, c + 1) * tx;
-    const bottom = h(r + 1, c) * (1 - tx) + h(r + 1, c + 1) * tx;
-    return top * (1 - tz) + bottom * tz;
-  };
-
-  const bounds = {
-    x0,
-    z0,
-    x1: x0 + (cols - 1) * cell,
-    z1: z0 + (rows - 1) * cell,
-  };
-  const coverage = {
-    x0: bounds.x0 - APRON_REACH,
-    z0: bounds.z0 - APRON_REACH,
-    x1: bounds.x1 + APRON_REACH,
-    z1: bounds.z1 + APRON_REACH,
-  };
-  const inGrid = (x, zz) =>
-    x >= bounds.x0 && x <= bounds.x1 && zz >= bounds.z0 && zz <= bounds.z1;
-
-  return { heightAt, bounds, coverage, inGrid };
-}
-
-/**
- * The texture-chunk grid: blocks of CHUNK_CELLS x CHUNK_CELLS terrain cells
- * (the trailing blocks are smaller when the grid does not divide evenly).
- * c0/r0..c1/r1 are SAMPLE indices, inclusive, so neighbouring chunks share
- * their edge samples and the meshes cannot open a seam.
- */
-export function chunkGrid(terrain, chunkCells = CHUNK_CELLS) {
-  const { x0, z0, cell, cols, rows } = terrain;
-  const chunks = [];
-  for (let r0 = 0, ri = 0; r0 < rows - 1; r0 += chunkCells, ri++) {
-    const r1 = Math.min(r0 + chunkCells, rows - 1);
-    for (let c0 = 0, ci = 0; c0 < cols - 1; c0 += chunkCells, ci++) {
-      const c1 = Math.min(c0 + chunkCells, cols - 1);
-      chunks.push({
-        ci, ri, c0, c1, r0, r1,
-        x0: x0 + c0 * cell,
-        x1: x0 + c1 * cell,
-        z0: z0 + r0 * cell,
-        z1: z0 + r1 * cell,
-      });
-    }
+export const ringArea = (ring) => {
+  let a = 0;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    a += (ring[j][0] + ring[i][0]) * (ring[j][1] - ring[i][1]);
   }
-  return chunks;
-}
+  return a / 2;
+};
 
-/** Even-odd point-in-polygon over one or more rings ([[x,z],...] each). */
-export function pointInRings(x, z, rings) {
-  let inside = false;
-  for (const ring of rings) {
-    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-      const [xi, zi] = ring[i];
-      const [xj, zj] = ring[j];
-      if (zi > z !== zj > z && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) {
-        inside = !inside;
-      }
-    }
-  }
-  return inside;
-}
-
-/** Does an axis-aligned rect [x0,z0]-[x1,z1] touch the polygon at all? */
-export function rectIntersectsRings(x0, z0, x1, z1, rings) {
-  // Any rect corner inside the polygon?
-  if (
-    pointInRings(x0, z0, rings) || pointInRings(x1, z0, rings) ||
-    pointInRings(x0, z1, rings) || pointInRings(x1, z1, rings)
-  ) return true;
-  // Any ring vertex inside the rect, or any ring edge crossing a rect edge?
-  const segs = [
-    [x0, z0, x1, z0], [x1, z0, x1, z1], [x1, z1, x0, z1], [x0, z1, x0, z0],
+/** Sutherland–Hodgman clip of one ring against an axis-aligned rectangle. */
+export function clipRect(ring, x0, z0, x1, z1) {
+  const inside = [
+    (p) => p[0] >= x0, (p) => p[0] <= x1,
+    (p) => p[1] >= z0, (p) => p[1] <= z1,
   ];
-  const cross = (ax, az, bx, bz, cx, cz, dx, dz) => {
-    const d1 = (bx - ax) * (cz - az) - (bz - az) * (cx - ax);
-    const d2 = (bx - ax) * (dz - az) - (bz - az) * (dx - ax);
-    const d3 = (dx - cx) * (az - cz) - (dz - cz) * (ax - cx);
-    const d4 = (dx - cx) * (bz - cz) - (dz - cz) * (bx - cx);
-    return d1 * d2 < 0 && d3 * d4 < 0;
-  };
-  for (const ring of rings) {
-    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-      const [ax, az] = ring[j];
-      const [bx, bz] = ring[i];
-      if (ax >= x0 && ax <= x1 && az >= z0 && az <= z1) return true;
-      for (const [cx, cz, dx, dz] of segs) {
-        if (cross(ax, az, bx, bz, cx, cz, dx, dz)) return true;
-      }
+  const cross = [
+    (a, b) => [x0, a[1] + ((b[1] - a[1]) * (x0 - a[0])) / (b[0] - a[0])],
+    (a, b) => [x1, a[1] + ((b[1] - a[1]) * (x1 - a[0])) / (b[0] - a[0])],
+    (a, b) => [a[0] + ((b[0] - a[0]) * (z0 - a[1])) / (b[1] - a[1]), z0],
+    (a, b) => [a[0] + ((b[0] - a[0]) * (z1 - a[1])) / (b[1] - a[1]), z1],
+  ];
+  let poly = ring;
+  for (let e = 0; e < 4 && poly.length; e++) {
+    const next = [];
+    for (let i = 0; i < poly.length; i++) {
+      const a = poly[i];
+      const b = poly[(i + 1) % poly.length];
+      const ain = inside[e](a);
+      const bin = inside[e](b);
+      if (ain) next.push(a);
+      if (ain !== bin) next.push(cross[e](a, b));
+    }
+    poly = next;
+  }
+  return poly;
+}
+
+/** Split every edge longer than EDGE so the drape has vertices to bend at. */
+export function subdivide(ring) {
+  const out = [];
+  for (let i = 0; i < ring.length; i++) {
+    const a = ring[i];
+    const b = ring[(i + 1) % ring.length];
+    out.push(a);
+    const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    const n = Math.floor(len / EDGE);
+    for (let k = 1; k <= n; k++) {
+      const t = k / (n + 1);
+      out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]);
     }
   }
-  return false;
+  return out;
+}
+
+/**
+ * Cut a polygon (outer ring first, then holes) into TILE-sized cells.
+ * Seams between cells are invisible — same material, same drape, coincident
+ * edges — and every piece is small enough to follow the ground.
+ */
+export function tile(rings) {
+  const outer = rings[0];
+  let minx = Infinity;
+  let maxx = -Infinity;
+  let minz = Infinity;
+  let maxz = -Infinity;
+  for (const [x, z] of outer) {
+    if (x < minx) minx = x;
+    if (x > maxx) maxx = x;
+    if (z < minz) minz = z;
+    if (z > maxz) maxz = z;
+  }
+  if (maxx - minx <= TILE && maxz - minz <= TILE) return [rings];
+
+  const pieces = [];
+  for (let gx = Math.floor(minx / TILE) * TILE; gx < maxx; gx += TILE) {
+    for (let gz = Math.floor(minz / TILE) * TILE; gz < maxz; gz += TILE) {
+      const o = clipRect(outer, gx, gz, gx + TILE, gz + TILE);
+      if (o.length < 3 || Math.abs(ringArea(o)) < MIN_AREA) continue;
+      const piece = [o];
+      for (const h of rings.slice(1)) {
+        const hc = clipRect(h, gx, gz, gx + TILE, gz + TILE);
+        if (hc.length >= 3 && Math.abs(ringArea(hc)) >= 0.5) piece.push(hc);
+      }
+      pieces.push(piece);
+    }
+  }
+  return pieces;
+}
+
+/**
+ * The whole load-time expansion: decimetre integers -> metres, tile, then
+ * subdivide every ring. Returns [{ kind, rings }] ready for triangulation.
+ */
+export function prepareGround(data) {
+  const out = [];
+  (data.ground || []).forEach((g, src) => {
+    const rings = g.r.map((ring) => ring.map(([x, z]) => [x / 10, z / 10]));
+    for (const piece of tile(rings)) {
+      /* src carries the polygon's index so a piece can find its sampled
+         aerial colour in campus-colors.json, which is parallel to ground. */
+      out.push({ kind: g.k, src, rings: piece.map(subdivide) });
+    }
+  });
+  return out;
 }

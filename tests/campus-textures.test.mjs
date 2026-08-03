@@ -13,8 +13,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
-  makeHeightSampler, chunkGrid, pointInRings, APRON_REACH,
-} from "../docs/js/campus-ground.js";
+  makeHeightSampler, chunkGrid, pointInRings, rectIntersectsRings, APRON_REACH,
+} from "../docs/js/campus-terrain.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (p) => JSON.parse(fs.readFileSync(path.join(ROOT, p), "utf8"));
@@ -35,16 +35,28 @@ const T = {
 
 /* --------------------------------------------------------------- boundary */
 
-test("boundary: main ring is closed, sane, and contains the terrain sheet", () => {
+test("boundary: main ring is closed, sane, and sits on measured ground", () => {
   const pts = boundary.points;
   assert.ok(Array.isArray(pts) && pts.length >= 50, "a real campus edge has many vertices");
   assert.deepEqual(pts[0], pts[pts.length - 1], "ring must be closed (first == last)");
   for (const [x, z] of pts) {
     assert.ok(Math.abs(x) < 20000 && Math.abs(z) < 20000, `absurd coordinate ${x},${z}`);
   }
-  /* The whole LiDAR sheet is main campus; all four corners must be inside. */
-  for (const [x, z] of [[T.x0, T.z0], [T.x1, T.z0], [T.x0, T.z1], [T.x1, T.z1]]) {
-    assert.ok(pointInRings(x, z, boundary.rings), `terrain corner ${x},${z} outside boundary`);
+  /* The full-campus terrain sheet reaches PAST the boundary (that contrast —
+     photo inside the line, stylized La Jolla outside it — is the point), so
+     the containment runs the other way: the campus proper must be inside the
+     ring, and the ring must have measured ground under nearly all of it. */
+  for (const name of ["Argo Hall", "Geisel Library", "Peterson Hall"]) {
+    const p = campus.places[name];
+    assert.ok(p, `${name} missing from places`);
+    assert.ok(pointInRings(p.x, p.z, boundary.rings), `${name} outside the campus boundary`);
+  }
+  const pad = 600; // the ring's far lobes may run a little past the sheet
+  for (const [x, z] of pts) {
+    assert.ok(
+      x > T.x0 - pad && x < T.x1 + pad && z > T.z0 - pad && z < T.z1 + pad,
+      `boundary point ${x},${z} far beyond the terrain sheet`
+    );
   }
 });
 
@@ -54,21 +66,27 @@ test("boundary: local frame matches campus-3d.json's origin", () => {
 
 /* --------------------------------------------------------------- manifest */
 
-test("manifest: chunks are exactly the shared chunk grid — no holes, no overlap", () => {
-  const expected = chunkGrid(terrain);
+test("manifest: chunks are exactly the boundary-touching subset of the grid", () => {
+  /* Imagery exists precisely where the campus is: every grid chunk that
+     touches the boundary polygon ships a texture, every chunk that misses it
+     ships none (the renderer keeps its NAIP colours there), and every rect
+     matches the live grid — the renderer refuses a manifest whose rects
+     drifted, so this test failing means the SITE would show no imagery. */
+  const expected = chunkGrid(terrain).filter((c) =>
+    rectIntersectsRings(c.x0, c.z0, c.x1, c.z1, boundary.rings)
+  );
+  assert.ok(expected.length >= 10, `only ${expected.length} grid chunks touch the boundary`);
   assert.equal(manifest.chunks.length, expected.length);
-  let area = 0;
+  const seen = new Set();
   for (const want of expected) {
     const got = manifest.chunks.find((c) => c.ci === want.ci && c.ri === want.ri);
     assert.ok(got, `chunk ${want.ci},${want.ri} missing from manifest`);
+    assert.ok(!seen.has(got.file), `duplicate manifest entry ${got.file}`);
+    seen.add(got.file);
     for (const k of ["x0", "z0", "x1", "z1"]) {
       assert.equal(got[k], want[k], `chunk ${want.ci},${want.ri} rect ${k} drifted`);
     }
-    area += (got.x1 - got.x0) * (got.z1 - got.z0);
   }
-  /* Rects that all match a partition of the grid tile it exactly; the area
-     sum catches a duplicated or dropped rect even if indices lie. */
-  assert.equal(area, (T.x1 - T.x0) * (T.z1 - T.z0));
 });
 
 test("manifest: every referenced file exists, every file present is referenced", () => {

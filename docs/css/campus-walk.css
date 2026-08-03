@@ -202,3 +202,37 @@ html, body {
   .walk-title p { display: none; }
   .walk-here { font-size: 12px; top: 16px; }
 }
+
+/* Free-roam controls, in the bar's own translucent language. */
+.walk-select {
+  font: 12px Arial, Helvetica, sans-serif;
+  padding: 5px 6px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  max-width: 170px;
+  cursor: pointer;
+}
+.walk-select option { color: #06384d; background: #fff; }
+.walk-speedbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font: 12px Arial, Helvetica, sans-serif;
+  white-space: nowrap;
+}
+.walk-speedbox input[type="range"] { width: 110px; accent-color: #ffcd00; }
+#walk-speed-val { font-variant-numeric: tabular-nums; min-width: 56px; opacity: 0.9; }
+
+/* The minimap: the aerial photo with you on it. Quiet corner instrument. */
+#walk-minimap {
+  position: fixed;
+  right: 14px;
+  bottom: 64px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: #20262b;
+  opacity: 0.92;
+  border-radius: 3px;
+  z-index: 5;
+}
+@media (max-width: 780px) { #walk-minimap { display: none; } }
