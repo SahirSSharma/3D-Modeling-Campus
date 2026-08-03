@@ -84,9 +84,19 @@ describe("the data paths the browser asks for", () => {
     const src = readFileSync(path.join(ROOT, "docs/js/campus-walk.js"), "utf8");
     const urls = [...src.matchAll(/new URL\(\s*["']([^"']+)["']\s*,\s*import\.meta\.url\s*\)/g)];
     assert.ok(urls.length >= 2, "campus-walk.js should resolve both campus-3d and campus-lidar");
+    /* campus-boundary.json is OPTIONAL by contract: it comes from a separate
+       build pipeline, and the runtime fetch is wrapped so its absence draws
+       no boundary rather than taking the walk down. Everything else fetched
+       must exist. */
+    const OPTIONAL = new Set(["campus-boundary.json"]);
     for (const [, rel] of urls) {
+      if (OPTIONAL.has(path.basename(rel))) continue;
       const resolved = path.resolve(path.join(ROOT, "docs/js"), rel);
       assert.ok(existsSync(resolved), `campus-walk.js fetches ${rel} — resolves to a missing file`);
+    }
+    const required = urls.map(([, rel]) => path.basename(rel));
+    for (const name of ["campus-3d.json", "campus-lidar.json"]) {
+      assert.ok(required.includes(name), `campus-walk.js no longer fetches ${name}`);
     }
   });
 });
@@ -127,6 +137,26 @@ describe("building heights come from LiDAR, not from tags", () => {
       .filter(([, h]) => !Number.isFinite(h) || h < 2 || h > 70)
       .map(([n, h]) => `${n} ${h}m`);
     assert.deepEqual(bad, [], `implausible measured heights: ${bad.join(", ")}`);
+  });
+
+  test("the README's measured-height table matches the shipped data", () => {
+    /* The README published stale numbers once — the data was rebuilt after it
+       was written and all six rows drifted (up to 1.6 m). On a site whose one
+       idea is "measurements, not impressions", the table IS a claim, so it is
+       pinned to the data it quotes. Rows look like:
+       | Argo Hall | 22.8 m | **18.5 m** | */
+    const readme = readFileSync(path.join(ROOT, "README.md"), "utf8");
+    const rows = [...readme.matchAll(
+      /^\|\s*([^|]+?)\s*\|\s*[\d.]+\s*m\s*\|\s*\*\*([\d.]+)\s*m\*\*\s*\|/gm
+    )];
+    assert.ok(rows.length >= 6, `only ${rows.length} height rows found in README`);
+    const wrong = [];
+    for (const [, name, quoted] of rows) {
+      const measured = LIDAR.heights[name];
+      assert.ok(measured !== undefined, `README quotes "${name}" but the data has no measurement`);
+      if (Number(quoted) !== measured) wrong.push(`${name}: README ${quoted} vs data ${measured}`);
+    }
+    assert.deepEqual(wrong, [], `README height table drifted: ${wrong.join("; ")}`);
   });
 
   test("the tall buildings really are the tall ones", () => {
