@@ -8,10 +8,12 @@
     "test": "node --test tests/*.test.mjs",
     "build:osm": "node scripts/build-campus-3d.mjs",
     "build:lidar": "node scripts/build-campus-lidar.mjs",
-    "check": "node scripts/build-campus-3d.mjs --check && node scripts/build-campus-lidar.mjs --check",
+    "build:satellite": "node scripts/build-campus-satellite.mjs",
+    "check": "node scripts/build-campus-3d.mjs --check && node scripts/build-campus-lidar.mjs --check && node scripts/build-campus-satellite.mjs --check",
     "serve": "node scripts/serve.mjs"
   },
   "devDependencies": {
-    "laz-perf": "^0.0.7"
+    "laz-perf": "^0.0.7",
+    "sharp": "^0.35.3"
   }
 }

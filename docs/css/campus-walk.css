@@ -126,6 +126,25 @@ html, body {
 }
 .walk-progress { height: 100%; width: 0; background: var(--accent); transition: width 0.1s linear; }
 
+/* The imagery credit. Unhidden by campus-world.js the moment the first
+   satellite ground chunk is applied, and stays up as long as the imagery is
+   part of the scene. Sits above the bottom bar, clear of the minimap on the
+   right. */
+.walk-imagery {
+  position: fixed;
+  left: 20px;
+  bottom: 46px;
+  padding: 3px 8px;
+  font-size: 10.5px;
+  letter-spacing: 0.2px;
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(8, 26, 34, 0.55);
+  border-radius: 3px;
+  pointer-events: none;
+  z-index: 41;
+}
+.walk-imagery[hidden] { display: none; }
+
 /* --------------------------------------------------------------- dev panel */
 
 .walk-dev {
