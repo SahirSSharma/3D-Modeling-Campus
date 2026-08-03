@@ -13,8 +13,8 @@
 /* Any draped triangle spanning more than TILE metres can bridge a dip in the
    terrain; any edge longer than EDGE has no vertex to bend at. Both bounded
    here. */
-const TILE = 28;
-const EDGE = 6;
+const TILE = 42;
+const EDGE = 10;
 export const MIN_AREA = 3; // m²; smaller fragments are clipping noise
 
 export const ringArea = (ring) => {

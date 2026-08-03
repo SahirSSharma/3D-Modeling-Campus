@@ -81,21 +81,26 @@ export function createTerrain(scene, lidar, colors) {
     return top * (1 - tz) + bottom * tz;
   };
 
+  /* The SAMPLER stays at the full 3 m grid — stairs are still stairs under
+     your feet. The RENDER MESH halves the resolution: at full-campus scale a
+     3 m mesh is 936,000 vertices pushed every frame, and that alone dragged
+     the whole site under 3 fps. At 6 m it is a quarter of the work and the
+     difference is invisible past the first metre of fog. */
+  const step = 2;
+  const mCols = Math.floor((cols - 1) / step) + 1;
+  const mRows = Math.floor((rows - 1) / step) + 1;
   const geo = new THREE.PlaneGeometry(
-    (cols - 1) * cell, (rows - 1) * cell, cols - 1, rows - 1
+    (mCols - 1) * cell * step, (mRows - 1) * cell * step, mCols - 1, mRows - 1
   );
   geo.rotateX(-Math.PI / 2);
   const pos = geo.attributes.position;
   for (let i = 0; i < pos.count; i++) {
-    /* PlaneGeometry lays vertices out row-major from -w/2,-h/2; after the
-       rotation that is +x east and +z south, which is the same frame the data
-       is in, so the index maps straight across. */
-    const c = i % cols;
-    const r = Math.floor(i / cols);
+    const c = (i % mCols) * step;
+    const r = Math.floor(i / mCols) * step;
     pos.setY(i, heights[r * cols + c] / 10);
   }
   geo.computeVertexNormals();
-  geo.translate(x0 + ((cols - 1) * cell) / 2, 0, z0 + ((rows - 1) * cell) / 2);
+  geo.translate(x0 + ((mCols - 1) * cell * step) / 2, 0, z0 + ((mRows - 1) * cell * step) / 2);
 
   /* The ground wears its aerial photograph. campus-colors.json carries a 6 m
      palette-indexed colour grid sampled from NAIP imagery; painting it as
@@ -234,8 +239,12 @@ export function createSurfaces(scene, campus, heightAt, arcgis, colors) {
       color = new THREE.Color(hex).lerp(base, 0.65);
     }
     const lift = kind === "water" ? DRAPE + 0.12 : kind === "green" ? DRAPE - 0.02 : DRAPE;
-    if (!buckets.has(kind)) buckets.set(kind, { pos: [], col: [], uv: [] });
-    const b = buckets.get(kind);
+    /* Chunked by 500 m cell as well as kind: one campus-wide merged mesh can
+       never be frustum-culled, so every frame drew every sidewalk on campus.
+       Chunks let the far side of the mesa drop out at eye level. */
+    const chunk = `${kind}|${Math.floor(outer[0][0] / 500)}:${Math.floor(outer[0][1] / 500)}`;
+    if (!buckets.has(chunk)) buckets.set(chunk, { kind, pos: [], col: [], uv: [] });
+    const b = buckets.get(chunk);
     /* A fountain is a BASIN, not a puddle: water rides 0.35 m up on a rim so
        it reads as the raised concrete basin it is. Everything else drapes. */
     const rim = kind === "water" ? 0.35 : 0;
@@ -281,7 +290,9 @@ export function createSurfaces(scene, campus, heightAt, arcgis, colors) {
   }
 
   const scoring = scoringTexture();
-  for (const [kind, b] of buckets) {
+  const matByKind = new Map();
+  for (const b of buckets.values()) {
+    const kind = b.kind;
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.Float32BufferAttribute(b.pos, 3));
     geo.setAttribute("color", new THREE.Float32BufferAttribute(b.col, 3));
@@ -289,16 +300,18 @@ export function createSurfaces(scene, campus, heightAt, arcgis, colors) {
     const normals = new Float32Array(b.pos.length);
     for (let i = 1; i < normals.length; i += 3) normals[i] = 1;
     geo.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
-    const mat = new THREE.MeshLambertMaterial({
-      vertexColors: true,
-      side: THREE.DoubleSide,
-      polygonOffset: true,
-      polygonOffsetFactor: -4,
-      polygonOffsetUnits: -8,
-      /* Only pavement is scored; lawns and water read as surfaces, not tiles. */
-      ...(kind === "walk" || kind === "plaza" ? { map: scoring } : {}),
-    });
-    group.add(new THREE.Mesh(geo, mat));
+    if (!matByKind.has(kind)) {
+      matByKind.set(kind, new THREE.MeshLambertMaterial({
+        vertexColors: true,
+        side: THREE.DoubleSide,
+        polygonOffset: true,
+        polygonOffsetFactor: -4,
+        polygonOffsetUnits: -8,
+        /* Only pavement is scored; lawns and water read as surfaces, not tiles. */
+        ...(kind === "walk" || kind === "plaza" ? { map: scoring } : {}),
+      }));
+    }
+    group.add(new THREE.Mesh(geo, matByKind.get(kind)));
   }
 
   scene.add(group);
