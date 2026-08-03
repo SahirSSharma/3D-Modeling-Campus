@@ -33,7 +33,9 @@
 import * as THREE from "../vendor/three/three.module.min.js";
 import { prepareGround } from "./campus-ground.js";
 import { makeHeightSampler, chunkGrid } from "./campus-terrain.js";
-import { SPECIES, treeSpecies, treeTint } from "./campus-species.js";
+import {
+  SPECIES, treeSpecies, treeTint, treeExclusionZones, solidZones, clearanceFor, crownFor,
+} from "./campus-species.js";
 import { OVERLAY, overlayLift, applyOverlayDepth } from "./campus-overlay.js";
 
 /* Campus on a clear November noon, as the 4K footage measures it: the big
@@ -715,8 +717,15 @@ function buildPaths(group, campus, heightAt, skip) {
  * route by a hash, which looked fine and told you nothing — the eucalyptus row
  * along Ridge Walk was invented, and the trees that really shade Revelle Plaza
  * were absent.
+ *
+ * Crown sizing is delegated to `crownFor` (campus-species.js): a proportion
+ * cap (no crown may read as wider than it is tall) and a crown-intrusion cap
+ * (a crown may not overhang a building or a sports pad — the Muir zone fix,
+ * RC2). `zoneSources` is whichever of { campus3d, arcgis, markings } the
+ * caller has loaded; clearance is computed ONCE per tree here, never per
+ * frame, using the same exclusion zones tree-rules.mjs prunes trunks with.
  */
-export function createTrees(scene, lidar, heightAt) {
+export function createTrees(scene, lidar, heightAt, zoneSources = {}) {
   const trees = lidar.trees || [];
   if (!trees.length) return { count: 0 };
 
@@ -727,11 +736,11 @@ export function createTrees(scene, lidar, heightAt) {
        round    — the conventional lawn tree (sycamore, jacaranda, fig)
      The form is most of the recognition: a eucalyptus is a pole with a tuft,
      a torrey pine is a low table of shade, and no shared geometry can play
-     both. */
-  const FORMS = {
-    tall: { crownAspect: 1.2, crownOfH: 0.30, trunkTaper: [0.16, 0.26] },
-    umbrella: { crownAspect: 0.55, crownOfH: 0.75, trunkTaper: [0.3, 0.44] },
-    round: { crownAspect: 1.05, crownOfH: 0.5, trunkTaper: [0.22, 0.34] },
+     both. Only the trunk taper is rendering-only and stays local; the crown
+     proportions themselves live in CROWN_FORMS so crownFor and the renderer
+     can never drift apart. */
+  const TRUNK_TAPER = {
+    tall: [0.16, 0.26], umbrella: [0.3, 0.44], round: [0.22, 0.34],
   };
 
   /* Bucket instances by form first — InstancedMesh needs its count up front. */
@@ -741,11 +750,10 @@ export function createTrees(scene, lidar, heightAt) {
     byForm[SPECIES[species].form].push({ t, species });
   }
 
-  /* You walk UNDER a tree, not through one. Crowns are sized so their underside
-     always clears head height. For a flattened crown the underside sits
-     crownR*aspect below centre, so the cap works on the VERTICAL radius —
-     a pine's table of shade widens, but never onto your head. */
-  const CLEARANCE = 2.4;
+  /* Clearance to the nearest building/sports-pad zone, once per tree — the
+     same exclusion zones scripts/lib/tree-rules.mjs prunes trunks with, minus
+     water (a crown may overhang a fountain). */
+  const solid = solidZones(treeExclusionZones(zoneSources));
 
   const group = new THREE.Group();
   const m = new THREE.Matrix4();
@@ -756,8 +764,8 @@ export function createTrees(scene, lidar, heightAt) {
 
   for (const [form, list] of Object.entries(byForm)) {
     if (!list.length) continue;
-    const f = FORMS[form];
-    const trunkGeo = new THREE.CylinderGeometry(f.trunkTaper[0], f.trunkTaper[1], 1, 5);
+    const taper = TRUNK_TAPER[form];
+    const trunkGeo = new THREE.CylinderGeometry(taper[0], taper[1], 1, 5);
     const leafGeo = new THREE.IcosahedronGeometry(1, form === "umbrella" ? 1 : 0);
     /* White base; the real colour rides per instance so one mesh can carry a
        stressed canyon eucalyptus and a lush lawn one. */
@@ -768,15 +776,8 @@ export function createTrees(scene, lidar, heightAt) {
 
     list.forEach(({ t: [x, z, h, r], species }, i) => {
       const ground = heightAt(x, z);
-      const minCrown = Math.max(1.2, Math.min(2.8, h * 0.13));
-      const wantCrown = form === "tall" ? Math.min(r, h * f.crownOfH) : r;
-      const maxVert = (h - CLEARANCE) / 2;
-      const crownR = Math.max(minCrown, Math.min(wantCrown, maxVert / f.crownAspect));
-      const crownV = crownR * f.crownAspect; // vertical half-extent
-      /* The crown CENTRE sits at crownOfH of the tree's height band for the
-         form: a eucalyptus tuft rides near the top of its pole, a pine's
-         table sits low. Clamped so top ≤ h and underside ≥ clearance. */
-      const centre = Math.min(h - crownV, Math.max(CLEARANCE + crownV, h * (form === "umbrella" ? 0.62 : 0.85)));
+      const clearNeed = solid.length ? clearanceFor(x, z, solid) : Infinity;
+      const { crownR, crownV, centre } = crownFor([x, z, h, r], form, clearNeed);
       const trunkH = centre; // trunk reaches into the crown; no gap can open
 
       const { leaf, trunk } = treeTint(species, x, z);

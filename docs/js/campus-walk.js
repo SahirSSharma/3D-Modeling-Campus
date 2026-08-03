@@ -512,14 +512,19 @@ export async function boot() {
      ribbons guessed from OSM centrelines would just z-fight them. They still
      draw when the GIS file is absent. */
   if (!arcgis?.ground?.length) world.createPaths(scene, campus, heightAt);
-  const trees = world.createTrees(scene, lidar, heightAt);
+  /* Fetched here (moved ahead of its old spot below createTrees) because
+     crown sizing needs the sports-pad facilities to compute clearance —
+     optional, and createTrees degrades to no crown-intrusion cap without it. */
+  const markingsData = await optional(new URL("../data/campus-markings.json", import.meta.url));
+  const trees = world.createTrees(scene, lidar, heightAt, {
+    campus3d: campus, arcgis, markings: markingsData,
+  });
   const details = createDetails(scene, campus, heightAt);
 
   /* The Muir athletics zone, 1:1 with the aerial references: the Main Gym
      vault roof and Natatorium skylight, the courts' nets/hoops/rigs, and
      Muir Field's overlays. All three modules no-op quietly on missing data;
      one parent group so the dev panel can drop the whole zone at once. */
-  const markingsData = await optional(new URL("../data/campus-markings.json", import.meta.url));
   const athleticsZone = new THREE.Group();
   for (const made of [
     createAthletics(scene, { campus, heightAt, massInfo }),
