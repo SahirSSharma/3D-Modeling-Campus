@@ -23,6 +23,7 @@
 // the paint it belongs to; if the markings never load, they simply do not
 // appear, exactly as the paint does not.
 import * as THREE from "../vendor/three/three.module.min.js";
+import { OVERLAY, overlayLift, applyOverlayDepth, sceneTone } from "./campus-overlay.js";
 
 /* Every colour is the median of a rect sampled from the aerials. */
 export const REC_COLORS = {
@@ -46,12 +47,10 @@ export const REC_COLORS = {
   table: "#8d8377",
 };
 
-/* Pads sit above the terrain drape (0.06 / -4 / -8 in campus-world.js) and
-   below the painted lines (0.10 / -6 / -12 in campus-markings.js), so the
-   paint always wins the depth fight over the surface it is painted on. */
-const PAD_LIFT = 0.075;
-const COURT_LIFT = 0.085;
-const PAD_OFFSET = { factor: -5, units: -10 };
+/* Aprons sit on the "pad" rung and court surfaces on the "carpet" rung of
+   the shared decal-stack ladder (campus-overlay.js — see padGroup below), so
+   the painted lines campus-markings.js draws on top always win the depth
+   fight, ordered by renderOrder rather than by how close the lifts sit. */
 const MAX_SEG = 6; // pads are subdivided so they follow bending ground
 
 /* Rects measured off "CleanShot 2026-08-03 at 12.55.08" (the courts/sand
@@ -309,8 +308,27 @@ function padQuad(out, corners, heightAt, lift) {
 
 const rectCorners = (r) => [[r.x0, r.z0], [r.x1, r.z0], [r.x1, r.z1], [r.x0, r.z1]];
 
-/** One merged, depth-biased mesh per pad colour. */
-function padGroup(pads, heightAt, lift) {
+/* Rec.601 luma of a hex string — a DECISION helper (which raw measured
+   fills are dark enough to sink), not a second tone formula; the one real
+   colour transform is still campus-overlay.js's sceneTone. */
+const luma601 = (hex) => {
+  const n = parseInt(hex.slice(1), 16);
+  return 0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255);
+};
+/* The lifted lawn beside this zone (campus-world.js's daylight blend,
+   unrelated to this fix) renders at luma ~104 — measured 2026-08-03. A
+   REC_COLORS fill already at or above that was never sinking (aprons,
+   courts, concrete, sand: 111-214); only Bar Park's rubber (81.1) and the
+   turf-lane/tent blue (81.5) sit below it and get the Muir turf's strength. */
+const REC_ZONE_LAWN_LUMA = 104.3;
+const REC_TONE_STRENGTH = 0.15;
+
+/** One merged, decal-stacked mesh per pad colour, on the given ladder rung.
+    Unlit fills darker than the lifted lawn beside them (REC_ZONE_LAWN_LUMA,
+    the class the Muir turf sank under) route through sceneTone; anything at
+    or above it keeps its true measured colour. */
+function padGroup(pads, heightAt, rung) {
+  const lift = overlayLift(rung);
   const buckets = new Map();
   for (const p of pads) {
     if (!buckets.has(p.colour)) buckets.set(p.colour, []);
@@ -320,13 +338,16 @@ function padGroup(pads, heightAt, lift) {
   for (const [colour, positions] of buckets) {
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
-    group.add(new THREE.Mesh(geo, new THREE.MeshBasicMaterial({
-      color: colour,
-      side: THREE.DoubleSide,
-      polygonOffset: true,
-      polygonOffsetFactor: PAD_OFFSET.factor,
-      polygonOffsetUnits: PAD_OFFSET.units,
-    })));
+    const toned = luma601(colour) < REC_ZONE_LAWN_LUMA
+      ? sceneTone(colour, REC_TONE_STRENGTH)
+      : colour;
+    const mat = applyOverlayDepth(
+      new THREE.MeshBasicMaterial({ color: toned, side: THREE.DoubleSide }),
+      rung
+    );
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.renderOrder = OVERLAY[rung].renderOrder;
+    group.add(mesh);
   }
   return group;
 }
@@ -360,11 +381,11 @@ export function createRecreation(scene, { campus, arcgis, markings, heightAt } =
   group.add(padGroup([
     ...r.tennisPads, ...r.basketballPads,
     r.sandPad, r.barPad, r.terracePad,
-  ], heightAt, PAD_LIFT));
+  ], heightAt, "pad"));
   group.add(padGroup([
     ...r.tennisCourts, ...r.basketballCourts,
     ...r.terraceMats, r.turfLane,
-  ], heightAt, COURT_LIFT));
+  ], heightAt, "carpet"));
 
   /* --- the sand pit's low concrete edge. */
   const s = r.sandPad;

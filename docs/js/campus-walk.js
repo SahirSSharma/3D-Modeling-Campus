@@ -512,21 +512,32 @@ export async function boot() {
      ribbons guessed from OSM centrelines would just z-fight them. They still
      draw when the GIS file is absent. */
   if (!arcgis?.ground?.length) world.createPaths(scene, campus, heightAt);
-  const trees = world.createTrees(scene, lidar, heightAt);
+  /* Fetched here (moved ahead of its old spot below createTrees) because
+     crown sizing needs the sports-pad facilities to compute clearance —
+     optional, and createTrees degrades to no crown-intrusion cap without it. */
+  const markingsData = await optional(new URL("../data/campus-markings.json", import.meta.url));
+  const trees = world.createTrees(scene, lidar, heightAt, {
+    campus3d: campus, arcgis, markings: markingsData,
+  });
   const details = createDetails(scene, campus, heightAt);
 
   /* The Muir athletics zone, 1:1 with the aerial references: the Main Gym
      vault roof and Natatorium skylight, the courts' nets/hoops/rigs, and
      Muir Field's overlays. All three modules no-op quietly on missing data;
      one parent group so the dev panel can drop the whole zone at once. */
-  const markingsData = await optional(new URL("../data/campus-markings.json", import.meta.url));
   const athleticsZone = new THREE.Group();
   for (const made of [
     createAthletics(scene, { campus, heightAt, massInfo }),
     createRecreation(scene, { campus, arcgis, markings: markingsData, heightAt }),
     createMuirField(scene, { markings: markingsData, heightAt }),
   ]) {
-    if (made?.group) athleticsZone.add(made.group); // add() reparents out of scene
+    /* Some builders hand back { group }, some the Object3D itself. Taking
+       only the former silently left Muir Field's overlays parented to the
+       scene: they rendered, so nothing looked broken, but the layer toggle
+       did not control them and no test noticed. Accept both shapes.
+       add() reparents out of the scene. */
+    const obj = made?.group ?? (made?.isObject3D ? made : null);
+    if (obj) athleticsZone.add(obj);
   }
   scene.add(athleticsZone);
 

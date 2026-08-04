@@ -114,6 +114,58 @@ export function pointInRings(x, z, rings) {
   return inside;
 }
 
+/** Axis-aligned bbox around a ring ([[x,z],...]), expanded by `pad` metres
+ *  on every side. Shared by anything that needs a cheap early-rejection test
+ *  before a per-vertex ring scan (exclusion zones, crown clearance). */
+export function ringBBox(ring, pad = 0) {
+  let x0 = Infinity, z0 = Infinity, x1 = -Infinity, z1 = -Infinity;
+  for (const [x, z] of ring) {
+    if (x < x0) x0 = x; if (x > x1) x1 = x;
+    if (z < z0) z0 = z; if (z > z1) z1 = z;
+  }
+  return { x0: x0 - pad, z0: z0 - pad, x1: x1 + pad, z1: z1 + pad };
+}
+
+/** Distance in metres from (x,z) to the nearest EDGE of a ring — 0 only if
+ *  the point lands exactly on the boundary; use pointInRings for whether it
+ *  is inside. */
+export function distToRing(x, z, ring) {
+  let best = Infinity;
+  for (let i = 0; i < ring.length; i++) {
+    const [ax, az] = ring[i];
+    const [bx, bz] = ring[(i + 1) % ring.length];
+    const dx = bx - ax, dz = bz - az;
+    const L2 = dx * dx + dz * dz;
+    const t = L2 ? Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / L2)) : 0;
+    const px = ax + t * dx - x, pz = az + t * dz - z;
+    const d2 = px * px + pz * pz;
+    if (d2 < best) best = d2;
+  }
+  return Math.sqrt(best);
+}
+
+/**
+ * Clearance in metres from (x,z) to the nearest of a set of zones
+ * ({ ring, bbox }), 0 when the point is inside any ring, Infinity when
+ * `zones` is empty. `maxReach` bounds the bbox early-rejection window so a
+ * caller comparing many points against many zones (7,331 trees x ~1,400
+ * exclusion zones is the case this exists for) never pays for a full
+ * per-vertex distToRing scan against a zone nowhere near — pass the largest
+ * distance you will ever care about.
+ */
+export function nearestZoneClearance(x, z, zones, maxReach = Infinity) {
+  let best = Infinity;
+  for (const zn of zones) {
+    const { bbox, ring } = zn;
+    if (bbox && (x < bbox.x0 - maxReach || x > bbox.x1 + maxReach ||
+                 z < bbox.z0 - maxReach || z > bbox.z1 + maxReach)) continue;
+    if (pointInRings(x, z, [ring])) return 0;
+    const d = distToRing(x, z, ring);
+    if (d < best) best = d;
+  }
+  return best;
+}
+
 /** Does an axis-aligned rect [x0,z0]-[x1,z1] touch the polygon at all? */
 export function rectIntersectsRings(x0, z0, x1, z1, rings) {
   // Any rect corner inside the polygon?

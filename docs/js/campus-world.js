@@ -33,7 +33,10 @@
 import * as THREE from "../vendor/three/three.module.min.js";
 import { prepareGround } from "./campus-ground.js";
 import { makeHeightSampler, chunkGrid } from "./campus-terrain.js";
-import { SPECIES, treeSpecies, treeTint } from "./campus-species.js";
+import {
+  SPECIES, treeSpecies, treeTint, treeExclusionZones, solidZones, clearanceFor, crownFor,
+} from "./campus-species.js";
+import { OVERLAY, overlayLift, applyOverlayDepth } from "./campus-overlay.js";
 
 /* Campus on a clear November noon, as the 4K footage measures it: the big
    pavement family is neutral-to-cool light grey, NOT the beige the first
@@ -47,18 +50,16 @@ const PATH_COLOR = 0xaaaea8;
 const ASPHALT_COLOR = 0x8e8b86; // worn path asphalt, measured right 4×
 const WATER_COLOR = 0x4a80a8; // real water reads deeper blue than a swatch
 
-/* Draped surfaces are lifted this far off the terrain and biased in depth, so
-   a path never fights the ground it is painted on. Both are needed: the offset
-   handles the general case, the depth bias handles grazing angles. */
-const DRAPE = 0.06;
+/* Draped surfaces sit on the "ground" rung of the shared decal-stack ladder
+   (campus-overlay.js) — a small lift for eye-level parallax, plus
+   renderOrder + depthWrite:false so a path never fights the ground it is
+   painted on, at ANY altitude the depth buffer can resolve. */
+const DRAPE = overlayLift("ground");
 const drapeMaterial = (color) =>
-  new THREE.MeshLambertMaterial({
-    color,
-    side: THREE.DoubleSide,
-    polygonOffset: true,
-    polygonOffsetFactor: -4,
-    polygonOffsetUnits: -8,
-  });
+  applyOverlayDepth(
+    new THREE.MeshLambertMaterial({ color, side: THREE.DoubleSide }),
+    "ground"
+  );
 
 /* ------------------------------------------------------------------ terrain */
 
@@ -277,7 +278,9 @@ function buildApron(terrain, h) {
 async function addBoundaryLine(scene, heightAt) {
   const { boundary } = await overlayData();
   if (!boundary?.rings?.length) return;
-  const DASH = 7, GAP = 5, STEP = 1.75, HALF = 0.7, LIFT = 0.15;
+  /* A dashed line drawn on the ground is exactly what the "paint" rung is
+     for — the SPEC's own preference for crosswalk-style dashes. */
+  const DASH = 7, GAP = 5, STEP = 1.75, HALF = 0.7, LIFT = overlayLift("paint");
   /* Only where ground exists: a ribbon drawn past the apron would hang at
      edge-clamped height over nothing. The minimap draws the full ring
      regardless. */
@@ -315,14 +318,13 @@ async function addBoundaryLine(scene, heightAt) {
   const normals = new Float32Array(position.length);
   for (let i = 1; i < normals.length; i += 3) normals[i] = 1;
   geo.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
-  const mat = new THREE.MeshBasicMaterial({
-    color: 0x1e2f6e,
-    side: THREE.DoubleSide,
-    polygonOffset: true,
-    polygonOffsetFactor: -4,
-    polygonOffsetUnits: -8,
-  });
-  scene.add(new THREE.Mesh(geo, mat));
+  const mat = applyOverlayDepth(
+    new THREE.MeshBasicMaterial({ color: 0x1e2f6e, side: THREE.DoubleSide }),
+    "paint"
+  );
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.renderOrder = OVERLAY.paint.renderOrder;
+  scene.add(mesh);
 }
 
 /* ---------------------------------------------------------------- lighting */
@@ -519,7 +521,10 @@ export function createSurfaces(scene, campus, heightAt, arcgis, colors) {
            collapse into one municipal blue. */
         color = new THREE.Color(hex).lerp(base, 0.5);
       }
-      const lift = kind === "water" ? DRAPE + 0.12 : kind === "green" ? DRAPE - 0.02 : DRAPE;
+      /* Water is a raised basin, not a decal-stack rung — its own lift, kept
+         clear of the ground ladder. Every other surface (including green,
+         no special case any more) shares the ground rung's exact lift. */
+      const lift = kind === "water" ? DRAPE + 0.12 : DRAPE;
       /* Chunked by 500 m cell as well as kind: one campus-wide merged mesh can
          never be frustum-culled, so every frame drew every sidewalk on campus.
          Chunks let the far side of the mesa drop out at eye level. */
@@ -593,17 +598,26 @@ export function createSurfaces(scene, campus, heightAt, arcgis, colors) {
       for (let i = 1; i < normals.length; i += 3) normals[i] = 1;
       geo.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
       if (!matByKind.has(kind)) {
-        matByKind.set(kind, new THREE.MeshLambertMaterial({
+        const base = new THREE.MeshLambertMaterial({
           vertexColors: true,
           side: THREE.DoubleSide,
-          polygonOffset: true,
-          polygonOffsetFactor: -4,
-          polygonOffsetUnits: -8,
           /* Only pavement is scored; lawns and water read as surfaces, not tiles. */
           ...(kind === "walk" || kind === "plaza" ? { map: scoring } : {}),
-        }));
+        });
+        /* Water is a raised basin, genuinely 3D — it keeps depthWrite:true
+           and stays OUT of the decal stack, at the terrain's own renderOrder
+           0. Every other kind joins the "ground" rung. */
+        matByKind.set(kind, kind === "water"
+          ? Object.assign(base, {
+              polygonOffset: true,
+              polygonOffsetFactor: OVERLAY.ground.polygonOffsetFactor,
+              polygonOffsetUnits: OVERLAY.ground.polygonOffsetUnits,
+            })
+          : applyOverlayDepth(base, "ground"));
       }
-      group.add(new THREE.Mesh(geo, matByKind.get(kind)));
+      const mesh = new THREE.Mesh(geo, matByKind.get(kind));
+      if (kind !== "water") mesh.renderOrder = OVERLAY.ground.renderOrder;
+      group.add(mesh);
     }
   };
 
@@ -687,7 +701,9 @@ function buildPaths(group, campus, heightAt, skip) {
     const normals = new Float32Array(positions.length);
     for (let i = 1; i < normals.length; i += 3) normals[i] = 1;
     geo.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
-    group.add(new THREE.Mesh(geo, drapeMaterial(color)));
+    const mesh = new THREE.Mesh(geo, drapeMaterial(color));
+    mesh.renderOrder = OVERLAY.ground.renderOrder;
+    group.add(mesh);
   }
 }
 
@@ -701,8 +717,15 @@ function buildPaths(group, campus, heightAt, skip) {
  * route by a hash, which looked fine and told you nothing — the eucalyptus row
  * along Ridge Walk was invented, and the trees that really shade Revelle Plaza
  * were absent.
+ *
+ * Crown sizing is delegated to `crownFor` (campus-species.js): a proportion
+ * cap (no crown may read as wider than it is tall) and a crown-intrusion cap
+ * (a crown may not overhang a building or a sports pad — the Muir zone fix,
+ * RC2). `zoneSources` is whichever of { campus3d, arcgis, markings } the
+ * caller has loaded; clearance is computed ONCE per tree here, never per
+ * frame, using the same exclusion zones tree-rules.mjs prunes trunks with.
  */
-export function createTrees(scene, lidar, heightAt) {
+export function createTrees(scene, lidar, heightAt, zoneSources = {}) {
   const trees = lidar.trees || [];
   if (!trees.length) return { count: 0 };
 
@@ -713,11 +736,11 @@ export function createTrees(scene, lidar, heightAt) {
        round    — the conventional lawn tree (sycamore, jacaranda, fig)
      The form is most of the recognition: a eucalyptus is a pole with a tuft,
      a torrey pine is a low table of shade, and no shared geometry can play
-     both. */
-  const FORMS = {
-    tall: { crownAspect: 1.2, crownOfH: 0.30, trunkTaper: [0.16, 0.26] },
-    umbrella: { crownAspect: 0.55, crownOfH: 0.75, trunkTaper: [0.3, 0.44] },
-    round: { crownAspect: 1.05, crownOfH: 0.5, trunkTaper: [0.22, 0.34] },
+     both. Only the trunk taper is rendering-only and stays local; the crown
+     proportions themselves live in CROWN_FORMS so crownFor and the renderer
+     can never drift apart. */
+  const TRUNK_TAPER = {
+    tall: [0.16, 0.26], umbrella: [0.3, 0.44], round: [0.22, 0.34],
   };
 
   /* Bucket instances by form first — InstancedMesh needs its count up front. */
@@ -727,11 +750,10 @@ export function createTrees(scene, lidar, heightAt) {
     byForm[SPECIES[species].form].push({ t, species });
   }
 
-  /* You walk UNDER a tree, not through one. Crowns are sized so their underside
-     always clears head height. For a flattened crown the underside sits
-     crownR*aspect below centre, so the cap works on the VERTICAL radius —
-     a pine's table of shade widens, but never onto your head. */
-  const CLEARANCE = 2.4;
+  /* Clearance to the nearest building/sports-pad zone, once per tree — the
+     same exclusion zones scripts/lib/tree-rules.mjs prunes trunks with, minus
+     water (a crown may overhang a fountain). */
+  const solid = solidZones(treeExclusionZones(zoneSources));
 
   const group = new THREE.Group();
   const m = new THREE.Matrix4();
@@ -742,8 +764,8 @@ export function createTrees(scene, lidar, heightAt) {
 
   for (const [form, list] of Object.entries(byForm)) {
     if (!list.length) continue;
-    const f = FORMS[form];
-    const trunkGeo = new THREE.CylinderGeometry(f.trunkTaper[0], f.trunkTaper[1], 1, 5);
+    const taper = TRUNK_TAPER[form];
+    const trunkGeo = new THREE.CylinderGeometry(taper[0], taper[1], 1, 5);
     const leafGeo = new THREE.IcosahedronGeometry(1, form === "umbrella" ? 1 : 0);
     /* White base; the real colour rides per instance so one mesh can carry a
        stressed canyon eucalyptus and a lush lawn one. */
@@ -754,15 +776,8 @@ export function createTrees(scene, lidar, heightAt) {
 
     list.forEach(({ t: [x, z, h, r], species }, i) => {
       const ground = heightAt(x, z);
-      const minCrown = Math.max(1.2, Math.min(2.8, h * 0.13));
-      const wantCrown = form === "tall" ? Math.min(r, h * f.crownOfH) : r;
-      const maxVert = (h - CLEARANCE) / 2;
-      const crownR = Math.max(minCrown, Math.min(wantCrown, maxVert / f.crownAspect));
-      const crownV = crownR * f.crownAspect; // vertical half-extent
-      /* The crown CENTRE sits at crownOfH of the tree's height band for the
-         form: a eucalyptus tuft rides near the top of its pole, a pine's
-         table sits low. Clamped so top ≤ h and underside ≥ clearance. */
-      const centre = Math.min(h - crownV, Math.max(CLEARANCE + crownV, h * (form === "umbrella" ? 0.62 : 0.85)));
+      const clearNeed = solid.length ? clearanceFor(x, z, solid) : Infinity;
+      const { crownR, crownV, centre } = crownFor([x, z, h, r], form, clearNeed);
       const trunkH = centre; // trunk reaches into the crown; no gap can open
 
       const { leaf, trunk } = treeTint(species, x, z);
