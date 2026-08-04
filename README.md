@@ -170,6 +170,25 @@ walking tour (Nov 2023, clear noon) and a 10-minute drone tour (Nov 2022, marine
   no sag: the nadir aerial is the one view a sag is invisible from, so the rake stays
   straight rather than curved by invention.
 
+- **RIMAC Field** (`docs/js/campus-rimac.js`): the same two-source split, stated harder.
+  The complex's southern corner is a **regulation softball field**, and it is measured, not
+  assumed: both painted foul lines least-squares fit the georeferenced chunks at 2.75° and
+  92.44° north of east (rms 0.050 m / 0.054 m) — **89.69° apart**, so the diamond is modelled
+  as a true right angle on their bisector, which then lands back on both fits to under 0.25 m
+  over 58 m. Home plate is their intersection. The pitching circle is found twice over, as the
+  centre of the circle fitted to the skinned infield's arc and as the object parked on the
+  plate — 0.14 m apart, 42.1 ft from home where the rulebook says 43 — and that skin arc comes
+  out at 60.3 ft, the rulebook's 60 ft grass line, a radius nothing was fitted to. The outfield
+  then falls out at ~190 ft down both lines and 209 ft to centre, so the fence stands at about
+  200 and 220. Also built: the warning track as a band of its four separately measured widths,
+  the outfield fence with its dark windscreen, the east perimeter fence against North Torrey
+  Pines Road (rms 0.246 m over 428 rows), the three-block west bleacher, and the pitches'
+  **patchy turf** — a 3.5 m tercile map sampled off the georeferenced chunks and painted in
+  colours measured off the current Apple captures, because where the dry ground is has to come
+  from the registered source and what it looks like today from the current one. No backstop is
+  modelled: nothing in either source resolves one. Every VERTICAL dimension here is a stated
+  convention — nadir imagery cannot see a height and the 2014 LiDAR ships no raw returns.
+
 ```
 docs/            the site — GitHub Pages serves this directly, no build step
   index.html     standalone page + development panel
@@ -183,6 +202,8 @@ docs/            the site — GitHub Pages serves this directly, no build step
     campus-route.js     A* over the real footpath graph (no DOM, no three.js)
     campus-ground.js    the surveyed ground polygons: clip + tile at load (no DOM)
     campus-terrain.js   height sampler, chunk grid, boundary rings (no DOM)
+    campus-rimac.js     RIMAC Field: softball field, fencing, bleacher, patchy turf
+    campus-drape.js     shared draping geometry: fills, ribbons, bands, merged solids
   data/
     campus-3d.json         OSM footprints, paths, plazas
     campus-lidar.json      measured heights, terrain grid, trees
@@ -215,6 +236,7 @@ tests/
   campus-imagery.test.mjs  the source layer: patch georeferencing, the Apple signing scheme
   campus-truecolor.test.mjs the measured-colour layer: keys resolve, gamut holds, turf beats pavement
   campus-markings.test.mjs the painted lines: bounds, widths, 9.15 m circles, 9 lanes
+  campus-rimac.test.mjs    RIMAC Field: the regulation cross-checks, the patch map, the fences
 ```
 
 ## Running it

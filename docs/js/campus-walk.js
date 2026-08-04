@@ -24,6 +24,7 @@ import { createDetails } from "./campus-details.js";
 import { createAthletics } from "./campus-athletics.js";
 import { createRecreation } from "./campus-recreation.js";
 import { createMuirField } from "./campus-muir-field.js";
+import { createRimac } from "./campus-rimac.js";
 import { createMinimap } from "./campus-minimap.js";
 import {
   createExplore, scaleAtmosphere, EYE, sliderToSpeed, speedToSlider,
@@ -521,15 +522,18 @@ export async function boot() {
   });
   const details = createDetails(scene, campus, heightAt);
 
-  /* The Muir athletics zone, 1:1 with the aerial references: the Main Gym
-     vault roof and Natatorium skylight, the courts' nets/hoops/rigs, and
-     Muir Field's overlays. All three modules no-op quietly on missing data;
-     one parent group so the dev panel can drop the whole zone at once. */
+  /* The athletics zone, 1:1 with the aerial references: at Muir, the Main Gym
+     vault roof and Natatorium skylight, the courts' nets/hoops/rigs and Muir
+     Field's overlays; at RIMAC, the softball field, the perimeter fencing, the
+     west bleacher and the pitches' patchy turf. Every module no-ops quietly on
+     missing data; one parent group so the dev panel can drop the whole zone at
+     once. */
   const athleticsZone = new THREE.Group();
   for (const made of [
     createAthletics(scene, { campus, heightAt, massInfo }),
     createRecreation(scene, { campus, arcgis, markings: markingsData, heightAt }),
     createMuirField(scene, { markings: markingsData, heightAt }),
+    createRimac(scene, { markings: markingsData, heightAt }),
   ]) {
     /* Some builders hand back { group }, some the Object3D itself. Taking
        only the former silently left Muir Field's overlays parented to the

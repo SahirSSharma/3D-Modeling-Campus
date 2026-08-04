@@ -18,6 +18,7 @@ import { THREE } from "../docs/js/campus-world.js";
 import { createAthletics } from "../docs/js/campus-athletics.js";
 import { createRecreation } from "../docs/js/campus-recreation.js";
 import { createMuirField } from "../docs/js/campus-muir-field.js";
+import { createRimac } from "../docs/js/campus-rimac.js";
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const load = (f) => JSON.parse(readFileSync(join(ROOT, "docs/data", f), "utf8"));
@@ -36,6 +37,7 @@ const buildZone = () => {
     ["athletics", createAthletics(scene, { campus, heightAt, massInfo: new Map() })],
     ["recreation", createRecreation(scene, { campus, arcgis, markings, heightAt })],
     ["muir-field", createMuirField(scene, { markings, heightAt })],
+    ["rimac", createRimac(scene, { markings, heightAt })],
   ];
   for (const [, made] of built) {
     const obj = unwrap(made);
@@ -56,7 +58,7 @@ test("the athletics layer holds every builder's geometry", () => {
   let meshes = 0;
   zone.traverse((o) => { if (o.isMesh) meshes++; });
   assert.ok(meshes > 20, `only ${meshes} meshes under the zone`);
-  assert.equal(zone.children.length, 3, "one group per builder");
+  assert.equal(zone.children.length, 4, "one group per builder");
 });
 
 test("nothing the builders make is left parented outside the zone", () => {
@@ -69,6 +71,7 @@ test("nothing the builders make is left parented outside the zone", () => {
     createAthletics(scene, { campus, heightAt, massInfo: new Map() }),
     createRecreation(scene, { campus, arcgis, markings, heightAt }),
     createMuirField(scene, { markings, heightAt }),
+    createRimac(scene, { markings, heightAt }),
   ]) {
     const obj = made?.group ?? (made?.isObject3D ? made : null);
     if (obj) zone.add(obj);
@@ -78,18 +81,27 @@ test("nothing the builders make is left parented outside the zone", () => {
   assert.equal(orphans, 0, `${orphans} meshes stayed under the scene, outside the layer`);
 });
 
-test("switching the layer off hides the whole zone, Muir Field included", () => {
+test("switching the layer off hides the whole zone, both fields included", () => {
   const { zone } = buildZone();
-  const FIELD = { x: [-181, -120], z: [64, 170] };
-  let overField = 0;
+  /* Two boxes, a kilometre apart: Muir Field, and RIMAC's softball field at
+     the far north-west. Each has to be covered by something under the zone. */
+  const BOXES = {
+    "Muir Field": { x: [-181, -120], z: [64, 170] },
+    "RIMAC softball": { x: [78, 150], z: [-937, -869] },
+  };
+  const seen = Object.fromEntries(Object.keys(BOXES).map((k) => [k, 0]));
   zone.traverse((o) => {
     if (!o.isMesh || !o.geometry?.attributes?.position) return;
     o.geometry.computeBoundingBox();
     const b = o.geometry.boundingBox;
-    if (b.max.x > FIELD.x[0] && b.min.x < FIELD.x[1] &&
-        b.max.z > FIELD.z[0] && b.min.z < FIELD.z[1]) overField++;
+    for (const [name, box] of Object.entries(BOXES)) {
+      if (b.max.x > box.x[0] && b.min.x < box.x[1] &&
+          b.max.z > box.z[0] && b.min.z < box.z[1]) seen[name]++;
+    }
   });
-  assert.ok(overField > 0, "no zone geometry over Muir Field — the overlays are missing again");
+  for (const [name, n] of Object.entries(seen)) {
+    assert.ok(n > 0, `no zone geometry over ${name} — the overlays are missing again`);
+  }
   zone.visible = false;
   assert.equal(zone.visible, false);
 });
