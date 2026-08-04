@@ -20,7 +20,9 @@
 //     its mid-field end. At 0.098 m per pixel the letterforms are mush, so
 //     each is modelled as a two-tone strip of the right length and place.
 //   · goals on the short ends, two painted triangles down the eastern half,
-//     and a boundary rail behind each end.
+//     and a boundary rail behind each end. The goals are frame AND net:
+//     campus-goal.js builds both from Law 1, and this file only says where
+//     they stand and what colour the twine reads.
 //
 // EVERY position here lives in the FIELD'S OWN FRAME — fractional (u, v)
 // along the fitted bounds quad's edges, u across the short axis and v along
@@ -31,6 +33,7 @@
 // uses. Missing or malformed data is a quiet no-op, as everywhere else here.
 import * as THREE from "../vendor/three/three.module.min.js";
 import { OVERLAY, overlayLift, applyOverlayDepth, sceneTone } from "./campus-overlay.js";
+import { GOAL_REGULATION, goalSpec, goalWorld, createGoalNet } from "./campus-goal.js";
 
 /* Measured off "CleanShot 2026-08-03 at 12.54.53" (full-field, 0.0977 m/px)
    and confirmed against the wider "12.53.45" frame, whose tennis-court
@@ -52,6 +55,11 @@ export const MUIR_COLORS = {
   wordmarkOrange: "#d4823f", // de-mixed from the warm peak; the block is lettering, not a solid
   triangle: "#d5d9db",   // solid enough to sample almost directly (p96 #caced0)
   goal: "#f0f2f0",
+  /* DERIVED, not sampled: a 3 mm cord on a 0.12 m mesh covers a twentieth of
+     a 0.098 m pixel, so the aerial can only say the net is not dark. Same
+     de-mixing as the paint above — the frame white carried one part in ten
+     toward the turf it hangs against (0.9 x #f0f2f0 + 0.1 x #283e40). */
+  goalNet: "#dce0de",
   fence: "#5a625d",
 };
 
@@ -81,9 +89,11 @@ const FAN = {
 };
 
 const GOAL_LINE_M = 2.71;  // the pitch's own end line, inside the bounds end
-const GOAL_SPAN = 7.32;    // regulation; the aerial's goals are parked outside
-const GOAL_HEIGHT = 2.44;
-const GOAL_DEPTH = 1.6;
+/* Mouth and crossbar come from Law 1 via campus-goal.js, which cites it. The
+   depth and back-rail height are NOT regulation and are not claimed to be:
+   they are the shallow portable rake this model has carried since the goals
+   were first drawn, and the nadir aerial resolves neither any further. */
+const GOAL = { ...GOAL_REGULATION, depth_m: 1.6, backHeight_m: 0.9 };
 
 const PAINT_WIDTH = 0.12;  // same paint gauge campus-markings.js uses
 
@@ -199,11 +209,10 @@ export function muirFieldSpec({ width_m, length_m } = MUIR_NOMINAL) {
   for (const end of ["north", "south"]) {
     const s = end === "north" ? 1 : -1;
     const v = end === "north" ? GOAL_LINE_M / L : 1 - GOAL_LINE_M / L;
-    const back = v - (s * GOAL_DEPTH) / L;
-    const half = GOAL_SPAN / 2 / W;
+    const back = v - (s * GOAL.depth_m) / L;
+    const half = GOAL.span_m / 2 / W;
     add({
-      id: `goal-${end}`, type: "goal", end, colour: MUIR_COLORS.goal,
-      span_m: GOAL_SPAN, height_m: GOAL_HEIGHT, depth_m: GOAL_DEPTH,
+      id: `goal-${end}`, type: "goal", end, colour: MUIR_COLORS.goal, ...GOAL,
       uv: [[0.5 - half, v], [0.5 + half, v], [0.5 + half, back], [0.5 - half, back]],
     });
   }
@@ -400,6 +409,7 @@ export function createMuirField(scene, { markings, heightAt } = {}) {
     return flats.get(key);
   };
   const stand = standing();
+  const netCords = []; // every cord of both goals, merged into one draw
 
   for (const el of spec.elements) {
     const pts = el.uv.map(world);
@@ -421,21 +431,14 @@ export function createMuirField(scene, { markings, heightAt } = {}) {
         fill(bucket("logo", el.colour), pts, heightAt, LOGO_LIFT);
         break;
       case "goal": {
-        /* Two posts, a crossbar, and a shallow back frame raked to the net. */
-        const [[lx, lz], [rx, rz], [brx, brz], [blx, blz]] = pts;
-        const rot = frame.uRot;
-        stand.box(0.12, GOAL_HEIGHT, 0.12, el.colour,
-          lx, heightAt(lx, lz) + GOAL_HEIGHT / 2, lz, rot);
-        stand.box(0.12, GOAL_HEIGHT, 0.12, el.colour,
-          rx, heightAt(rx, rz) + GOAL_HEIGHT / 2, rz, rot);
-        const cx = (lx + rx) / 2, cz = (lz + rz) / 2;
-        stand.box(el.span_m + 0.12, 0.12, 0.12, el.colour,
-          cx, heightAt(cx, cz) + GOAL_HEIGHT, cz, rot);
-        for (const [px, pz] of [[blx, blz], [brx, brz]]) {
-          stand.box(0.09, 0.9, 0.09, el.colour, px, heightAt(px, pz) + 0.45, pz, rot);
-        }
-        const bx = (blx + brx) / 2, bz = (blz + brz) / 2;
-        stand.box(el.span_m, 0.08, 0.08, el.colour, bx, heightAt(bx, bz) + 0.9, bz, rot);
+        /* Frame and net both come from campus-goal.js, which owns the Law 1
+           dimensions and the mesh gauge. One terrain datum for the whole
+           goal, taken at the mouth centre: a goal is welded, not draped. */
+        const [[lx, lz], [rx, rz]] = pts;
+        const placed = goalWorld(goalSpec(el), pts, heightAt((lx + rx) / 2, (lz + rz) / 2));
+        if (!placed) break;
+        for (const b of placed.boxes) stand.box(b.w, b.h, b.d, el.colour, b.x, b.y, b.z, b.rot);
+        netCords.push(...placed.cords);
         break;
       }
       case "fence-post": {
@@ -456,6 +459,7 @@ export function createMuirField(scene, { markings, heightAt } = {}) {
     }
   }
   stand.build(group);
+  if (netCords.length) group.add(createGoalNet(netCords, MUIR_COLORS.goalNet));
 
   /* Tone routing (campus-overlay.js's sceneTone doc). Strengths come from
      sceneTone's REAL output — it lifts in THREE's linear colour space, a
