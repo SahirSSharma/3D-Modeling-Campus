@@ -250,10 +250,16 @@ npm run audit:imagery -- --facility=muir-tennis-west
 ```
 
 Run against the shipped Google chunks it reports **0.25 m** of resolved edge detail out of
-imagery stored at 0.125 m/px — Google's zoom 20 over this campus is an upsample of roughly
-0.25 m originals. That is the measured reason `muir-tennis-west` fits at 0.43 coverage: a
-5 cm painted line cannot survive a 0.25 m sensor. A source swap is only worth making if the
-audit shows the new source resolving finer edges, not merely storing more pixels.
+imagery stored at 0.125 m/px — two stored pixels per edge, where a source resolving its own
+pixel scale would give one. Some of that softness is ours (the build's bilinear reprojection
+and JPEG q80), so the number is not a verdict on Google's sensor alone; what it does measure
+honestly is the detail that actually reaches the colour and marking pipelines, and it is
+roughly half what the pixel count advertises. That is the measured company `muir-tennis-west`
+keeps at 0.43 coverage: a 5 cm painted line does not survive a quarter-metre edge.
+
+Both sources pass through the identical pipeline, so the comparison stays fair even though
+neither number isolates the sensor. A source swap is only worth making if the audit shows the
+new source resolving finer edges — not merely storing more pixels.
 
 Because the chunk grid, output resolution and manifest shape are identical either way, the
 swap changes one thing and the audit measures one variable. Rebuilding the shipped Google
