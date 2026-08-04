@@ -54,13 +54,36 @@ That is a real accuracy gap, and it is worth noting that it argues for Apple on 
 while the measurement argues against it on **resolution**. The two are separate questions and
 this project has always treated them separately (see the epoch rule in the README).
 
-## Open
+## The zoom test, which settles it
 
-Whether Apple's Maps Web Snapshot service at `scale=2` resolves better than its web viewer did
-here is untested — it needs an Apple Developer Program membership. On this evidence alone the
-membership does not pay for itself on sharpness. The remaining free test is a capture at
-maximum zoom: if detail keeps improving past 0.126 m/px there is more to buy, and if the image
-merely gets larger and softer there is not.
+A third capture, this time zoomed to a single court. Its scale is ruled the same way and the
+two readings agree exactly: doubles sidelines 88 px for 10.97 m, baselines 190 px for 23.77 m
+— **0.125 m/px**. That is the same scale as the wide capture. Apple's web viewer did not go
+finer when asked to; the court simply fills more of the frame.
+
+| source | m/px | grad/m | resolved edge detail |
+|---|---|---|---|
+| Google (shipped chunks) | 0.125 | 82.6 | 0.25 m |
+| Apple, maximum zoom | 0.125 | 86.9 | **0.25 m** |
+
+A dead heat — 1.00x the edge resolution, 1.05x the detail per metre.
+
+## Verdict
+
+Across three captures Apple never resolved more ground than Google once: equal on the clean
+court, worse on the west block. Apple's imagery over this campus tops out where Google already
+is, and the impression of clarity is its rendering. **A source swap buys no accuracy, and the
+Apple Developer Program membership it would require does not pay for itself on sharpness.**
+
+The provider layer stays regardless: it cost nothing to keep, it is the only reason this
+question could be answered with numbers rather than opinion, and it makes the next candidate
+source a flag rather than a rewrite.
+
+## What is still open, and it is not resolution
+
+`campus-truecolor.json` carries a retired paint scheme for the Muir west tennis block. Neither
+source fixes that by being sharper — it needs a *current* capture of that block, which is an
+epoch problem and belongs with the epoch rule in the README, not with this comparison.
 
 Reproduce with:
 
