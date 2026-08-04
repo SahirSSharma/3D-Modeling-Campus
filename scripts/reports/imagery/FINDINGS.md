@@ -68,7 +68,44 @@ finer when asked to; the court simply fills more of the frame.
 
 A dead heat — 1.00x the edge resolution, 1.05x the detail per metre.
 
-## Verdict
+## The web viewer was capped — the Maps app is not (2026-08-03, later)
+
+A fourth capture, from the **Apple Maps application** rather than the web beta, over the same
+court. Its calibration is the cleanest of the set:
+
+| measured span | regulation | px |
+|---|---|---|
+| doubles sideline to doubles sideline | 10.97 m | 233 |
+| singles sideline to singles sideline | 8.23 m | 176 |
+| baseline to baseline | 23.77 m | 505 |
+
+Singles/doubles comes out at 0.755 against a regulation 0.750, and baseline-to-width at
+**2.167** against a regulation 2.167 — so the view is true nadir, with no 3D-mesh
+foreshortening to correct for. **0.0471 m/px.**
+
+Edge rise measured in PIXELS, which needs no calibration at all and so settles the
+upsample question by itself:
+
+| capture | m/px | edge rise (px) | resolved detail |
+|---|---|---|---|
+| Google, shipped chunks | 0.125 | 2 | 0.25 m |
+| Apple, web beta at max zoom | 0.125 | 2 | 0.25 m |
+| Apple, **Maps app** at max zoom | 0.047 | 3 | **0.14 m** |
+
+The app carries 2.65x the pixel density and its edges widened only from 2 px to 3 px. A pure
+upsample would have widened them to ~5 px. So the detail is real: **roughly 1.8x finer than
+anything this project has measured from.**
+
+**This reverses the verdict below.** The earlier conclusion was correct about the imagery it
+was shown and wrong about Apple — the web beta serves a capped tier, and three captures of a
+capped tier cannot speak for the source behind it. The lesson is specific and worth keeping:
+*measuring a delivery channel is not measuring a data source.*
+
+It also moves the zoom. At 0.047 m/px the imagery is finer than `z=20&scale=2` delivers
+(0.063 m/px), so a swap should probe **z21** as well or it undersamples ground it was told is
+there.
+
+## Verdict (superseded — see above)
 
 Across three captures Apple never resolved more ground than Google once: equal on the clean
 court, worse on the west block. Apple's imagery over this campus tops out where Google already

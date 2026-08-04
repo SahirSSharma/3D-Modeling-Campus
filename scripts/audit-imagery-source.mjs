@@ -186,7 +186,11 @@ async function cropShipped(manifest, x0, z0, x1, z1) {
    Sampling is nearest-neighbour ON PURPOSE: the question is how much detail
    the source has, and any interpolation here would blur the answer. */
 async function probe(sourceId, facility, x0, z0, x1, z1, origin, shipped) {
-  const ZOOM = 20;
+  /* Zoom is a knob, not a constant, because the right one is a measurement.
+     Apple's own Maps app renders this campus at ~0.047 m/px, which is finer
+     than z20 at scale=2 delivers (0.063) — so asking only z20 would leave
+     detail on the table that the imagery demonstrably has. Probe both. */
+  const ZOOM = Number(arg("zoom", "20"));
   const provider = makeProvider(sourceId, {
     root: ROOT, cacheDir: cacheDirFor(ROOT, sourceId), cap: 24,
   });
