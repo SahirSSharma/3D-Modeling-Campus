@@ -26,6 +26,20 @@
 //
 // Water is NOT a rung here: it is a raised basin (+0.35 m rim), genuinely
 // 3D, and keeps `depthWrite: true` — see campus-world.js.
+//
+// TONE. campus-world.js blends every LIT ground surface toward a "daylight"
+// base colour and runs it through a taste-guard clamp, which together lift
+// a measured colour roughly a stop and a half (a lawn measured #75833f,
+// luma 73.9, renders #5e792e, luma 104.3 — a 1.41x lift). UNLIT
+// MeshBasicMaterial fills (paint, courts, logos — deliberately unlit, see
+// each module's own comment on why) draw their raw measured colour and get
+// none of that lift, so a dark measured fill sinks relative to the ground
+// around it. The Muir trident did this first (a navy logo read as a black
+// splat on the brightened turf); the same class later showed up as the
+// Muir turf carpet reading as a near-black slab beside its own lawn.
+// `sceneTone` is the one fix for the whole class — every unlit fill that
+// needs to track the ground's lift routes through it, not a local formula.
+import * as THREE from "../vendor/three/three.module.min.js";
 
 /** Ordered rungs, ground upward. Position in the array is the ladder order. */
 export const OVERLAY_RUNGS = ["ground", "pad", "carpet", "paint", "logo"];
@@ -76,4 +90,40 @@ export function applyOverlayDepth(material, rung) {
   material.depthWrite = false;
   material.depthTest = true;
   return material;
+}
+
+/**
+ * Lift a raw measured colour toward the same tonal register the LIT ground
+ * gets, on a `strength` dial from 0 (unchanged) to 1 (the full lift, first
+ * tuned so the navy trident stopped rendering as a black splat on the
+ * brightened turf). Lightness moves along a compressing curve —
+ * `min(0.85, l*0.6 + 0.26)` — that pulls dark colours up hard and barely
+ * touches colours already near daylight, plus a small saturation boost so
+ * the lift reads as brighter, not washed out. Hue is untouched.
+ *
+ * `strength` is a per-fill judgement call, not a universal constant: a fill
+ * that visually sinks next to the lifted ground around it (Muir's turf
+ * carpet, its wordmarks) needs the lift; a fill that was never sinking
+ * (the track's terracotta ring, already brighter than the lawn beside it;
+ * paint whites, concrete, sand — all already near daylight) does not, and
+ * calling this at strength 0 (or not calling it at all) is the correct,
+ * deliberate choice for those. Every call site says which and why.
+ *
+ * Not idempotent at strength 1 in general — the lightness curve is a
+ * contraction toward its fixed point (l = 0.65), so re-applying it keeps
+ * moving colours toward that fixed point rather than leaving them fixed.
+ * That is fine here: nothing in this codebase applies it twice to the same
+ * colour (tests/campus-overlay.test.mjs pins that repeated application
+ * stays bounded and keeps moving toward, never away from, daylight).
+ */
+export function sceneTone(hex, strength = 1) {
+  const c = new THREE.Color(hex);
+  const hsl = {};
+  c.getHSL(hsl);
+  const liftedL = Math.min(0.85, hsl.l * 0.6 + 0.26);
+  const liftedS = Math.min(1, hsl.s * 1.15);
+  const l = hsl.l + (liftedL - hsl.l) * strength;
+  const s = hsl.s + (liftedS - hsl.s) * strength;
+  c.setHSL(hsl.h, s, l);
+  return c;
 }

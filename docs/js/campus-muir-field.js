@@ -30,7 +30,7 @@
 // muirFieldSpec() is pure, so the tests run the exact placement the renderer
 // uses. Missing or malformed data is a quiet no-op, as everywhere else here.
 import * as THREE from "../vendor/three/three.module.min.js";
-import { OVERLAY, overlayLift, applyOverlayDepth } from "./campus-overlay.js";
+import { OVERLAY, overlayLift, applyOverlayDepth, sceneTone } from "./campus-overlay.js";
 
 /* Measured off "CleanShot 2026-08-03 at 12.54.53" (full-field, 0.0977 m/px)
    and confirmed against the wider "12.53.45" frame, whose tennis-court
@@ -457,6 +457,20 @@ export function createMuirField(scene, { markings, heightAt } = {}) {
   }
   stand.build(group);
 
+  /* Tone routing (campus-overlay.js's sceneTone doc). Strengths come from
+     sceneTone's REAL output — it lifts in THREE's linear colour space, a
+     steeper curve than the hex numbers suggest — not a hand estimate:
+     carpet (turf, #283e40/luma 55.7) was NOT lifted like the lawn beside it
+     is (luma 73.9->104.3) and read as a near-black slab; strength 0.15
+     renders it at luma 79.4, a ~0.76 turf/lawn ratio, inside the aerial's
+     measured 0.68-0.82 band. paint (the fan arcs/circles) is calibrated
+     against the RAW turf (see the de-mixing note above MUIR_COLORS) and
+     shares carpet's strength so it keeps moving with the carpet instead of
+     losing contrast while the carpet alone brightens under it. logo (the
+     wordmark strips, the fan triangles) gets FULL strength: the wordmark
+     navy sits on turf exactly like the trident in campus-markings.js, and
+     needs the same fix or it is the same black splat. */
+  const FAMILY_TONE = { carpet: 0.15, paint: 0.15, logo: 1 };
   for (const [key, positions] of flats) {
     if (!positions.length) continue;
     const [family, colour] = key.split("|");
@@ -466,7 +480,10 @@ export function createMuirField(scene, { markings, heightAt } = {}) {
        fill whose triangulation winds back-facing gets lit by the hemisphere's
        GROUND term and renders near-black. */
     const mat = applyOverlayDepth(
-      new THREE.MeshBasicMaterial({ color: colour, side: THREE.DoubleSide }),
+      new THREE.MeshBasicMaterial({
+        color: sceneTone(colour, FAMILY_TONE[family] ?? 0),
+        side: THREE.DoubleSide,
+      }),
       family
     );
     const mesh = new THREE.Mesh(geo, mat);

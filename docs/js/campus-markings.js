@@ -12,7 +12,7 @@
 // a handful of draw calls. The file being absent must never take the walk
 // down: everything resolves to a quiet no-op.
 import * as THREE from "../vendor/three/three.module.min.js";
-import { OVERLAY, overlayLift, applyOverlayDepth } from "./campus-overlay.js";
+import { OVERLAY, overlayLift, applyOverlayDepth, sceneTone } from "./campus-overlay.js";
 
 const MARKINGS_URL = new URL("../data/campus-markings.json", import.meta.url);
 
@@ -89,22 +89,20 @@ function fill(out, poly, heightAt, holes = [], lift = overlayLift("logo")) {
 }
 
 /**
- * The scene renders its measured colours about a stop and a half lighter
- * than the source imagery (the taste-guard clamp and daylight blending in
- * campus-world.js lift every lawn and pavement), so a logo fill left at its
- * true measured value reads as a black splat on the brightened turf — the
- * Muir trident did exactly that. Painted LOGOS therefore get the same
- * lightness lift the ground around them effectively received; painted
- * SURFACES (the track ring, its infield) keep their measured colour, which
- * already sits in the same family as the neighbouring terrain.
+ * Painted LOGOS (the trident) get the FULL lift campus-overlay.js's
+ * `sceneTone` offers — a logo fill left at its true measured value reads as
+ * a black splat on the brightened turf, which is exactly what the Muir
+ * trident did before this existed. A thin case of the shared function, not
+ * a sibling formula: this module never rolls its own tone math.
+ *
+ * Painted SURFACES (the track ring, its infield) stay unrouted — measured
+ * and re-verified 2026-08-03 at luma 149.3 (terracotta ring) and 135.0
+ * (infield green), both already brighter than the lifted lawn (luma
+ * 104.3) beside them, so they were never sinking and the lift would only
+ * push them past it. The material colour picked below (`family === "logo"`)
+ * still gates on family, unchanged from before this fix.
  */
-export function sceneToneLogo(hex) {
-  const c = new THREE.Color(hex);
-  const hsl = {};
-  c.getHSL(hsl);
-  c.setHSL(hsl.h, Math.min(1, hsl.s * 1.15), Math.min(0.85, hsl.l * 0.6 + 0.26));
-  return c;
-}
+export const sceneToneLogo = (hex) => sceneTone(hex, 1);
 
 /**
  * Draw every facility's markings. Returns a group immediately and fills it

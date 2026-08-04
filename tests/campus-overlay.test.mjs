@@ -11,9 +11,16 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import * as THREE from "../docs/vendor/three/three.module.min.js";
 import {
-  OVERLAY_RUNGS, OVERLAY, overlayLift, applyOverlayDepth,
+  OVERLAY_RUNGS, OVERLAY, overlayLift, applyOverlayDepth, sceneTone,
 } from "../docs/js/campus-overlay.js";
+
+/* Rec.601 luma, matching the sampler the SPEC's colour audit used
+   (python3 sample.py prints the same weights). */
+const luma = (c) => 0.299 * c.r + 0.587 * c.g + 0.114 * c.b;
+const rawColor = (hex) => new THREE.Color(hex);
+const hslOf = (c) => { const hsl = {}; c.getHSL(hsl); return hsl; };
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const src = (rel) => readFileSync(join(ROOT, rel), "utf8");
@@ -138,4 +145,118 @@ test("the renderer modules import clean with the ladder wired in", async () => {
   assert.equal(typeof rec.placeRecreation, "function");
   const markings = await import("../docs/js/campus-markings.js");
   assert.equal(typeof markings.createMarkings, "function");
+});
+
+/* sceneTone: the one tone-mapping fix for the unlit-fill-sinks-next-to-
+   lifted-ground class (the Muir turf carpet, before this; the trident,
+   before that). Every module that needs it imports THIS function — no
+   second ad-hoc HSL formula anywhere else in the codebase. */
+
+test("sceneTone(hex, 0) is a no-op: the raw measured colour, unchanged", () => {
+  const raw = rawColor("#283e40");
+  const toned = sceneTone("#283e40", 0);
+  assert.ok(Math.abs(toned.r - raw.r) < 1e-6);
+  assert.ok(Math.abs(toned.g - raw.g) < 1e-6);
+  assert.ok(Math.abs(toned.b - raw.b) < 1e-6);
+});
+
+test("sceneTone lifts a dark measured colour: luma increases with strength", () => {
+  const raw = luma(sceneTone("#283e40", 0));
+  const half = luma(sceneTone("#283e40", 0.5));
+  const full = luma(sceneTone("#283e40", 1));
+  assert.ok(half > raw, `strength 0.5 luma ${half} did not exceed raw ${raw}`);
+  assert.ok(full > half, `strength 1 luma ${full} did not exceed strength 0.5 luma ${half}`);
+});
+
+test("sceneTone monotonically lifts genuinely dark measured colours as strength rises", () => {
+  /* Below the lightness curve's fixed point (l=0.65, see campus-overlay.js's
+     idempotence note) the lift is a strict increase at every step — this is
+     the regime every colour actually routed through sceneTone in this
+     codebase lives in (turf, wordmark navy, bar-park rubber, ...). */
+  const hexes = ["#283e40", "#1d2d54", "#42546a"];
+  for (const hex of hexes) {
+    let prev = luma(sceneTone(hex, 0));
+    for (let s = 0.1; s <= 1.0001; s += 0.1) {
+      const l = luma(sceneTone(hex, s));
+      assert.ok(l >= prev - 1e-6, `${hex}: luma dropped going from strength ${s - 0.1} to ${s}`);
+      prev = l;
+    }
+  }
+});
+
+test("sceneTone is monotonic: a darker input never comes out lighter than a lighter input", () => {
+  /* Same hue and saturation (the turf's own), three strictly increasing
+     lightness levels — isolates the lightness-ordering guarantee from any
+     hue-crossing luma quirk (Rec.601 weights green far above blue, so two
+     DIFFERENT hues at the same HSL lightness can rank differently in luma;
+     that is a property of luma, not of sceneTone, so this test holds hue
+     fixed to test sceneTone honestly). */
+  const { h, s } = hslOf(rawColor("#283e40"));
+  const darker = new THREE.Color().setHSL(h, s, 0.12);
+  const mid = new THREE.Color().setHSL(h, s, 0.32);
+  const lighter = new THREE.Color().setHSL(h, s, 0.55);
+  for (const strength of [0, 0.3, 0.5, 0.7, 1]) {
+    const ld = luma(sceneTone(`#${darker.getHexString()}`, strength));
+    const lm = luma(sceneTone(`#${mid.getHexString()}`, strength));
+    const ll = luma(sceneTone(`#${lighter.getHexString()}`, strength));
+    assert.ok(ld <= lm, `strength ${strength}: darker (${ld}) came out lighter than mid (${lm})`);
+    assert.ok(lm <= ll, `strength ${strength}: mid (${lm}) came out lighter than lighter (${ll})`);
+  }
+});
+
+test("sceneTone preserves hue", () => {
+  for (const hex of ["#283e40", "#1d2d54", "#d4823f", "#c8675a"]) {
+    const before = hslOf(rawColor(hex));
+    const after = hslOf(sceneTone(hex, 0.6));
+    assert.ok(Math.abs(before.h - after.h) < 1e-6, `${hex}: hue drifted ${before.h} -> ${after.h}`);
+  }
+});
+
+test("sceneTone under repeated application stays bounded and keeps moving toward daylight, never away from it", () => {
+  /* Not idempotent (documented in campus-overlay.js): each application is a
+     contraction toward lightness 0.65. Re-applying must never diverge, blow
+     past valid colour range, or move a colour AWAY from that fixed point. */
+  let c = sceneTone("#283e40", 1);
+  let prevDist = Math.abs(0.65 - hslOf(c).l);
+  for (let i = 0; i < 8; i++) {
+    c = sceneTone(`#${c.getHexString()}`, 1);
+    const hsl = hslOf(c);
+    assert.ok(hsl.l >= 0 && hsl.l <= 1, `lightness left [0,1]: ${hsl.l}`);
+    assert.ok(c.r >= 0 && c.r <= 1 && c.g >= 0 && c.g <= 1 && c.b >= 0 && c.b <= 1,
+      "repeated application produced an out-of-gamut colour");
+    const dist = Math.abs(0.65 - hsl.l);
+    assert.ok(dist <= prevDist + 1e-6, `iteration ${i}: moved away from the fixed point (${dist} > ${prevDist})`);
+    prevDist = dist;
+  }
+});
+
+test("sceneToneLogo derives from sceneTone at full strength and is preserved: the trident stays lifted, not a black splat", async () => {
+  const { sceneToneLogo } = await import("../docs/js/campus-markings.js");
+  const tridentNavy = "#1d2d54";
+  const full = sceneTone(tridentNavy, 1);
+  const viaLogo = sceneToneLogo(tridentNavy);
+  assert.equal(viaLogo.getHexString(), full.getHexString(),
+    "sceneToneLogo must be sceneTone at strength 1, not a second formula");
+  const rawLuma = luma(rawColor(tridentNavy));
+  const toned = luma(viaLogo);
+  assert.ok(toned > rawLuma * 1.2,
+    `trident navy barely lifted (raw ${rawLuma}, toned ${toned}) — regression toward the black-splat bug`);
+});
+
+test("no module outside campus-overlay.js defines a second ad-hoc HSL tone formula", () => {
+  /* The regression this class of bug came from: two independent
+     `c.setHSL(hsl.h, ..., ...)` lift formulas (campus-markings.js's old
+     sceneToneLogo predates campus-overlay.js's sceneTone). Every module
+     must call the shared function, never roll its own. */
+  const SET_HSL_RE = /\.setHSL\s*\(/;
+  const OTHER_MODULES = [
+    "docs/js/campus-world.js",
+    "docs/js/campus-muir-field.js",
+    "docs/js/campus-recreation.js",
+    "docs/js/campus-markings.js",
+  ];
+  for (const rel of OTHER_MODULES) {
+    assert.doesNotMatch(src(rel), SET_HSL_RE,
+      `${rel}: defines its own .setHSL(...) lift instead of calling campus-overlay.js's sceneTone`);
+  }
 });

@@ -23,7 +23,7 @@
 // the paint it belongs to; if the markings never load, they simply do not
 // appear, exactly as the paint does not.
 import * as THREE from "../vendor/three/three.module.min.js";
-import { OVERLAY, overlayLift, applyOverlayDepth } from "./campus-overlay.js";
+import { OVERLAY, overlayLift, applyOverlayDepth, sceneTone } from "./campus-overlay.js";
 
 /* Every colour is the median of a rect sampled from the aerials. */
 export const REC_COLORS = {
@@ -308,7 +308,25 @@ function padQuad(out, corners, heightAt, lift) {
 
 const rectCorners = (r) => [[r.x0, r.z0], [r.x1, r.z0], [r.x1, r.z1], [r.x0, r.z1]];
 
-/** One merged, decal-stacked mesh per pad colour, on the given ladder rung. */
+/* Rec.601 luma of a hex string — a DECISION helper (which raw measured
+   fills are dark enough to sink), not a second tone formula; the one real
+   colour transform is still campus-overlay.js's sceneTone. */
+const luma601 = (hex) => {
+  const n = parseInt(hex.slice(1), 16);
+  return 0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255);
+};
+/* The lifted lawn beside this zone (campus-world.js's daylight blend,
+   unrelated to this fix) renders at luma ~104 — measured 2026-08-03. A
+   REC_COLORS fill already at or above that was never sinking (aprons,
+   courts, concrete, sand: 111-214); only Bar Park's rubber (81.1) and the
+   turf-lane/tent blue (81.5) sit below it and get the Muir turf's strength. */
+const REC_ZONE_LAWN_LUMA = 104.3;
+const REC_TONE_STRENGTH = 0.15;
+
+/** One merged, decal-stacked mesh per pad colour, on the given ladder rung.
+    Unlit fills darker than the lifted lawn beside them (REC_ZONE_LAWN_LUMA,
+    the class the Muir turf sank under) route through sceneTone; anything at
+    or above it keeps its true measured colour. */
 function padGroup(pads, heightAt, rung) {
   const lift = overlayLift(rung);
   const buckets = new Map();
@@ -320,8 +338,11 @@ function padGroup(pads, heightAt, rung) {
   for (const [colour, positions] of buckets) {
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+    const toned = luma601(colour) < REC_ZONE_LAWN_LUMA
+      ? sceneTone(colour, REC_TONE_STRENGTH)
+      : colour;
     const mat = applyOverlayDepth(
-      new THREE.MeshBasicMaterial({ color: colour, side: THREE.DoubleSide }),
+      new THREE.MeshBasicMaterial({ color: toned, side: THREE.DoubleSide }),
       rung
     );
     const mesh = new THREE.Mesh(geo, mat);
