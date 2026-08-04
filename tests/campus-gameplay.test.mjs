@@ -7,9 +7,10 @@
  *      removed ON PURPOSE — from the shipped data, and from the build script
  *      so a rebuild cannot quietly resurrect it. Routing between the two
  *      buildings must still succeed, the long way round.
- *   2. The spawn hangs exactly 110 m over Argo Hall and the fly speed caps at
- *      exactly 250 m/s. Both are exported constants precisely so this file
- *      can pin them.
+ *   2. The spawn hangs exactly 110 m over Argo Hall at exactly 500 m/s, and
+ *      the fly speed caps at exactly 1000 m/s. All three are exported
+ *      constants precisely so this file can pin them, and the arrow keys —
+ *      the throttle — must stay inside the cap at both rates.
  *   3. The minimap's world↔pixel transform round-trips, because the click
  *      that teleports you and the dot that shows you use the same numbers.
  */
@@ -27,12 +28,13 @@ const { buildGraph, routeBetween, routeThrough, makeMapTransform } = await impor
 );
 /* campus-walk.js touches no DOM at import time — boot() does — so Node can
    import it to read the constants the runtime actually uses. */
-const { SPAWN_ALTITUDE_M, MAX_SPEED_MPS } = await import(
+const { SPAWN_ALTITUDE_M, SPAWN_SPEED_MPS, MAX_SPEED_MPS } = await import(
   path.join(ROOT, "docs/js/campus-walk.js")
 );
-const { createExplore, sliderToSpeed } = await import(
-  path.join(ROOT, "docs/js/campus-explore.js")
-);
+const {
+  createExplore, sliderToSpeed, speedToSlider, stepSpeed,
+  SPEED_RATE_COARSE, SPEED_RATE_FINE, SHIFT_MULT,
+} = await import(path.join(ROOT, "docs/js/campus-explore.js"));
 
 const GRAPH = buildGraph(CAMPUS);
 
@@ -148,8 +150,8 @@ describe("spawn altitude and speed cap are the promised numbers", () => {
       "spawn height must come from SPAWN_ALTITUDE_M, not a copy of it");
   });
 
-  test("top speed is exactly 250 m/s, reachable, and a hard cap", () => {
-    assert.equal(MAX_SPEED_MPS, 250);
+  test("top speed is exactly 1000 m/s, reachable, and a hard cap", () => {
+    assert.equal(MAX_SPEED_MPS, 1000);
     /* Reachable: the slider's top IS the cap. */
     assert.ok(Math.abs(sliderToSpeed(1) - MAX_SPEED_MPS) < 1e-9,
       `full slider gives ${sliderToSpeed(1)} m/s, not ${MAX_SPEED_MPS}`);
@@ -173,12 +175,108 @@ describe("spawn altitude and speed cap are the promised numbers", () => {
     assert.ok(travelled <= MAX_SPEED_MPS + 1e-6,
       `shift at full slider covered ${travelled.toFixed(1)} m in 1 s — the cap leaks`);
     assert.ok(travelled > MAX_SPEED_MPS * 0.99,
-      `full slider only covered ${travelled.toFixed(1)} m in 1 s — 250 is not reachable`);
+      `full slider only covered ${travelled.toFixed(1)} m in 1 s — ${MAX_SPEED_MPS} is not reachable`);
   });
 
-  test("walking pace on the ground is untouched", () => {
+  test("shift doubles the current speed, in both modes, under the cap", () => {
+    assert.equal(SHIFT_MULT, 2);
+    /* Free roam: from the spawn speed, one second of shift must cover exactly
+       twice the metres one second without it does. */
+    const flat = { x0: -5000, z0: -5000, cell: 10, cols: 1001, rows: 1001 };
+    const ex = createExplore({
+      campus: { places: {} }, lidar: { terrain: flat }, heightAt: () => 0,
+    });
+    const run = (keys) => {
+      ex.enterAt(0, 0, 0);
+      ex.speed = SPAWN_SPEED_MPS;
+      let travelled = 0;
+      for (let i = 0; i < 100; i++) {
+        const before = { x: ex.x, z: ex.z };
+        ex.update(0.01, new Set(keys));
+        travelled += Math.hypot(ex.x - before.x, ex.z - before.z);
+      }
+      return travelled;
+    };
+    const plain = run(["w"]);
+    const shifted = run(["w", "shift"]);
+    assert.ok(Math.abs(plain - SPAWN_SPEED_MPS) < 1e-6,
+      `a second at the spawn speed covered ${plain.toFixed(1)} m, not ${SPAWN_SPEED_MPS}`);
+    assert.ok(Math.abs(shifted - plain * SHIFT_MULT) < 1e-6,
+      `shift turned ${plain.toFixed(1)} m/s into ${shifted.toFixed(1)} m/s, not double`);
+
+    /* The guided walk must use the same multiplier and the same cap — it once
+       had a 2.9 of its own and no ceiling at all, so the rail outran the
+       flight. */
     const src = readFileSync(path.join(ROOT, "docs/js/campus-walk.js"), "utf8");
-    assert.match(src, /WALK_SPEED = 1\.45/);
+    assert.doesNotMatch(src, /SHIFT_MULT\s*=/,
+      "the guided walk must import SHIFT_MULT, not declare its own");
+    assert.match(src, /Math\.min\(state\.speed \* \(fast \? SHIFT_MULT : 1\), MAX_SPEED_MPS\)/,
+      "the guided walk must double under the same cap free roam obeys");
+  });
+
+  test("you spawn at 500 m/s, and the state starts there", () => {
+    assert.equal(SPAWN_SPEED_MPS, 500);
+    assert.ok(SPAWN_SPEED_MPS < MAX_SPEED_MPS, "the spawn speed must leave room to climb");
+    /* Pinned to the source so a hardcoded copy cannot drift: the shared
+       velocity both modes read must be seeded FROM the constant. */
+    const src = readFileSync(path.join(ROOT, "docs/js/campus-walk.js"), "utf8");
+    assert.match(src, /speed:\s*SPAWN_SPEED_MPS/,
+      "state.speed must come from SPAWN_SPEED_MPS, not a copy of it");
+  });
+
+  test("the arrow keys steer the velocity — coarse up/down, fine left/right", () => {
+    const s0 = SPAWN_SPEED_MPS;
+    const up = stepSpeed(s0, 1, new Set(["arrowup"]));
+    const down = stepSpeed(s0, 1, new Set(["arrowdown"]));
+    const right = stepSpeed(s0, 1, new Set(["arrowright"]));
+    const left = stepSpeed(s0, 1, new Set(["arrowleft"]));
+
+    assert.ok(up > s0 && right > s0, "up and right must speed you up");
+    assert.ok(down < s0 && left < s0, "down and left must slow you down");
+    /* "High rate" and "low rate" is the whole point of having two pairs:
+       one second of up/down must move the throttle further than one second
+       of left/right, in both directions. */
+    assert.ok(up - s0 > right - s0, "up/down is not the coarser pair");
+    assert.ok(s0 - down > s0 - left, "up/down is not the coarser pair downwards");
+    assert.ok(SPEED_RATE_COARSE > SPEED_RATE_FINE * 3,
+      "the two rates are too close to feel like different controls");
+
+    /* Rates are in slider fractions per second, so a full sweep of the
+       logarithmic axis is 1 / rate seconds. */
+    const sweep = (rate) => 1 / rate;
+    assert.ok(sweep(SPEED_RATE_COARSE) < 5,
+      `coarse takes ${sweep(SPEED_RATE_COARSE).toFixed(1)} s end to end — not a high rate`);
+    assert.ok(sweep(SPEED_RATE_FINE) > 10,
+      `fine takes ${sweep(SPEED_RATE_FINE).toFixed(1)} s end to end — not a low rate`);
+
+    /* Neither pair may steer out of the slider's range, however long it is
+       held: the cap is the cap and the floor is a walking pace. */
+    let held = SPAWN_SPEED_MPS;
+    for (let i = 0; i < 600; i++) held = stepSpeed(held, 0.05, new Set(["arrowup", "arrowright"]));
+    assert.ok(Math.abs(held - MAX_SPEED_MPS) < 1e-6,
+      `holding up for 30 s reached ${held}, not the ${MAX_SPEED_MPS} cap`);
+    for (let i = 0; i < 600; i++) held = stepSpeed(held, 0.05, new Set(["arrowdown", "arrowleft"]));
+    assert.ok(Math.abs(speedToSlider(held)) < 1e-9,
+      `holding down for 30 s reached ${held}, past the bottom of the slider`);
+  });
+
+  test("the arrow keys no longer move or turn free roam", () => {
+    /* They are the throttle now. A stale alias would make one key do two
+       jobs at once — fly forward AND wind the speed up while doing it. */
+    const flat = { x0: -5000, z0: -5000, cell: 10, cols: 1001, rows: 1001 };
+    const ex = createExplore({
+      campus: { places: {} }, lidar: { terrain: flat }, heightAt: () => 0,
+    });
+    ex.speed = SPAWN_SPEED_MPS;
+    for (const key of ["arrowup", "arrowdown", "arrowleft", "arrowright"]) {
+      ex.enterAt(0, 0, 0);
+      ex.hover = 50;
+      ex.update(0.5, new Set([key]));
+      assert.equal(ex.x, 0, `${key} still moves free roam in x`);
+      assert.equal(ex.z, 0, `${key} still moves free roam in z`);
+      assert.equal(ex.yaw, 0, `${key} still turns free roam`);
+      assert.equal(ex.hover, 50, `${key} still changes altitude`);
+    }
   });
 });
 

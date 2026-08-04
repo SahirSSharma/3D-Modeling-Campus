@@ -22,12 +22,42 @@ const HOVER_MAX = 900; // the whole 3 km campus fits in frame from up here
    control and drone speeds do not, and a linear slider spends 97% of its
    travel on speeds nobody can steer at. Full slider is MAX_SPEED_MPS exactly,
    and update() clamps to it too — no combination of slider and shift may
-   move you faster. Crossing the whole 3 km campus takes ~12 s flat out. */
-export const MAX_SPEED_MPS = 250;
+   move you faster. Crossing the whole 3 km campus takes ~3 s flat out. */
+export const MAX_SPEED_MPS = 1000;
 const SPEED_MIN = 0.6;
 const SPEED_RATIO = MAX_SPEED_MPS / SPEED_MIN;
 export const sliderToSpeed = (t) => SPEED_MIN * Math.pow(SPEED_RATIO, Math.max(0, Math.min(1, t)));
 export const speedToSlider = (v) => Math.log(v / SPEED_MIN) / Math.log(SPEED_RATIO);
+
+/* The arrow keys are the slider without the mouse, and they move ALONG it —
+   in slider fractions per second, not metres per second per second. On a
+   logarithmic axis that is the only rate that feels the same everywhere: a
+   fixed m/s² would be imperceptible at 500 m/s and would blow straight past
+   walking pace down at the bottom.
+
+   Up/down is the coarse pair — a shade under three seconds from 0.6 m/s to
+   the cap, for getting across campus. Left/right is the fine pair, ~1.45×
+   per second, for settling on a speed you can actually steer at. */
+export const SPEED_RATE_COARSE = 0.35;
+export const SPEED_RATE_FINE = 0.05;
+
+/* Shift doubles whatever the throttle currently says — one number, shared by
+   both modes, so "shift" means the same thing on the rail and off it. It is
+   still bounded by MAX_SPEED_MPS: at 500 m/s shift gets you the full 1000, and
+   above that it gets you nothing extra. */
+export const SHIFT_MULT = 2;
+
+/** The velocity after one tick of arrow-key steering. Clamped to the slider's
+    own range by sliderToSpeed, so it can never leave 0.6…MAX_SPEED_MPS. */
+export function stepSpeed(speed, dt, held) {
+  let d = 0;
+  if (held.has("arrowup")) d += SPEED_RATE_COARSE;
+  if (held.has("arrowdown")) d -= SPEED_RATE_COARSE;
+  if (held.has("arrowright")) d += SPEED_RATE_FINE;
+  if (held.has("arrowleft")) d -= SPEED_RATE_FINE;
+  if (!d) return speed;
+  return sliderToSpeed(speedToSlider(speed) + d * dt);
+}
 
 export function createExplore({ campus, lidar, heightAt }) {
   const t = lidar.terrain;
@@ -71,16 +101,18 @@ export function createExplore({ campus, lidar, heightAt }) {
      * One tick of movement. Reads held keys, returns the camera pose.
      * Forward is where you are looking (horizontally); strafing is sideways;
      * Q/E sink and climb. Shift multiplies, exactly like the guided walk.
+     * The arrow keys are not here: they set the velocity (see stepSpeed), and
+     * looking is the drag.
      */
     update(dt, held) {
       /* The cap is the cap: shift on top of a high slider still tops out at
          MAX_SPEED_MPS, never multiplies past it. */
-      const v = Math.min(self.speed * (held.has("shift") ? 2.5 : 1), MAX_SPEED_MPS) * dt;
+      const v = Math.min(self.speed * (held.has("shift") ? SHIFT_MULT : 1), MAX_SPEED_MPS) * dt;
       const sin = Math.sin(self.yaw);
       const cos = Math.cos(self.yaw);
 
-      if (held.has("w") || held.has("arrowup")) { self.x += sin * v; self.z += cos * v; }
-      if (held.has("s") || held.has("arrowdown")) { self.x -= sin * v; self.z -= cos * v; }
+      if (held.has("w")) { self.x += sin * v; self.z += cos * v; }
+      if (held.has("s")) { self.x -= sin * v; self.z -= cos * v; }
       /* Left is left. The look vector is (sin, cos); the LEFT-hand vector in
          this frame (x east, z south, y up) is (cos, -sin) — face north
          (yaw π) and your left is west, face east (yaw π/2) and it is north.
@@ -88,14 +120,12 @@ export function createExplore({ campus, lidar, heightAt }) {
          right and D strafed left the entire time. */
       if (held.has("a")) { self.x += cos * v; self.z -= sin * v; }
       if (held.has("d")) { self.x -= cos * v; self.z += sin * v; }
-      if (held.has("arrowleft")) self.yaw += dt * 1.1;
-      if (held.has("arrowright")) self.yaw -= dt * 1.1;
 
       /* Climb rate follows travel speed, floored so the first metres of lift
          do not crawl when the slider sits at walking pace — and capped like
          the travel speed is. */
       const climb =
-        Math.min(Math.max(3, self.speed) * (held.has("shift") ? 2.5 : 1), MAX_SPEED_MPS) * dt;
+        Math.min(Math.max(3, self.speed) * (held.has("shift") ? SHIFT_MULT : 1), MAX_SPEED_MPS) * dt;
       if (held.has("e") || held.has("pageup")) self.hover += climb;
       if (held.has("q") || held.has("pagedown")) self.hover -= climb;
       self.hover = Math.max(EYE, Math.min(HOVER_MAX, self.hover));

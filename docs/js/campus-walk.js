@@ -27,7 +27,8 @@ import { createMuirField } from "./campus-muir-field.js";
 import { createRimac } from "./campus-rimac.js";
 import { createMinimap } from "./campus-minimap.js";
 import {
-  createExplore, scaleAtmosphere, EYE, sliderToSpeed, speedToSlider,
+  createExplore, scaleAtmosphere, stepSpeed, EYE, sliderToSpeed, speedToSlider,
+  SHIFT_MULT, MAX_SPEED_MPS,
 } from "./campus-explore.js";
 
 const CAMPUS_URL = new URL("../data/campus-3d.json", import.meta.url);
@@ -43,18 +44,22 @@ const LANDMARKS_URL = new URL("../data/campus-landmarks.json", import.meta.url);
 const BOUNDARY_URL = new URL("../data/campus-boundary.json", import.meta.url);
 
 const EYE_HEIGHT = EYE;       // a person's eyes, not a drone's — until you climb
-const WALK_SPEED = 1.45;      // m/s, an ordinary pace and the slider's default
-const SHIFT_MULT = 2.9;       // holding shift, for getting back to a spot
 const CHASE_BACK = 6.5;
 const CHASE_HEIGHT = 3.4;
 const SPACING = 2;            // metres between resampled route points
 
 /* Exported so the tests can pin them: the spawn hangs exactly this far above
-   the ground at Argo Hall, and no speed — slider, shift or both — may pass
-   the cap. The cap itself lives in campus-explore.js, next to the code that
-   enforces it. */
+   the ground at Argo Hall and travels at exactly this speed, and no speed —
+   slider, arrows, shift or all three — may pass the cap. The cap itself lives
+   in campus-explore.js, next to the code that enforces it.
+
+   You spawn at a survey speed, not a walking one: the spawn is 110 m up over
+   a 3 km campus, and at 1.45 m/s the first minute of the product is spent
+   drifting. 500 m/s crosses it in six seconds; the arrow keys wind it back
+   down to a pace you can look at things from. */
 export const SPAWN_ALTITUDE_M = 110;
-export { MAX_SPEED_MPS } from "./campus-explore.js";
+export const SPAWN_SPEED_MPS = 500;
+export { MAX_SPEED_MPS };
 
 const state = {
   s: 0,                // metres along the route
@@ -63,7 +68,7 @@ const state = {
   view: "eye",         // eye | chase
   yaw: 0,              // free look, radians off the route heading
   pitch: -0.03,
-  speed: WALK_SPEED,   // m/s, from the velocity slider; both modes obey it
+  speed: SPAWN_SPEED_MPS, // m/s, from the slider or the arrow keys; both modes obey it
   lastTime: 0,
 };
 
@@ -71,6 +76,10 @@ let scene, camera, renderer, route, campus, lidar, heightAt, walker, explore, la
 let massInfo = new Map(); // building name -> { x, z, topY, h } from the massing
 let labels = null;
 let minimap = { update() {} };
+/* Set by boot: pushes state.speed back out to the slider and its readout, so
+   the arrow keys and the slider are two handles on one number rather than two
+   numbers that disagree. No-op before the bar exists. */
+let showSpeed = () => {};
 
 /* --------------------------------------------------------------- geometry */
 
@@ -233,6 +242,17 @@ function setMode(mode) {
 function update(dt) {
   const held = state.held;
 
+  /* The arrow keys are the throttle, in both modes: up/down coarse, left/right
+     fine. They used to move and turn, which W/S and the drag already did —
+     and left the velocity, the one control that changes constantly at these
+     speeds, reachable only by aiming a mouse at a 110-pixel slider. */
+  const steered = stepSpeed(state.speed, dt, held);
+  if (steered !== state.speed) {
+    state.speed = steered;
+    explore.speed = steered;
+    showSpeed();
+  }
+
   if (state.mode === "free") {
     const pose = explore.update(dt, held);
     camera.position.set(pose.x, pose.y, pose.z);
@@ -250,8 +270,11 @@ function update(dt) {
     return;
   }
 
+  /* Shift doubles, and the cap holds here too: the rail used to multiply by
+     its own 2.9 with nothing above it, so a fast slider plus shift walked the
+     route faster than free roam is allowed to fly it. */
   const fast = held.has("shift");
-  const speed = (fast ? state.speed * SHIFT_MULT : state.speed) * dt;
+  const speed = Math.min(state.speed * (fast ? SHIFT_MULT : 1), MAX_SPEED_MPS) * dt;
 
   /* W walks where you are LOOKING. On the rail that means: dragged around to
      face back down the route, W walks back down the route. Keying it to the
@@ -260,10 +283,10 @@ function update(dt) {
      the route's direction — there is no sideways on a rail. */
   const facing = Math.cos(state.yaw) < -0.25 ? -1 : 1;
   let moved = 0;
-  if (held.has("w") || held.has("arrowup")) { moved += speed * facing; state.auto = false; }
-  if (held.has("s") || held.has("arrowdown")) { moved -= speed * facing; state.auto = false; }
-  if (held.has("a") || held.has("arrowleft")) state.yaw += dt * 1.1;
-  if (held.has("d") || held.has("arrowright")) state.yaw -= dt * 1.1;
+  if (held.has("w")) { moved += speed * facing; state.auto = false; }
+  if (held.has("s")) { moved -= speed * facing; state.auto = false; }
+  if (held.has("a")) state.yaw += dt * 1.1;
+  if (held.has("d")) state.yaw -= dt * 1.1;
   if (state.auto) moved += speed;
 
   if (moved) {
@@ -391,8 +414,8 @@ function updateChrome() {
     /* Non-breaking spaces INSIDE each key–label pair, so a narrow bar wraps
        between shortcuts, never between "F" and what F does. */
     hint.textContent = free
-      ? "drag to look · W/A/S/D move · Q/E height · shift faster · L labels · F back to the walk"
-      : "drag to look · W/S to move · 1 eye level · 2 over the shoulder · L labels · F free roam · R restart";
+      ? "drag to look · W/A/S/D move · Q/E height · ↑/↓ speed · ←/→ fine · shift doubles · L labels · F back to the walk"
+      : "drag to look · W/S to move · ↑/↓ speed · ←/→ fine · 1 eye level · 2 over the shoulder · L labels · F free roam · R restart";
   }
 }
 
@@ -603,23 +626,22 @@ export async function boot() {
 
   /* The velocity slider drives both modes: the guided walk paces itself by it
      and free roam moves at it. Logarithmic, so the walking range is not three
-     pixels wide — see campus-explore.js. */
+     pixels wide — see campus-explore.js. The arrow keys drive the same number,
+     so the slider has to follow them, not just lead. */
   const slider = document.getElementById("walk-speed");
   const speedVal = document.getElementById("walk-speed-val");
-  const showSpeed = () => {
+  showSpeed = () => {
+    if (slider) slider.value = String(Math.round(speedToSlider(state.speed) * 1000));
     if (speedVal) {
       speedVal.textContent =
         state.speed >= 10 ? `${Math.round(state.speed)} m/s` : `${state.speed.toFixed(1)} m/s`;
     }
   };
-  if (slider) {
-    slider.value = String(Math.round(speedToSlider(state.speed) * 1000));
-    slider.addEventListener("input", () => {
-      state.speed = sliderToSpeed(Number(slider.value) / 1000);
-      explore.speed = state.speed;
-      showSpeed();
-    });
-  }
+  slider?.addEventListener("input", () => {
+    state.speed = sliderToSpeed(Number(slider.value) / 1000);
+    explore.speed = state.speed;
+    showSpeed();
+  });
   showSpeed();
 
   /* Teleport: pick any named place and stand in front of it. Arriving is
@@ -645,7 +667,7 @@ export async function boot() {
       if (state.mode !== "free") setMode("free");
       explore.teleport(tp.value);
       tp.value = "";
-      tp.blur(); // arrow keys must go back to moving, not to the list
+      tp.blur(); // arrow keys must go back to the throttle, not to the list
     });
   }
   updateChrome();

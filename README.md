@@ -361,17 +361,20 @@ on bigger files — extra resolution has to arrive as accuracy, not as aliasing.
 
 ## Controls
 
-You spawn in free roam, hanging **110 m above Argo Hall** and holding that height over the
-ground — nothing moves until you do. The guided walk (Argo → Revelle Plaza → Peterson) is one
-press of `F` away.
+You spawn in free roam, hanging **110 m above Argo Hall** at **500 m/s** and holding that height
+over the ground — nothing moves until you do. That is a survey speed, not a walking one: the
+campus is 3 km across, and the arrow keys wind it back down to a pace you can look at things
+from. The guided walk (Argo → Revelle Plaza → Peterson) is one press of `F` away.
 
 | | |
 |---|---|
 | drag | look around |
 | `W`/`A`/`S`/`D` | move where you are looking (strafe in free roam) |
 | `Q` / `E` | (free roam) sink / climb — eye level to 900 m up |
-| velocity slider | both modes pace themselves by it — logarithmic, 0.6 up to **250 m/s** |
-| `shift` | faster, but never past the 250 m/s cap |
+| `↑` / `↓` | speed, coarse — the whole range in under three seconds |
+| `←` / `→` | speed, fine — about 1.45× per second, for settling on a pace |
+| velocity slider | the same number the arrows drive; both modes pace themselves by it — logarithmic, 0.6 up to **1000 m/s** |
+| `shift` | double whatever the throttle says, but never past the 1000 m/s cap |
 | `F` | toggle free roam ↔ the guided walk (rejoins at the nearest point) |
 | `1` / `2` | (guided walk) eye level / over the shoulder |
 | minimap click/tap | teleport there — same heading, same height over the ground |
