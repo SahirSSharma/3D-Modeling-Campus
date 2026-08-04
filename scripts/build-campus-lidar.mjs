@@ -91,6 +91,32 @@ const POST_2014_SITES = new Set([
   // off the DEMOLISHED predecessor block, which is the same lie twice over.
   "The Strauss", "Student Success Building",
   "Student Health and Well-Being Building", "Triton Alumni and Welcome Center",
+  // Found by the 2026-08-04 gauntlet sweep: every name below shipped a 2014
+  // "measurement" of the lot, predecessor or canopy that stood on its site.
+  // Mesa Nueva graduate housing (opened 2017) — the flight saw the old Mesa
+  // Residential Apartments block it replaced.
+  "Ola", "Arena", "Artesa", "Cala", "Cresta", "Marea",
+  // Nuevo West graduate housing (opened 2020) — Viento "measured" 22.9 m of
+  // predecessor/canopy against the university's 36.6 m, 12-storey record.
+  "Viento", "Brisa",
+  // Athena Parking Structure (East Campus, opened 2019) — LiDAR 2.3 m is the
+  // surface lot it replaced; the GIS carries the 7-level structure at 29.9 m.
+  "Athena Parking Structure",
+  // TDLLN's fifth building (2023) — its four siblings were already listed.
+  "Survivance",
+  // Tata Hall for the Sciences (opened 2018) — 19.5 m of pre-construction
+  // returns are not a measurement of it.
+  "Tata Hall for the Sciences",
+  // Epstein Family Amphitheater (opened 2022) — the 17 m the laser saw is the
+  // eucalyptus canopy cleared for it. (OSM tags the bowl building=no, so the
+  // footprint itself no longer imports as a building either.)
+  "Epstein Family Amphitheater",
+  // The East Campus health buildout the flight caught mid-construction:
+  // ACTRI (opened March 2016; the 28.6 m of 2014 returns are its topped-out
+  // frame, not the building) and the Campus Point garage that went up with
+  // the Jacobs Medical Center project.
+  "Altman Clinical and Translational Research Institute",
+  "Campus Point Parking Structure",
 ]);
 
 /* Hand-audited stats where the automatic roofOf() percentile choice is
@@ -104,12 +130,17 @@ const POST_2014_SITES = new Set([
      eucalyptus, and the tree-guard's p75 4.6 misses the ridge.
    - Stewart Commons Annex: null — the 16 m stat was LiDAR bleed from the
      Tenaya tower over a 1-storey service sliver.
+   - Stage Room at the Pub: the wooden Student Center pub sits UNDER the
+     eucalyptus grove; more than a quarter of its returns are crown, so the
+     tree-guard's p75 (12.8) is still in the tree. The roof is the dense p50
+     band at 4.6 m, and the university GIS agrees (4.3 m, one level).
    A null here means "measured, but not trustworthy: emit nothing". */
 const HAND_AUDITED = {
   "Tenaya Hall": 27.6,
   "Mandeville Center": 20.9,
   "Ida and Cecil Green Faculty Club": 6.5,
   "Stewart Commons Annex": null,
+  "Stage Room at the Pub": 4.6,
 };
 
 const R = 6378137;
@@ -277,27 +308,67 @@ async function build() {
      building — spatially hashed so each return tests only nearby rings. */
   const targets = [];
   const hostByIndex = new Map();
-  campus.buildings.forEach((b, bi) => {
-    const add = (ringLocal, key, name) => {
-      const ring = ringLocal.map(([x, z]) => localToMerc(x, z));
-      const xs = ring.map((p) => p[0]);
-      const ys = ring.map((p) => p[1]);
-      const bb = {
-        minx: Math.min(...xs), maxx: Math.max(...xs),
-        miny: Math.min(...ys), maxy: Math.max(...ys),
-      };
-      if (bb.maxx < BOX.minx || bb.minx > BOX.maxx || bb.maxy < BOX.miny || bb.maxy > BOX.maxy) return null;
-      const t = { key, name, ring, bb, roofs: [] };
-      targets.push(t);
-      return t;
+  const addTarget = (ringLocal, key, name) => {
+    const ring = ringLocal.map(([x, z]) => localToMerc(x, z));
+    const xs = ring.map((p) => p[0]);
+    const ys = ring.map((p) => p[1]);
+    const bb = {
+      minx: Math.min(...xs), maxx: Math.max(...xs),
+      miny: Math.min(...ys), maxy: Math.max(...ys),
     };
-    const host = add(b.p, `b${bi}`, b.n || null);
+    if (bb.maxx < BOX.minx || bb.minx > BOX.maxx || bb.maxy < BOX.miny || bb.maxy > BOX.maxy) return null;
+    const t = { key, name, ring, bb, roofs: [] };
+    targets.push(t);
+    return t;
+  };
+  campus.buildings.forEach((b, bi) => {
+    const host = addTarget(b.p, `b${bi}`, b.n || null);
     if (host) { host.isHost = true; host.bi = bi; hostByIndex.set(bi, host); }
     (b.parts || []).forEach((part, pi) => {
-      const t = add(part.p, `${bi}/${pi}`, null);
+      const t = addTarget(part.p, `${bi}/${pi}`, null);
       if (t) t.bi = bi;
     });
   });
+
+  /* The university's massing parts are targets too, measured the way OSM
+     parts are, so a mass inside a multi-height building ships ITS roof and
+     not its host's. The Urey Hall Office Addition stood at the tower's
+     30.5 m, the Natatorium at the Main Gym's 14.9, W. M. Keck at Biomedical
+     Sciences' 24.1 — the same per-sample-quantity-resolved-once bug the
+     RIMAC coverage metric had, this time over height. Keys are the geometry
+     hashes campus-massing.js / build-campus-truecolor.mjs already use
+     (`m:` + outer-ring vertex-average centroid, local metres, rounded), so
+     the lookup survives an arcgis rebuild by falling back rather than
+     mismatching. Epoch rule applies through the HOST: a mass standing in a
+     POST_2014_SITES footprint gets nothing, ever; a hand-audited host keeps
+     its audited value rather than a per-mass number the same misread would
+     poison. */
+  const arcgisData = (() => {
+    try { return JSON.parse(readFileSync(path.join(REPO_ROOT, "docs/data/campus-arcgis.json"), "utf8")); } catch { return null; }
+  })();
+  const namedLocalRings = campus.buildings.filter((b) => b.n).map((b) => ({ n: b.n, p: b.p, bi: campus.buildings.indexOf(b) }));
+  const inLocalRing = (x, z, ring) => {
+    let ins = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const [xi, zi] = ring[i];
+      const [xj, zj] = ring[j];
+      if (zi > z !== zj > z && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) ins = !ins;
+    }
+    return ins;
+  };
+  const massTargets = [];
+  for (const m of arcgisData?.massing || []) {
+    const ring = m.r[0].map(([x, z]) => [x / 10, z / 10]);
+    let cx = 0, cz = 0;
+    for (const p of ring) { cx += p[0]; cz += p[1]; }
+    cx /= ring.length; cz /= ring.length;
+    const host = namedLocalRings.find((b) => inLocalRing(cx, cz, b.p));
+    if (!host) continue; // no named host: today's GIS value stands unchallenged
+    if (POST_2014_SITES.has(host.n)) continue; // the flight predates the building
+    if (host.n in HAND_AUDITED) continue; // the audited value already answers
+    const t = addTarget(ring, `m:${Math.round(cx)},${Math.round(cz)}`, null);
+    if (t) { t.isMass = true; t.bi = host.bi; massTargets.push(t); }
+  }
   const HCELL = 60; // mercator metres per hash cell
   const hcell = new Map();
   for (const t of targets) {
@@ -431,7 +502,7 @@ async function build() {
   /* Parts share their host's grade — a tower wing and its podium stand on
      the same ground even when the wing's own perimeter is all rooftop. */
   for (const t of targets) {
-    if (t.isHost || t.roofs.length < 12) continue;
+    if (t.isHost || t.isMass || t.roofs.length < 12) continue;
     const hostName = campus.buildings[t.bi]?.n;
     if (hostName && POST_2014_SITES.has(hostName)) continue; // same epoch rule
     const base = baseByBuilding.get(t.bi) ?? rimBase(t.ring);
@@ -439,6 +510,44 @@ async function build() {
     const h = Math.round((roofOf(t.roofs) - base) * 10) / 10;
     if (h < 2 || h > 90) continue;
     partHeights[t.key] = h;
+  }
+  /* University massing parts, same treatment (epoch and hand-audit hosts were
+     already excluded when the target was made). 25-return floor as for hosts:
+     a mass sliver measured off nine points is a guess wearing a number.
+     Base is the mass's OWN rim, not its host's: the terrain grid is ground
+     returns only (hole-filled under roofs, never rooftop), so a mass rim is
+     always a sane local grade — while a host-wide median smears a complex's
+     slope onto every mass in it. Eckart Building drops 15.6 m across its SIO
+     bluff site and its host median sits 7.6 m above the mass's own grade;
+     Tuolumne's T House East gained 2.6 m the same way.
+
+     Unlike hosts, a mass only gets a height when its roof reads as ONE plane.
+     roofOf's canopy guard (p98−p75 > 5) fires on two very different shapes:
+     a tight low roof under a tall neighbour's edge returns (Medical Teaching
+     Facility's 8.3 m wing beside its 19.7 m block — p75 is the roof, keep it)
+     and a genuinely stepped slab with no plane anywhere near p75 (Urey Hall's
+     main mass: half its returns on ~16 m steps, crown at 30.4 — p75 lands at
+     25.4 m, a roof that does not exist). The discriminator is the body: if
+     p75−p50 ≤ 2 m the fallback sits on a real plane; if the body is smeared
+     wider, emit nothing and let the host-level reconcile answer instead. */
+  const massHeights = {};
+  for (const t of massTargets) {
+    if (t.roofs.length < 25) continue;
+    const base = rimBase(t.ring);
+    if (base === null) continue;
+    const p50 = percentile(t.roofs, 0.5);
+    const p75 = percentile(t.roofs, 0.75);
+    const p98 = percentile(t.roofs, 0.98);
+    let roof;
+    if (p98 - p75 > 5) {
+      if (p75 - p50 > 2) continue; // stepped slab: no single plane to report
+      roof = p75;
+    } else {
+      roof = p98;
+    }
+    const h = Math.round((roof - base) * 10) / 10;
+    if (h < 2 || h > 90) continue;
+    massHeights[t.key] = h;
   }
 
   /* ---- trees: canopy maxima that stand outside every footprint ---- */
@@ -482,6 +591,7 @@ async function build() {
     },
     heights,
     partHeights,
+    massHeights,
     trees: trees.map((t) => [
       Math.round(t.x * 10) / 10,
       Math.round(t.z * 10) / 10,
@@ -495,7 +605,7 @@ async function build() {
   measured.sort((a, b) => b.h - a.h);
   console.log(`\nwrote ${OUT} — ${kb} KB`);
   console.log(`  datum ${datum} m · terrain ${cols}×${rows} @ ${TERRAIN_CELL} m`);
-  console.log(`  ${Object.keys(heights).length} named buildings measured, ${trees.length} trees`);
+  console.log(`  ${Object.keys(heights).length} named buildings measured, ${Object.keys(massHeights).length} massing parts, ${trees.length} trees`);
   console.log(`  tallest: ${measured.slice(0, 5).map((m) => `${m.n} ${m.h}m`).join(", ")}`);
 }
 

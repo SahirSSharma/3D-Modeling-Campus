@@ -319,15 +319,25 @@ const isExcludedBuilding = (ring) => {
 
 /* Anchors a student navigates by that no single OSM footprint carries: the
    college-level names (anchored on member buildings), the trolley station
-   platform (no building to hang a name on), and the underground Scholars
-   garage whose footprint is deliberately not extruded above. */
+   platform (no building to hang a name on), the underground Scholars garage
+   whose footprint is deliberately not extruded above, and the Epstein bowl
+   whose footprint is building=no (the label survives the exclusion). */
 const SEEDED_PLACES = {
   "Thurgood Marshall College": { x: -160, z: -590 },
   "Eleanor Roosevelt College": { x: -69.5, z: -655.3 },
   "International House": { x: -75.6, z: -688 },
-  "Eighth College": { x: -99.4, z: 608.5 },
+  /* Ridge Walk North. The old seed (-99.4, 608.5) pointed at a canyon and a
+     road interchange ~1.1 km south-west of the college — nothing named
+     "Eighth College" exists in OSM to import, so the anchor is the mean of
+     its four member buildings' OSM footprints (Alianza 1274990079, Umoja
+     1274990081, Coalition 1274990080, Malk Hall 1274990078; queried
+     2026-08-04), the same way the Marshall anchor rides its buildings. */
+  "Eighth College": { x: 122.5, z: -515.1 },
   "UC San Diego Central Campus Trolley Station": { x: 875, z: -75 },
   "Scholars Parking Structure": { x: -36.1, z: -259.4 },
+  /* Its ring's centroid, kept as a place after building=no dropped the ring:
+     the venue is real even though the slab was not. */
+  "Epstein Family Amphitheater": { x: 743, z: -131.6 },
 };
 
 /** Stitch a multipolygon relation's outer members into closed rings (already
@@ -422,7 +432,12 @@ function build(elements) {
       continue;
     }
 
-    if (tags.building) {
+    if (tags.building && tags.building !== "no") {
+      /* building=no is OSM saying "this closed way is NOT a building" — the
+         Epstein Family Amphitheater's bowl (amenity=theatre, building=no)
+         imported as a truthy string and shipped as a 17 m slab over an
+         open-air venue. The parts filter two branches up already knew this;
+         this one did not. */
       if (isUnderground(tags)) continue; // below grade — nothing to extrude
       if (DEMOLISHED.has(tags.name)) continue; // stood in 2014, gone today
       // Closed ring; drop the duplicated last vertex OSM uses to close it.

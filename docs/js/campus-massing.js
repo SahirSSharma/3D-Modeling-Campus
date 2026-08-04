@@ -258,13 +258,18 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
     if (parts.length >= 2) {
       /* Suppression is per PART here — the parts are what renders. Rya and
          Vela's outer-ring centroids fall in the paseo between the towers, but
-         every part-box sits ON the university's PCW massing and must yield. */
+         every part-box sits ON the university's PCW massing and must yield.
+         lidarDone: a part's height IS its own measurement (or its own OSM
+         tag) — reconciling it against the whole building's number pasted the
+         VA Medical Center tower's 33.7 m onto all five of its low pavilions
+         (measured 6.6-27.4 m). Steps have to step. */
       for (const { part, pi } of parts) {
         if (ringCoveredBy(part.p, covered)) continue;
         masses.push({
           rings: [part.p],
           name: b.n || null,
           gisH: lidar.partHeights?.[`${i}/${pi}`] ?? part.h,
+          lidarDone: true,
           levels: null,
           roof: colors?.buildings?.[i] || null,
           src: "osm",
@@ -284,16 +289,25 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
     });
   });
 
-  /* Reconcile massing-part heights against the LiDAR building they stand in,
-     and label each mass by the name a STUDENT uses: the OSM building it
-     stands inside ("Sankofa", "Vela"), not the facilities code
-     ("TDLLN - Sankofa Tower"). */
+  /* Reconcile massing-part heights against the LiDAR, and label each mass by
+     the name a STUDENT uses: the OSM building it stands inside ("Sankofa",
+     "Vela"), not the facilities code ("TDLLN - Sankofa Tower").
+
+     The measurement is per MASS where the survey could answer per mass:
+     lidar.massHeights carries each massing ring's own 2014 roof plane, keyed
+     by the same geometry hash the truecolor lookup uses, and epoch-guarded at
+     build time (a post-2014 host emits nothing). Where it exists it IS the
+     height — reconciling per host pasted Urey Hall's 30.5 m tower onto its
+     12.2 m office addition and the Main Gym's 14.9 onto the 8.4 m Natatorium.
+     Where it does not (sliver masses, unnamed hosts, post-2014 sites), the
+     host-level reconcile stands as before. */
   const namedRings = campus.buildings.filter((b) => b.n).map((b) => ({ n: b.n, p: b.p }));
   for (const m of masses) {
     if (m.lidarDone) continue;
     const [cx, cz] = centroidOf(m.rings[0]);
+    const own = m.src === "gis" ? lidar.massHeights?.[`m:${Math.round(cx)},${Math.round(cz)}`] : undefined;
     const host = namedRings.find((b) => inRing(cx, cz, b.p));
-    m.h = reconcile(m.gisH, host ? lidar.heights[host.n] : null);
+    m.h = own ?? reconcile(m.gisH, host ? lidar.heights[host.n] : null);
     if (host) m.name = host.n;
   }
   for (const m of masses) if (m.h === undefined) m.h = m.gisH;

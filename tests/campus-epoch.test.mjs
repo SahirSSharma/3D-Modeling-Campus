@@ -17,6 +17,11 @@
  *   5. Relation-mapped buildings exist (a ways-only Overpass pull shipped a
  *      campus with no Faculty Club and no Rady School).
  *   6. The routing graph still connects the walk's anchor buildings.
+ *   7. University massing rings measure their OWN 2014 roof plane — the
+ *      host-level reconcile pasted the Main Gym's 14.9 m onto the 8.4 m
+ *      Natatorium and Urey Hall's tower onto its low office addition.
+ *   8. The Epstein bowl (OSM building=no) stays unbuilt, and the Eighth
+ *      College label stands at Ridge Walk North where OSM puts it.
  */
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
@@ -57,6 +62,16 @@ const POST_2014 = [
   "Viterbi Family Vision Research Center",
   "The Strauss", "Student Success Building",
   "Student Health and Well-Being Building", "Triton Alumni and Welcome Center",
+  // Found by the 2026-08-04 gauntlet sweep — each shipped a 2014 "measurement"
+  // of the lot, predecessor block, canopy or construction frame on its site.
+  "Ola", "Arena", "Artesa", "Cala", "Cresta", "Marea", // Mesa Nueva, 2017
+  "Viento", "Brisa", // Nuevo West, 2020
+  "Athena Parking Structure", // 2019 — 2.3 m was the surface lot
+  "Survivance", // TDLLN's fifth building, 2023
+  "Tata Hall for the Sciences", // 2018 — 19.5 m was the demolished USB site
+  "Epstein Family Amphitheater", // 2022 — 17 m was the eucalyptus grove
+  "Altman Clinical and Translational Research Institute", // opened 2016
+  "Campus Point Parking Structure", // Jacobs Medical Center buildout
 ];
 
 describe("1. LiDAR never claims a measurement of a post-2014 building", () => {
@@ -76,6 +91,16 @@ describe("1. LiDAR never claims a measurement of a post-2014 building", () => {
     const orphans = Object.keys(LIDAR.heights).filter((n) => !names.has(n));
     assert.deepEqual(orphans, [], `LiDAR heights for buildings not on the map: ${orphans}`);
   });
+  test("no massing ring inside a post-2014 footprint carries a LiDAR height", () => {
+    /* massHeights keys encode the mass centroid ("m:x,z"), so the epoch
+       guard is checkable from the shipped file alone. */
+    const rings = CAMPUS.buildings.filter((b) => b.n && POST_2014.includes(b.n));
+    const liars = Object.keys(LIDAR.massHeights || {}).filter((k) => {
+      const [x, z] = k.slice(2).split(",").map(Number);
+      return rings.some((b) => inRing([x, z], b.p));
+    });
+    assert.deepEqual(liars, [], `2014 mass planes inside post-2014 buildings: ${liars}`);
+  });
 });
 
 describe("2. post-2014 buildings render at their documented heights", () => {
@@ -90,6 +115,16 @@ describe("2. post-2014 buildings render at their documented heights", () => {
     "Alianza": 50, // 18 levels (GIS 59.2)
     "Umoja": 45, // 16 levels (GIS 51.9)
     "Sankofa": 55, // 21-level tower (GIS 64)
+    // 2026-08-04 sweep additions — GIS massing carries each now that the
+    // stale 2014 return is gone.
+    "Ola": 12, // GIS 15.2
+    "Cala": 20, // GIS 24.4
+    "Cresta": 18, // GIS 21.3
+    "Viento": 30, // GIS 36.6, 12 storeys
+    "Survivance": 30, // GIS 33.5
+    "Tata Hall for the Sciences": 20, // GIS masses top at 25.6
+    "Athena Parking Structure": 25, // GIS 29.9, 7 levels
+    "Altman Clinical and Translational Research Institute": 25, // GIS 29.9, 7 storeys
   };
   for (const [n, min] of Object.entries(FLOORS)) {
     test(`${n} stands at least ${min} m`, () => {
@@ -185,5 +220,76 @@ describe("6. the data still routes and stays aligned", () => {
     const graph = buildGraph(CAMPUS);
     const r = routeBetween(CAMPUS, graph, "Argo Hall", "Peterson Hall");
     assert.ok(r.points.length > 50, "route came back suspiciously short");
+  });
+});
+
+describe("7. per-mass roof planes (the 2026-08-04 host-bleed fix)", () => {
+  /* Reconciling per HOST pasted the tallest volume's height onto every
+     university massing ring inside the OSM footprint: the Main Gym's 14.9 m
+     onto the 8.4 m Natatorium, Urey Hall's 30.5 m tower onto its 12 m office
+     addition, the Biomedical Sciences Building's 24.1 m onto the 6.4 m Keck
+     annex. lidar.massHeights now carries each ring's own 2014 roof plane
+     (verified against a targeted EPT re-sample, 2026-08-04), and
+     assembleMasses ships it. Keyed by the mass centroid, value = what must
+     render. */
+  const massKey = (m) => {
+    let x = 0, z = 0;
+    for (const p of m.rings[0]) { x += p[0]; z += p[1]; }
+    const n = m.rings[0].length;
+    return `m:${Math.round(x / n)},${Math.round(z / n)}`;
+  };
+  const PLANES = {
+    "m:585,-292": [18.7, "Powell Structural Systems Lab — GIS said 8.5"],
+    "m:571,-207": [13.8, "Powell Components Lab — host bled 21.9"],
+    "m:536,218": [19.7, "Medical Teaching Facility block — GIS said 29.9"],
+    "m:540,264": [8.3, "MTF low wing — GIS said 29.9"],
+    "m:-50,97": [8.5, "Natatorium — Main Gym bled 14.9"],
+    "m:467,331": [6.4, "W. M. Keck Building — host bled 24.1"],
+    "m:-153,-41": [9.3, "Tuolumne T House East — host bled 17.3"],
+    "m:18,299": [12.1, "Urey Hall Office Addition — tower bled 30.5"],
+    "m:-10,266": [30.5, "Urey Hall main slab — stepped roof, host crown stands"],
+    "m:161,103": [4.6, "Student Center Pub — hand-audited under the grove"],
+    "m:95,16": [20.9, "Mandeville Center — hand-audited fly volume"],
+    "m:-1065,1189": [11.3, "Eckart Building — host-median grade sat 7.6 m high"],
+  };
+  const gisByKey = new Map(MASSES.filter((m) => m.src === "gis").map((m) => [massKey(m), m]));
+  for (const [key, [h, why]] of Object.entries(PLANES)) {
+    test(`${why} — ships ${h} m`, () => {
+      const m = gisByKey.get(key);
+      assert.ok(m, `no massing ring at ${key}`);
+      assert.equal(m.h, h, `${key} ships ${m.h} m`);
+    });
+  }
+  test("a stepped slab emits no per-mass plane (p75 is not a roof)", () => {
+    /* Urey Hall's main mass: half its 2014 returns sit on ~16 m steps, the
+       crown at 30.4 — the p75 fallback (25.4) matches no physical roof, so
+       the build withholds the mass and host reconciliation answers. */
+    assert.equal(LIDAR.massHeights["m:-10,266"], undefined);
+  });
+  test("the hand-audited Pub height survives the rebuild", () => {
+    assert.equal(LIDAR.heights["Stage Room at the Pub"], 4.6);
+  });
+});
+
+describe("8. the amphitheater is open air and the Eighth College label is home", () => {
+  test("Epstein Family Amphitheater does not import as a building (OSM building=no)", () => {
+    assert.ok(!CAMPUS.buildings.some((b) => b.n === "Epstein Family Amphitheater"),
+      "the bowl is back as a solid 17 m slab");
+    assert.equal(LIDAR.heights["Epstein Family Amphitheater"], undefined,
+      "2014 canopy shipped as an amphitheater height");
+  });
+  test("Epstein keeps its place anchor for wayfinding", () => {
+    const p = CAMPUS.places["Epstein Family Amphitheater"];
+    assert.ok(p, "place anchor lost");
+    assert.ok(Math.abs(p.x - 743) < 2 && Math.abs(p.z - (-131.6)) < 2, `anchor drifted to ${p.x},${p.z}`);
+  });
+  test("the Eighth College label sits at Ridge Walk North, not the canyon", () => {
+    /* Mean of its four member buildings (Alianza, Umoja, Coalition, Malk
+       Hall) from OSM, 2026-08-04. The old seed put it 1.1 km south in a
+       canyon interchange. */
+    const p = CAMPUS.places["Eighth College"];
+    assert.ok(p, "Eighth College place missing");
+    assert.ok(Math.abs(p.x - 122.5) < 2 && Math.abs(p.z - (-515.1)) < 2,
+      `label at ${p.x},${p.z} — expected Ridge Walk North (122.5, -515.1)`);
   });
 });

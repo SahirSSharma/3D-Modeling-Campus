@@ -121,6 +121,34 @@ not measurements — they shipped NTPLLN as bungalows and The Jeannie at tree-ca
   (Scholars Parking, under the Sixth College green) never extrude.
 - `tests/campus-epoch.test.mjs` pins every one of these classes so a rebuild cannot regress.
 
+**The per-mass survey (2026-08-04).** Heights were reconciled per HOST: every university massing
+ring inside an OSM footprint took that footprint's one LiDAR number, so the tallest volume's
+height pasted itself onto everything sharing its ring. Checked against a targeted re-sample of
+the same EPT, per massing ring:
+
+| Mass | Shipped (host's height) | Its own 2014 roof plane |
+|---|---|---|
+| Natatorium | 14.9 m (the Main Gym's) | **8.5 m** |
+| Urey Hall Office Addition | 30.5 m (the tower's) | **12.1 m** |
+| W. M. Keck Building annex | 24.1 m (Biomedical Sciences') | **6.4 m** |
+| Powell Structural Components Lab | 21.9 m (SERF's) | **13.8 m** |
+| Tuolumne T House East | 17.3 m (the complex's) | **9.3 m** |
+| Medical Teaching Facility low wing | 29.9 m (a stale GIS record) | **8.3 m** |
+
+`campus-lidar.json` now carries `massHeights` — each ring's own roof plane, measured from its
+own rim grade (a host-wide median smears a complex's slope onto every mass in it: Eckart
+Building drops 15.6 m across its SIO bluff and lost 7.6 m of height to its host's grade). A
+mass only gets a number when its roof reads as ONE plane; Urey Hall's main slab (half its
+returns on ~16 m steps, crown at 30.4 m) emits nothing and the host measurement stands. The
+same sweep found eight more names shipping 2014 returns off their predecessors — Mesa Nueva
+(2017), Nuevo West (2020), the Athena and Campus Point garages, Survivance, Tata Hall, ACTRI
+(2016, caught mid-construction at 28.6 m) — all moved to `POST_2014_SITES`, all falling back to
+their university GIS records. The Epstein Family Amphitheater (2022) is open air and tagged
+`building=no` in OSM; the importer now honours that tag instead of extruding the 2014 eucalyptus
+canopy as a 17 m slab, and the bowl stays unbuilt — better absent than wrong. And the "Eighth
+College" label, hand-seeded a kilometre south into a canyon interchange, now stands at Ridge
+Walk North where OSM puts its four member buildings.
+
 ### The colours, measured off footage
 
 Satellite imagery sees roofs and ground; it cannot see a wall, a tree trunk, or the sky. For

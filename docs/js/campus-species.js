@@ -100,7 +100,15 @@ export function treeExclusionZones({ campus3d, arcgis, markings } = {}) {
     zones.push({ ring, kind, margin, name: name || kind, bbox: ringBBox(ring, margin) });
   };
   for (const b of campus3d?.buildings || []) add(b.p, "building", WALL_MARGIN, b.n);
-  for (const m of arcgis?.massing || []) add(m.r, "building", WALL_MARGIN, m.n);
+  /* Massing rings arrive as decimetre ring ARRAYS (m.r = [outer, holes...]).
+     This line used to pass m.r whole, so every massing zone failed the
+     ring.length >= 3 check and silently contributed nothing — the
+     "university's own massing" half of this function's contract never ran.
+     Outer ring only, scaled to metres, matching how OSM rings (holes
+     dropped at build) already behave. */
+  for (const m of arcgis?.massing || []) {
+    add((m.r?.[0] || []).map(([x, z]) => [x / 10, z / 10]), "building", WALL_MARGIN, m.n);
+  }
   for (const f of markings?.facilities || []) add(f.bounds, "sports", PAD_MARGIN, f.name);
   for (const s of campus3d?.surfaces || []) {
     if ((s.kind ?? s.k) === "water") add(s.p, "water", 0, s.n);
