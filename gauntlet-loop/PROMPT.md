@@ -232,6 +232,18 @@ A region only counts as done when ALL of:
 - Deployed and confirmed live at `https://sahirssharma.github.io/campus-walk/` before being
   reported as done.
 
+## Running this on Cursor (single agent, no fan-out)
+
+`cursor-agent` is ONE agent — it has no sub-agent teams, so the mandate above
+cannot be handed to it whole. `scripts/gauntlet-cursor.sh` is the adapter: it
+cuts campus into geographic shards (`scripts/gauntlet-shards.mjs`), feeds them
+through one at a time, and appends a Cursor-mode addendum to this file at
+invocation time — single-agent framing, the shard's bounds, and a hard
+push/deploy prohibition backed by an armed `pre-push` hook.
+
+Do not paste this file into Cursor by hand; you will get an agent that tries to
+spawn teams it does not have and to deploy a site it must not touch.
+
 ## Loop behavior
 
 Run full sweeps repeatedly. Do not declare "perfect" after one pass — declare it only after a

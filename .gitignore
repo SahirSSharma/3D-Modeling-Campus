@@ -4,3 +4,17 @@ node_modules/
 .env
 .env.*
 .cache/
+
+# Apple imagery is licensed and stays out of the repo — only numbers derived from it are
+# committed (see scripts/reports/imagery/FINDINGS.md). Google probe renders are tracked.
+scripts/reports/imagery/*-apple-probe.png
+
+# Gauntlet run artifacts: raw agent transcripts are large and regenerable.
+# STATUS.md / FINDINGS.md / shards.json stay tracked as evidence.
+gauntlet-loop/runs/*/*.log
+gauntlet-loop/runs/*/*.prompt.md
+gauntlet-loop/runs/latest
+gauntlet-loop/.no-push
+
+# Machine-local: symlinks into ~/.claude, and Claude Code worktrees.
+.claude/
