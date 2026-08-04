@@ -5,6 +5,16 @@
 #   scripts/gauntlet-cursor.sh --shard r1c1    # one shard only
 #   scripts/gauntlet-cursor.sh --passes 3      # three full passes
 #   scripts/gauntlet-cursor.sh --dry-run       # print what would run, call nothing
+#   scripts/gauntlet-cursor.sh --until-clean   # keep sweeping until a pass changes nothing
+#
+# --until-clean is the loop as PROMPT.md actually defines it: "a pass that finds
+# nothing is what ends the loop, not a time or iteration budget." A pass counts as
+# clean when it produced no new commits. --max-passes (default 4) is a runaway
+# backstop, not the intended stopping condition.
+#
+# Shards run SEQUENTIALLY on purpose. They are geographically disjoint, but the
+# builders rewrite whole JSON files (campus-lidar.json, campus-colors.json), so
+# two agents in parallel would race on the same artifacts.
 #
 # WHY A DRIVER EXISTS AT ALL
 # gauntlet-loop/PROMPT.md is addressed to a multi-agent runner with sub-agent
@@ -27,6 +37,8 @@ MODEL="${GAUNTLET_MODEL:-claude-fable-5-thinking-max}"   # Fable 5 1M Max Thinki
 PASSES=1
 ONLY_SHARD=""
 DRY_RUN=0
+UNTIL_CLEAN=0
+MAX_PASSES=4
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -34,6 +46,8 @@ while [[ $# -gt 0 ]]; do
     --passes)  PASSES="$2"; shift 2 ;;
     --model)   MODEL="$2"; shift 2 ;;
     --dry-run) DRY_RUN=1; shift ;;
+    --until-clean) UNTIL_CLEAN=1; shift ;;
+    --max-passes)  MAX_PASSES="$2"; shift 2 ;;
     *) echo "unknown option: $1" >&2; exit 2 ;;
   esac
 done
@@ -114,7 +128,12 @@ echo "[gauntlet] watch: tail -f $STATUS"
 
 [[ $DRY_RUN -eq 1 ]] || arm_guard
 
-for (( pass=1; pass<=PASSES; pass++ )); do
+[[ $UNTIL_CLEAN -eq 1 ]] && PASSES=$MAX_PASSES
+
+pass=0
+while (( pass < PASSES )); do
+  pass=$(( pass + 1 ))
+  PASS_START_SHA="$(git rev-parse HEAD)"
   for id in "${SHARD_IDS[@]}"; do
     SCOPE="$(node -e '
       const s=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));
@@ -157,6 +176,26 @@ Landmarks inside: ${x.landmarks.join(", ")}`);
     printf '| %s | %s | %s | %s | %dm%02ds | `%s` |\n' \
       "$pass" "$id" "$START" "$RC" "$((DUR/60))" "$((DUR%60))" "$(basename "$LOG")" >> "$STATUS"
   done
+
+  PASS_END_SHA="$(git rev-parse HEAD)"
+  PASS_COMMITS="$(git rev-list --count "${PASS_START_SHA}..${PASS_END_SHA}")"
+  echo "" >> "$STATUS"
+  echo "**Pass $pass produced $PASS_COMMITS commit(s).**" >> "$STATUS"
+  echo "" >> "$STATUS"
+  echo "[gauntlet] pass $pass produced $PASS_COMMITS commit(s)"
+
+  if [[ $UNTIL_CLEAN -eq 1 && "$PASS_COMMITS" -eq 0 ]]; then
+    echo "" >> "$STATUS"
+    echo "CLEAN PASS — a full sweep changed nothing. Loop complete after $pass pass(es)." >> "$STATUS"
+    echo "[gauntlet] CLEAN PASS. stopping."
+    break
+  fi
+
+  if [[ $UNTIL_CLEAN -eq 1 && $pass -eq $PASSES ]]; then
+    echo "" >> "$STATUS"
+    echo "STOPPED AT THE --max-passes BACKSTOP ($MAX_PASSES), not on a clean pass. Work remains." >> "$STATUS"
+    echo "[gauntlet] hit max-passes backstop; work remains."
+  fi
 done
 
 echo "" >> "$STATUS"
