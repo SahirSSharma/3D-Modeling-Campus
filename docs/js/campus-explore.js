@@ -1,11 +1,9 @@
-// Free roam over the measured campus.
+// Free roam over the measured campus — the only way you move.
 //
-// The guided walk answers "is this what walking there looks like". This mode
-// answers the follow-up: "let me check anywhere else". You can leave the route,
-// walk any path at any speed, rise from eye level to a drone's view, and jump
+// Walk any path at any speed, rise from eye level to a drone's view, and jump
 // straight to any named place. The ground rules stay honest — the camera rides
 // the measured terrain, so stairs are still stairs and Revelle still sits a
-// step below the path — but nothing fences you onto the route.
+// step below the path — but nothing fences you anywhere.
 //
 // Deliberately DOM-light: campus-walk.js owns the frame loop and the camera;
 // this module owns position, velocity and altitude, and the few controls that
@@ -13,17 +11,21 @@
 
 /* Eyes above the ground directly below. 1.65 m is a pedestrian; anything above
    that is the same world from higher up, which is the whole point of the
-   control. The cap is generous because the terrain box is ~1 km across and a
-   full overview needs real height. */
+   control. */
 export const EYE = 1.65;
-const HOVER_MAX = 900; // the whole 3 km campus fits in frame from up here
+/* 900 m stays: the measured world is ~3 km across and the whole of it already
+   fits in frame from here, so more altitude buys no more campus — it only
+   drags scaleAtmosphere's far plane out past 13 km for an emptier picture.
+   Nothing about the clearance-driven climb argues for changing it either;
+   because the rate grows with height the last 400 m cost about a second. */
+export const HOVER_MAX = 900;
 
 /* The velocity slider is logarithmic: human speeds (1–2 m/s) need fine
-   control and drone speeds do not, and a linear slider spends 97% of its
-   travel on speeds nobody can steer at. Full slider is MAX_SPEED_MPS exactly,
-   and update() clamps to it too — no combination of slider and shift may
-   move you faster. Crossing the whole 3 km campus takes ~3 s flat out. */
-export const MAX_SPEED_MPS = 1000;
+   control and drone speeds do not, and on a linear slider walking pace would
+   land inside the first 0.1% of the travel. Full slider is MAX_SPEED_MPS
+   exactly, and update() clamps to it too — no combination of slider and shift
+   may move you faster. Crossing the whole 3 km campus takes ~1.5 s flat out. */
+export const MAX_SPEED_MPS = 2000;
 const SPEED_MIN = 0.6;
 const SPEED_RATIO = MAX_SPEED_MPS / SPEED_MIN;
 export const sliderToSpeed = (t) => SPEED_MIN * Math.pow(SPEED_RATIO, Math.max(0, Math.min(1, t)));
@@ -35,16 +37,22 @@ export const speedToSlider = (v) => Math.log(v / SPEED_MIN) / Math.log(SPEED_RAT
    fixed m/s² would be imperceptible at 500 m/s and would blow straight past
    walking pace down at the bottom.
 
-   Up/down is the coarse pair — a shade under three seconds from 0.6 m/s to
-   the cap, for getting across campus. Left/right is the fine pair, ~1.45×
-   per second, for settling on a speed you can actually steer at. */
+   These are fractions of the AXIS per second, so raising the cap does not
+   change how long a sweep takes — only what a second of holding multiplies
+   your speed by. Up/down is the coarse pair: a shade under three seconds from
+   0.6 m/s to the cap (1 / 0.35), for getting across campus. Left/right is the
+   fine pair, for settling on a speed you can actually steer at — and it got
+   slightly coarser when the cap doubled, because a fifth of a longer axis is
+   a bigger step: SPEED_RATIO^0.05 is ~1.50× per second at a 2000 m/s cap
+   where it was ~1.45× at 1000. Still an order of magnitude under the coarse
+   pair's ~17×, which is all the two rates have to be. */
 export const SPEED_RATE_COARSE = 0.35;
 export const SPEED_RATE_FINE = 0.05;
 
-/* Shift doubles whatever the throttle currently says — one number, shared by
-   both modes, so "shift" means the same thing on the rail and off it. It is
-   still bounded by MAX_SPEED_MPS: at 500 m/s shift gets you the full 1000, and
-   above that it gets you nothing extra. */
+/* Shift doubles whatever the throttle currently says — one number, so "shift"
+   means the same thing for travel as it does for climb. It is still bounded by
+   MAX_SPEED_MPS: at 1000 m/s shift gets you the full 2000, and above that it
+   gets you nothing extra. */
 export const SHIFT_MULT = 2;
 
 /** The velocity after one tick of arrow-key steering. Clamped to the slider's
@@ -59,7 +67,42 @@ export function stepSpeed(speed, dt, held) {
   return sliderToSpeed(speedToSlider(speed) + d * dt);
 }
 
-export function createExplore({ campus, lidar, heightAt }) {
+/* Q/E used to climb at your TRAVEL speed, which is the wrong variable: at the
+   500 m/s spawn speed one tap of Q fell through the entire atmosphere, and at
+   walking pace the 3 m/s floor made a 900 m descent take five minutes. The
+   right variable is CLEARANCE — how far the camera is above the nearest solid
+   below it, terrain or roof, whichever is higher — because what you want from
+   the control is set entirely by how close you are to something: a metre at a
+   time when you are parking two metres over a roof to look at it, hundreds of
+   metres a second when you are dropping out of the drone view.
+
+   So the rate is proportional to clearance, which makes altitude move
+   GEOMETRICALLY — the same reasoning the velocity slider already runs on, and
+   for the same reason: a fixed linear rate is useless at both ends of a range
+   this wide. EYE to HOVER_MAX comes out at ~9.7 s either way.
+
+   BASE is what you get hard against a surface. It has to be a pedestrian
+   nudge (1.5 m/s is 2.5 cm per frame) so you can settle a couple of metres
+   over a roof, and it has to be non-zero or clearance 0 would be a trap you
+   could never climb out of. */
+export const CLIMB_BASE_MPS = 1.5;
+export const CLIMB_GAIN = 0.55;
+
+/** Metres per second of climb at a given clearance above the solid below. */
+export function climbRate(clearance, shift = false) {
+  const c = Number.isFinite(clearance) ? Math.max(0, clearance) : 0;
+  return Math.min((CLIMB_BASE_MPS + c * CLIMB_GAIN) * (shift ? SHIFT_MULT : 1), MAX_SPEED_MPS);
+}
+
+/**
+ * @param {object}   deps
+ * @param {function} deps.heightAt  terrain height at (x, z) — required.
+ * @param {function} [deps.solidAt] world Y of the roof over (x, z), or
+ *   null/undefined where nothing is built. Optional by design: the module has
+ *   to stay usable without the massing (the Node tests build no buildings),
+ *   and every caller that predates it keeps working unchanged.
+ */
+export function createExplore({ campus, lidar, heightAt, solidAt }) {
   const t = lidar.terrain;
   const bounds = {
     x0: t.x0 + t.cell, x1: t.x0 + (t.cols - 2) * t.cell,
@@ -100,9 +143,9 @@ export function createExplore({ campus, lidar, heightAt }) {
     /**
      * One tick of movement. Reads held keys, returns the camera pose.
      * Forward is where you are looking (horizontally); strafing is sideways;
-     * Q/E sink and climb. Shift multiplies, exactly like the guided walk.
-     * The arrow keys are not here: they set the velocity (see stepSpeed), and
-     * looking is the drag.
+     * Q/E sink and climb at a rate set by clearance, not by travel speed.
+     * Shift multiplies both. The arrow keys are not here: they set the
+     * velocity (see stepSpeed), and looking is the drag.
      */
     update(dt, held) {
       /* The cap is the cap: shift on top of a high slider still tops out at
@@ -121,17 +164,44 @@ export function createExplore({ campus, lidar, heightAt }) {
       if (held.has("a")) { self.x += cos * v; self.z -= sin * v; }
       if (held.has("d")) { self.x -= cos * v; self.z += sin * v; }
 
-      /* Climb rate follows travel speed, floored so the first metres of lift
-         do not crawl when the slider sits at walking pace — and capped like
-         the travel speed is. */
-      const climb =
-        Math.min(Math.max(3, self.speed) * (held.has("shift") ? SHIFT_MULT : 1), MAX_SPEED_MPS) * dt;
-      if (held.has("e") || held.has("pageup")) self.hover += climb;
-      if (held.has("q") || held.has("pagedown")) self.hover -= climb;
-      self.hover = Math.max(EYE, Math.min(HOVER_MAX, self.hover));
-
       clamp();
       const ground = heightAt(self.x, self.z);
+
+      /* Clearance is measured against the HIGHER of terrain and roof, so two
+         metres over Geisel's deck is two metres of clearance and not the
+         eighty-odd you are holding above the forecourt. solidAt is optional:
+         without it clearance degrades to height above terrain, which is what
+         the module did before buildings could answer, and is still right
+         everywhere nothing is built.
+
+         Drift off a roof edge and clearance jumps — 2 m over a 30 m roof
+         becomes 32 m the instant you clear the parapet, so the rate goes from
+         2.6 to 19 m/s in one frame. That discontinuity is DELIBERATELY left
+         unsmoothed. It is physically truthful (there really is nothing under
+         you now), it is invisible unless you are holding Q or E at the moment
+         you cross the edge, and the alternative costs more than it buys:
+         rate-limiting the clearance the controller sees would put lag into
+         precisely the manoeuvre that needs precision — the slow descent onto
+         a roof — and it would make the rate depend on how long you had been
+         holding the key rather than on where you are, which is exactly the
+         hidden state that made the old speed-keyed climb impossible to
+         reason about or test.
+
+         Note also that this is a rate governor, not a collision surface: hold
+         Q over a roof and you still sink through it, slowly. Free roam has
+         never had collision, and being stranded on a rooftop with no way down
+         would be a worse bug than passing through one. */
+      const roofY = solidAt?.(self.x, self.z);
+      const surfaceY = roofY != null ? Math.max(ground, roofY) : ground;
+      const clearance = Math.max(0, ground + self.hover - surfaceY);
+      const climb = climbRate(clearance, held.has("shift")) * dt;
+      if (held.has("e") || held.has("pageup")) self.hover += climb;
+      if (held.has("q") || held.has("pagedown")) self.hover -= climb;
+      /* Both clamps are escapable in both directions because climbRate never
+         returns 0: at EYE the rate is still 2.4 m/s up, at HOVER_MAX it is
+         496 m/s down. */
+      self.hover = Math.max(EYE, Math.min(HOVER_MAX, self.hover));
+
       return { x: self.x, y: ground + self.hover, z: self.z, yaw: self.yaw, ground };
     },
 

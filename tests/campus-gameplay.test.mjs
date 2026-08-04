@@ -8,15 +8,21 @@
  *      so a rebuild cannot quietly resurrect it. Routing between the two
  *      buildings must still succeed, the long way round.
  *   2. The spawn hangs exactly 110 m over Argo Hall at exactly 500 m/s, and
- *      the fly speed caps at exactly 1000 m/s. All three are exported
+ *      the fly speed caps at exactly 2000 m/s. All three are exported
  *      constants precisely so this file can pin them, and the arrow keys —
  *      the throttle — must stay inside the cap at both rates.
  *   3. The minimap's world↔pixel transform round-trips, because the click
  *      that teleports you and the dot that shows you use the same numbers.
+ *
+ * The routing assertions used to protect a guided walk on a rail. That mode is
+ * gone and free roam is the only way you move, but campus-route.js stayed: it
+ * is what scripts/audit-accuracy.mjs routes our footpaths through to compare
+ * them against a real pedestrian router. So the routes below are the audit's
+ * fixture now, not a feature's itinerary — same arithmetic, different reader.
  */
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, readdirSync, existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -117,7 +123,14 @@ describe("the Argo ↔ Peterson footway is removed, and stays removed", () => {
       `${offenders.length} route points still travel the removed footway`);
   });
 
-  test("the shipped walk still routes start to end", () => {
+  test("the accuracy audit's reference route still chains its three legs", () => {
+    /* Argo Hall → Revelle Plaza → a point 300 m north of it up Ridge Walk,
+       built here exactly as scripts/audit-accuracy.mjs builds it — the middle
+       leg is a named place and the last is a bare coordinate snapped onto the
+       path, which is a different code path through routeThrough than a pair of
+       names. It was the guided walk's itinerary before the walk was deleted;
+       the audit inherited it, so a break here breaks `audit:accuracy` rather
+       than a rendered route. */
     const plaza = CAMPUS.places["Revelle Plaza"];
     const ridge = CAMPUS.paths.filter((p) => p.n === "Ridge Walk").flatMap((p) => p.p);
     const target = { x: plaza.x, z: plaza.z - 300 };
@@ -127,9 +140,9 @@ describe("the Argo ↔ Peterson footway is removed, and stays removed", () => {
       const d = Math.hypot(x - target.x, z - target.z);
       if (d < bestD) { bestD = d; end = { x, z, name: "Ridge Walk" }; }
     }
-    const walk = routeThrough(CAMPUS, GRAPH, ["Argo Hall", "Revelle Plaza", end]);
-    assert.ok(walk.metres > 200 && walk.metres < 900,
-      `the walk is ${walk.metres} m — it should be ~371 m`);
+    const route = routeThrough(CAMPUS, GRAPH, ["Argo Hall", "Revelle Plaza", end]);
+    assert.ok(route.metres > 200 && route.metres < 900,
+      `the reference route is ${route.metres} m — it should be ~371 m`);
   });
 });
 
@@ -150,8 +163,8 @@ describe("spawn altitude and speed cap are the promised numbers", () => {
       "spawn height must come from SPAWN_ALTITUDE_M, not a copy of it");
   });
 
-  test("top speed is exactly 1000 m/s, reachable, and a hard cap", () => {
-    assert.equal(MAX_SPEED_MPS, 1000);
+  test("top speed is exactly 2000 m/s, reachable, and a hard cap", () => {
+    assert.equal(MAX_SPEED_MPS, 2000);
     /* Reachable: the slider's top IS the cap. */
     assert.ok(Math.abs(sliderToSpeed(1) - MAX_SPEED_MPS) < 1e-9,
       `full slider gives ${sliderToSpeed(1)} m/s, not ${MAX_SPEED_MPS}`);
@@ -178,17 +191,15 @@ describe("spawn altitude and speed cap are the promised numbers", () => {
       `full slider only covered ${travelled.toFixed(1)} m in 1 s — ${MAX_SPEED_MPS} is not reachable`);
   });
 
-  test("shift doubles the current speed, in both modes, under the cap", () => {
+  test("shift doubles the current speed, under the cap", () => {
     assert.equal(SHIFT_MULT, 2);
-    /* Free roam: from the spawn speed, one second of shift must cover exactly
-       twice the metres one second without it does. */
     const flat = { x0: -5000, z0: -5000, cell: 10, cols: 1001, rows: 1001 };
     const ex = createExplore({
       campus: { places: {} }, lidar: { terrain: flat }, heightAt: () => 0,
     });
-    const run = (keys) => {
+    const run = (keys, speed) => {
       ex.enterAt(0, 0, 0);
-      ex.speed = SPAWN_SPEED_MPS;
+      ex.speed = speed;
       let travelled = 0;
       for (let i = 0; i < 100; i++) {
         const before = { x: ex.x, z: ex.z };
@@ -197,28 +208,48 @@ describe("spawn altitude and speed cap are the promised numbers", () => {
       }
       return travelled;
     };
-    const plain = run(["w"]);
-    const shifted = run(["w", "shift"]);
-    assert.ok(Math.abs(plain - SPAWN_SPEED_MPS) < 1e-6,
-      `a second at the spawn speed covered ${plain.toFixed(1)} m, not ${SPAWN_SPEED_MPS}`);
-    assert.ok(Math.abs(shifted - plain * SHIFT_MULT) < 1e-6,
-      `shift turned ${plain.toFixed(1)} m/s into ${shifted.toFixed(1)} m/s, not double`);
 
-    /* The guided walk must use the same multiplier and the same cap — it once
-       had a 2.9 of its own and no ceiling at all, so the rail outran the
-       flight. */
-    const src = readFileSync(path.join(ROOT, "docs/js/campus-walk.js"), "utf8");
-    assert.doesNotMatch(src, /SHIFT_MULT\s*=/,
-      "the guided walk must import SHIFT_MULT, not declare its own");
-    assert.match(src, /Math\.min\(state\.speed \* \(fast \? SHIFT_MULT : 1\), MAX_SPEED_MPS\)/,
-      "the guided walk must double under the same cap free roam obeys");
+    /* From the spawn speed, one second of shift must cover exactly twice the
+       metres one second without it does — and in every direction you can
+       travel, because the multiplier is applied ONCE to a scalar velocity and
+       a per-key copy of it is exactly the drift that would go unnoticed:
+       sprinting forward and strolling sideways still looks like movement. */
+    for (const dir of ["w", "s", "a", "d"]) {
+      const plain = run([dir], SPAWN_SPEED_MPS);
+      const shifted = run([dir, "shift"], SPAWN_SPEED_MPS);
+      assert.ok(Math.abs(plain - SPAWN_SPEED_MPS) < 1e-6,
+        `a second of ${dir} at the spawn speed covered ${plain.toFixed(1)} m, not ${SPAWN_SPEED_MPS}`);
+      assert.ok(Math.abs(shifted - plain * SHIFT_MULT) < 1e-6,
+        `${dir} + shift turned ${plain.toFixed(1)} m into ${shifted.toFixed(1)} m, not double`);
+    }
+
+    /* Shift is a multiplier under a ceiling, and the ceiling is what it once
+       lacked: the deleted guided walk carried a 2.9 of its own and no cap at
+       all, so the rail outran the flight. From three-quarters of the cap,
+       doubling must land ON MAX_SPEED_MPS and not 1.5× past it. */
+    const capped = run(["w", "shift"], MAX_SPEED_MPS * 0.75);
+    assert.ok(Math.abs(capped - MAX_SPEED_MPS) < 1e-6,
+      `shift at ${MAX_SPEED_MPS * 0.75} m/s covered ${capped.toFixed(1)} m in 1 s — the cap leaks`);
+
+    /* One multiplier, one declaration. There is a single mode now, so nothing
+       CAN disagree about what shift means — but that is a fact about today's
+       module list, and this is the invariant that outlived the mode it was
+       written for: whatever imports SHIFT_MULT, campus-explore.js is the only
+       file allowed to say what it is. Asserted across the whole of docs/js
+       rather than against one file, because the failure was never "campus-walk
+       declared one" — it was "two modules each declared one". */
+    const declaring = readdirSync(path.join(ROOT, "docs/js"))
+      .filter((f) => f.endsWith(".js"))
+      .filter((f) => /SHIFT_MULT\s*=/.test(readFileSync(path.join(ROOT, "docs/js", f), "utf8")));
+    assert.deepEqual(declaring, ["campus-explore.js"],
+      `SHIFT_MULT is declared in ${declaring.join(", ") || "nothing"} — it belongs to campus-explore.js alone`);
   });
 
   test("you spawn at 500 m/s, and the state starts there", () => {
     assert.equal(SPAWN_SPEED_MPS, 500);
     assert.ok(SPAWN_SPEED_MPS < MAX_SPEED_MPS, "the spawn speed must leave room to climb");
-    /* Pinned to the source so a hardcoded copy cannot drift: the shared
-       velocity both modes read must be seeded FROM the constant. */
+    /* Pinned to the source so a hardcoded copy cannot drift: the velocity the
+       slider and the arrow keys share must be seeded FROM the constant. */
     const src = readFileSync(path.join(ROOT, "docs/js/campus-walk.js"), "utf8");
     assert.match(src, /speed:\s*SPAWN_SPEED_MPS/,
       "state.speed must come from SPAWN_SPEED_MPS, not a copy of it");

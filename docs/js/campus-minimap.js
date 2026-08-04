@@ -2,13 +2,14 @@
 //
 // The background IS the aerial photograph — campus-colors.json's terrain grid
 // was sampled from NAIP imagery, so painting its palette-indexed cells gives a
-// true satellite underlay for free, roofs and canyons included. The guided
-// walk draws over it in gold; you are the white dot with the view wedge.
+// true satellite underlay for free, roofs and canyons included. The surveyed
+// boundary is the only line drawn over it; you are the white dot with the view
+// wedge, free to be anywhere inside it.
 //
 // Drawn in 2D canvas, not WebGL: it is a HUD instrument, and a second GL
 // context would cost more than the whole minimap is worth.
 
-export function createMinimap(canvas, { colors, lidar, route, boundary, onTeleport }) {
+export function createMinimap(canvas, { colors, lidar, boundary, onTeleport }) {
   if (!canvas || !colors?.terrain) return { update() {} };
   const t = lidar.terrain;
   const worldW = (t.cols - 1) * t.cell;
@@ -43,15 +44,6 @@ export function createMinimap(canvas, { colors, lidar, route, boundary, onTelepo
         ctx.fillStyle = ct.palette[k] || "#556";
         ctx.fillRect(px(ct.x0 + c * ct.cell), pz(ct.z0 + r * ct.cell), cellW, cellH);
       }
-    }
-    /* The guided walk, so the dot has a story to sit on. */
-    if (route?.points?.length) {
-      ctx.strokeStyle = "#ffcd00";
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(px(route.points[0].x), pz(route.points[0].z));
-      for (const p of route.points) ctx.lineTo(px(p.x), pz(p.z));
-      ctx.stroke();
     }
     /* The campus boundary — dashed dark navy over the aerial, the same line
        the world draws on the ground, so map and world agree about where the

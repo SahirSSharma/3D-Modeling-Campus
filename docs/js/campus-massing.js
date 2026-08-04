@@ -35,22 +35,15 @@ const ROOF_FALLBACK = "#d9dbd5";
 
 const hash = (x, z) => Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1;
 
-/* Measured roof colour, sampled at build time from the georeferenced
-   satellite chunks — finer than NAIP, edge-eroded so walls and their shadows
-   stay out of the median. Keys are geometry hashes (`m:`/`b:` + outer-ring
-   vertex-average centroid, rounded to the metre) recomputed here, so the
-   lookup survives a data rebuild and simply misses — falling back to the
-   NAIP colour, then the palette — when a footprint moved. May be absent, and
-   fetch() has no file:// under Node tests: both degrade to null. Keep the
-   key rule in sync with scripts/build-campus-truecolor.mjs. */
-const TRUECOLOR = await (async () => {
-  try {
-    const r = await fetch(new URL("../data/campus-truecolor.json", import.meta.url));
-    return r.ok ? await r.json() : null;
-  } catch {
-    return null;
-  }
-})();
+/* Measured roof colour, sampled at build time from the georeferenced satellite
+   chunks — finer than NAIP, edge-eroded so walls and their shadows stay out of
+   the median. Keys are geometry hashes (`m:`/`b:` + outer-ring vertex-average
+   centroid, rounded to the metre) recomputed here, so the lookup survives a
+   data rebuild and simply misses — falling back to the NAIP colour, then the
+   palette — when a footprint moved. Keep the key rule in sync with
+   scripts/build-campus-truecolor.mjs. The fetch itself lives in
+   campus-truecolor.js because campus-world.js wants the same file. */
+import { TRUECOLOR } from "./campus-truecolor.js";
 
 /* TASTE GUARD (defence in depth — the build already clamps): keep any
    measured roof inside the site's palette family so one bad sample can never
@@ -309,11 +302,16 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
 
 /**
  * Assemble the full mass list, then extrude every mass into per-material
- * buckets and merge — ~1,400 masses render as a few dozen draw calls, not
- * three thousand.
+ * buckets and merge — ~1,500 masses render as ~1,080 draw calls rather than one
+ * per mass. (This comment said "a few dozen" for a long time. That was true
+ * before the merge was chunked by 500 m for frustum culling, which multiplies
+ * the bucket count by the number of occupied chunks; the trade was worth it,
+ * but the number in the docstring was not re-measured.)
  *
- * Returns { group, info } where info maps building name -> { x, z, topY, h }
- * for labels and callouts.
+ * Returns { group, info, roofs, masses, drawCalls }:
+ *   info   building name -> { x, z, topY, h, ring }, for labels and callouts.
+ *          Keyed by NAME, so it holds only the tallest mass per name.
+ *   roofs  EVERY mass that got built, as { topY, ring } — see below.
  */
 export function createBuildings(scene, { campus, lidar, arcgis, colors, facades, heightAt }) {
   const masses = assembleMasses({ campus, lidar, arcgis, colors });
@@ -343,6 +341,15 @@ export function createBuildings(scene, { campus, lidar, arcgis, colors, facades,
   };
 
   const info = new Map();
+  /* Every mass that gets built, roof height and footprint, for the clearance
+     sampler that scales free roam's climb rate (campus-clearance.js).
+     `info` cannot serve that: it is keyed by NAME and keeps only the tallest
+     mass per name, which is 479 of the ~1,490 masses. Sampled through it, the
+     camera two metres over an unnamed podium wing measured its clearance to the
+     GROUND thirty metres below and climbed at thirty metres a second — fast
+     exactly where the control has to be slow. Labels want one entry per name;
+     a rate governor wants every roof. */
+  const roofs = [];
   let built = 0;
   for (const m of masses) {
     const outer = m.rings[0];
@@ -396,6 +403,7 @@ export function createBuildings(scene, { campus, lidar, arcgis, colors, facades,
     const key = `${wallHex}|${roofHex}|${style}|${Math.floor(cx / 500)}:${Math.floor(cz / 500)}`;
     if (!buckets.has(key)) buckets.set(key, { lids: [], walls: [] });
     splitIntoBucket(geo, buckets.get(key));
+    roofs.push({ topY: roofY, ring: outer });
     built++;
 
     if (m.name) {
@@ -417,6 +425,7 @@ export function createBuildings(scene, { campus, lidar, arcgis, colors, facades,
     if (!buckets.has(bucketKey)) buckets.set(bucketKey, { lids: [], walls: [] });
     const bucket = buckets.get(bucketKey);
     let top = base;
+    let topRing = null;
     for (const floor of geisel) {
       const shape = new THREE.Shape();
       const ring = floor.rings[0].map(([x, z]) => [x / 10, z / 10]);
@@ -432,9 +441,16 @@ export function createBuildings(scene, { campus, lidar, arcgis, colors, facades,
       const scaleV = STOREY / floor.h;
       for (let i = 0; i < uv.count; i++) uv.setY(i, uv.getY(i) * scaleV);
       splitIntoBucket(geo, bucket);
-      top = Math.max(top, base + floor.from + floor.h);
+      const floorTop = base + floor.from + floor.h;
+      if (floorTop >= top) { top = floorTop; topRing = ring; }
     }
     info.set("Geisel Library", { x: geiselPlace.x, z: geiselPlace.z, topY: top, h: Math.round((top - base) * 10) / 10 });
+    /* Geisel's info entry deliberately carries no ring — its floors are stacked
+       separately, so there is no single outer footprint for a label to point at.
+       The clearance sampler does need one, and the top floor's slab is the deck
+       you would actually be hovering over. Without this, the one building on
+       campus people most want to fly around was a hole in the roof map. */
+    if (topRing) roofs.push({ topY: top, ring: topRing });
     built++;
   }
 
@@ -456,7 +472,7 @@ export function createBuildings(scene, { campus, lidar, arcgis, colors, facades,
     if (geo) group.add(new THREE.Mesh(geo, [roofMats.get(roofHex), wallMats.get(matKey)]));
   }
   scene.add(group);
-  return { group, info, masses: built, drawCalls: buckets.size };
+  return { group, info, roofs, masses: built, drawCalls: buckets.size };
 }
 
 /* ExtrudeGeometry emits group 0 = lids, group 1 = side walls (an ordering

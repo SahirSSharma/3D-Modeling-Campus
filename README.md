@@ -4,9 +4,16 @@ A walk across a real campus, in 3D, built from measurements rather than impressi
 
 **Live:** https://sahirssharma.github.io/campus-walk/
 
-Out of **Argo Hall**, across **Revelle Plaza**, onto **Ridge Walk** — 371 m, of which 72 m is
-plaza. Walk it at eye level like Street View, or from over your own shoulder. Every building names
-its measured height as you pass it.
+You spawn hanging **110 m over Argo Hall**, looking north across the whole of it, and go wherever
+you like — ~3 km of surveyed ground, from eye level to 900 m up, at anything between a walking pace
+and 2000 m/s. Every building names its measured height as you pass it.
+
+There used to be a second mode: a guided walk on a rail out of Argo Hall, across Revelle Plaza and
+up Ridge Walk to Peterson Hall — 371 m, with a walking figure, a progress bar and an
+over-the-shoulder camera. It was the original product and the campus outgrew it: once 3 km of
+measured ground was reachable in any direction, a 740 m rail was the least interesting thing on
+offer, and every control it needed was chrome explaining a feature nobody chose. Free roam is the
+only mode now.
 
 ---
 
@@ -36,7 +43,8 @@ LiDAR:
 (The measured column is read from the shipped `docs/data/campus-lidar.json`; a test fails if this
 table ever drifts from the data again.)
 
-Argo and Blake are the two buildings you stand between at the start of the walk. Both were wrong.
+Argo is the building you spawn over and Blake stands beside it, so they are the first two heights
+anyone can check. Both were wrong.
 
 The LiDAR survey (`CA_SanDiegoQL2_2014`) classifies ground and lumps everything else into
 "unassigned" — there is no building class. So nothing here asks the data *"is this a building?"*.
@@ -144,7 +152,7 @@ walking tour (Nov 2023, clear noon) and a 10-minute drone tour (Nov 2022, marine
   than the black lamp post with its banner pair, so the walks now carry them — placed
   deterministically along the named majors at the footage's 18 m rhythm, banner colours by
   zone, plus the perforated bench blocks lining Library Walk, the royal-blue emergency towers,
-  and chrome-yellow hydrants. One-offs the route passes — the Revelle Plaza ring fountain and
+  and chrome-yellow hydrants. One-offs along the main walks — the Revelle Plaza ring fountain and
   flagpole, the Ridge Walk pergola swing stations, the Mayer/Bonner folded-plate canopy — live
   in `campus-landmarks.json` with frame-measured colour blocks. `tests/campus-details.test.mjs`
   keeps every placement out of the buildings and on its rhythm. 
@@ -223,13 +231,19 @@ walking tour (Nov 2023, clear noon) and a 10-minute drone tour (Nov 2022, marine
 docs/            the site — GitHub Pages serves this directly, no build step
   index.html     standalone page + development panel
   js/
-    campus-walk.js      the walk: movement, cameras, HUD, boot
+    campus-walk.js      the frame loop: the download table, the camera, the HUD, boot
+    campus-boot.js      the loading screen: phase weights, the real-bytes bar, the overlay (no imports)
+    campus-facts.js     the numbers that screen quotes, derived from the loaded data (no DOM)
     campus-world.js     the world: terrain (NAIP vertex colours), surfaces, paths, trees, boundary
     campus-massing.js   buildings: the university GIS's per-mass extrusions
-    campus-explore.js   free roam: position, hover, the velocity model (no DOM)
+    campus-explore.js   free roam: position, hover, the velocity and climb models (no DOM)
+    campus-clearance.js how far the camera is above the nearest roof — what Q/E's rate follows (no DOM)
     campus-minimap.js   the minimap: aerial underlay, boundary ring, click-to-teleport
     campus-landmarks.js labels + placed landmarks (Fallen Star, Sun God…)
-    campus-route.js     A* over the real footpath graph (no DOM, no three.js)
+    campus-route.js     A* over the real footpath graph (no DOM, no three.js). An analysis
+                        library, not runtime: nothing on the page routes any more, and
+                        audit-accuracy.mjs checks our footpaths through it against a real
+                        pedestrian router
     campus-ground.js    the surveyed ground polygons: clip + tile at load (no DOM)
     campus-terrain.js   height sampler, chunk grid, boundary rings (no DOM)
     campus-rimac.js     RIMAC Field: softball field, fencing, bleacher, patchy turf
@@ -262,6 +276,8 @@ tests/
   campus-walk.test.mjs     the invariants that have actually broken
   campus-arcgis.test.mjs   the survey layer: masses, ground polygons, colours
   campus-gameplay.test.mjs the removed footway, spawn, speed cap, minimap arithmetic
+  campus-flight.test.mjs   the flight model: the velocity axis, the clearance-driven climb
+  campus-facts.test.mjs    the loading screen's arithmetic: areas, lengths, counts
   campus-textures.test.mjs the satellite layer: manifest vs grid vs boundary, ground coverage
   campus-imagery.test.mjs  the source layer: patch georeferencing, the Apple signing scheme
   campus-truecolor.test.mjs the measured-colour layer: keys resolve, gamut holds, turf beats pavement
@@ -359,41 +375,88 @@ gains its `source` / `sourceMPerPx` provenance, which every downstream measureme
 A denser source is spent on supersampling (`k` source pixels averaged per output pixel), not
 on bigger files — extra resolution has to arrive as accuracy, not as aliasing.
 
+## The loading screen
+
+Ten megabytes of survey has to land before anything can be drawn, so the wait is spent accounting
+for itself. The percentage is the **real download**: `campus-walk.js` reads each response body as a
+stream and reports bytes as they arrive, rather than counting whole files finished — a cold load is
+~10 MB and the bar tracks it, revising the denominator upward if a host serves the JSON gzipped and
+a body outruns its `Content-Length`. Ten weighted phases carry the rest (download, WebGL, terrain,
+massing, ground, trees, details, chrome, first frame), each logging the file or the source it just
+used. `docs/js/campus-boot.js` owns the progress engine and the overlay, imports nothing, and does
+every DOM write inside one `requestAnimationFrame` loop — the geometry stages are long synchronous
+blocks, and an earlier version that wrote straight from the reporter had its paints queue behind
+them, so the bar stood still and then jumped from 6% to 62% in a single frame.
+
+Beside the bar, around 28 statistics, **every one computed from the data as it loads** by
+`docs/js/campus-facts.js`: terrain samples, grid spacing and surveyed area; trees placed and the
+tallest of them; heights measured and the tallest building; footprints and their vertices; the path
+network in kilometres; named places; surveyed polygons, their vertices and their area; aerial tones;
+facades measured; landmarks; sports surfaces and painted markings — then, as each phase finishes,
+the vertex and mesh counts the geometry actually came to.
+
+That is the whole point of the module. The screen used to quote a hand-written sentence in
+`index.html`, and it went stale in the way a hardcoded number always does: it claimed 12,659 trees
+long after the prune left 7,331, and "1,800+ building masses" for a dataset carrying 1,396
+footprints. A number on screen that nobody recomputes is a number that will be wrong, so nothing
+here is written down — a fact that cannot be derived from the file that shipped is not shown at all.
+
+The downloads are declared once, as a table in `campus-walk.js`, because a byte total is only
+honest if the boot knows about every file. Two of them used to be fetched twice, once by the boot
+and again by the module that needed them: `campus-boundary.json` is now handed to
+`world.primeOverlay()` and `campus-markings.json` to `createMarkings(scene, heightAt, preloaded)`,
+so each is downloaded once and passed along.
+
 ## Controls
 
-You spawn in free roam, hanging **110 m above Argo Hall** at **500 m/s** and holding that height
-over the ground — nothing moves until you do. That is a survey speed, not a walking one: the
-campus is 3 km across, and the arrow keys wind it back down to a pace you can look at things
-from. The guided walk (Argo → Revelle Plaza → Peterson) is one press of `F` away.
+You spawn hanging **110 m above Argo Hall** at **500 m/s** and holding that height over the
+ground — nothing moves until you do. That is a survey speed, not a walking one: the campus is
+3 km across, which is 1.5 seconds flat out, and the arrow keys wind it back down to a pace you
+can look at things from.
 
 | | |
 |---|---|
 | drag | look around |
-| `W`/`A`/`S`/`D` | move where you are looking (strafe in free roam) |
-| `Q` / `E` | (free roam) sink / climb — eye level to 900 m up |
+| `W`/`A`/`S`/`D` | move where you are looking (`A`/`D` strafe) |
+| `Q` / `E` | sink / climb — eye level to 900 m up, at a rate that follows your clearance above the roof or ground beneath you, so the whole range is about ten seconds either way (below) |
 | `↑` / `↓` | speed, coarse — the whole range in under three seconds |
-| `←` / `→` | speed, fine — about 1.45× per second, for settling on a pace |
-| velocity slider | the same number the arrows drive; both modes pace themselves by it — logarithmic, 0.6 up to **1000 m/s** |
-| `shift` | double whatever the throttle says, but never past the 1000 m/s cap |
-| `F` | toggle free roam ↔ the guided walk (rejoins at the nearest point) |
-| `1` / `2` | (guided walk) eye level / over the shoulder |
+| `←` / `→` | speed, fine — about 1.5× per second, for settling on a pace |
+| velocity slider | the same number the arrows drive — logarithmic, 0.6 up to **2000 m/s** |
+| `shift` | double whatever the throttle says (travel and climb alike), but never past the 2000 m/s cap |
 | minimap click/tap | teleport there — same heading, same height over the ground |
 | teleport menu | jump to any of 360+ named places |
 | `L` | building labels on/off |
-| `R` | back to the start of the walk, on foot |
-| `space` | pause / resume the auto-walk (on the ground) |
 | `H` | show or hide the development panel |
 
-The minimap (top right) is the NAIP aerial itself, with the guided walk in gold, you as the
-white dot with a view wedge, and — when `docs/data/campus-boundary.json` has been generated —
-the official campus boundary as a dashed dark-navy ring over the surrounding La Jolla ground.
-The file is optional by contract: without it the map simply has no boundary line and clicks
-still teleport.
+That is the whole list. There is no pause, no restart and no view toggle, because there is nothing
+to pause and only one view.
+
+**Q/E is governed by clearance, not by how fast you are travelling**, and the difference is the
+difference between a usable control and an unusable one. The rate is `1.5 + 0.55 × clearance` m/s,
+where clearance is your height above the nearest solid *below* you — the terrain, or a building roof
+via `docs/js/campus-clearance.js` — doubled by shift and capped like everything else at 2000 m/s.
+So it is ~2.6 m/s when you are parked two metres over a roof, ~62 m/s at the 110 m spawn, and
+~496 m/s at the 900 m ceiling: altitude moves geometrically, the same reasoning the velocity slider
+runs on and for the same reason, and eye level to the ceiling takes about 9.7 s either way. It
+replaced a rate keyed to your travel speed, which made the control useless at both ends — at the
+500 m/s spawn speed one tap of Q fell through the entire atmosphere, so parking the camera just
+above a rooftop to look at it was impossible, and down at walking pace a 900 m descent took five
+minutes. Drift off a roof edge while holding a key and the rate jumps, because the clearance really
+did; that discontinuity is deliberately left unsmoothed. Note also that the clearance governs the
+rate and does not stop you: hold `Q` over a roof and you still sink through it, slowly. Free roam
+has never had collision, and being stranded on a rooftop would be the worse bug.
+
+The minimap (top right) is the NAIP aerial itself, with you as the white dot with a view wedge and —
+when `docs/data/campus-boundary.json` has been generated — the official campus boundary as a dashed
+dark-navy ring over the surrounding La Jolla ground. The file is optional by contract: without it
+the map simply has no boundary line and clicks still teleport.
 
 One path is missing on purpose: the direct footway between Argo Hall and Peterson Hall was
 removed from the shipped data **and** blacklisted in `scripts/build-campus-3d.mjs`
 (`EXCLUDED_WAYS`, OSM way `1025633000`), so a rebuild keeps it out. Routing between the two
 still works — A* goes round via the diverging walkway to the east (~785 m instead of ~795 m).
+Nothing on the page routes any more; that A* is `campus-route.js`, which `audit-accuracy.mjs`
+and the tests use to hold our footpaths to what a real pedestrian router says.
 
 The development panel's **layer toggles** are the most useful thing in it. Nearly every rendering
 fault found so far was invisible until whatever stood in front of it could be switched off — the
@@ -487,7 +550,7 @@ The 2014 LiDAR remains the referee for everything it saw and is
 overruled for everything built after it flew — it "measured" Sankofa at
 8.4 m, the parking lot the tower replaced. Heights reconcile per mass.
 
-Free roam (F) goes anywhere from eye level to 900 m up, with a
+Free roam goes anywhere from eye level to 900 m up, with a
 logarithmic velocity slider and teleport to any of 360+ named places.
 Labels (L) name every building in view, depth-tested so a hidden
 building keeps its name to itself. Fallen Star hangs off the Jacobs

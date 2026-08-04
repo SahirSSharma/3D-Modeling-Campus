@@ -78,22 +78,25 @@ function overlayData() {
   return overlayPromise;
 }
 
+/**
+ * Hand in a boundary the caller has already downloaded, so this module does not
+ * fetch it again. boot() reads the same file for the minimap, and the loading
+ * screen's byte counter is the actual download — it cannot be, while one file
+ * arrives twice under two different names.
+ */
+export function primeOverlay(boundary) {
+  overlayPromise = Promise.resolve({ boundary: boundary || null });
+}
+
 /* Measured per-polygon colour, sampled at build time from the georeferenced
-   satellite chunks (0.125–0.25 m/px — fine enough to see one sidewalk, not
-   the lawn beside it). Keys are geometry hashes — `g:<kind>:<cx>,<cz>` /
+   satellite chunks (0.125–0.25 m/px — fine enough to see one sidewalk, not the
+   lawn beside it). Keys are geometry hashes — `g:<kind>:<cx>,<cz>` /
    `s:<kind>:<cx>,<cz>`, centroid = outer-ring vertex average rounded to the
-   metre — recomputed here so the lookup survives any data rebuild. The file
-   may be absent (or this may run under Node in tests): everything degrades
-   to the NAIP/palette colours below. Keep keyOf in sync with
-   scripts/build-campus-truecolor.mjs and campus-massing.js. */
-const TRUECOLOR = await (async () => {
-  try {
-    const r = await fetch(new URL("../data/campus-truecolor.json", import.meta.url));
-    return r.ok ? await r.json() : null;
-  } catch {
-    return null;
-  }
-})();
+   metre — recomputed here so the lookup survives any data rebuild. Everything
+   degrades to the NAIP/palette colours below when a key misses. Keep keyOf in
+   sync with scripts/build-campus-truecolor.mjs and campus-massing.js. The fetch
+   itself lives in campus-truecolor.js, which campus-massing.js shares. */
+import { TRUECOLOR } from "./campus-truecolor.js";
 
 const keyOf = (ring) => {
   let sx = 0, sz = 0;

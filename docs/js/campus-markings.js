@@ -108,14 +108,22 @@ export const sceneToneLogo = (hex) => sceneTone(hex, 1);
  * Draw every facility's markings. Returns a group immediately and fills it
  * when the data arrives; missing data is a no-op, exactly like the boundary
  * line in campus-world.js.
+ *
+ * `preloaded` is the parsed file when the caller already holds it. boot() does:
+ * it needs the facilities to size tree crowns against the sports pads, so it
+ * downloads this before the trees go in. Left to fetch for itself, this module
+ * pulled the same 34 kB down a second time and landed its geometry a frame or
+ * two after the loading screen had already gone.
  */
-export function createMarkings(scene, heightAt) {
+export function createMarkings(scene, heightAt, preloaded = null) {
   const group = new THREE.Group();
   scene.add(group);
 
-  fetch(MARKINGS_URL)
-    .then((r) => (r.ok ? r.json() : null))
-    .catch(() => null)
+  const source = preloaded
+    ? Promise.resolve(preloaded)
+    : fetch(MARKINGS_URL).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+
+  source
     .then((data) => {
       if (!data?.facilities?.length) return;
       /* Three families, each merged per colour and pinned to its own rung of

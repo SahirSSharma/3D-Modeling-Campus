@@ -9,12 +9,12 @@
  * So these assert the specific ways this has ALREADY been wrong:
  *
  *   1. Heights come from LiDAR, not from OpenStreetMap. OSM had Argo Hall
- *      4.5 m too tall and Blake Hall 3 m too tall — the two buildings you
- *      stand between at the start of the walk — and had nothing at all to say
- *      about most of the rest.
- *   2. The walk crosses the plaza. Routed on OSM lines alone, Argo Hall to the
- *      middle of Revelle Plaza came out at 390 m, around a square you can see
- *      across. It is 55 m.
+ *      4.5 m too tall and Blake Hall 3 m too tall — the pair you spawn over,
+ *      and so the first heights anyone can check — and had nothing at all to
+ *      say about most of the rest.
+ *   2. The footpath graph crosses the plaza. Routed on OSM lines alone, Argo
+ *      Hall to the middle of Revelle Plaza came out at 390 m, around a square
+ *      you can see across. It is 55 m.
  *   3. The terrain is a surface, not a sheet with holes in it.
  *   4. THE GUARD: the geometry still agrees with what the rest of the site
  *      ships, so the Campus Map and the walk cannot disagree about where a
@@ -37,8 +37,11 @@ const { buildGraph, routeThrough, routeBetween } = await import(
 
 const GRAPH = buildGraph(CAMPUS);
 
-/* The walk, as described: out of Argo, across the plaza, up Ridge Walk to
-   Peterson Hall — a real dorm-to-lecture errand with a real destination. */
+/* The reference errand: out of Argo, across the plaza, up Ridge Walk to
+   Peterson Hall. A real dorm-to-lecture trip, so a real pedestrian router's
+   distance for it is a number our footpath graph can be held to — which is what
+   scripts/audit-accuracy.mjs does with it, and all it is for now that the
+   guided walk that once rendered it has been deleted. */
 const START = "Argo Hall";
 const VIA = "Revelle Plaza";
 const DEST = "Peterson Hall";
@@ -63,30 +66,75 @@ function project(lat, lng) {
 /* --------------------------------------------------------- 0. the fetches */
 
 describe("the data paths the browser asks for", () => {
-  test("campus-walk.js resolves both datasets to files that exist", () => {
-    /* tests/data/client-data-paths.test.mjs pins every fetch("…") string
-       literal to a real file, after a shipped feature spent a day silently
-       404ing. It cannot see these: campus-walk.js builds its URLs with
-       new URL(…, import.meta.url) so they resolve against the module rather
-       than whichever page loaded it — the more robust spelling, and precisely
-       why it needs its own assertion rather than none. */
+  test("campus-walk.js resolves every dataset it names to a file that exists", () => {
+    /* The bug class: shipping a fetch to a path that 404s. A shipped feature
+       spent a day silently doing it, because a missing optional file is
+       indistinguishable from an optional file the browser declined to want.
+
+       This reads the module's DATA TABLE rather than regexing URL literals, and
+       that is deliberate — please do not "simplify" it back. campus-walk.js
+       used to spell each download out as new URL("../data/x.json",
+       import.meta.url), which a regex could enumerate; it now declares the
+       whole download set once and builds every URL from one template, because
+       the loading screen quotes the byte total and a file fetched from
+       somewhere else is a file that total is wrong about. The literal-hunting
+       version of this test still PASSED against that rewrite — it found zero
+       URLs, and zero URLs resolving to missing files is zero failures. A test
+       that silently stops looking is worse than no test, so this one asserts
+       the table exists before it asserts anything about its contents.
+
+       The stray-literal sweep stays anyway: a future fetch written the old way
+       is exactly the thing the table is supposed to prevent, so it gets caught
+       rather than ignored. */
     const src = readFileSync(path.join(ROOT, "docs/js/campus-walk.js"), "utf8");
-    const urls = [...src.matchAll(/new URL\(\s*["']([^"']+)["']\s*,\s*import\.meta\.url\s*\)/g)];
-    assert.ok(urls.length >= 2, "campus-walk.js should resolve both campus-3d and campus-lidar");
-    /* campus-boundary.json is OPTIONAL by contract: it comes from a separate
-       build pipeline, and the runtime fetch is wrapped so its absence draws
-       no boundary rather than taking the walk down. Everything else fetched
-       must exist. */
-    const OPTIONAL = new Set(["campus-boundary.json"]);
-    for (const [, rel] of urls) {
-      if (OPTIONAL.has(path.basename(rel))) continue;
+
+    const table = src.match(/const DATA = \[([\s\S]*?)^\];/m);
+    assert.ok(table, "campus-walk.js declares no `const DATA = [...]` table — this test has gone blind");
+    const listed = [...table[1].matchAll(/file:\s*["']([^"']+)["']\s*,\s*required:\s*(true|false)/g)]
+      .map(([, file, required]) => ({ file, required: required === "true" }));
+    assert.ok(listed.length >= 2,
+      `the DATA table parsed to ${listed.length} entries — the row shape changed under the regex`);
+
+    /* Every listed file must exist, optional ones included. `required: false`
+       is a promise about RESILIENCE — the campus still stands on OSM + LiDAR
+       alone, so a failed download degrades instead of throwing — not a licence
+       for the repo to be missing the file. campus-boundary.json was exempted
+       here once, back when it came from a build pipeline that had not been run;
+       all eight ship today, so plain existence is the stronger assertion and
+       the exemption is gone. Put one back only when a file genuinely is not
+       expected in the tree. */
+    for (const { file } of listed) {
+      assert.ok(existsSync(path.join(ROOT, "docs/data", file)),
+        `campus-walk.js downloads ${file} — docs/data/ has no such file, so this 404s`);
+    }
+
+    /* The two the walk cannot stand without, still listed and still required.
+       Everything else is an upgrade. */
+    for (const name of ["campus-3d.json", "campus-lidar.json"]) {
+      const entry = listed.find((d) => d.file === name);
+      assert.ok(entry, `campus-walk.js no longer downloads ${name}`);
+      assert.ok(entry.required, `${name} is marked optional — the campus cannot be built without it`);
+    }
+
+    /* Any URL still spelled out as a literal resolves against the module, not
+       against whichever page loaded it, so it is resolved the same way. */
+    for (const [, rel] of src.matchAll(/new URL\(\s*["']([^"']+)["']\s*,\s*import\.meta\.url\s*\)/g)) {
       const resolved = path.resolve(path.join(ROOT, "docs/js"), rel);
       assert.ok(existsSync(resolved), `campus-walk.js fetches ${rel} — resolves to a missing file`);
     }
-    const required = urls.map(([, rel]) => path.basename(rel));
-    for (const name of ["campus-3d.json", "campus-lidar.json"]) {
-      assert.ok(required.includes(name), `campus-walk.js no longer fetches ${name}`);
-    }
+
+    /* And the table is the ONLY place the module names a data file, so a fetch
+       added anywhere else cannot escape the checks above. Cheap to assert
+       because there is exactly one way to write a filename: any `<name>.json`
+       in the source that the table does not list is either a second download
+       route or a comment that has drifted from it, and both are worth reading.
+       (`.json()` on a response does not match — the dot has no name in front
+       of it.) */
+    const named = new Set([...src.matchAll(/[\w-]+\.json/g)].map(([hit]) => hit));
+    const inTable = new Set(listed.map((d) => d.file));
+    const elsewhere = [...named].filter((n) => !inTable.has(n));
+    assert.deepEqual(elsewhere, [],
+      `campus-walk.js names ${elsewhere.join(", ")} outside the DATA table`);
   });
 });
 
@@ -163,9 +211,9 @@ describe("building heights come from LiDAR, not from tags", () => {
   });
 });
 
-/* ------------------------------------------------------------ 2. the walk */
+/* -------------------------------------------------- 2. the reference errand */
 
-describe(`the walk: ${START} → ${VIA} → ${DEST}`, () => {
+describe(`the reference errand: ${START} → ${VIA} → ${DEST}`, () => {
   const walk = routeThrough(CAMPUS, GRAPH, [START, VIA, DEST]);
   const plaza = CAMPUS.surfaces.find((s) => s.n === VIA);
 
@@ -193,7 +241,7 @@ describe(`the walk: ${START} → ${VIA} → ${DEST}`, () => {
     assert.ok(inside >= 10, `only ${inside} route points fall inside Revelle Plaza`);
   });
 
-  test("is the length of the real walk and ends at Peterson Hall", () => {
+  test("is the length a real pedestrian router gives, and ends at Peterson Hall", () => {
     /* Google-Maps-style walking distance for this pair is a bit over 700 m —
        about a ten-minute walk. A collapse below 600 m means the route found a
        shortcut through something; growth past 950 m means it is wandering. */
@@ -208,9 +256,11 @@ describe(`the walk: ${START} → ${VIA} → ${DEST}`, () => {
   });
 
   test("rides Ridge Walk north, as a person would", () => {
-    /* The promise in the page copy. Ridge Walk's vertices are known, so count
-       how much of the route lies on them: if the router ever reroutes through
-       Muir's service paths, this collapses. */
+    /* A person making this trip walks up Ridge Walk, so a router that agrees
+       with people has to as well — and a total distance alone cannot tell you
+       whether it did. Ridge Walk's vertices are known, so count how much of the
+       route lies on them: if it ever reroutes through Muir's service paths for
+       the same 700-odd metres, only this collapses. */
     const ridge = new Set();
     for (const p of CAMPUS.paths) {
       if (p.n !== "Ridge Walk") continue;
