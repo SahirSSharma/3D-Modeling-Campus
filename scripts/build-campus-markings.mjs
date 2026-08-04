@@ -312,7 +312,16 @@ function paintThreshAt(x, z) {
   return ch && ch.zoom >= 20 ? 0.18 : 0.09;
 }
 
-function paintCoverage(field, worldLines, reach = 0.45, thresh = 0.18) {
+/* PER SAMPLE, not per facility. The threshold above was for years resolved
+   ONCE, at the facility's centre, and applied to every sample — which is the
+   right number only for a facility that lies inside one chunk. RIMAC's
+   north-west pitch straddles the zoom seam at z = -1128: its centre sits in
+   the z20 chunk, so its whole northern half — real paint, recorded at half
+   the resolution — was scored against the z20 threshold it cannot reach, and
+   the pitch measured 0.53 coverage and shipped as a bad fit. Resolved where
+   each sample actually lands, the same fit measures 0.92. Any facility
+   crossing a seam had the same fault. */
+function paintCoverage(field, worldLines, reach = 0.45) {
   let hit = 0;
   let n = 0;
   for (const line of worldLines) {
@@ -323,7 +332,7 @@ function paintCoverage(field, worldLines, reach = 0.45, thresh = 0.18) {
         const xx = x + px * o, zz = z + pz * o;
         if (!field.validAt(xx, zz)) continue;
         seen = true;
-        if (field.at(xx, zz) >= thresh) { on = true; break; }
+        if (field.at(xx, zz) >= paintThreshAt(xx, zz)) { on = true; break; }
       }
       if (!seen) continue;
       n++;
@@ -701,17 +710,30 @@ const FACILITIES = [];
 /** A painted grass/turf soccer pitch. */
 function pitch(id, name, init, opts = {}) {
   FACILITIES.push({
-    id, name, kind: "pitch",
+    id, name, kind: "pitch", minCover: opts.minCover, maxError: opts.maxError,
     async build() {
       const pad = Math.max(init.L, init.W) / 2 + 15;
       const field = await whitenessField(init.cx - pad, init.cz - pad, init.cx + pad, init.cz + pad);
+      /* What the fit is allowed to see. The boundary, the halfway line and the
+         centre circle always; the penalty geometry too where the facility is
+         known to carry it full size. Leaving the boxes out meant the fit and
+         the coverage metric that judges it were reading different evidence —
+         at RIMAC the score would settle a fit the coverage then marked down,
+         because four fifths of the emitted line is box and arc. */
       const template = (p) => {
-        const k = Math.min(1, p.L / 105, p.W / 68);
-        return [
+        const lines = [
           [[-p.L / 2, -p.W / 2], [p.L / 2, -p.W / 2], [p.L / 2, p.W / 2], [-p.L / 2, p.W / 2], [-p.L / 2, -p.W / 2]],
           [[0, -p.W / 2], [0, p.W / 2]],
           arcPts(0, 0, 9.15, 0, Math.PI * 2),
         ];
+        if (opts.fullBoxes) {
+          for (const dir of [1, -1]) {
+            const gx = (p.L / 2) * dir;
+            lines.push([[gx, -20.16], [gx - 16.5 * dir, -20.16], [gx - 16.5 * dir, 20.16], [gx, 20.16]]);
+            lines.push([[gx, -9.16], [gx - 5.5 * dir, -9.16], [gx - 5.5 * dir, 9.16], [gx, 9.16]]);
+          }
+        }
+        return lines;
       };
       const evalFn = (p) => scoreTemplate(field, template(p), p.cx, p.cz, p.theta);
       let seed = { cx: init.cx, cz: init.cz, theta: init.theta, L: init.L, W: init.W };
@@ -722,7 +744,7 @@ function pitch(id, name, init, opts = {}) {
         params.cx, params.cz, params.theta);
       const lines = markings.filter((m) => m.kind !== "fill").flatMap(markingToLines);
       const err = fitError(field, lines);
-      const cover = paintCoverage(field, lines, 0.45, paintThreshAt(params.cx, params.cz));
+      const cover = paintCoverage(field, lines, 0.45);
       if (opts.logo) {
         const logo = await opts.logo(params);
         if (logo) markings.push(...logo);
@@ -783,7 +805,7 @@ function tennisRow(id, name, init) {
       }
       const lines = markings.flatMap(markingToLines);
       const err = fitError(field, lines);
-      const cover = paintCoverage(field, lines, 0.45, paintThreshAt(params.cx, params.cz));
+      const cover = paintCoverage(field, lines, 0.45);
       return { markings, field, err, cover, score, fitted: params };
     },
   });
@@ -878,7 +900,7 @@ function tennisCourts(id, name, pads) {
           const lines = placed.flatMap(markingToLines);
           return {
             params, placed, lines,
-            cover: paintCoverage(f, lines, 0.45, paintThreshAt(params.cx, params.cz)),
+            cover: paintCoverage(f, lines, 0.45),
           };
         };
         const tight = candidate(1, 0.4);
@@ -936,7 +958,7 @@ function basketball(id, name, init) {
       }
       const lines = markings.flatMap(markingToLines);
       const err = fitError(field, lines);
-      const cover = paintCoverage(field, lines, 0.45, paintThreshAt(params.cx, params.cz));
+      const cover = paintCoverage(field, lines, 0.45);
       return { markings, field, err, cover, score, fitted: params };
     },
   });
@@ -979,7 +1001,7 @@ FACILITIES.push({
       trackMarkings(params.straight, params.r0, LANES, LANE_W), params.cx, params.cz, params.theta);
     const lines = markings.flatMap(markingToLines);
     const err = fitError(field, lines, 0.8);
-    const cover = paintCoverage(field, lines, 0.45, paintThreshAt(params.cx, params.cz));
+    const cover = paintCoverage(field, lines, 0.45);
 
     /* The RUNNING SURFACE, modeled. The ring's terracotta and the infield's
        green are measured off the chunks (shadow-rejected medians along the
@@ -1031,23 +1053,79 @@ FACILITIES.push({
   },
 });
 
-// RIMAC Field — the intramural flats hold several generations of painted
-// pitches over each other; the two crispest sets are modelled, the heavily
-// faded ghosts (the east strip, the track infield's throw sectors) are left
-// unpainted rather than guessed at.
-// Both pitches re-anchored off the crisp painted generation in the QA
-// overlays (2026-08-03): the north pitch is FULL SIZE (~104 m, centred at
-// z ≈ -1099.5), and both paint regulation full-size penalty geometry.
-pitch("rimac-north", "RIMAC Field (north pitch)",
-  { cx: 107.75, cz: -1096, theta: 1.515, L: 104.5, W: 60 },
-  { fullBoxes: true,
-    sweep: { cx: { span: 1.5, step: 0.5 }, cz: { span: 1.5, step: 0.5 }, theta: { span: 0.02, step: 0.005 } },
-    ranges: { cx: 1, cz: 1, theta: 0.008, L: 2, W: 2 } });
-pitch("rimac-south", "RIMAC Field (south pitch)",
-  { cx: 112.7, cz: -1009, theta: 1.518, L: 85, W: 61 },
-  { fullBoxes: true,
-    sweep: { cx: { span: 4, step: 0.5 }, cz: { span: 6, step: 0.5 }, theta: { span: 0.05, step: 0.01 } },
-    ranges: { cx: 2, cz: 2.5, theta: 0.012, L: 3, W: 3 } });
+/* ------------------------------------------------------------ RIMAC Field
+   FOUR pitches, two columns by two rows. The model carried two, both in the
+   WESTERN column, and the whole eastern column was missing — the defect this
+   block exists to correct. Every number below is measured off the chunks.
+
+   THE COLUMNS, from the touchlines' own projection peaks (whiteness projected
+   onto the pitches' cross-axis over the north band, z -1140..-1052):
+
+     west column   x  74.93 .. 140.58   (65.65 m)
+     east column   x 142.06 .. 202.90   (60.84 m)
+
+   — two long lines 1.5 m apart at the seam between them, which is what a pair
+   of adjacent pitches looks like and what settles that this is two columns
+   and not one wide field.
+
+   THE ROWS, from the regulation scan (score the WHOLE rulebook at once — two
+   goal lines at +-L/2, halfway at 0, penalty areas at +-(L/2 - 16.5), goal
+   areas at +-(L/2 - 5.5) — so a ghost line or a kerb cannot pass for a pitch
+   by producing one peak):
+
+     north row   goal lines z -1148.0 and -1043.7, penalty areas -1131.8 and
+                 -1060.1, goal areas -1142.5 and -1049.2   -> L 104.3
+     south row   goal lines z -1053.0 and  -967.6, penalty areas -1036.7 and
+                 -984.0                                    -> L  85.4
+
+   Centre circles at exactly 9.15 m — a ruler nothing else in the frame shares
+   — land on the halfway lines that scan implies: (107.5, -1095.6) north-west,
+   (113.0, -1010.5) south-west, (177.25, -1014.0) south-east.
+
+   WHY THE NORTH-WEST PITCH USED TO MEASURE 0.53. Not two painted generations
+   and not missing paint: the seam between the z20 and z19 chunks runs at
+   z = -1128, straight across this pitch, and paintCoverage resolved its
+   resolution-scaled threshold once at the facility CENTRE (see the note
+   there). The northern half was scored against a threshold its imagery
+   cannot reach. Per sample, the same fit measures 0.92.
+
+   WHAT IS DELIBERATELY NOT HERE. The east column carries a second complete
+   generation 18.1 m north of the south-east pitch — centre (176.0, -1032.1),
+   its own full rulebook, coverage 0.90 — from a layout that has since been
+   repainted. Two pitches cannot occupy one strip, and the current capture
+   shows the south-east pitch level with its western partner, so the older set
+   is left unpainted. The north-east pitch has its two touchlines in the
+   chunks and nothing else — no circle, no halfway, no goal line, no boxes —
+   so it cannot be fitted from the registered source at all; its entry stays
+   below so a future imagery refresh re-measures it, and the coverage gate is
+   EXPECTED to drop it. Better absent than wrong. */
+const RIMAC_GATE = { minCover: 0.75, maxError: 0.35 };
+
+pitch("rimac-nw", "RIMAC Field (north-west pitch)",
+  { cx: 107.75, cz: -1095.85, theta: 1.515, L: 104.4, W: 66 },
+  { fullBoxes: true, ...RIMAC_GATE,
+    sweep: { cx: { span: 2, step: 0.5 }, cz: { span: 2, step: 0.5 }, theta: { span: 0.02, step: 0.005 } },
+    ranges: { cx: 1.5, cz: 1.5, theta: 0.008, L: 2.5, W: 2.5 } });
+/* Anchored on its own two touchlines for the cross-axis and on its measured
+   western partner's row for the along-axis, because the imagery gives it
+   nothing of its own to anchor to. Expected to be dropped. */
+pitch("rimac-ne", "RIMAC Field (north-east pitch)",
+  { cx: 172.48, cz: -1095.85, theta: 1.515, L: 104.4, W: 60.84 },
+  { fullBoxes: true, ...RIMAC_GATE,
+    sweep: { cx: { span: 4, step: 0.5 }, cz: { span: 12, step: 0.5 }, theta: { span: 0.03, step: 0.005 } },
+    ranges: { cx: 2.5, cz: 4, theta: 0.012, L: 4, W: 3 } });
+pitch("rimac-sw", "RIMAC Field (south-west pitch)",
+  { cx: 113.25, cz: -1010.5, theta: 1.514, L: 85.5, W: 60.5 },
+  { fullBoxes: true, ...RIMAC_GATE,
+    sweep: { cx: { span: 2, step: 0.5 }, cz: { span: 2, step: 0.5 }, theta: { span: 0.02, step: 0.005 } },
+    ranges: { cx: 1.5, cz: 1.5, theta: 0.008, L: 2.5, W: 2.5 } });
+/* Leashed hard: the older generation's centre circle is 18.1 m north and the
+   sweep must not be allowed to walk onto it. */
+pitch("rimac-se", "RIMAC Field (south-east pitch)",
+  { cx: 177.38, cz: -1014.13, theta: 1.514, L: 85.5, W: 61 },
+  { fullBoxes: true, ...RIMAC_GATE,
+    sweep: { cx: { span: 2, step: 0.5 }, cz: { span: 2, step: 0.5 }, theta: { span: 0.02, step: 0.005 } },
+    ranges: { cx: 1.5, cz: 1.5, theta: 0.008, L: 2.5, W: 2.5 } });
 
 // Muir Field — the dark multi-sport turf: white soccer core (the lacrosse
 // overlay is a different set of hues and stays un-modelled for now) plus the
@@ -1124,8 +1202,9 @@ basketball("warren-basketball", "Warren basketball court",
 // Skipped, and knowingly: Warren's lone tennis court (the bright pad edge
 // out-scores its faded lines and every fit slid off the paint), the
 // Canyonview pickleball pads, the Muir turf's lacrosse overlay and lettering,
-// the RIMAC softball diamond, the track's throw-sector lines, and the ghost
-// pitch generations under RIMAC/Warren. Better absent than invented.
+// the RIMAC softball diamond, the track's throw-sector lines, and the older
+// painted generation in RIMAC's east column and the ghosts under Warren.
+// Better absent than invented.
 
 /* ------------------------------------------------------------------- main */
 
@@ -1165,6 +1244,13 @@ for (const f of FACILITIES) {
   if (!Number.isNaN(cover) && cover < gate) {
     console.warn(`  DROPPED ${f.id}: only ${(cover * 100).toFixed(0)}% of the emitted line lies on paint ` +
       `(< ${(gate * 100).toFixed(0)}%) — better absent than wrong.`);
+    continue;
+  }
+  /* A facility may also carry a tighter offset gate than the build's global
+     0.5 m. RIMAC's four do, because this is where a loose fit shipped once. */
+  if (f.maxError !== undefined && !Number.isNaN(err) && err > f.maxError) {
+    console.warn(`  DROPPED ${f.id}: mean offset ${err.toFixed(2)} m exceeds its own ` +
+      `${f.maxError} m gate — better absent than wrong.`);
     continue;
   }
   facilities.push({

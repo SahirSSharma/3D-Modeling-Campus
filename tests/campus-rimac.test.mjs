@@ -25,12 +25,12 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import {
-  rimacSpec, RIMAC_COLORS, SOFTBALL, EAST_FENCE, BLEACHER, TURF_PATCHES,
+  rimacSpec, RIMAC_COLORS, SOFTBALL, EAST_FENCE, BLEACHER, TURF_QUAD, TURF_MAP,
 } from "../docs/js/campus-rimac.js";
 
 const DATA = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "docs", "data");
 const markings = JSON.parse(readFileSync(path.join(DATA, "campus-markings.json")));
-const spec = rimacSpec(markings);
+const spec = rimacSpec();
 const el = (id) => spec.elements.find((e) => e.id === id);
 const FT = 0.3048;
 
@@ -158,26 +158,44 @@ test("everything softball stays inside the softball field's own enclosure", () =
   }
 });
 
-test("the turf patch maps are the shape the sampler emitted", () => {
-  for (const [id, map] of Object.entries(TURF_PATCHES)) {
-    const f = markings.facilities.find((x) => x.id === id);
-    assert.ok(f, `${id} is gone from campus-markings.json — the maps hang off it`);
-    const [b0, b1, , b3] = f.bounds;
-    const W = Math.hypot(b1[0] - b0[0], b1[1] - b0[1]);
-    const L = Math.hypot(b3[0] - b0[0], b3[1] - b0[1]);
-    const fullRows = Math.round(L / (W / 20));
-    for (const row of map) {
-      assert.equal(row.length, 20, `${id}: a row is not 20 cells`);
-      assert.match(row, /^[.\-#]{20}$/, `${id}: a row has a cell the renderer cannot colour`);
-    }
-    assert.ok(map.length <= fullRows,
-      `${id}: ${map.length} rows sampled but the quad only holds ${fullRows}`);
-    /* Each family is a real share of the pitch, not a rounding artefact. */
-    const all = map.join("");
-    for (const ch of ".-#") {
-      const share = [...all].filter((c) => c === ch).length / all.length;
-      assert.ok(share > 0.1, `${id}: '${ch}' covers only ${(share * 100).toFixed(0)}% — the split collapsed`);
-    }
+test("the turf map is the shape the sampler emitted, on square-ish cells", () => {
+  for (const row of TURF_MAP) {
+    assert.equal(row.length, 39, "a turf row is not 39 cells");
+    assert.match(row, /^[.\-#]{39}$/, "a turf row has a cell the renderer cannot colour");
+  }
+  /* Cells must stay near-square or the map stretches: the row count is the
+     quad's own aspect ratio, not a free parameter. */
+  const cell = (TURF_QUAD.x1 - TURF_QUAD.x0) / 39;
+  assert.equal(TURF_MAP.length, Math.round((TURF_QUAD.z1 - TURF_QUAD.z0) / cell),
+    "the row count no longer matches the quad's aspect");
+  /* Each family is a real third, not a rounding artefact. */
+  const all = TURF_MAP.join("");
+  for (const ch of ".-#") {
+    const share = [...all].filter((c) => c === ch).length / all.length;
+    assert.ok(share > 0.25, `'${ch}' covers only ${(share * 100).toFixed(0)}% — the tercile split collapsed`);
+  }
+});
+
+test("the turf map covers all four quadrants of the flats, not one column", () => {
+  /* The defect this file exists to prevent, on the ground layer: the map used
+     to be keyed to two fitted pitches in the WESTERN column, so the whole
+     eastern half of the flats rendered as flat green. Sample the centre of
+     each of the four quadrants and require a patch on each. */
+  const midX = (TURF_QUAD.x0 + TURF_QUAD.x1) / 2, midZ = (TURF_QUAD.z0 + TURF_QUAD.z1) / 2;
+  const quadrants = {
+    "north-west": [(TURF_QUAD.x0 + midX) / 2, (TURF_QUAD.z0 + midZ) / 2],
+    "north-east": [(midX + TURF_QUAD.x1) / 2, (TURF_QUAD.z0 + midZ) / 2],
+    "south-west": [(TURF_QUAD.x0 + midX) / 2, (midZ + TURF_QUAD.z1) / 2],
+    "south-east": [(midX + TURF_QUAD.x1) / 2, (midZ + TURF_QUAD.z1) / 2],
+  };
+  const patches = spec.elements.filter((e) => e.type === "patch");
+  assert.ok(patches.length > 1500, `only ${patches.length} turf patches — the map shrank`);
+  for (const [name, [x, z]] of Object.entries(quadrants)) {
+    const hit = patches.some((e) => {
+      const xs = e.poly.map((p) => p[0]), zs = e.poly.map((p) => p[1]);
+      return x >= Math.min(...xs) && x <= Math.max(...xs) && z >= Math.min(...zs) && z <= Math.max(...zs);
+    });
+    assert.ok(hit, `the ${name} quadrant of RIMAC Field carries no turf patch`);
   }
 });
 
@@ -188,17 +206,6 @@ test("no turf patch lands on the softball field", () => {
     for (const [x, z] of e.poly) {
       const inside = x > f.west && x < f.east && z > f.north && z < f.south;
       assert.ok(!inside, `${e.id} paints turf over the softball field at ${x.toFixed(1)}, ${z.toFixed(1)}`);
-    }
-  }
-  /* And the north pitch's dropped rows really are dropped: nothing from it
-     may reach into the south pitch's own quad. */
-  const south = markings.facilities.find((x) => x.id === "rimac-south");
-  const southNorthEdge = Math.min(...south.bounds.map((p) => p[1]));
-  for (const e of spec.elements) {
-    if (e.type !== "patch" || e.facility !== "rimac-north") continue;
-    for (const [, z] of e.poly) {
-      assert.ok(z <= southNorthEdge + 0.01,
-        `${e.id} overlaps the south pitch at z ${z.toFixed(1)}`);
     }
   }
 });
@@ -213,11 +220,18 @@ test("the east perimeter fence runs the length it was tracked over", () => {
   const dx = EAST_FENCE.x_at_z(EAST_FENCE.z1) - EAST_FENCE.x_at_z(EAST_FENCE.z0);
   const deg = (Math.atan2(dx, EAST_FENCE.z1 - EAST_FENCE.z0) * 180) / Math.PI;
   assert.ok(Math.abs(deg - 3.49) < 0.1, `east fence at ${deg.toFixed(2)} deg, not 3.49`);
-  /* And it stays east of every field it is meant to bound. */
-  const eastmost = Math.max(...markings.facilities
-    .filter((f) => f.id.startsWith("rimac-")).flatMap((f) => f.bounds.map((p) => p[0])));
-  assert.ok(Math.min(...e.pts.map((p) => p[0])) > eastmost,
-    "the perimeter fence cuts across a pitch");
+  /* And it stays east of every field it is meant to bound — AT THAT FIELD'S
+     OWN LATITUDE. The fence leans 3.49 deg, so it runs 14 m further east at
+     the south end than at the north, and comparing its global westernmost
+     point against a pitch corner 200 m away compares nothing: it passed only
+     while every pitch sat in the western column. */
+  for (const f of markings.facilities.filter((x) => x.id.startsWith("rimac-"))) {
+    for (const [x, z] of f.bounds) {
+      assert.ok(EAST_FENCE.x_at_z(z) > x,
+        `${f.id} reaches x ${x.toFixed(1)} at z ${z.toFixed(1)}, past the fence at ` +
+        `${EAST_FENCE.x_at_z(z).toFixed(1)}`);
+    }
+  }
 });
 
 test("the bleacher is one 9.5 m deck in three blocks that do not overlap", () => {

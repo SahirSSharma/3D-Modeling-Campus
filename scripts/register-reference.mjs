@@ -23,8 +23,8 @@
 // imagery. Only the measurements derived from them are.
 //
 // Usage:
-//   node scripts/register-reference.mjs --image=cap3.png --near=rimac-north
-//   node scripts/register-reference.mjs --image=cap.png --near=rimac-north --m-per-px=0.0566
+//   node scripts/register-reference.mjs --image=cap3.png --near=rimac-nw
+//   node scripts/register-reference.mjs --image=cap.png --near=rimac-nw --m-per-px=0.0566
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -225,7 +225,7 @@ async function main() {
   const manifest = JSON.parse(fs.readFileSync(path.join(TEX, "manifest.json"), "utf8"));
   const markings = JSON.parse(fs.readFileSync(path.join(ROOT, "docs/data/campus-markings.json"), "utf8"));
 
-  const nearId = arg("near", "rimac-north");
+  const nearId = arg("near", "rimac-nw");
   const near = markings.facilities.find((f) => f.id === nearId);
   if (!near) throw new Error(`unknown facility "${nearId}"`);
   const nx = near.bounds.reduce((s, p) => s + p[0], 0) / near.bounds.length;

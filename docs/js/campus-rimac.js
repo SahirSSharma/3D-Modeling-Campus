@@ -1,11 +1,13 @@
 // RIMAC Field: the softball field, the fences, the seating, the patchy turf.
 //
-// campus-markings.json already carries the two soccer pitches here as fitted
-// line sets (`rimac-north`, `rimac-south`). Everything else at this end of
-// campus was missing: the complex's whole southern corner is a regulation
-// softball field, its east edge is fenced against North Torrey Pines Road,
-// its west edge carries a three-tier bleacher, and the turf is nowhere near
-// one flat green.
+// campus-markings.json carries the soccer pitches here as fitted line sets —
+// the flats are TWO COLUMNS BY TWO ROWS (`rimac-nw`, `rimac-ne`, `rimac-sw`,
+// `rimac-se`), of which the three the georeferenced imagery can answer for
+// are painted and the north-east is not; that script states why at its own
+// declaration. Everything else at this end of campus was missing: the
+// complex's whole southern corner is a regulation softball field, its east
+// edge is fenced against North Torrey Pines Road, its west edge carries a
+// three-tier bleacher, and the turf is nowhere near one flat green.
 //
 // TWO SOURCES, EACH FOR THE ONE THING IT IS GOOD AT — the same division of
 // labour the rest of this project runs on:
@@ -170,43 +172,48 @@ export const BLEACHER = {
 };
 
 /* ------------------------------------------------------- the patchy turf
-   The pitches are not one green. Sampled on their own fitted bounds in the
-   georeferenced chunks — 20 cells across each pitch, ~3.53 m a cell, each cell
-   the median of 16 sub-samples — and split at its own terciles:
+   The flats are not one green. Sampled on ONE quad spanning all four pitches
+   in the georeferenced chunks — 39 cells across, 3.54 m a cell, each cell the
+   median of 16 sub-samples — and split at the whole quad's own terciles
+   (luminance 119.8 and 134.5):
 
      '.' irrigated   '-' middle   '#' dry
+
+   The quad is measured, not chosen: its edges are the outermost painted lines
+   of the four pitches themselves — the north-west pitch's north goal line
+   (z -1148.0) and west touchline (x 74.9), the south-east pitch's east
+   touchline (x 207.8) and the south-west pitch's south goal line (z -967.6) —
+   taken out to the pitches' rotated corners. It stops 29 m short of the
+   softball field's fence.
+
+   IT NO LONGER HANGS OFF campus-markings.json. Keying each map to a fitted
+   pitch's bounds tied the ground's appearance to whether that pitch's PAINT
+   happened to clear a coverage gate, so the unpainted north-east quadrant
+   would have rendered as flat green beside three patchy ones. Turf patchiness
+   is a property of the ground; the paint is a separate question.
 
    THE MAP IS FROM THE CHUNKS AND THE COLOURS ARE FROM THE CAPTURES, and that
    is deliberate: where the dry ground is has to come from the one source that
    is registered, what dry ground looks like today from the one that is
-   current. The chunks' own terciles run #80815c / #908863 / #9e8e6a north and
-   #60744d / #6e7b52 / #83845e south — same ordering, different grade.
+   current. Row 0 is the quad's north edge and column 0 its west edge. */
+export const TURF_QUAD = { x0: 72.0, x1: 210.2, z0: -1150.0, z1: -966.3 };
+export const TURF_MAP = [
+  "---##################------#-------....", "---###############-##-----##-------....", "############----#--##-----####-##--....", "##############----##-----########--...-",
+  "#--###-#####-##-----------########-....", "#--#########--------#----#########--..-", "---##-######-.-------##############--.-", "----#-#######------#-##-##########-----",
+  "----##-####---#------#-###########-----", "--------###----#--.----############----", "-------#########----#--############----", "--.------####----#-###-##########-----.",
+  "-------######-####-###############----.", "#---#---##########################--.-.", "#---##############################--.-.", "-#--############-################-#-.-.",
+  "----#-############################----.", "-----#############--#---##########----.", "-----########---#------##########---...", "-.----######-----#-#-----########---...",
+  "-...--##########-##-----##########-....", "..-.--#####------.-.----##########...-.", "---.-#---##--.--.-----.-########---....", "--..-##--##------#-#-#-.-#######-......",
+  "--.-#-------.----####----#######-.---..", "--------#---#--#######----#########-#-.", "----###---#-----##-###-###########----.", "----##-.--###-..-#-###---#########---..",
+  "#--.---..-##---..--###--.-#####-#----..", "----....-----.....####-..-#-##---##----", "#---...--######-.--###-----####-##---#-", "---....---##---..--##-.----#####------#",
+  "----.-.----#--..---#--.-------##-------", "-..-..-------....------....-..-#####--#", ".......--------.-------....----########", "...-------...---.----.-....#-#---######",
+  ".......-......--....-.....-####---###--", ".............-............-----##--##-.", "......................-...----#######--", ".............-......-.....###--###--...",
+  "...........--..............#-..-.......", "....................-......------......", "..................-.-........---.......", ".............................----......",
+  "..........-.................--##-......", "..........-..................----....-.", ".........--.-.....-...........--.....-.", "..........-.....-.-....................",
+  "...............-.......................", "..............................-........", "#...............................--....-", "#.................................-...-",
+];
 
-   Row 0 is each pitch's north edge and column 0 its west edge, in the bounds
-   quad's own (u, v). The north pitch's last six rows are dropped: its fitted
-   bounds overlap the south pitch's by 18 m and only one field may paint there. */
-export const TURF_PATCHES = {
-  "rimac-north": [
-    "..-########--#######", "..-#--#########-#-##", "--##########--.-#--#", "##########---.--#-##",
-    "#-########-----.----", "#..##--####--#-....-", "#..##--####-........", "-..--.--#----.....-.",
-    "...---#-####----#-.-", "-..---.-##--------.-", "-..--...###---#--..-", "--..--.#######-.---#",
-    "-......---##--.----#", ".----..-###.--#---##", "---..-..######-#####", "--..--########--####",
-    ".-..--##########.###", "....######-####---##", "....--###-###.-###-.", "#-..-#-######-----..",
-    "......#--###----.#.#", ".....########-.-.---", ".....#----#-........", "--..---.---......-..",
-    "--..---...-......--#", "....-.-..--....-.###",
-  ],
-  "rimac-south": [
-    "####################", "######-#####--######", "#-###--#####---.####", "##-----#######-#####",
-    "##--#-########-#-###", "#-.--.######---#####", "#-.---#######-######", "----################",
-    "-#####-#---#########", "-#-###----##-##-####", "-..-.-------##-.-#-.", "-........----.......",
-    "-........-.-#..-#..-", ".........---.-----##", ".........--...-----#", "-....-.-......-#-#--",
-    ".....-.#---..-.-#---", "......-----..-----.-", ".....----#..-..-.-..", ".....-----.-..-.--..",
-    "....--.--#-#-#-###--", "-..--#-------###----", "-...--..........----", "-.....-...-....---.-",
-    "--..---...#...-.-..-", ".....-......-.....--",
-  ],
-};
-
-const PATCH_COLS = 20;
+const PATCH_COLS = 39;
 const PAINT_WIDTH = 0.12; // the paint gauge campus-markings.js uses
 const D2R = Math.PI / 180;
 
@@ -293,7 +300,7 @@ function skinReach() {
  * metres. Pure: same data in, same geometry out, so the tests walk exactly
  * what the renderer draws.
  */
-export function rimacSpec(markings) {
+export function rimacSpec() {
   const elements = [];
   const add = (e) => { elements.push(e); return e; };
   const at = diamondFrame();
@@ -349,29 +356,21 @@ export function rimacSpec(markings) {
   });
 
   /* ------------------------------------------------------------ the turf map */
-  for (const [id, map] of Object.entries(TURF_PATCHES)) {
-    const f = (markings?.facilities || []).find((x) => x.id === id);
-    if (!f || !Array.isArray(f.bounds) || f.bounds.length < 4) continue;
-    const [b0, b1, , b3] = f.bounds;
-    const ux = b1[0] - b0[0], uz = b1[1] - b0[1];
-    const vx = b3[0] - b0[0], vz = b3[1] - b0[1];
-    const uv = (u, v) => [b0[0] + ux * u + vx * v, b0[1] + uz * u + vz * v];
-    /* v is measured against the FULL quad the map was sampled on, so dropping
-       the north pitch's overlapping rows does not stretch what is left. */
-    const fullRows = Math.round(Math.hypot(vx, vz) / (Math.hypot(ux, uz) / PATCH_COLS));
-    map.forEach((row, r) => {
-      for (let c = 0; c < PATCH_COLS; c++) {
-        const colour = { ".": RIMAC_COLORS.turfWet, "-": RIMAC_COLORS.turfMid,
-          "#": RIMAC_COLORS.turfDry }[row[c]];
-        if (!colour) continue;
-        add({
-          id: `turf-${id}-${r}-${c}`, type: "patch", colour, facility: id,
-          poly: [uv(c / PATCH_COLS, r / fullRows), uv((c + 1) / PATCH_COLS, r / fullRows),
-            uv((c + 1) / PATCH_COLS, (r + 1) / fullRows), uv(c / PATCH_COLS, (r + 1) / fullRows)],
-        });
-      }
-    });
-  }
+  const q = TURF_QUAD;
+  const patchRows = TURF_MAP.length;
+  const uv = (u, v) => [q.x0 + (q.x1 - q.x0) * u, q.z0 + (q.z1 - q.z0) * v];
+  TURF_MAP.forEach((row, r) => {
+    for (let c = 0; c < PATCH_COLS; c++) {
+      const colour = { ".": RIMAC_COLORS.turfWet, "-": RIMAC_COLORS.turfMid,
+        "#": RIMAC_COLORS.turfDry }[row[c]];
+      if (!colour) continue;
+      add({
+        id: `turf-${r}-${c}`, type: "patch", colour,
+        poly: [uv(c / PATCH_COLS, r / patchRows), uv((c + 1) / PATCH_COLS, r / patchRows),
+          uv((c + 1) / PATCH_COLS, (r + 1) / patchRows), uv(c / PATCH_COLS, (r + 1) / patchRows)],
+      });
+    }
+  });
 
   return { elements };
 }
@@ -418,16 +417,16 @@ function fenceRun(el, stand, heightAt) {
 }
 
 /**
- * Build the RIMAC Field group. `markings` is the parsed campus-markings.json —
- * the same object campus-markings.js is handed, not fetched twice. Missing or
- * malformed data resolves to an empty group, quietly, as everywhere here.
+ * Build the RIMAC Field group. Everything it places is measured in this
+ * module, so it needs no data file — only a ground sampler. Without one it
+ * resolves to an empty group, quietly, as everywhere here.
  */
-export function createRimac(scene, { markings, heightAt } = {}) {
+export function createRimac(scene, { heightAt } = {}) {
   const group = new THREE.Group();
   if (scene) scene.add(group);
   if (typeof heightAt !== "function") return group;
 
-  const spec = rimacSpec(markings);
+  const spec = rimacSpec();
   const flats = new Map(); // `${rung}|${colour}` -> positions[]
   const bucket = (rung, colour) => {
     const key = `${rung}|${colour}`;

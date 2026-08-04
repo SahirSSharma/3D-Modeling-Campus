@@ -533,7 +533,7 @@ export async function boot() {
     createAthletics(scene, { campus, heightAt, massInfo }),
     createRecreation(scene, { campus, arcgis, markings: markingsData, heightAt }),
     createMuirField(scene, { markings: markingsData, heightAt }),
-    createRimac(scene, { markings: markingsData, heightAt }),
+    createRimac(scene, { heightAt }),
   ]) {
     /* Some builders hand back { group }, some the Object3D itself. Taking
        only the former silently left Muir Field's overlays parented to the
