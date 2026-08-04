@@ -46,7 +46,7 @@ import {
   chunkGrid, pointInRings, rectIntersectsRings,
 } from "../docs/js/campus-terrain.js";
 import {
-  makeProvider, PROVIDERS, mercX, mercY, mercXToLng, mercYToLat, mPerMercPx,
+  makeProvider, PROVIDERS, cacheDirFor, mercX, mercY, mercXToLng, mercYToLat, mPerMercPx,
 } from "./lib/imagery.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -54,7 +54,7 @@ const BOUNDARY_OUT = path.join(ROOT, "docs/data/campus-boundary.json");
 const TEX_DIR = path.join(ROOT, "docs/data/textures");
 const CHECK = process.argv.includes("--check");
 const SOURCE = (process.argv.find((a) => a.startsWith("--source=")) || "--source=google").slice(9);
-const CACHE = path.join(ROOT, ".cache", SOURCE === "google" ? "satellite" : SOURCE);
+const CACHE = cacheDirFor(ROOT, SOURCE);
 
 const CAMPUS = JSON.parse(fs.readFileSync(path.join(ROOT, "docs/data/campus-3d.json"), "utf8"));
 const LIDAR = JSON.parse(fs.readFileSync(path.join(ROOT, "docs/data/campus-lidar.json"), "utf8"));

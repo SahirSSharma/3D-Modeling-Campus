@@ -326,6 +326,14 @@ export function appleProvider({ root, cacheDir, cap = 3500, marginPt = MARGIN_PT
 
 export const PROVIDERS = { google: googleProvider, apple: appleProvider };
 
+/** Where a source caches its raw imagery. One rule, used by the build and by
+ *  the audit alike — two callers guessing separately is how the probe quietly
+ *  refetched tiles the build already had on disk. Google keeps its historic
+ *  `.cache/satellite` path so an existing cache stays valid. */
+export function cacheDirFor(root, id) {
+  return path.join(root, ".cache", id === "google" ? "satellite" : id);
+}
+
 export function makeProvider(id, opts) {
   const make = PROVIDERS[id];
   if (!make) throw new Error(`unknown imagery source "${id}" (have: ${Object.keys(PROVIDERS).join(", ")})`);

@@ -30,10 +30,14 @@
 //   # regulation dimensions: --width-m is the real ground width the image spans.
 //   node scripts/audit-imagery-source.mjs --facility=muir-tennis-west \
 //        --compare=/path/apple.png --width-m=120
+//
+//   # spend ONE request on a live source before spending five hundred
+//   node scripts/audit-imagery-source.mjs --probe=apple
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
+import { makeProvider, cacheDirFor, mercX, mercY, mPerMercPx } from "./lib/imagery.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const TEX = path.join(ROOT, "docs/data/textures");
@@ -168,6 +172,108 @@ async function cropShipped(manifest, x0, z0, x1, z1) {
   return { buf: out, w: W, h: H, mPerPx: 1 / ppm };
 }
 
+/* ------------------------------------------------------------- live probe */
+
+/* A full rebuild is several hundred signed requests and several minutes. This
+   spends a handful over one facility and answers the three things that can
+   each waste all of that:
+     1. does the service still return the size we asked for — the scale
+        semantics are load-bearing, and a silent change would misplace every
+        pixel measured afterwards;
+     2. does the imagery land where the survey says it should — a source that
+        resolves beautifully half a metre east is worse than a blurry one;
+     3. is it actually sharper than what we already ship.
+   Sampling is nearest-neighbour ON PURPOSE: the question is how much detail
+   the source has, and any interpolation here would blur the answer. */
+async function probe(sourceId, facility, x0, z0, x1, z1, origin, shipped) {
+  const ZOOM = 20;
+  const provider = makeProvider(sourceId, {
+    root: ROOT, cacheDir: cacheDirFor(ROOT, sourceId), cap: 24,
+  });
+  await provider.prepare();
+
+  const toLat = (z) => origin.lat - z / origin.mPerDegLat;
+  const toLng = (x) => origin.lng + x / origin.mPerDegLng;
+
+  const mxA = mercX(toLng(x0), ZOOM), mxB = mercX(toLng(x1), ZOOM);
+  const myA = mercY(toLat(z0), ZOOM), myB = mercY(toLat(z1), ZOOM);
+  const patches = provider.patchesFor(ZOOM, mxA, mxB, myA, myB);
+  console.log(`probing ${sourceId}: ${patches.length} patch(es) at z${ZOOM}, cap 24 requests`);
+
+  const tiles = [];
+  for (const p of patches) {
+    const file = await provider.fetchPatch(ZOOM, p);
+    const { data, info } = await sharp(file).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+    tiles.push({ p, data, info });
+    console.log(`  patch ${p.gx},${p.gy} -> ${info.width}x${info.height}px`);
+    /* The size contract: subPx image pixels per Mercator pixel, exactly. */
+    const want = p.span * provider.subPx;
+    if (info.width !== want || info.height !== want) {
+      throw new Error(
+        `${sourceId} patch is ${info.width}x${info.height}, contract says ${want}x${want} — ` +
+        `the service changed its scale semantics and every georeference would be wrong`
+      );
+    }
+  }
+
+  /* Reproject onto the shipped crop's own grid, so the two are pixel-aligned
+     and directly differenceable. */
+  const ppm = 1 / shipped.mPerPx;
+  const W = shipped.w, H = shipped.h;
+  const out = Buffer.alloc(W * H * 3, 0);
+  let covered = 0;
+  for (let r = 0; r < H; r++) {
+    const my = mercY(toLat(z0 + (r + 0.5) / ppm), ZOOM);
+    for (let c = 0; c < W; c++) {
+      const mx = mercX(toLng(x0 + (c + 0.5) / ppm), ZOOM);
+      for (const t of tiles) {
+        const px = Math.floor((mx - t.p.mx0) * provider.subPx);
+        const py = Math.floor((my - t.p.my0) * provider.subPx);
+        if (px < 0 || py < 0 || px >= t.info.width || py >= t.info.height) continue;
+        const s = (py * t.info.width + px) * t.info.channels;
+        const d = (r * W + c) * 3;
+        out[d] = t.data[s]; out[d + 1] = t.data[s + 1]; out[d + 2] = t.data[s + 2];
+        covered++;
+        break;
+      }
+    }
+  }
+  const coverage = covered / (W * H);
+
+  /* Georegistration: slide the probe against the shipped crop and find the
+     offset of best normalised correlation. Anything past a pixel or two is a
+     projection bug, not imagery. */
+  const ya = luma(shipped.buf, W, H, 3);
+  const yb = luma(out, W, H, 3);
+  const R = Math.max(2, Math.round(1.5 / shipped.mPerPx));
+  let best = { ncc: -2, dx: 0, dz: 0 };
+  for (let dz = -R; dz <= R; dz++) {
+    for (let dx = -R; dx <= R; dx++) {
+      let sa = 0, sb = 0, n = 0;
+      for (let r = R; r < H - R; r += 2) for (let c = R; c < W - R; c += 2) {
+        sa += ya[r * W + c]; sb += yb[(r + dz) * W + (c + dx)]; n++;
+      }
+      const ma = sa / n, mb = sb / n;
+      let num = 0, da = 0, db = 0;
+      for (let r = R; r < H - R; r += 2) for (let c = R; c < W - R; c += 2) {
+        const u = ya[r * W + c] - ma, v = yb[(r + dz) * W + (c + dx)] - mb;
+        num += u * v; da += u * u; db += v * v;
+      }
+      const ncc = num / Math.sqrt(da * db || 1);
+      if (ncc > best.ncc) best = { ncc, dx, dz };
+    }
+  }
+
+  const png = path.join(OUT_DIR, `${facility.id}-${sourceId}-probe.png`);
+  await sharp(out, { raw: { width: W, height: H, channels: 3 } }).png().toFile(png);
+
+  return {
+    png, coverage, best, requests: provider.requests,
+    row: await measure(out, W, H, 3, shipped.mPerPx, `probe (${sourceId} z${ZOOM})`),
+    offsetM: { x: best.dx * shipped.mPerPx, z: best.dz * shipped.mPerPx },
+  };
+}
+
 /* -------------------------------------------------------------------- main */
 
 async function main() {
@@ -203,6 +309,13 @@ async function main() {
     `shipped (${manifest.source || "google"})`
   ));
 
+  const probeSource = arg("probe");
+  let probed = null;
+  if (probeSource) {
+    probed = await probe(probeSource, facility, x0, z0, x1, z1, o, shipped);
+    rows.push(probed.row);
+  }
+
   const comparePath = arg("compare");
   if (comparePath) {
     const widthM = Number(arg("width-m", String(x1 - x0)));
@@ -230,6 +343,23 @@ async function main() {
       String(r.edges),
     ].join(" "));
   }
+  if (probed) {
+    console.log(
+      `\nprobe: ${probed.requests} request(s), ${(probed.coverage * 100).toFixed(0)}% of the rect covered, ` +
+      `wrote ${path.relative(ROOT, probed.png)}`
+    );
+    console.log(
+      `georegistration: best correlation ${probed.best.ncc.toFixed(3)} at ` +
+      `${probed.offsetM.x.toFixed(2)} m east, ${probed.offsetM.z.toFixed(2)} m south`
+    );
+    if (Math.hypot(probed.offsetM.x, probed.offsetM.z) > 0.6) {
+      console.log(
+        "  WARNING: that is a real displacement, not rounding. Colours measured " +
+        "from this source would be sampled off the neighbouring surface."
+      );
+    }
+  }
+
   if (rows.length === 2) {
     const [a, b] = rows;
     const sharper = b.edgeRiseM !== null && a.edgeRiseM !== null

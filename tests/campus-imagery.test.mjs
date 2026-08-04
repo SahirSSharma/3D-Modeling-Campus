@@ -12,7 +12,7 @@ import crypto from "node:crypto";
 import {
   mercX, mercY, mercXToLng, mercYToLat, mPerMercPx,
   googleProvider, appleProvider, makeProvider, PROVIDERS,
-  appleSnapshotQuery, signAppleSnapshot, APPLE_CONSTANTS,
+  appleSnapshotQuery, signAppleSnapshot, APPLE_CONSTANTS, cacheDirFor,
 } from "../scripts/lib/imagery.mjs";
 
 const LAT = 32.878, LNG = -117.2412; // the site origin
@@ -126,6 +126,17 @@ test("the Apple signature signs exactly the string that gets requested", () => {
 test("an unknown source is refused by name, not silently defaulted", () => {
   assert.throws(() => makeProvider("bing", { root: ".", cacheDir: "/tmp/none" }), /unknown imagery source/);
   assert.deepEqual(Object.keys(PROVIDERS).sort(), ["apple", "google"]);
+});
+
+test("one cache rule, so the audit never refetches what the build already has", () => {
+  /* This is a regression, not a hypothetical: the probe once counted four
+     fresh requests for tiles that were already on disk, because it derived the
+     cache path itself instead of asking. */
+  assert.equal(cacheDirFor("/r", "google"), "/r/.cache/satellite", "google's historic path must hold");
+  assert.equal(cacheDirFor("/r", "apple"), "/r/.cache/apple");
+  for (const id of Object.keys(PROVIDERS)) {
+    assert.ok(cacheDirFor("/r", id).startsWith("/r/.cache/"), `${id} caches outside .cache/`);
+  }
 });
 
 test("every provider states its own attribution", () => {

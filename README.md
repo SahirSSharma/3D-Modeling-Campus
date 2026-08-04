@@ -261,6 +261,25 @@ Both sources pass through the identical pipeline, so the comparison stays fair e
 neither number isolates the sensor. A source swap is only worth making if the audit shows the
 new source resolving finer edges — not merely storing more pixels.
 
+### Switching the source
+
+A full rebuild is several hundred signed requests, so spend one first. `--probe` fetches only
+the patches over a single facility, checks that the service still returns the size the
+georeferencing contract assumes, correlates the result against the shipped chunks to prove the
+imagery lands where the survey says it should, and measures whether it is actually sharper:
+
+```bash
+# .env: APPLE_MAPKIT_TEAM_ID, APPLE_MAPKIT_KEY_ID, APPLE_MAPKIT_KEY_FILE
+node scripts/audit-imagery-source.mjs --facility=muir-tennis-west --probe=apple
+npm run build:satellite:apple     # only if the probe justifies it
+npm run build:truecolor && npm run build:markings   # re-measure from the new pixels
+npm test && npm run check
+```
+
+A georegistration offset past ~0.6 m is a stop sign, not a detail: colours would be sampled
+off the neighbouring surface, and a sharper source landing in the wrong place is worse than a
+soft one landing in the right one.
+
 Because the chunk grid, output resolution and manifest shape are identical either way, the
 swap changes one thing and the audit measures one variable. Rebuilding the shipped Google
 chunks through the provider path reproduces all 87 files byte for byte; only the manifest

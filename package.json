@@ -12,6 +12,8 @@
     "build:colors": "node scripts/build-campus-colors.mjs",
     "build:satellite": "node scripts/build-campus-satellite.mjs",
     "build:satellite:apple": "node scripts/build-campus-satellite.mjs --source=apple",
+    "build:truecolor": "node scripts/build-campus-truecolor.mjs",
+    "build:markings": "node scripts/build-campus-markings.mjs",
     "audit:imagery": "node scripts/audit-imagery-source.mjs",
     "check": "node scripts/build-campus-3d.mjs --check && node scripts/build-campus-lidar.mjs --check && node scripts/build-campus-satellite.mjs --check",
     "serve": "node scripts/serve.mjs"
