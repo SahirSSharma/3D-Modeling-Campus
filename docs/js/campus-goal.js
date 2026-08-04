@@ -128,7 +128,17 @@ export function goalSpec({
   const hx = span_m / 2;
   const px = hx + post_m / 2;
 
-  /* Boxes, each sized (w along x, h up, d along z) and centred at `at`. */
+  /* AND THE LAW MEASURES THE CROSSBAR'S LOWER EDGE, which is the same
+     centre-versus-edge distinction again, turned through ninety degrees.
+     `at` is a box CENTRE, so a crossbar written at `height_m` hangs from
+     2.38 m to 2.50 m: it puts its middle where its underside belongs, robs
+     the mouth of 6 cm, and passes clean through the top of both posts on
+     the way. Every horizontal member here therefore rests ON its uprights —
+     centre half a member-gauge above the top it sits on — and the two
+     regulation numbers are then true of the AIR, which is what a goal is:
+     7.32 m of it between the posts, 2.44 m of it under the bar.
+
+     Boxes, each sized (w along x, h up, d along z) and centred at `at`. */
   const frame = [
     { id: "post-left", role: "post", w: post_m, h: height_m, d: post_m,
       at: [-px, height_m / 2, 0] },
@@ -137,13 +147,24 @@ export function goalSpec({
     /* The crossbar runs outer face to outer face, so its ends close the two
        corners instead of leaving a square notch at each post top. */
     { id: "crossbar", role: "crossbar", w: span_m + 2 * post_m, h: post_m, d: post_m,
-      at: [0, height_m, 0] },
+      at: [0, height_m + post_m / 2, 0] },
     { id: "back-post-left", role: "back-post", w: backPost_m, h: backHeight_m, d: backPost_m,
       at: [-px, backHeight_m / 2, depth_m] },
     { id: "back-post-right", role: "back-post", w: backPost_m, h: backHeight_m, d: backPost_m,
       at: [px, backHeight_m / 2, depth_m] },
+    /* The back rail takes the crossbar's convention, deliberately, though no
+       Law reaches it: `backHeight_m` is defined as the height the net is
+       CARRIED TO at the back, exactly as `height_m` is the height it hangs
+       from at the front, so the rail rests on its posts and the net meets
+       its underside. Choosing the other convention — rail centred on the
+       post tops, as this module first had it — would make backHeight_m mean
+       "to the middle of the rail" at one end of the goal and "to the
+       underside of the bar" at the other, and one symbol would quietly
+       measure two different things. It stays out of GOAL_REGULATION either
+       way: it is a property of the goal standing on the field, not of the
+       game. */
     { id: "back-rail", role: "back-rail", w: 2 * px + backPost_m, h: backRail_m, d: backRail_m,
-      at: [0, backHeight_m, depth_m] },
+      at: [0, backHeight_m + backRail_m / 2, depth_m] },
   ];
 
   /* Four panels, and between them the whole hung surface: up the back, over

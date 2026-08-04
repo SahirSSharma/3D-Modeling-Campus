@@ -61,9 +61,16 @@ test("the mouth is 7.32 m of AIR: the Law measures between the inner edges", () 
     assert.equal(p.h, GOAL_REGULATION.height_m);
     assert.ok(Math.abs(p.at[1] - GOAL_REGULATION.height_m / 2) < 1e-9, "a post is not on the ground");
   }
+  /* ASSERT THE EDGE, NOT THE CENTRE. The first version of this test read
+     `bar.at[1]` — the box's middle — under a failure message naming its
+     lower edge, so it passed while the bar hung from 2.38 m and reported
+     that as regulation. A test that checks a different quantity from the one
+     it claims to check is worse than no test: it is false assurance, and it
+     survives exactly the change it exists to catch. */
   const bar = member("crossbar");
-  assert.ok(Math.abs(bar.at[1] - GOAL_REGULATION.height_m) < 1e-9,
-    "the crossbar's lower edge is not at 2.44 m");
+  const barUnder = bar.at[1] - bar.h / 2;
+  assert.ok(Math.abs(barUnder - GOAL_REGULATION.height_m) < 1e-9,
+    `the crossbar's lower edge is at ${barUnder.toFixed(3)} m, not 2.44 m`);
   /* Outer face to outer face, so no square notch is left at either corner. */
   const outer = (right.at[0] + right.w / 2) - (left.at[0] - left.w / 2);
   assert.ok(Math.abs(bar.w - outer) < 1e-9, `crossbar is ${bar.w} m, the posts span ${outer} m`);
@@ -71,6 +78,44 @@ test("the mouth is 7.32 m of AIR: the Law measures between the inner edges", () 
   assert.deepEqual(spec.frame.map((f) => f.id).sort(), [
     "back-post-left", "back-post-right", "back-rail", "crossbar", "post-left", "post-right",
   ]);
+});
+
+test("every horizontal member RESTS on its uprights — none passes through one", () => {
+  /* The class the crossbar's 6 cm belonged to, pinned for the whole frame:
+     `at` is a centre, so a member written at the height it should REACH ends
+     up straddling that height instead of sitting on it. The crossbar had it
+     at 2.44 m and the back rail had it at 0.9 m; the second was invisible
+     because no number in the Law goes anywhere near it. Both are checked
+     here on the derived edges, so neither can quietly come back. */
+  const pairs = [
+    ["crossbar", ["post-left", "post-right"]],
+    ["back-rail", ["back-post-left", "back-post-right"]],
+  ];
+  for (const [railId, postIds] of pairs) {
+    const rail = member(railId);
+    const under = rail.at[1] - rail.h / 2;
+    for (const postId of postIds) {
+      const post = member(postId);
+      const top = post.at[1] + post.h / 2;
+      assert.ok(Math.abs(under - top) < 1e-9,
+        `${railId}'s underside is ${under.toFixed(3)} m and ${postId}'s top is ${top.toFixed(3)} m` +
+        " — the two must meet, not overlap");
+    }
+    /* And every upright starts on the ground, so its top IS its own height. */
+    for (const postId of postIds) {
+      const post = member(postId);
+      assert.ok(Math.abs(post.at[1] - post.h / 2) < 1e-9, `${postId} is not on the ground`);
+    }
+  }
+  /* The net is hung off those same undersides, front and back: the rake's
+     top edge meets the crossbar and its bottom edge meets the back rail, so
+     no cord floats inside a member or hangs in the air below one. */
+  const rake = panel("net-rake");
+  const ys = rake.cords.flatMap(([a, b]) => [a[1], b[1]]);
+  assert.ok(Math.abs(Math.max(...ys) - (member("crossbar").at[1] - member("crossbar").h / 2)) < 1e-9,
+    "the net's top edge is not on the crossbar's underside");
+  assert.ok(Math.abs(Math.min(...ys) - (member("back-rail").at[1] - member("back-rail").h / 2)) < 1e-9,
+    "the net's back edge is not on the back rail's underside");
 });
 
 test("four panels: the back, the rake and both sides — and the mouth left open", () => {
@@ -183,10 +228,16 @@ test("a goal stands on the footprint it is given, at regulation size", () => {
   /* The mouth faces the way the quad does. */
   assert.ok(Math.abs(placed.rot - Math.atan2(-uz, ux)) < 1e-9, "the goal ignored the quad's heading");
   /* One ground datum for the whole goal: every member and every cord is
-     referred to the same 12.5 m, so nothing shears over a bump. */
+     referred to the same 12.5 m, so nothing shears over a bump. Measured on
+     each box's EDGES — bottom on or above the datum, top no higher than the
+     crossbar's own top — because `b.y` is a centre, and bounding a centre by
+     the crossbar's underside is the mistake that let a 2.38 m mouth ship. */
+  const top = 12.5 + GOAL_REGULATION.height_m + GOAL_REGULATION.post_m;
   for (const b of placed.boxes) {
-    assert.ok(b.y >= 12.5 - 1e-9 && b.y <= 12.5 + GOAL_REGULATION.height_m + 1e-9,
-      `${b.id} sits at y=${b.y}, off the goal's own datum`);
+    assert.ok(b.y - b.h / 2 >= 12.5 - 1e-9,
+      `${b.id} sinks to ${(b.y - b.h / 2).toFixed(3)}, below the goal's own datum`);
+    assert.ok(b.y + b.h / 2 <= top + 1e-9,
+      `${b.id} reaches ${(b.y + b.h / 2).toFixed(3)}, above the crossbar's top`);
   }
   const ys = [];
   for (let i = 1; i < placed.cords.length; i += 3) ys.push(placed.cords[i]);

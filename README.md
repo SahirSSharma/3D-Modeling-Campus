@@ -154,10 +154,16 @@ walking tour (Nov 2023, clear noon) and a 10-minute drone tour (Nov 2022, marine
   two posts, a crossbar and a shallow back rake, over a comment claiming the rake ran "to
   the net" for a net nothing in the repository drew — so from above, the one view that sees
   a whole pitch, the goals read as absent. `campus-goal.js` now builds both, and builds them
-  for any pitch rather than for Muir's: IFAB Law 1 fixes the mouth at 7.32 m **between the
-  posts' inner edges** (so the posts stand half a gauge outboard of the mouth line, where the
-  inline version put them ON it and quietly lost 12 cm of opening) and the crossbar's lower
-  edge at 2.44 m. The net is hung as real cords on a 0.12 m square mesh — the coarse end of
+  for any pitch rather than for Muir's. **Law 1 measures the air, not the steel**, and that
+  cost 12 cm one way and 6 cm the other before it was believed: the 7.32 m is between the
+  posts' INNER edges, so the posts stand half a gauge outboard of the mouth line where the
+  inline version centred them on it, and the 2.44 m is the crossbar's LOWER edge, so the bar
+  rests on the posts where the first draft of this module centred it at the height instead
+  and hung a 2.38 m mouth under a bar driven through the top of both posts. Every horizontal
+  member now sits on its uprights, and a test asserts the derived edges rather than the
+  centres that are easier to reach — the earlier one named the lower edge in its failure
+  message while checking the centre, so it passed on the wrong geometry. The net is hung as
+  real cords on a 0.12 m square mesh — the coarse end of
   the 100–120 mm full-size nets are made in — up the back, over the rake from crossbar to
   back rail and closing both sides, drawn as lines rather than modelled members because
   2–4 mm twine is far below a pixel at every distance a walker sees a goal from. It is given
@@ -362,6 +368,12 @@ Kept because each one cost real time and none of them announced itself:
   writes that size as inline CSS, cropping the render and hiding whatever sits low in frame.
 - **Overpass wants tag filters before the bounding box**, or it answers `406` rather than a syntax
   error.
+- **A test that checks a different quantity from the one its message names is worse than no
+  test.** `assert(bar.at[1] === 2.44, "the crossbar's lower edge is not at 2.44 m")` reads a box
+  CENTRE, so it passed while the goal's mouth was 2.38 m tall and the bar ran through the top of
+  both posts — and it would have gone on passing through exactly the change it existed to catch.
+  Assert the derived edge, `at[1] - h/2`. The same shape of mistake hides anywhere a regulation
+  is stated about a surface and the code stores a middle.
 
 ## Provenance
 
