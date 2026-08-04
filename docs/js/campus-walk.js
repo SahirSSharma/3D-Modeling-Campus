@@ -531,7 +531,13 @@ export async function boot() {
     createRecreation(scene, { campus, arcgis, markings: markingsData, heightAt }),
     createMuirField(scene, { markings: markingsData, heightAt }),
   ]) {
-    if (made?.group) athleticsZone.add(made.group); // add() reparents out of scene
+    /* Some builders hand back { group }, some the Object3D itself. Taking
+       only the former silently left Muir Field's overlays parented to the
+       scene: they rendered, so nothing looked broken, but the layer toggle
+       did not control them and no test noticed. Accept both shapes.
+       add() reparents out of the scene. */
+    const obj = made?.group ?? (made?.isObject3D ? made : null);
+    if (obj) athleticsZone.add(obj);
   }
   scene.add(athleticsZone);
 
