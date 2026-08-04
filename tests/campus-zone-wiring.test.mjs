@@ -37,7 +37,7 @@ const buildZone = () => {
     ["athletics", createAthletics(scene, { campus, heightAt, massInfo: new Map() })],
     ["recreation", createRecreation(scene, { campus, arcgis, markings, heightAt })],
     ["muir-field", createMuirField(scene, { markings, heightAt })],
-    ["rimac", createRimac(scene, { markings, heightAt })],
+    ["rimac", createRimac(scene, { heightAt })],
   ];
   for (const [, made] of built) {
     const obj = unwrap(made);
@@ -71,7 +71,7 @@ test("nothing the builders make is left parented outside the zone", () => {
     createAthletics(scene, { campus, heightAt, massInfo: new Map() }),
     createRecreation(scene, { campus, arcgis, markings, heightAt }),
     createMuirField(scene, { markings, heightAt }),
-    createRimac(scene, { markings, heightAt }),
+    createRimac(scene, { heightAt }),
   ]) {
     const obj = made?.group ?? (made?.isObject3D ? made : null);
     if (obj) zone.add(obj);

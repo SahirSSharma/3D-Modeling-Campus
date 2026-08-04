@@ -72,11 +72,21 @@ Northview tennis banks tilt ~2.5° off the campus grid and their courts stagger,
 is fitted individually from the university survey's own pad polygons. Each facility records
 `fitError_m` (mean perpendicular offset to the paint) and `fitCoverage` (the fraction of the
 emitted line actually lying ON paint — the metric that catches a rotated misfit the offset
-metric cannot); the build refuses fits past 0.5 m or under the coverage gate. `docs/js/campus-markings.js`
+metric cannot); the build refuses fits past 0.5 m or under the coverage gate, and a facility
+may carry a tighter pair of its own. `docs/js/campus-markings.js`
 drapes the result as merged meshes. The heavily faded ghost sets, a few unfittable one-offs,
 and Warren Field — whose overlapping painted generations disagree with each other by metres, so
 no single regulation set can lie on all of them — are deliberately left unpainted: better
 absent than wrong.
+
+**Coverage is resolved per sample, not per facility.** A 10 cm line fills about half a pixel at
+0.125 m/px and a quarter at 0.25, so the threshold that decides "is this on paint" has to follow
+the source's own resolution — and it did, but it was resolved ONCE, at the facility's centre.
+That is the right number only for a facility inside a single chunk. RIMAC's north-west pitch
+runs straight across the zoom seam at z = -1128: its centre sits in the fine chunk, so its whole
+northern half — real paint, recorded at half the pixel scale — was scored against a threshold
+its imagery cannot reach. The pitch measured **0.53** coverage and shipped anyway. Resolved
+where each sample actually lands it measures **0.78**, and the fit itself never moved.
 
 **Epochs do not match, on purpose.** The source imagery is current; every height and the ground
 surface are the 2014 LiDAR survey (reconciled per mass against the university GIS for what was
@@ -170,7 +180,24 @@ walking tour (Nov 2023, clear noon) and a 10-minute drone tour (Nov 2022, marine
   no sag: the nadir aerial is the one view a sag is invisible from, so the rake stays
   straight rather than curved by invention.
 
-- **RIMAC Field** (`docs/js/campus-rimac.js`): the same two-source split, stated harder.
+- **RIMAC Field** (`docs/js/campus-rimac.js`, plus its four pitches in `campus-markings.json`):
+  the same two-source split, stated harder.
+
+  **The flats are FOUR pitches, two columns by two rows** — and the model carried two, both in
+  the *western* column, with the entire eastern column missing. The columns are the touchlines'
+  own projection peaks (west x 74.9–140.6, east x 142.1–202.9, two lines 1.5 m apart at the seam
+  between them); the rows come from scoring the whole rulebook at once — goal lines, halfway,
+  penalty areas and goal areas at their fixed offsets — so a ghost line or a kerb cannot pass for
+  a pitch by producing one peak. Three of the four are painted, at 0.78 / 0.91 / 0.84 coverage
+  and 0.22–0.25 m offset. The north-east is **not**: the registered imagery holds its two
+  touchlines and nothing else — no circle, no halfway line, no goal line, no boxes — so no
+  regulation set can be fitted to it, its entry stays so a future imagery refresh re-measures
+  it, and the coverage gate is expected to keep dropping it. The east column also carries a
+  second complete generation 18.1 m north of the current south-east pitch, which fits *better*
+  (0.90) than the pitch that is actually there; what separates them is that the south row is a
+  **row**, and a test pins it. RIMAC's four run a tighter gate than the rest of the build —
+  0.75 coverage and 0.35 m — because this is where a loose fit got through once.
+
   The complex's southern corner is a **regulation softball field**, and it is measured, not
   assumed: both painted foul lines least-squares fit the georeferenced chunks at 2.75° and
   92.44° north of east (rms 0.050 m / 0.054 m) — **89.69° apart**, so the diamond is modelled
@@ -182,10 +209,13 @@ walking tour (Nov 2023, clear noon) and a 10-minute drone tour (Nov 2022, marine
   then falls out at ~190 ft down both lines and 209 ft to centre, so the fence stands at about
   200 and 220. Also built: the warning track as a band of its four separately measured widths,
   the outfield fence with its dark windscreen, the east perimeter fence against North Torrey
-  Pines Road (rms 0.246 m over 428 rows), the three-block west bleacher, and the pitches'
-  **patchy turf** — a 3.5 m tercile map sampled off the georeferenced chunks and painted in
+  Pines Road (rms 0.246 m over 428 rows), the three-block west bleacher, and the flats'
+  **patchy turf** — a 3.54 m tercile map sampled off the georeferenced chunks and painted in
   colours measured off the current Apple captures, because where the dry ground is has to come
-  from the registered source and what it looks like today from the current one. No backstop is
+  from the registered source and what it looks like today from the current one. That map is
+  sampled on ONE quad spanning all four pitches, its edges the outermost painted lines the four
+  of them own; it used to be keyed to each fitted pitch's own bounds, which tied how the
+  *ground* looks to whether that pitch's *paint* cleared a gate. No backstop is
   modelled: nothing in either source resolves one. Every VERTICAL dimension here is a stated
   convention — nadir imagery cannot see a height and the 2014 LiDAR ships no raw returns.
 
@@ -236,7 +266,7 @@ tests/
   campus-imagery.test.mjs  the source layer: patch georeferencing, the Apple signing scheme
   campus-truecolor.test.mjs the measured-colour layer: keys resolve, gamut holds, turf beats pavement
   campus-markings.test.mjs the painted lines: bounds, widths, 9.15 m circles, 9 lanes
-  campus-rimac.test.mjs    RIMAC Field: the regulation cross-checks, the patch map, the fences
+  campus-rimac.test.mjs    RIMAC Field: the regulation cross-checks, the turf quad, the fences
 ```
 
 ## Running it
@@ -390,6 +420,16 @@ Kept because each one cost real time and none of them announced itself:
   writes that size as inline CSS, cropping the render and hiding whatever sits low in frame.
 - **Overpass wants tag filters before the bounding box**, or it answers `406` rather than a syntax
   error.
+- **A per-sample quantity resolved once, for the whole object, is a bug waiting on geometry.**
+  The paint threshold correctly follows the imagery's resolution — and was read at the
+  facility's centre and applied to every sample, which is right until a facility spans two
+  chunks. RIMAC's north-west pitch crosses the zoom seam; half of it was judged against a
+  threshold its own imagery cannot reach, it measured 0.53, and the 0.53 was read as "the paint
+  isn't there" rather than "the metric is wrong here". Both halves of that sentence cost time.
+- **A better fit can be the wrong object.** RIMAC's east column carries two complete painted
+  generations 18.1 m apart. The older one fits at 0.90 coverage, the current one at 0.84, and
+  no fit-quality metric will ever prefer the right one. What tells them apart is that the pitch
+  has to line up with its own row — a fact about the layout, not about the paint.
 - **A test that checks a different quantity from the one its message names is worse than no
   test.** `assert(bar.at[1] === 2.44, "the crossbar's lower edge is not at 2.44 m")` reads a box
   CENTRE, so it passed while the goal's mouth was 2.38 m tall and the bar ran through the top of

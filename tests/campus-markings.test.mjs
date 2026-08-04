@@ -96,6 +96,111 @@ test("every fitted facility sits within 0.5 m of the imagery's paint", () => {
   }
 });
 
+/* ------------------------------------------------------------ RIMAC Field
+   RIMAC Field is FOUR pitches, two columns by two rows. The model once
+   carried two, both in the WESTERN column, and the entire eastern column was
+   missing — from a rebuild, not from an edit anyone would notice in a diff.
+   These pin the layout so that cannot come back quietly. */
+
+const rimacPitches = data.facilities.filter((f) => f.id.startsWith("rimac-") && f.kind === "pitch");
+/** A pitch's centre is its 9.15 m centre circle; nothing else in the set is one. */
+const centreOf = (f) => {
+  const c = f.markings.find(
+    (m) => m.kind === "arc" && Math.abs(m.a1 - m.a0) > 6.2 && Math.abs(m.r - 9.15) < 0.2);
+  assert.ok(c, `${f.id}: no 9.15 m centre circle to take a centre from`);
+  return c.c;
+};
+
+test("RIMAC Field is declared as four pitches, two columns by two rows", () => {
+  /* Read the declarations, not the output: a pitch the coverage gate drops is
+     absent from the data BY DESIGN, and the failure being guarded against is
+     someone deleting the entry so a rebuild stops re-measuring it. */
+  const src = readFileSync(join(ROOT, "scripts/build-campus-markings.mjs"), "utf8");
+  for (const id of ["rimac-nw", "rimac-ne", "rimac-sw", "rimac-se"]) {
+    assert.match(src, new RegExp(`pitch\\("${id}"`),
+      `${id} is no longer declared — RIMAC Field has four pitches and the build must measure all four`);
+  }
+  assert.equal((src.match(/pitch\("rimac-/g) || []).length, 4,
+    "RIMAC Field must be declared as exactly four pitches");
+});
+
+test("RIMAC's shipped pitches span both columns, not just the western one", () => {
+  /* The reported defect, stated as a check. The columns meet at x ~141: the
+     western column's east touchline and the eastern column's west touchline
+     run 1.5 m apart there. */
+  const SEAM = 141;
+  const west = rimacPitches.filter((f) => centreOf(f)[0] < SEAM);
+  const east = rimacPitches.filter((f) => centreOf(f)[0] > SEAM);
+  assert.ok(west.length >= 1, "RIMAC's western column lost its pitches");
+  assert.ok(east.length >= 1,
+    "RIMAC's EASTERN column carries no pitch — this is exactly the defect that shipped once");
+});
+
+test("RIMAC's south row is a ROW: its two pitches are level with each other", () => {
+  /* The east column holds a second complete painted generation 18.1 m north
+     of the current south-east pitch, and it fits about as well. Modelling it
+     instead would stagger the row — which is the one thing that tells the two
+     apart, and the check that would catch the swap. */
+  const sw = rimacPitches.find((f) => f.id === "rimac-sw");
+  const se = rimacPitches.find((f) => f.id === "rimac-se");
+  assert.ok(sw && se, "the south row lost a pitch");
+  const gap = Math.abs(centreOf(sw)[1] - centreOf(se)[1]);
+  assert.ok(gap < 8,
+    `the south row's pitches are ${gap.toFixed(1)} m apart in z — the east one is off its row ` +
+    `(the older generation it must not be fitted to sits 18.1 m north)`);
+});
+
+test("every RIMAC pitch is measured where the imagery says, or is not there", () => {
+  /* Centres from the chunks, 2026-08-04: the north row's halfway lines and
+     centre circles at z -1095.9, the south row's at -1010.5 / -1014.1, the
+     columns at x 107.8 and 177.4. A metre of drift is a refit; ten is a
+     different pitch. */
+  const expected = {
+    "rimac-nw": [107.75, -1095.85],
+    "rimac-sw": [113.25, -1010.50],
+    "rimac-se": [177.38, -1014.13],
+  };
+  for (const f of rimacPitches) {
+    const want = expected[f.id];
+    assert.ok(want, `${f.id} ships but has no measured centre on record here`);
+    const [x, z] = centreOf(f);
+    assert.ok(Math.hypot(x - want[0], z - want[1]) < 2.5,
+      `${f.id} centres at (${x}, ${z}), not the measured (${want[0]}, ${want[1]})`);
+  }
+});
+
+test("every RIMAC pitch that ships clears RIMAC's own tighter gate", () => {
+  /* The north-west pitch shipped once at 0.53 coverage and was merged; the
+     number was the fit saying it was wrong. RIMAC carries 0.75 / 0.35 m,
+     tighter than the build's global 0.5 / 0.5 m, because this is where a
+     loose fit got through. */
+  assert.ok(rimacPitches.length >= 3, "RIMAC lost a pitch it could measure");
+  for (const f of rimacPitches) {
+    assert.ok(f.fitCoverage >= 0.75,
+      `${f.id}: only ${(f.fitCoverage * 100).toFixed(0)}% of its line lies on paint (gate 75%)`);
+    assert.ok(f.fitError_m <= 0.35,
+      `${f.id}: mean offset ${f.fitError_m} m exceeds RIMAC's 0.35 m gate`);
+  }
+});
+
+test("a pitch across the imagery's zoom seam is still scored on its own paint", () => {
+  /* The chunk grid changes resolution at z = -1128 and the north-west pitch
+     runs straight across it. Coverage used to resolve its resolution-scaled
+     threshold once, at the facility CENTRE, so this pitch's northern half —
+     real paint at half the pixel scale — was scored against a threshold its
+     imagery cannot reach, and it measured 0.53 and shipped as a bad fit.
+     Per sample it measures 0.78. Any facility crossing a seam had the fault,
+     so this guards the class and not just the case. */
+  const SEAM = -1128;
+  const nw = rimacPitches.find((f) => f.id === "rimac-nw");
+  assert.ok(nw, "the north-west pitch is gone — it is the one that crosses the seam");
+  const zs = nw.bounds.map((p) => p[1]);
+  assert.ok(Math.min(...zs) < SEAM && Math.max(...zs) > SEAM,
+    "the north-west pitch no longer spans the zoom seam — this test has lost its subject");
+  assert.ok(nw.fitCoverage >= 0.75,
+    `the seam-crossing pitch is back down at ${nw.fitCoverage} — is the threshold per facility again?`);
+});
+
 test("the track has its nine lanes", () => {
   const track = data.facilities.find((f) => f.kind === "track");
   assert.ok(track, "track present");
