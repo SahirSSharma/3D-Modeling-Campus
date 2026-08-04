@@ -18,7 +18,7 @@ Two sources, each used only for the thing it is actually good at.
 |---|---|---|
 | **OpenStreetMap** | footprint outlines, paths, plazas, names, the campus boundary | anything vertical |
 | **USGS 3DEP aerial LiDAR** | every height, the ground surface, every tree | anything about what a thing *is* |
-| **Google satellite imagery** | a build-time SOURCE only: per-polygon measured colours, the painted sports markings, the accuracy cross-checks | rendering — no photograph ever drapes the world |
+| **Satellite imagery** (Google today, Apple selectable) | a build-time SOURCE only: per-polygon measured colours, the painted sports markings, the accuracy cross-checks | rendering — no photograph ever drapes the world |
 
 OSM is very good in plan and close to useless in elevation. Of ~320 buildings in this area, 38
 carried a height tag, and the tagged ones were not reliably right either. Checked afterwards against
@@ -181,7 +181,9 @@ scripts/
   build-campus-arcgis.mjs    university GIS -> docs/data/campus-arcgis.json
   build-campus-colors.mjs    NAIP -> docs/data/campus-colors.json
   build-campus-truecolor.mjs textures/ chunks -> docs/data/campus-truecolor.json
-  build-campus-satellite.mjs boundary + Google tiles -> boundary json, textures/
+  build-campus-satellite.mjs boundary + satellite source -> boundary json, textures/
+  lib/imagery.mjs            the imagery providers: Google tiles, Apple snapshots
+  audit-imagery-source.mjs   resolved detail per metre, source vs source
   build-campus-markings.mjs  textures/ chunks -> docs/data/campus-markings.json
   audit-accuracy.mjs         R2 cross-source audit -> scripts/reports/
   serve.mjs                  static server for docs/
@@ -190,6 +192,7 @@ tests/
   campus-arcgis.test.mjs   the survey layer: masses, ground polygons, colours
   campus-gameplay.test.mjs the removed footway, spawn, speed cap, minimap arithmetic
   campus-textures.test.mjs the satellite layer: manifest vs grid vs boundary, ground coverage
+  campus-imagery.test.mjs  the source layer: patch georeferencing, the Apple signing scheme
   campus-truecolor.test.mjs the measured-colour layer: keys resolve, gamut holds, turf beats pavement
   campus-markings.test.mjs the painted lines: bounds, widths, 9.15 m circles, 9 lanes
 ```
@@ -213,13 +216,51 @@ npm run build:satellite  # boundary polygon + satellite ground chunks
 
 All three write into `docs/data/`, so a rebuild is a normal reviewable diff.
 
-`build:satellite` reads `GOOGLE_MAPS_API_KEY` from `.env` (never committed, never written into
-any output) and uses the Map Tiles API's 2D satellite session. It builds only the terrain
-chunks that touch the boundary polygon (87 of 132 over the full campus), fetches only tiles
-that touch it too, hard-caps itself at 3,500 tile requests per run (a full rebuild uses
-~2,600), and caches raw tiles under `.cache/` so a rerun refetches nothing. The chunks it
-writes are the SOURCE imagery for the colour and markings pipelines above — they never render
-in-world.
+`build:satellite` builds only the terrain chunks that touch the boundary polygon (87 of 132
+over the full campus), fetches only source imagery that touches it too, hard-caps itself at
+3,500 requests per run, and caches raw imagery under `.cache/<source>/` so a rerun refetches
+nothing. The chunks it writes are the SOURCE imagery for the colour and markings pipelines
+above — they never render in-world.
+
+### Which satellite, and how you would know
+
+The imagery source is a provider (`scripts/lib/imagery.mjs`), chosen with `--source`:
+
+| | zoom 19 | zoom 20 | credential |
+|---|---|---|---|
+| `google` (shipped) | 0.251 m/px | 0.125 m/px | `GOOGLE_MAPS_API_KEY` — Map Tiles API 2D satellite session |
+| `apple` | 0.125 m/px | **0.063 m/px** | `APPLE_MAPKIT_TEAM_ID`, `APPLE_MAPKIT_KEY_ID`, `APPLE_MAPKIT_KEY_FILE` — a MapKit JS key |
+
+Apple serves no tile endpoint a third party may use; the licensed way in is the Maps Web
+Snapshot service, where one signed request returns one rendered image of a stated centre,
+zoom, size and scale — a georeferenced patch by another name, because a snapshot at zoom *z*
+sits on exactly the Web Mercator grid a tile at zoom *z* does. `scale=2` is the entire point:
+the same zoom at twice the linear resolution. Two things the service forces, both handled in
+the provider: images cap at 640×640 points, so a 255 m chunk needs several; and every image
+carries Apple's logo and legal line burned in. Those are not removed — each snapshot is
+cropped to its middle and the lattice steps by the cropped span, so a branded margin is always
+covered by a neighbour's clean centre and no branded pixel is ever measured.
+
+**Stated resolution is not resolved detail, and only the second one matters.**
+`scripts/audit-imagery-source.mjs` measures both, per metre of ground rather than per pixel,
+so sources at different pixel scales compare honestly:
+
+```bash
+npm run audit:imagery -- --facility=muir-tennis-west
+```
+
+Run against the shipped Google chunks it reports **0.25 m** of resolved edge detail out of
+imagery stored at 0.125 m/px — Google's zoom 20 over this campus is an upsample of roughly
+0.25 m originals. That is the measured reason `muir-tennis-west` fits at 0.43 coverage: a
+5 cm painted line cannot survive a 0.25 m sensor. A source swap is only worth making if the
+audit shows the new source resolving finer edges, not merely storing more pixels.
+
+Because the chunk grid, output resolution and manifest shape are identical either way, the
+swap changes one thing and the audit measures one variable. Rebuilding the shipped Google
+chunks through the provider path reproduces all 87 files byte for byte; only the manifest
+gains its `source` / `sourceMPerPx` provenance, which every downstream measurement inherits.
+A denser source is spent on supersampling (`k` source pixels averaged per output pixel), not
+on bigger files — extra resolution has to arrive as accuracy, not as aliasing.
 
 ## Controls
 
@@ -293,9 +334,11 @@ geometry). It will fold back into TritonPlan once it stands up on its own.
 
 - Building outlines, paths, plazas and the campus boundary: © OpenStreetMap contributors, **ODbL**.
 - Heights, terrain and trees: **USGS 3DEP** LiDAR (`CA_SanDiegoQL2_2014`), public domain.
-- Measured colours and fitted markings derive at build time from **Imagery © Google**
-  (Map Tiles API), current epoch; no tile imagery renders in-world. Heights remain 2014 LiDAR;
-  see the epoch note above.
+- Measured colours and fitted markings derive at build time from the imagery source named in
+  `docs/data/textures/manifest.json` — today **Imagery © Google** (Map Tiles API), current
+  epoch; **Imagery © Apple** (Maps Web Snapshot) is the selectable alternative and carries its
+  own credit line into the same field. No tile imagery renders in-world under either. Heights
+  remain 2014 LiDAR; see the epoch note above.
 - three.js r169, MIT.
 
 Unofficial and not affiliated with, endorsed by, or operated by any university. Not a navigation
