@@ -140,7 +140,7 @@ walking tour (Nov 2023, clear noon) and a 10-minute drone tour (Nov 2022, marine
   keeps every placement out of the buildings and on its rhythm. 
 
 - **The Muir athletics zone** (`docs/js/campus-athletics.js`, `campus-recreation.js`,
-  `campus-muir-field.js`): built 1:1 from seven aerial reference captures — the Main Gym's
+  `campus-muir-field.js`, `campus-goal.js`): built 1:1 from seven aerial reference captures — the Main Gym's
   eleven pale barrel vaults with their transverse walkway seams, the Natatorium's white
   skylight grid with the lap-lane blues reading through the glass and the spa on its
   terracotta deck, both tennis pads in their real two-block identity (green-on-red west,
@@ -149,6 +149,20 @@ walking tour (Nov 2023, clear noon) and a 10-minute drone tour (Nov 2022, marine
   and canopy tents, parked cars in Gymnasium Lot, and John Muir Field's dark turf with its
   softball fans, wordmark strips, goals and end netting. Every colour median-sampled from the
   captures; each module's placement rules are pinned by its own test file.
+
+  A goal is frame **and** net. For as long as the model had goals it had only the frame —
+  two posts, a crossbar and a shallow back rake, over a comment claiming the rake ran "to
+  the net" for a net nothing in the repository drew — so from above, the one view that sees
+  a whole pitch, the goals read as absent. `campus-goal.js` now builds both, and builds them
+  for any pitch rather than for Muir's: IFAB Law 1 fixes the mouth at 7.32 m **between the
+  posts' inner edges** (so the posts stand half a gauge outboard of the mouth line, where the
+  inline version put them ON it and quietly lost 12 cm of opening) and the crossbar's lower
+  edge at 2.44 m. The net is hung as real cords on a 0.12 m square mesh — the coarse end of
+  the 100–120 mm full-size nets are made in — up the back, over the rake from crossbar to
+  back rail and closing both sides, drawn as lines rather than modelled members because
+  2–4 mm twine is far below a pixel at every distance a walker sees a goal from. It is given
+  no sag: the nadir aerial is the one view a sag is invisible from, so the rake stays
+  straight rather than curved by invention.
 
 ```
 docs/            the site — GitHub Pages serves this directly, no build step

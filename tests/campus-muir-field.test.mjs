@@ -150,6 +150,69 @@ test("two goals, on the short ends, a regulation mouth wide", () => {
   assert.ok(Math.abs((goals[0].uv[0][1] + goals[1].uv[0][1]) - 1) < 1e-9, "goals are not mirrored");
 });
 
+test("both goals carry a net, and it hangs on the goal and nowhere else", () => {
+  /* The gap this closes: for as long as the field had goals, the renderer
+     built a frame and a comment that said the back rake ran "to the net",
+     and there was no net in the repository at all. Nets are the one part of
+     a goal you can see from the air, so their absence read as "the field has
+     no goals" from the one view that shows the whole field at once. */
+  const heightAt = () => 0;
+  const group = createMuirField(null, { markings, heightAt });
+  const nets = [];
+  group.traverse((o) => { if (o.isLineSegments) nets.push(o); });
+  assert.equal(nets.length, 1, "both goals' nets belong in ONE draw, and there must be one");
+  const pos = nets[0].geometry.getAttribute("position");
+  assert.ok(pos.count >= 800, `${pos.count} vertices — two full nets is far more than that`);
+  assert.equal(pos.count % 2, 0, "LineSegments needs its vertices in pairs");
+  assert.equal(nets[0].material.color.getHexString(), MUIR_COLORS.goalNet.slice(1),
+    "the net is not wearing the twine colour");
+  /* Distinct from the frame: a net drawn in the frame's own white reads as a
+     solid pale slab hung between the posts. */
+  assert.notEqual(MUIR_COLORS.goalNet, MUIR_COLORS.goal);
+
+  /* Every cord back into the field's own frame. The bounds quad is affine,
+     so invert its 2x2 and read each vertex as a (u, v). */
+  const [b0, b1, , b3] = field.bounds;
+  const [ux, uz] = [b1[0] - b0[0], b1[1] - b0[1]];
+  const [vx, vz] = [b3[0] - b0[0], b3[1] - b0[1]];
+  const det = ux * vz - uz * vx;
+  const toUV = (x, z) => {
+    const [dx, dz] = [x - b0[0], z - b0[1]];
+    return [(dx * vz - dz * vx) / det, (ux * dz - uz * dx) / det];
+  };
+  const goals = byType("goal").map((g) => ({
+    g, u: g.uv.map(([u]) => u), v: g.uv.map(([, v]) => v),
+  }));
+  /* A goal's own footprint, widened by the half post gauge the posts stand
+     outboard of the mouth line on — the Law measures 7.32 m between the
+     posts' INNER edges, so the frame and the net it carries sit a hair wider
+     than the mouth the spec quad traces. */
+  const pad = 0.07;
+  let counted = 0;
+  for (let i = 0; i < pos.count; i++) {
+    const [u, v] = toUV(pos.getX(i), pos.getZ(i));
+    assert.ok(Number.isFinite(u) && Number.isFinite(v), "NaN in the net geometry");
+    assert.ok(u >= 0 && u <= 1 && v >= 0 && v <= 1,
+      `a cord left the field at (${u.toFixed(3)}, ${v.toFixed(3)})`);
+    /* On the ground and no higher than the crossbar. heightAt is flat here,
+       so the whole goal shares one datum — which is the point: a goal is a
+       welded frame and must not shear over the terrain. */
+    const y = pos.getY(i);
+    assert.ok(y >= -1e-6 && y <= 2.44 + 1e-6, `a cord reaches ${y.toFixed(2)} m`);
+    const home = goals.find(({ u: us, v: vs }) =>
+      u >= Math.min(...us) - pad / frame.width_m && u <= Math.max(...us) + pad / frame.width_m &&
+      v >= Math.min(...vs) - pad / frame.length_m && v <= Math.max(...vs) + pad / frame.length_m);
+    assert.ok(home, `a cord at (${u.toFixed(3)}, ${v.toFixed(3)}) belongs to neither goal`);
+    counted++;
+  }
+  assert.equal(counted, pos.count);
+  /* Both goals got one: the cords straddle the halfway line. */
+  const vs = [];
+  for (let i = 0; i < pos.count; i++) vs.push(toUV(pos.getX(i), pos.getZ(i))[1]);
+  assert.ok(Math.min(...vs) < 0.1 && Math.max(...vs) > 0.9,
+    "only one end of the field got a net");
+});
+
 test("the wordmarks are the diagonal pair the aerial shows", () => {
   const strips = byType("wordmark-strip");
   assert.equal(strips.length, 4, "two strips, navy and orange, at two corners");
