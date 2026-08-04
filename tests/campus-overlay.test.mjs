@@ -29,6 +29,7 @@ const DRAPING_MODULES = [
   "docs/js/campus-world.js",
   "docs/js/campus-muir-field.js",
   "docs/js/campus-recreation.js",
+  "docs/js/campus-rimac.js",
   "docs/js/campus-markings.js",
 ];
 
