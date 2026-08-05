@@ -40,7 +40,7 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { treeExclusionZones, pruneTrees } from "./lib/tree-rules.mjs";
-import { roofOf, denseBandFraction } from "./lib/roof-measure.mjs";
+import { roofOf, denseBandFraction, explainRoof } from "./lib/roof-measure.mjs";
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const IN = path.join(REPO_ROOT, "docs/data/campus-3d.json");
@@ -633,6 +633,58 @@ const MEASURE_MINUS_CONTAINED_HOSTS = {
         near-ground / deck (p50 0.2, hist peaks at 0 m and 3 m;
         bodyTight=false). Apple shows a finished low pad today, but the
         2014 sample is not a clean body plane; the 9 m guess stands. */
+/* Rings a person looked at and decided NOT to trust — extracted from the
+   assertions the gauntlet's judges wrote (2026-08-05). Their reasons are shapes
+   and dates that point statistics cannot see: a stepped mass whose upper plane
+   reads tight, a garage built after the 2014 flight, a ring whose centroid sits
+   past the survey box so its "ground" comes from the edge of the world.
+
+   The statistical gate below never overrules one of these. A gate that can
+   reverse a human judgement is not a gate, it is a race. */
+const OSM_WITHHELD = new Set([
+  39, 42, 83, 171, 216, 233, 245, 246, 248, 289, 294, 322,
+  438, 441, 465, 479, 480, 485, 497, 503, 513, 520, 656, 658,
+  661, 695, 707, 708, 718, 762, 765, 769, 780, 785, 805, 806,
+  825, 827, 828, 832, 833, 834, 904, 907, 909, 910, 944, 975,
+  982, 986, 996, 997, 999, 1002, 1007, 1008, 1013, 1017, 1022, 1023,
+  1024, 1033, 1062, 1068, 1075, 1089, 1120, 1127, 1144, 1146, 1160, 1218,
+  1339, 1345, 1352, 1354, 1392,
+]);
+
+/* ---------------------------------------------------------------------------
+   ADMITTING THE UNNAMED BACKLOG BY RULE INSTEAD OF ONE AT A TIME
+
+   1,030 unnamed OSM rings carry a roof measurement every build. Until now only
+   the ~273 some agent had personally eyeballed were allowed to SHIP; the rest
+   rendered at an invented number — 4.5 m for most, 9 m for a hundred more.
+   The loop retired them six to eight per pass, which is centuries of passes.
+
+   This is the rule those agents were applying, written down. They stated it
+   themselves, three times, in the comments above: a ring may ship when it reads
+   as ONE PLANE — no-guard spread p98-p75 <= 2 m, or a guarded body tight to
+   p75-p50 <= 2 m. It was never code, so it never scaled.
+
+   WHAT THIS RULE CANNOT DO, stated plainly. Measured against the 59 rings judges
+   withheld by hand, a spread-only gate wrongly admits 25 of them. Adding rim
+   coverage and tightening to the thresholds below brings that to 4, and no
+   setting reaches zero: the residue is stepped buildings, where the laser sees
+   the upper plane as a clean tight roof and only a photograph shows a second
+   level below it. So the hand-withheld set is honoured absolutely, and the gate
+   runs only on rings nobody has judged.
+
+   WHY ADMIT AT ALL, given a known error rate. Because "withhold" here does not
+   mean absent — the renderer always draws something, and today it draws a guess.
+   Across the rings this gate admits, that guess misses the measurement by 1.8 m
+   on average and by 2 m or more on 29% of them. A measurement carrying a bounded
+   risk of being the wrong plane beats a number that was never measured at all.
+   The one genuinely catastrophic case — a post-2014 building whose 2014 site was
+   a parking lot, measuring near zero — is excluded by the 3 m floor, and the
+   builder already drops anything under 2 m before it reaches here. --------- */
+const STAT_MIN_PTS = 400;        // below this the percentiles are noise
+const STAT_MIN_RIM = 0.99;       // ground must resolve all the way round
+const STAT_MAX_SPREAD = 1.2;     // one plane, not two
+const STAT_MIN_HEIGHT = 3;       // under this, suspect a pre-construction site
+
 const OSM_UNNAMED_VERIFIED = new Set([
   786, 893,
   93, 77, 333, 335,
@@ -1539,6 +1591,14 @@ async function build() {
      a canyon is the canyon. Geisel measured "40.3 m" exactly this way: its
      real roof minus a grade 14 m below its real forecourt, borrowed from the
      ravine to its north. */
+  /* Perimeter ground samples that actually RESOLVED, as a fraction. A ring
+     whose centroid sits past the survey box still returns a base here — the
+     handful of samples that landed inside the grid produce a confident-looking
+     median from the edge of the world. osm:656 / 658 / 661 and 1144 / 1146 /
+     1160 were withheld by hand for exactly this, and nothing in the point
+     statistics shows it: the roof returns look clean because they ARE clean,
+     they are just measured against a ground nobody surveyed. */
+  const rimCoverageOf = new Map();
   const rimBase = (ring) => {
     const rim = [];
     for (const [mx, my] of ring) {
@@ -1546,6 +1606,7 @@ async function build() {
       const g = groundAt(lx, lz);
       if (g !== null) rim.push(g);
     }
+    rimCoverageOf.set(ring, ring.length ? rim.length / ring.length : 0);
     return rim.length ? percentile(rim, 0.5) : null;
   };
 
@@ -1565,6 +1626,22 @@ async function build() {
      and massHeights. */
   /* roofOf + denseBandFraction now live in scripts/lib/roof-measure.mjs —
      imported at the top of this file so probes and the builder cannot drift. */
+
+  const statAdmitted = [];
+  /* True when the point cloud alone is enough to trust this ring's plane.
+     Deliberately conservative: every clause below was added because dropping it
+     let a hand-withheld ring back in. */
+  const statisticallyAdmissible = (t, base, h) => {
+    if (h < STAT_MIN_HEIGHT) return false;
+    if (t.roofs.length < STAT_MIN_PTS) return false;
+    if ((rimCoverageOf.get(t.ring) ?? 0) < STAT_MIN_RIM) return false;
+    const e = explainRoof(t.roofs, base);
+    /* An unguarded read is one plane when its top tail is close to the body.
+       A guarded read already discarded its tail, so the question becomes
+       whether what remains is tight. */
+    const spread = e.rule === "p98" ? e.p98 - e.p75 : e.p75 - e.p50;
+    return spread <= STAT_MAX_SPREAD;
+  };
 
   const heights = {};
   const partHeights = {};
@@ -1601,7 +1678,9 @@ async function build() {
     if (!t.name) {
       const bi = Number(t.key.slice(1));
       if (POST_2014_OSM_RINGS.has(bi)) continue; // the flight predates the building
-      if (OSM_UNNAMED_VERIFIED.has(bi)) osmHeights[bi] = h;
+      if (OSM_UNNAMED_VERIFIED.has(bi)) { osmHeights[bi] = h; continue; }
+      if (OSM_WITHHELD.has(bi)) continue; // judged by hand; the gate does not overrule a person
+      if (statisticallyAdmissible(t, base, h)) { osmHeights[bi] = h; statAdmitted.push(bi); }
       continue;
     }
     if (POST_2014_SITES.has(t.name)) continue; // building postdates the flight
@@ -1820,6 +1899,9 @@ async function build() {
   measured.sort((a, b) => b.h - a.h);
   console.log(`\nwrote ${OUT} — ${kb} KB`);
   console.log(`  datum ${datum} m · terrain ${cols}×${rows} @ ${TERRAIN_CELL} m`);
+  if (statAdmitted.length) {
+    console.log(`  ${statAdmitted.length} unnamed ring(s) admitted by the statistical gate (${Object.keys(osmHeights).length - statAdmitted.length} hand-verified)`);
+  }
   console.log(`  ${Object.keys(heights).length} named buildings measured, ${Object.keys(massHeights).length} massing parts, ${trees.length} trees`);
   console.log(`  tallest: ${measured.slice(0, 5).map((m) => `${m.n} ${m.h}m`).join(", ")}`);
 }
