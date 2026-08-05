@@ -654,3 +654,59 @@ Apple snapshots from the screener's `/tmp/gauntlet-r0c0-pass2/apple/`
   osm:502). Height withhold stands independently of the renderer fix.
 - **Extended Studies H/J/K/M/N**: pass-1 handoff unchanged — Δ≤0.9 vs GIS
   records, under the Δ≥3 bar.
+
+---
+
+# FINDINGS — run `2026-08-05_033905` · shard r0c1 (pass 2)
+
+Pass 2 of the North campus shard (Warren / Rady / Marshall / Village East /
+RIMAC / ERC east). Screen: 5 candidates (0 high / 5 medium). Judged by
+`cursor-grok-4.5-high`.
+
+Every candidate in `pass2-r0c1.screen.json` was re-derived before judgement
+against the screener's full-depth EPT (`/tmp/gauntlet-r0c1-pass2/probe.json` —
+55 targets; point counts taken as the re-measurement: VE6 2,835 / LaundryE
+1,278 / MarshResN 1,074 / Pangea 16,430), Apple snapshots in
+`/tmp/gauntlet-r0c1-pass2/apple/` (copied to `.cache/gauntlet-r0c1-p2/evidence/`),
+and thin-shelf arithmetic re-computed per sample from each mass's histogram.
+
+### Fixed — heights (class rule already in builder; file was stale)
+
+| Entity | Was shipping | Now ships | Source | Test |
+|---|---|---|---|---|
+| Seventh College East #6 (`ve6-thin-shelf`) | 10.7 m massHeights p98 | **8.4 m** | Thin-shelf massHeights rule (body tight + gap > 2 + dense ≥85% → p75). Re-sample: 2,835 pts, dense 88.1% in 8–9 m matching GIS L2=8.5; p98 10.7 rides the recessed central HVAC well Apple shows today (gap 2.3). | epoch §28 |
+
+### Rejected candidates (each re-measured before rejection; do not re-find these)
+
+- **`erc-laundry-e-near-ground`** — REJECTED as POST_2014. ERC opened 2003
+  (Safdie; Guardian 2003-09-23); laundry was in the original program. The GIS
+  ring's near-grade smear (roofOf 1.5, dense 79% in −1..0) is a measurement
+  under-read, not a date. Host `lidar.heights` 2.6 is within 0.4 m of GIS
+  L1=3. Do not admit roofOf=1.5 (below the 2 m floor), do not invent a height
+  from Apple, and do not epoch-list a pre-2014 building. Pinned in §28.
+- **`marsh-res-n-near-shelf`** — REJECTED. Dense 81.8% in 11–12 m — under the
+  85% thin-shelf cut (Otterson / Copley / McGill / Perlman family). Apple shows
+  finished Marshall residence roofs with mechanical vents; pasting the dense
+  body flattens a real upper volume. massHeights 15.2 stands. Pinned in §28.
+- **`pangea-open-deck-under`** — REJECTED. Open-deck multimodal (dense 60%,
+  grade spread 12.6 m). roofOf 5.7 is what the laser resolves; GIS L2=8.5 and
+  OSM 16 are not a single tight plane. Apple confirms the garage exists — not
+  a height source. Do not invent. Pinned in §28.
+- **`roof-anchor-class-expanded`** — REJECTED as in-scope fix; RE-LOGGED as
+  handoff. Grade audit now finds seven in-shard masses past 2 m (prior four
+  plus VW2 / Robinson Library / Otterson). Bases per-vertex safe. Renderer
+  change (`roofY = rimMedian + h`) is cross-shard — prior FINDINGS unchanged.
+
+### Withheld (better absent than wrong)
+
+None new this pass. Pangea's open-deck under-read is already the measured
+answer the laser can give; inventing GIS 8.5 from a photo would be the defect.
+
+### Handoffs / observations
+
+- **Roof-anchor class**: now seven in this shard (Hopkins Parking, Canyon Vista
+  admin, Cuzco, VE4, VW2, Robinson Library, Otterson). Still a dedicated
+  renderer pass.
+- **Thin-shelf rule campus-wide**: next full `build:lidar` applies it to every
+  mass. This pass spliced the one in-shard stale hit (`m:-78,-1060`) after
+  re-deriving it; Asante / CSC H already matched.

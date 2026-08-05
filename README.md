@@ -197,7 +197,7 @@ every site against a fresh Apple snapshot:
 |---|---|---|---|
 | Atkinson Hall, west pavilion | 27.2 m (host bleed) | **14.5 m** | the facility ring spans the whole hall WITH its 29.8 m tower nested inside; measured whole it reads canopy-stepped and the guard withheld it, so the host-wide value — dominated by the tower — pasted onto the low wing. Measured MINUS the contained tower ring (16,642 returns) the pavilion has its own clean plane. `MEASURE_MINUS_CONTAINED` pins the mechanism. |
 | SDSC East Expansion | 17.1 m (GIS record) | **23.2 m** | no OSM host, no OSM name twin — the record could not be challenged until `PRE_2014_GIS_VERIFIED` let its documented 2009 build date answer the epoch question. |
-| Social Sciences Building | 17.1 m (GIS record) | **21.0 m** | same class (1995). Robinson 1 & 3, ERC Admin North, Outback Adventures, SCE #5/#6 measured with them (10.4 / 7.5 / 4.8 / 2.5 / 12.2 / 10.7). |
+| Social Sciences Building | 17.1 m (GIS record) | **21.0 m** | same class (1995). Robinson 1 & 3, ERC Admin North, Outback Adventures, SCE #5/#6 measured with them (10.4 / 7.5 / 4.8 / 2.5 / 12.2 / 8.4). |
 | Douglas Hall | 18.3 m (GIS, unchallenged) | **16.1 m** | the inventory calls the mass "Douglas Apartments", OSM calls the building "Douglas Hall" — no name match, no host (its centroid falls in a light-well), so the label orphaned AND the record stood. `MASS_RENAMES` maps inventory name to OSM name; the ring re-samples at 16.1. |
 | Earth Hall chain (ERC) | one 11.7 m slab | **11.6 / 4.7 / 11.6 m** | the facility ring is the UNION of Earth North, the Middle Earth Lounge and Earth South; the single slab flattened the 4.7 m lounge and wore the lounge's name. The union ring is dropped; each OSM footprint renders its own plane. |
 | Canyon Vista | one 12 m union | **12.0 + 8.6 m** | same class: one ring across the admin lodge and the restaurant, centroid in the shared courtyard, suppressing both named buildings. |
@@ -547,6 +547,21 @@ conference), dense bands 74 % / 79 % under the 85 % cut. Marshall Upper H/L cano
 bodies already match GIS 6.1; pinned against a future auto-admit. Stewart multi-modal —
 stepped Warren residence, no single plane to prefer. Roof-anchor class — still the
 cross-shard renderer handoff (Hopkins / Canyon Vista admin / Cuzco / VE4).
+
+**The North-campus pass-2 (2026-08-05, r0c1).** Same shard, second decide pass. Every
+candidate re-derived from the screener's full-depth EPT (point counts taken as the
+re-measurement) and Apple snapshots before judgement.
+
+| Entity | Was shipping | Now ships | Why |
+|---|---|---|---|
+| Seventh College East #6 | 10.7 m (`massHeights` p98) | **8.4 m** | 88 % of 2,835 returns in an 8–9 m band matching GIS L2=8.5; p98 rode the recessed central HVAC well Apple shows today (gap 2.3). Thin-shelf rule already in the builder — the shipped file still held the pre-splice p98. |
+
+Rejected, each re-measured: ERC Laundry East "needs POST_2014" — ERC opened 2003; the
+near-grade GIS ring is an under-read, and host 2.6 already matches GIS L1≈3. Marshall
+Residence Hall N — dense 81.8 % under the 85 % cut (Otterson family); roofOf 15.2 stands.
+Pangea Parking — open-deck multimodal (dense 60 %); laser's 5.7 stands, do not invent
+from the photo. Roof-anchor class — membership grew (VW2 / Robinson Library / Otterson);
+still the cross-shard renderer handoff.
 
 **The east-campus re-sweep (2026-08-05, r0c2).** Hospital district / CSC yard / Preuss /
 Qualcomm AA — a second pass after the first r0c2 sweep measured the nameless rings. Every

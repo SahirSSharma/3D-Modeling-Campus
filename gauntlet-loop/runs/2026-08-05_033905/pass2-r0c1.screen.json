@@ -1,0 +1,87 @@
+[
+  {
+    "id": "ve6-thin-shelf",
+    "entity": "Seventh College East #6",
+    "where": {"x": -77.5, "z": -1059.8},
+    "claim": "assembleMasses ships h=10.7 via massHeights[m:-78,-1060] over gisH=8.5 / L2. Epoch § pins that 10.7 as \"SCE#6's own plane\". Host thin-shelf rule is already in roofOf/massHeights (gap>2 + dense≥85% + bodyTight → p75) but this key still holds the pre-splice p98.",
+    "observed": "Fresh EPT of the GIS ring: 2,835 pts, roofOf=10.7, p50=8.2, p75=8.4, p98=10.7, gap=2.3, guard=false, bodyTight=true, massOk=true. Histogram: 8 m:2190 + 9 m:309 = 2,499/2,835 (88.1%) in the 8–9 m band; 10 m bin only 164. Dense body matches GIS L2=8.5; shipped 10.7 rides a thin ~2.3 m shelf. Thin-shelf arithmetic (same cut that took AsanteMeet to 4.0 and CSC H to 4.8) would admit p75=8.4.",
+    "evidence": {
+      "lidar": "gis:VE6 2835 pts roofOf=10.7 p50=8.2 p75=8.4 p98=10.7 gap=2.3 dense=88.1%@8 bodyTight massOk; hist 8m:2190 9m:309 10m:164; massHeights[m:-78,-1060]=10.7",
+      "gis": "Seventh College East #6 gisH=8.5 levels=2 area≈474; listed in PRE_2014_GIS_VERIFIED (Village East, 2008-11)",
+      "osm": "Village East Building 5/6 neighbourhood; sibling VE5 GIS mass ships roofOf 12.2 over gisH=15.2 (not thin-shelf)",
+      "apple": "Apple snapshot ve6.jpg z19 at 32.887585,-117.242029 (2170 kB) — finished Village East pad today with a recessed central mechanical well (HVAC/ducts) on a light-tan trapezoidal roof; no crane; sibling solar-panel roofs adjacent",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Thin-shelf massHeights still holding p98 after the class rule landed via per-key splices (AsanteMeet/CSC H) but before a full build:lidar — dense body already agrees with GIS L2; Apple's mechanical well is the shelf the cut would drop.",
+    "epoch_risk": "Low for existence — Apple shows a finished pre-2014 Village East roof. The 10.7 vs ~8.4 split is assignment (plant shelf vs dense deck), not a rebuild. Note: current epoch test pins 10.7, so any fix must update that pin."
+  },
+  {
+    "id": "erc-laundry-e-near-ground",
+    "entity": "ERC Laundry East",
+    "where": {"x": -59.7, "z": -806.4},
+    "claim": "GIS mass ships h=2.6 from host lidar.heights['ERC Laundry East']=2.6 over gisH=3 / L1. Not in POST_2014_SITES / ESTIMATED_POST_2014. massHeights[m:-60,-806] undefined.",
+    "observed": "Fresh EPT of the GIS ring: 1,278 pts, roofOf=1.5, p50=0.0, p75=0.9, p98=1.5, gap=0.6, guard=false, bodyTight=true. Histogram mode −1..0 m (dense 79% in −1..0). Returns sit near grade — same signature the 2026-08-03 accuracy report logged as epochGaps[\"ERC Laundry East\"] (\"near-zero 2014 height — site was flat in 2014\"). OSM tag still 9 m. Apple today shows a light finished pad at the centroid among the ERC / IOA fabric.",
+    "evidence": {
+      "lidar": "gis:ERCLaundryE 1278 pts roofOf=1.5 p50=0 p75=0.9 p98=1.5 dense=79%@-1 bodyTight; lidar.heights host=2.6; massHeights absent",
+      "gis": "ERC Laundry East gisH=3 levels=1 area≈302",
+      "osm": "ERC Laundry East way index 891 osmH=9; Places mismatch in accuracy report (Pepper Canyon East, 1354 m) is a name collision, not a footprint move",
+      "apple": "Apple snapshot laundry-e.jpg z19 at 32.885293,-117.241839 (2239 kB) — finished light-grey pad/roof at the GIS centroid among Hopkins Dr / Earth Hall / IOA; no bare-dirt construction lot; centerRGB≈195,197,198 ent=3.31",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Post-2014 (or rebuilt) low pad still wearing a near-ground 2014 host height — needs POST_2014_SITES / ESTIMATED_POST_2014 / Street-View floor count, not a massHeights admission of roofOf=1.5. Sibling of the accuracy-report honesty list that already named this building.",
+    "epoch_risk": "Primary. 2014 returns are near-grade; Apple shows a finished structure today. Do not treat roofOf=1.5 as the finished height — that is exactly the eucalyptus/slab failure mode, inverted. The laser cannot date the laundry."
+  },
+  {
+    "id": "marsh-res-n-near-shelf",
+    "entity": "Marshall Residence Hall N",
+    "where": {"x": -127.7, "z": -610.5},
+    "claim": "GIS mass ships h=15.2 via massHeights[m:-128,-610] over gisH=12.2 / L4.",
+    "observed": "Fresh EPT: 1,074 pts, roofOf=15.2, p50=11.8, p75=11.9, p98=15.2, gap=3.3, guard=false, bodyTight=true. Histogram: 11 m:760 + 12 m:119 = 879/1,074 (81.8%) in the 11–12 m band; 14–15 m bins 63+46. Dense body ≈ GIS 12.2; shipped 15.2 is +3.3 m over p75. Dense band 81.8% — under the 85% thin-shelf cut (near-miss, same family as IGPP 2000 / Perlman).",
+    "evidence": {
+      "lidar": "gis:MarshResN 1074 pts roofOf=15.2 p50=11.8 p75=11.9 p98=15.2 gap=3.3 dense=81.8%@11 bodyTight; hist 11m:760 12m:119 14m:63 15m:46; massHeights ships 15.2",
+      "gis": "Marshall Residence Hall N gisH=12.2 levels=4 area≈205",
+      "osm": "no OSM way named Marshall Residence Hall N",
+      "apple": "Apple snapshot marsh-res-n.jpg z19 at 32.883521,-117.242566 (2336 kB) — finished Marshall residence fabric standing today; light-grey flat roofs with mechanical vents; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Near-miss thin-shelf (dense 81.8% < 85% cut) — plant/upper shelf over a dense body that already matches GIS L4. Not auto-caught by the current rule; same judgment call as Otterson/Copley vs Asante.",
+    "epoch_risk": "Low — Marshall residence is pre-2014 and Apple shows it finished. The 15.2 vs ~11.9 split is shelf vs body, not a date conflict."
+  },
+  {
+    "id": "pangea-open-deck-under",
+    "entity": "Pangea Parking Structure",
+    "where": {"x": -148.7, "z": -695.7},
+    "claim": "GIS mass ships h=5.7 via massHeights[m:-149,-696] over gisH=8.5 / L2. OSM host lidar.heights['Pangea Parking Structure']=3.6 against osmH=16.",
+    "observed": "Fresh EPT GIS ring: 16,430 pts, roofOf=5.7, p50=2.2, p75=2.7, p98=5.7, gap=3.0, bodyTight=true, dense only 60%@1 — open-deck multimodal, not a single plane. OSM host ring: 17,998 pts, roofOf=3.6, p50=0.0, p75=0.3 (even lower). Grade spread 12.6 m across the deck. Apple today shows a multi-level garage with cars parked on the top deck.",
+    "evidence": {
+      "lidar": "gis:Pangea 16430 pts roofOf=5.7 p50=2.2 p75=2.7 p98=5.7 dense=60%@1 bodyTight; hist top 2m:7732 1m:2188 3m:1950 0m:1903 5m:1256; osm:Pangea 17998 pts roofOf=3.6 p50=0 p75=0.3; massHeights[m:-149,-696]=5.7; host lidar.heights=3.6",
+      "gis": "Pangea Parking gisH=8.5 levels=2 area≈5316",
+      "osm": "Pangea Parking Structure way index 342 osmH=16 lidarH=3.6",
+      "apple": "Apple snapshot pangea.jpg z17 at 32.884292,-117.242791 (3244 kB) — multi-level parking structure standing today with vehicles on the exposed top deck among the ERC / Marshall lower cluster; finished, no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Open-deck parking LiDAR under-read — returns concentrate on lower/mid decks and voids; GIS L2=8.5 may be closer to the finished garage than roofOf=5.7, but the laser has no single tight plane to prefer. Do not invent a height from the photo.",
+    "epoch_risk": "Low for existence — Apple confirms the garage. The 5.7 vs 8.5 vs OSM-16 disagreement is deck-sampling physics + a wild OSM tag, not a post-2014 rebuild of the structure."
+  },
+  {
+    "id": "roof-anchor-class-expanded",
+    "entity": "Hopkins Parking / Canyon Vista admin / Cuzco / VE4 / VW2 / Robinson Library / Otterson",
+    "where": {"x": 182.0, "z": -634.0},
+    "claim": "Renderer sets roofY = ground(centroid) + h while surveyed h = roof − median(rim ground). Prior r0c1 pass logged four in-shard masses past a 2 m roof-anchor gate and handed the class off.",
+    "observed": "Re-ran grade audit on current assembleMasses: seven in-box masses with |centroid ground − rim median| > 2 m — Canyon Vista Administration building +4.60 m (span 4.6, h=12), Village West Building 2 −3.00 m (span 2.9, h=13), Hopkins Parking Structure +2.90 m (span 16.3, h=21.5), Robinson Building 3 - Library +2.70 m (span 3.7, h=7.5), Cuzco Hall −2.60 m (span 2.8, h=11.8), Otterson Hall −2.20 m (span 4.9, h=18.9), Village East Building 4 −2.10 m (span 4.5, h=12.1). Bases remain per-vertex safe. New since prior handoff: VW2, Robinson Library, Otterson.",
+    "evidence": {
+      "lidar": "grade audit over all in-box rendered masses; seven exceed 2 m roof-anchor delta; Hopkins / Canyon Vista / Cuzco / VE4 still present; VW2 / Robinson Lib / Otterson newly past the bar",
+      "gis": "Hopkins Parking gisH=18.3 massH=21.5; Robinson Building 3 - Library gisH=8.5 massH=7.5 (guarded thin-shelf already took p75); Otterson massH=18.9",
+      "osm": "Canyon Vista Administration building osmHeights=12; Village West Building 2 / Village East Building 4 via host path",
+      "apple": "not required for this class — it is a renderer anchor definition, not a currency question (canyon-admin.jpg / hopkins.jpg / vw2.jpg / robinson-lib.jpg confirm those pads stand today)",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Cross-shard roof-anchor render class (centroid ground vs rim-median definition of h) — still open; membership in this shard grew from four to seven. Not a per-building height bug.",
+    "epoch_risk": "None — this is a geometry definition mismatch inside one epoch, not a source-date conflict."
+  }
+]

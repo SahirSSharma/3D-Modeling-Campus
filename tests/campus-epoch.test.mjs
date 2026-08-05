@@ -136,6 +136,12 @@
  *      the near-ground Salk-road fringe (osm:828) and coastal-scrub
  *      pad (osm:513) keep their guesses, and the class-hole stays
  *      per-ring.
+ *  28. The r0c1 pass-2 re-sweep's measurements hold: Seventh College
+ *      East #6 sheds its thin 10.7 m mechanical shelf for the dense
+ *      8.4 m body (rule already in massHeights; file was stale), ERC
+ *      Laundry East stays off POST_2014 (2003 ERC fabric; 2.6 ≈ GIS
+ *      L1), Marshall Res N / Pangea keep roofOf under the cut / open-
+ *      deck, and the roof-anchor class stays a renderer handoff.
  */
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
@@ -605,8 +611,8 @@ describe("10. the north-central shard sweep (r0c1, 2026-08-04)", () => {
   test("Village East 4 and 5 stand apart; the #4 union ring stays gone", () => {
     /* "Seventh College East #4" (GIS 15.2 m) traced VE4+VE5 as one ring:
        VE4 double-rendered through it and VE5 was suppressed by it. Their
-       own 2014 planes: 12.1 and 12.4; the remaining SCE masses measure
-       12.2 and 10.7 on their own rings. */
+       own 2014 planes: 12.1 and 12.4; SCE#5 measures 12.3. SCE#6's plane
+       is the thin-shelf dense body (8.4) — see §28. */
     const ve4 = MASSES.find((m) => m.name === "Village East Building 4");
     const ve5 = MASSES.find((m) => m.name === "Village East Building 5");
     assert.ok(ve4 && ve5, "a Village East building is missing");
@@ -615,7 +621,7 @@ describe("10. the north-central shard sweep (r0c1, 2026-08-04)", () => {
     assert.equal(MASSES.find((m) => m.name === "Seventh College East #4"), undefined);
     /* 12.3 is the r1c0 rebuild's decimetre re-round of the same plane. */
     assert.equal(LIDAR.massHeights["m:-49,-1057"], 12.3, "SCE#5's own plane");
-    assert.equal(LIDAR.massHeights["m:-78,-1060"], 10.7, "SCE#6's own plane");
+    assert.equal(LIDAR.massHeights["m:-78,-1060"], 8.4, "SCE#6's dense body (thin-shelf)");
   });
 
   test("Douglas Hall's mass carries its OSM name and its 16.1 m plane", () => {
@@ -2479,5 +2485,74 @@ describe("campus epoch — r0c0 pass-2 re-sweep (2026-08-05)", () => {
     assert.equal(LIDAR.osmHeights?.[513], undefined, "a 2014 number shipped for osm:513");
     assert.equal(rendersNear(-768.4, -877.3, 4).find((m) => m.src === "osm")?.h, 9,
       "the contaminated pad keeps its declared guess");
+  });
+});
+
+describe("campus epoch — r0c1 pass-2 re-sweep (2026-08-05)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("Seventh College East #6 sheds its thin 10.7 m mechanical shelf", () => {
+    /* 2,835 returns, 88.1% in an 8–9 m band matching GIS L2=8.5; p98 10.7
+       rides the recessed central HVAC well Apple shows today (gap 2.3).
+       Thin-shelf massHeights rule (already in the builder) takes p75=8.4;
+       the shipped file still held the pre-splice p98 until this pass. */
+    assert.equal(LIDAR.massHeights["m:-78,-1060"], 8.4);
+    const ve6 = rendersNear(-77.5, -1059.8, 3).find((m) => m.src === "gis");
+    assert.ok(ve6, "Seventh College East #6 vanished");
+    assert.equal(ve6.h, 8.4, `SCE#6 ships ${ve6.h}`);
+  });
+
+  test("ERC Laundry East stays off POST_2014; the 2003 pad keeps ~GIS L1", () => {
+    /* Screener proposed POST_2014_SITES because the GIS ring reads near
+       grade (1,278 pts, roofOf 1.5, dense 79% in −1..0). That is a
+       measurement under-read, not a date: ERC opened 2003 (Safdie;
+       Guardian 2003-09-23), laundry was in the original program, and
+       Apple shows the finished pad among the ERC / IOA fabric today.
+       Host lidar.heights 2.6 is within 0.4 m of GIS L1=3 — not a
+       multi-storey lie. Do not invent a height from the photo, do not
+       admit roofOf=1.5 (below the 2 m floor), and do not epoch-list a
+       pre-2014 building. */
+    assert.ok(!POST_2014.includes("ERC Laundry East"),
+      "ERC Laundry East was wrongly epoch-listed");
+    assert.equal(LIDAR.heights["ERC Laundry East"], 2.6);
+    assert.equal(LIDAR.massHeights["m:-60,-806"], undefined,
+      "near-grade GIS ring must not emit massHeights");
+    const laundry = MASSES.find((m) => m.name === "ERC Laundry East" && m.src === "gis");
+    assert.ok(laundry, "ERC Laundry East vanished");
+    assert.equal(laundry.h, 2.6, `Laundry East ships ${laundry.h}`);
+  });
+
+  test("Marshall Residence Hall N keeps its roofOf upper shelf", () => {
+    /* Dense 81.8% in 11–12 m (GIS L4=12.2) under a 15.2 p98 shelf — under
+       the 85% thin-shelf cut (Otterson / Copley / McGill / Perlman family).
+       Apple shows finished Marshall residence roofs with mechanical vents;
+       pasting the dense body would flatten a real upper volume. */
+    assert.equal(LIDAR.massHeights["m:-128,-610"], 15.2);
+    const n = rendersNear(-127.7, -610.5, 3).find((m) => m.src === "gis");
+    assert.equal(n?.h, 15.2, `Marshall Res N ships ${n?.h}`);
+  });
+
+  test("Pangea Parking keeps the measured open-deck plane", () => {
+    /* 16,430 pts, multimodal (dense only 60% @1–2), grade spread 12.6 m
+       across the decks. roofOf 5.7 is what the laser resolves; GIS L2=8.5
+       and OSM 16 are not a single tight plane to prefer. Apple confirms
+       the multi-level garage with cars on the top deck — existence, not
+       a height source. Do not invent a taller number from the photo. */
+    assert.equal(LIDAR.massHeights["m:-149,-696"], 5.7);
+    assert.equal(LIDAR.heights["Pangea Parking Structure"], 3.6);
+    const pangea = rendersNear(-148.7, -695.7, 5).find(
+      (m) => m.src === "gis" && /Pangea/i.test(m.name || ""),
+    );
+    assert.ok(pangea, "Pangea Parking vanished");
+    assert.equal(pangea.h, 5.7, `Pangea ships ${pangea.h}`);
   });
 });
