@@ -1,0 +1,172 @@
+[
+  {
+    "id": "hubbs-conf-canopy-bleed",
+    "entity": "Hubbs Hall Confrence Center",
+    "where": {"x": -1107.6, "z": 1178.0},
+    "claim": "Ships as OSM src h=17.9 via lidar.heights['Hubbs Hall Confrence Center']=17.9. OSM tag is 4.5; arcgis.buildings pairs it with Hubbs's 4-level / 17.1 m record. No GIS mass of its own; Hubbs Hall GIS mass ships separately at massHeights=12.3.",
+    "observed": "Fresh EPT of the 284 m² Conf ring (3,426 non-ground returns, base 22.8): histogram mode is the 4 m bin (951 pts); continuous tall tail 6–19 m. Pipeline roofOf=17.9, p50=9.9, p75=14.2, p98=17.9, guard=false, bodyTight=false, massOk=true on the letter of the rule. Ring sits ~14 m east of Hubbs with zero interior overlap. The 1-storey body plane matches the OSM 4.5 tag; roofOf rides the tall tail (trees / cliff / neighbour bleed). Δ ≈ +13 m vs the dense band.",
+    "evidence": {
+      "lidar": "osm:HubbsConf 3426 pts roofOf=17.9 p50=9.9 p75=14.2 p98=17.9 hist mode 4 m (951/3426); gis:Hubbs 10859 pts roofOf=12.2 p50=8.1 p75=8.1 massOk bodyTight; lidar.heights Conf=17.9 Hubbs=12.2",
+      "gis": "no GIS mass named Conference Center; arcgis.buildings['Hubbs Hall Confrence Center']={levels:4,height:17.1} (same record as Hubbs Hall); Hubbs Hall mass gisH=17.1 massH=12.3",
+      "osm": "way index 424, osmH=4.5, area≈284 m², 4 verts at (−1107.6,1178); Hubbs Hall way 27 lidarH=12.2",
+      "apple": "Apple snapshot hubbs-conf.jpg z19 at 32.867347,-117.253047 — finished Hubbs plateau: large flat grey Hubbs roof with central mechanical penthouse; smaller pad/structures to its east among mature canopy; no crane",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Canopy/neighbour-bleed host height on a small 1-storey annex — dense band at ~4 m, roofOf at 17.9; same class as Che Café / Laurel (mode is the roof, p98 is the trees).",
+    "epoch_risk": "Low for existence — Apple shows the Hubbs complex standing. The 17.9 vs 4 split is contamination on a pre-2014 annex, not a rebuild. Do not treat arcgis.buildings' copied 4-level record as independent confirmation."
+  },
+  {
+    "id": "ritter-newer-overheight",
+    "entity": "Ritter Hall",
+    "where": {"x": -1150.1, "z": 1402.0},
+    "claim": "No GIS massing ring. Ships as OSM src h=21.3 because arcgis.buildings['Ritter Hall'] has newer=true (GIS 21.3 / L5 vs lidar.heights=12.5), so assembleMasses prefers the GIS figure over the 2014 plane.",
+    "observed": "Fresh EPT of the OSM Ritter ring: 5,798 pts, roofOf=14.6, p50=9.7, p75=11.4, p98=14.6, guard=false, bodyTight=true, massOk=true. Δ = −6.7 m (~1.5–2 storeys) vs the shipped 21.3. The gisTaller heuristic in build-campus-arcgis.mjs flipped newer because 21.3 − 12.5 > max(8, 0.45×12.5); the re-sample's own plane is 14.6, not a near-zero lot.",
+    "evidence": {
+      "lidar": "osm:Ritter 5798 pts roofOf=14.6 p50=9.7 p75=11.4 p98=14.6 massOk bodyTight; lidar.heights['Ritter Hall']=12.5 (build-time; fresh rim-base re-sample 14.6)",
+      "gis": "arcgis.buildings Ritter={levels:5,height:21.3,newer:true}; no massing ring within 80 m (nearest Kaplan Lab 33 m, Scholander 68 m)",
+      "osm": "way index 65, osmH=9, centroid (−1150.1,1402)",
+      "apple": "Apple snapshot ritter.jpg z18 at 32.865321,-117.253502 — finished SIO seaside cluster (pier visible NW); multi-wing institutional roofs with mechanical plant; mature landscaping, no crane",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "gisTaller→newer heuristic misfire: GIS record much taller than a real 2014 plane, so the renderer pastes the record over a measured ~14–15 m building.",
+    "epoch_risk": "Possible but secondary — if Ritter grew a storey after 2014 the record could be current; Apple shows a finished mid-rise, not a 21 m tower, and the 2014 flight already sees a tight 14.6 m plane (not a demolished lot). Judge should not keep 21.3 without a source that resolves the vertical above the measured roof."
+  },
+  {
+    "id": "coastal-studies-low-plane",
+    "entity": "Center for Coastal Studies",
+    "where": {"x": -1193.8, "z": 1290.5},
+    "claim": "GIS mass ships h=3.8 via massHeights (gisH=12.8 / L3). arcgis.buildings marks newer=true (GIS 12.8 vs lidar.heights=4.7). OSM host is suppressed under the GIS mass.",
+    "observed": "Fresh EPT GIS ring: 2,231 pts, roofOf=5.0, p50=3.7, p75=3.8, p98=5.0, massOk bodyTight. OSM ring: 1,826 pts, roofOf=4.6; histogram 3 m:605 + 4 m:1076 of 1826 (≈92% in the 3–4 m band). Shipped 3.8 matches the 2014 plane; GIS 12.8 does not. Building at pier base was renovated 2019–20 (Miller Hull; concrete tank preserved, upper floor rebuilt) — Apple shows the finished renovated block.",
+    "evidence": {
+      "lidar": "gis:Coastal 2231 pts roofOf=5.0 p50=3.7 p75=3.8 p98=5.0 massOk; osm:Coastal 1826 pts roofOf=4.6 hist 3–4 m dominant (1681/1826); massHeights m:-1194,1291=3.8; lidar.heights=4.7",
+      "gis": "Center for Coastal Studies gisH=12.8 levels=3 area≈487; arcgis.buildings newer=true",
+      "osm": "way index 47, osmH=9, lidarH=4.7",
+      "apple": "Apple snapshot coastal-studies.jpg z19 at 32.866359,-117.253991 — pier landward base with white/tan finished roofs, palms, green bike-lane paint on the road; no crane",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Pier-base / seawall mass whose 2014 plane (~4 m) and university L3 record (12.8) disagree by two storeys — same newer-heuristic family as Ritter; renovation epoch makes the 2014 number unsafe to treat as 'today' without a post-reno vertical source.",
+    "epoch_risk": "HIGH — structure existed in 2014 (1963 tank + 1973 labs) and was heavily renovated 2019–20. The dense 3–4 m band is the flight's reading of the then-standing mass (likely tank/low roof), not an empty lot. Do not ship 3.8 as the renovated building; do not keep 12.8 without a measured post-2020 vertical. Asking Sahir / checking SV storeys is legitimate here."
+  },
+  {
+    "id": "t25-t30-cottage-canopy",
+    "entity": "T-25 Cottage / T-30 Cottage",
+    "where": {"x": -1085.0, "z": 970.0},
+    "claim": "GIS T-25 Cottage ships h=9.0 (gisH=4.3 / L1) via massHeights; T-30 Cottage ships h=10.7 (gisH=4.3 / L1). OSM hosts T-25/T-30 are suppressed under the GIS rings.",
+    "observed": "Fresh EPT gis:T25 357 pts roofOf=8.9 p50=4.1 p75=4.7 p98=8.9 — histogram mode 4 m (140/357). gis:T30 1188 pts roofOf=10.7 p50=4.7 p75=7.5 p98=10.7 bodyTight=false. Matching OSM rings measure clean low planes: osm:T25 roofOf=4.8 (157 pts); osm:T30 roofOf=6.8 (528 pts). GIS rings are ~2× the OSM area and pull canopy into massHeights; L1 record (4.3) matches the dense band, not the shipped 9–10.7.",
+    "evidence": {
+      "lidar": "gis:T25 357 pts roofOf=8.9 hist mode 4 m; gis:T30 1188 pts roofOf=10.7 p50=4.7 bodyTight=false; osm:T25 157 pts roofOf=4.8; osm:T30 528 pts roofOf=6.8; massHeights m:-1072,976=9 and m:-1097,965=10.7",
+      "gis": "T-25 Cottage gisH=4.3 L1 area≈136; T-30 Cottage gisH=4.3 L1 area≈129",
+      "osm": "T-25 way 429 osmH=4.5 lidarH=4.9 area≈70; T-30 way 423 osmH=4.5 lidarH=6.8 area≈77 — both centroids inside their GIS rings",
+      "apple": "Apple snapshot t25-t30.jpg z19 at 32.869228,-117.252806 — three small dark-roof cottages under mature tree canopy on the IGPP bluff; finished, no crane",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "L1 cottage GIS rings oversized into canopy — massOk admits roofOf on a tree-contaminated ring while the OSM body plane and the GIS level count both say ~4–5 m.",
+    "epoch_risk": "None for existence — Apple shows the cottages standing under trees on the 2014 footprints. Contamination, not a date."
+  },
+  {
+    "id": "noaa-name-mismatch-double",
+    "entity": "NOAA Southwest Fisheries Science Center",
+    "where": {"x": -908.1, "z": 837.9},
+    "claim": "GIS mass 'NOAA Southwest Fisheries Science Center' ships h=13.8 (massHeights). OSM ring 'NOAA - Southwest Fisheries Science Center Laboratory' (index 420) still assembles as src=osm h=14.7 beside it.",
+    "observed": "GIS centroid (−908.1,837.9) lies INSIDE the OSM ring; OSM interior coverage by GIS ≈0.475 (757/1593 grid samples) — GIS is the core, OSM is a larger outline. Name strings differ ('NOAA Southwest…' vs 'NOAA - Southwest… Laboratory'), so area-suppression / rename never fire. Fresh EPT: gis roofOf=13.8 (13997 pts, bodyTight); osm roofOf=14.7 (26180 pts). Two coincident extrusions over the shared pad.",
+    "evidence": {
+      "lidar": "gis:NOAA 13997 pts roofOf=13.8 p50=12.8 p75=13.6 p98=13.8 massOk; osm:NOAA 26180 pts roofOf=14.7 p50=10.4 p75=13.7 p98=14.7; massHeights on GIS=13.8; lidar.heights OSM name=14.7",
+      "gis": "NOAA Southwest Fisheries Science Center gisH=21.3 L5 area≈3092 massH=13.8",
+      "osm": "NOAA - Southwest Fisheries Science Center Laboratory way 420 osmH=20 lidarH=14.7 area≈6363 — still in assembleMasses as src=osm",
+      "apple": "Apple snapshot noaa.jpg z17 at 32.870358,-117.250912 — large multi-wing finished complex with grey roofs and solar arrays above the coastal bluff; standing today",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "GIS/OSM name-string mismatch (dash + 'Laboratory' suffix) defeats suppression — same double-render family as pre-fix unnamed overlaps, but here both sides are named.",
+    "epoch_risk": "None for existence — Apple shows one NOAA complex. Heights 13.8/14.7 agree within a metre; the bug is the double extrusion, not the plane."
+  },
+  {
+    "id": "spiess-hostless-unchallenged",
+    "entity": "Fred N. Spiess Hall / Spiess Hall",
+    "where": {"x": -917.6, "z": 989.7},
+    "claim": "GIS mass 'Fred N. Spiess Hall' ships unchallenged h=17.1 (gisH=17.1 / L4). No massHeights key. OSM 'Spiess Hall' is suppressed/renamed under it; lidar.heights['Spiess Hall']=12.5.",
+    "observed": "Fresh EPT of the GIS ring: 6,133 pts, roofOf=14.3, p50=12.8, p75=12.9, p98=14.3, guard=false, bodyTight=true, massOk=true — clean plane, Δ = −2.8 m vs shipped GIS. OSM Spiess ring: 6,102 pts, roofOf=12.6. massHeights['m:-918,990'] is undefined despite massOk on re-sample. Hostless because GIS name ≠ OSM name ('Fred N. Spiess Hall' vs 'Spiess Hall'), so PRE_2014_GIS_VERIFIED never listed it.",
+    "evidence": {
+      "lidar": "gis:Spiess 6133 pts roofOf=14.3 p50=12.8 p75=12.9 p98=14.3 massOk; osm:Spiess 6102 pts roofOf=12.6; massHeights[m:-918,990]=undefined; lidar.heights['Spiess Hall']=12.5",
+      "gis": "Fred N. Spiess Hall gisH=17.1 levels=4 area≈1233 — hostless, not in PRE_2014_GIS_VERIFIED",
+      "osm": "Spiess Hall way 70 osmH=9 lidarH=12.5 — suppressed under GIS after rename",
+      "apple": "Apple snapshot spiess.jpg z18 at 32.869047,-117.251019 — finished white/grey lab complex beside parking and the pedestrian bridge over La Jolla Shores Dr; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Hostless GIS mass left unchallenged because the facilities name carries an honorific prefix the OSM name lacks — PRE_2014_GIS_VERIFIED hole; plane is real, record is ~3 m high.",
+    "epoch_risk": "Low — Apple matches the 2014 footprint. Not a date conflict; the 14.3 m plane is this building."
+  },
+  {
+    "id": "birch-aquarium-step",
+    "entity": "Birch Aquarium",
+    "where": {"x": -885.6, "z": 1339.3},
+    "claim": "GIS 'Birch Aquarium at Scripps' ships h=6.5 via massHeights (gisH=12.8 / L3). OSM Birch suppressed.",
+    "observed": "Fresh EPT GIS: 21,647 pts, roofOf=6.2, p50=5.6, p75=6.2, p90=10.6, p98=12.3, guard=true, bodyTight=true, massOk=true — guard keeps p75. OSM ring: roofOf=7.2 same signature. Shipped 6.5 tracks the guarded low plane; GIS L3 12.8 tracks the p98 tail. Hillside aquarium with terraced roofs — single-plane massHeights may under-represent the tall wing.",
+    "evidence": {
+      "lidar": "gis:Birch 21647 pts roofOf=6.2 p50=5.6 p75=6.2 p98=12.3 guard bodyTight massOk; osm:Birch 17213 pts roofOf=7.2; massHeights=6.5; lidar.heights['Birch Aquarium']=7.2",
+      "gis": "Birch Aquarium at Scripps gisH=12.8 levels=3 area≈3699",
+      "osm": "Birch Aquarium way 211 osmH=12 lidarH=7.2",
+      "apple": "Apple snapshot birch.jpg z18 at 32.865890,-117.250677 — finished multi-wing complex with white/grey roofs, solar arrays, blue outdoor pool/courtyard, dense canopy to the north; standing today",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Stepped / hillside facility where canopy-guard + bodyTight admits a low plane while p98 still reaches the GIS storey count — may need MEASURE_MINUS_CONTAINED or partHeights, not a wholesale 6.5.",
+    "epoch_risk": "Low for existence. Height disagreement is geometry (terrace/step), not a post-2014 rebuild — aquarium predates the flight."
+  },
+  {
+    "id": "mcf-host-bleed-guard",
+    "entity": "Marine Conservation Facility",
+    "where": {"x": -1021.9, "z": 759.9},
+    "claim": "GIS 'Marine Conservation and Technology Facility' has no massHeights (massOk=false at build). Ships h=18.9 via host reconcile against lidar.heights['Marine Conservation Facility']=18.9 (gisH=17.1).",
+    "observed": "Fresh EPT GIS ring: 2,816 pts, roofOf=13.5, p50=9.7, p75=13.5, p90=18.7, p98=22.0, guard=true, bodyTight=false → massOk=false (withheld — correct). OSM host ring: 4,339 pts, roofOf=18.9, p50=11.0, p75=18.9, same guard/bodyTight=false. reconcile() then pastes the host's 18.9 onto the GIS mass. Names differ slightly (Technology Facility vs Facility) but host containment still fires.",
+    "evidence": {
+      "lidar": "gis:MCF 2816 pts roofOf=13.5 p50=9.7 guard bodyTight=false massOk=false; osm:MCF 4339 pts roofOf=18.9 p50=11 guard bodyTight=false massOk=false; lidar.heights['Marine Conservation Facility']=18.9; no massHeights key",
+      "gis": "Marine Conservation and Technology Facility gisH=17.1 levels=4 area≈2142",
+      "osm": "Marine Conservation Facility way 107 osmH=16 lidarH=18.9",
+      "apple": "Apple snapshot mcf.jpg z17 at 32.871127,-117.252132 — finished coastal lab complex north of MESOM/NOAA corridor; standing, landscaped",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "massOk=false correctly withholds massHeights, then host lidar.heights pastes a canopy-guarded plane onto the GIS mass — same bleed path as Che Café before HAND_AUDITED.",
+    "epoch_risk": "Low — Apple shows the facility standing on the 2014 footprint. The uncertainty is which plane is the roof, not whether the building is new."
+  },
+  {
+    "id": "osm403-underheight",
+    "entity": "unnamed OSM building index 403",
+    "where": {"x": -1015.6, "z": 630.9},
+    "claim": "Ships as OSM area-guess h=4.5 (still rendering; area≈170 m²). Not in lidar.osmHeights / OSM_UNNAMED_VERIFIED.",
+    "observed": "Fresh EPT: 381 pts, roofOf=9.8, p50=9.0, p75=9.3, p98=9.8, massOk=true. Histogram bimodal 1 m (108) and 9 m (158) — dense roof band at 9. Δ = +5.3 m vs the 4.5 guess. Apple shows the cliff-edge crescent / Seaside Forum neighbourhood on this pad.",
+    "evidence": {
+      "lidar": "osm:403 381 pts roofOf=9.8 p50=9.0 p75=9.3 p98=9.8 massOk; hist mode 9 m (158) plus low clutter at 1 m (108)",
+      "gis": "no covering GIS mass near this ring",
+      "osm": "unnamed way index 403, h=4.5, area≈170",
+      "apple": "Apple snapshot osm403.jpg z18 at 32.872294,-117.252063 — finished cliff-edge buildings including a grey crescent-roof volume; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Unnamed OSM area-guess under-reading a clean ~9–10 m plane — OSM_UNNAMED_VERIFIED candidate if Apple currency holds.",
+    "epoch_risk": "Low — Apple shows standing structure matching a real roof plane, not a post-2014 empty lot."
+  },
+  {
+    "id": "unnamed-guess-class-hole",
+    "entity": "125 unnamed OSM rings still shipping area-guesses in shard",
+    "where": {"x": -600.0, "z": 700.0},
+    "claim": "assembleMasses still extrudes 125 unnamed OSM rings in-box from campus-3d.json area-guesses (4.5 or 9 m), not in lidar.osmHeights / OSM_UNNAMED_VERIFIED. Coast Apartments GIS pads (9310/9321/…) ship unchallenged gisH=6.1 without massHeights.",
+    "observed": "Enumeration: 182 OSM buildings in-box, 43 named, 125 unnamed guesses still rendered. Spot EPT: osm:1036 roofOf=6.2 vs ship 9; 1048=3.2 vs 9; 1053=4.8 vs 9; 1073=3.7 vs 9; 1141=5.3 vs 9; 1145=3.1 vs 9 — several ≥3 m off. osm:1068 reads roofOf=24.3 but hist mode 3 m under canyon canopy (do not ship 24). Coast apt GIS sample 9321 Discovery Way: roofOf=5.8 clean vs gisH=6.1 (agreement). 9369/9383 massOk=false (canopy) — correctly unchallenged at 6.1.",
+    "evidence": {
+      "lidar": "sample: osm:1036=6.2; 1048=3.2; 1053=4.8; 1073=3.7; 1145=3.1; 403=9.8; 1068 hist mode 3 m / roofOf 24.3 crown; gis:9321 roofOf=5.8 massOk; gis:9369 massOk=false",
+      "gis": "Coast Apartments / Redwood+Discovery hostless pads gisH=6.1 L2, no massHeights — agreement ~0.3 m where clean",
+      "osm": "125 unnamed in-box still src=osm at area-guess heights; F_unverifiedGuess flagged 1033 (area 895) and 1036 (area 856) as large",
+      "apple": "Apple snapshots coast-apts.jpg / osm1068.jpg / osm1033.jpg — finished residential and SIO-adjacent pads; no widespread crane/dirt",
+      "probe": null
+    },
+    "severity": "low",
+    "suspected_class": "Shard-scale OSM_UNNAMED_VERIFIED gap (same handoff pattern as r2c1 Mesa pads) — outliers above deserve per-ring admission; bulk Coast Apartments GIS already within ~1 m of plane.",
+    "epoch_risk": "Per-ring — most look pre-2014 on Apple; any sparse/near-zero plane (none in the named high list except Azad/Pulse which are already POST_2014) needs its own epoch check before a 2014 number ships."
+  }
+]

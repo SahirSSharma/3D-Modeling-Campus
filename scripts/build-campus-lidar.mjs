@@ -133,6 +133,28 @@ const POST_2014_SITES = new Set([
   // and no 2014 number may ever touch it. (A screener proposed "measuring"
   // it at 4.2 — the exact epoch mistake this list exists to forbid.)
   "Satellite Utility Plant",
+  // Found by the r2c0 judge sweep (2026-08-05). Two SIO buildings whose 2014
+  // roofs no longer exist:
+  // Center for Coastal Studies — 1963 seawater tank + 1973 labs at the pier
+  // base, renovated 2019-20 (Miller Hull) with the upper floor rebuilt. The
+  // flight reads one tight 3-4 m band over the footprint (osm ring: 1,826
+  // returns, 83% in the 3 m bin, roofOf 4.6; GIS ring: 2,231 returns, same
+  // band) — the PRE-renovation low roof, which shipped as today's building
+  // at 3.8 m. Street View 2025-02 shows the finished multi-level block
+  // stepping down the bluff; the university's 12.8 m / 3-level record
+  // ships unchallenged.
+  "Center for Coastal Studies",
+  // Marine Conservation Facility — the 1963-64 NOAA fisheries lab, converted
+  // 2021-23 (Miller Hull) into the Marine Conservation and Technology
+  // Facility: new top-level pavilion and winged roof canopy on the old
+  // concrete frame. The 2014 returns (osm ring: 4,339 pts, p50 11.0 under a
+  // p75 of 18.9 — guard fires, body loose; the mass's own trace failed
+  // massOk the same way) mix the old lab's roof with the pine canopy, and
+  // the host-level reconcile pasted that 18.9 onto the mass. No 2014 number
+  // describes today's roofline; the university's current 17.1 m / 4-level
+  // record ships unchallenged, and Street View 2025-02 (the MCTF sign is on
+  // the building) supports a 4-level block stepping down the bluff.
+  "Marine Conservation Facility",
 ]);
 
 /* Post-2014 sites keyed by OSM ring INDEX — for what a name cannot say.
@@ -163,8 +185,17 @@ const POST_2014_SITES = new Set([
         pitched-roof building with its solar carports. Built after mid-2018,
         so the ring keeps its stated area guess of 12. (The registered
         Google chunk over this block is censored — Apple is the only
-        current nadir view of it, the VA-garage situation again.) */
-const POST_2014_OSM_RINGS = new Set([954, 833, 718, 1354]);
+        current nadir view of it, the VA-garage situation again.)
+   r2c0 judge sweep (2026-08-05):
+   1345: the unnamed courtyard pavilion between the Eighth College
+        residential blocks — an Apple z20 closeup shows the one-storey
+        dining pavilion (dark pitched roof, three round vents) standing on
+        a terrace the university's massing does not model (0.00 coverage).
+        Built with the 2023 neighbourhood: the flight read 549 returns, ALL
+        below grade (max -0.1 m) — the bare site. No 2014 number may ever
+        ship for it; the ring keeps its stated guess of 4.5, which a
+        one-storey pavilion supports. */
+const POST_2014_OSM_RINGS = new Set([954, 833, 718, 1354, 1345]);
 
 /* GIS masses verified PRE-2014 by hand (r0c1 sweep, 2026-08-04) whose ring
    has neither a named-OSM host nor an exact OSM name twin — the two paths
@@ -282,6 +313,22 @@ const MEASURE_MINUS_CONTAINED = {
   "Atkinson Hall": ["Atkinson Hall Tower"],
 };
 
+/* The OSM-HOST form of the same correction (r2c0 judge sweep, 2026-08-05),
+   in its own map because the two keys live in different namespaces — an
+   "Atkinson Hall" here would subtract the tower from the OSM ring too and
+   silently change what that host's number means. NOAA is the mirror image
+   of Atkinson: OSM traces the full fisheries complex (centre block plus
+   both low lab wings) while the university's ring is the tall centre block
+   alone — 98% of the record ring sits inside the OSM outline, covering 47%
+   of it. Measured whole, the outline's p98 (14.7) lands ON the centre
+   block, so the wings extruded a metre ABOVE the core's own measured plane
+   (13.8, 13,997 returns) and the two prisms z-fought where they overlap.
+   Minus the contained mass, the wings read their own p98 of 13.5 (12,697
+   returns, no guard, body tight) and the core keeps measuring itself. */
+const MEASURE_MINUS_CONTAINED_HOSTS = {
+  "NOAA - Southwest Fisheries Science Center Laboratory": ["NOAA Southwest Fisheries Science Center"],
+};
+
 /* UNNAMED OSM rings that render (no facilities mass covers them, no name to
    key lidar.heights) and are hand-verified UNCHANGED since the 2014 flight
    (Apple satellite, 2026-08-04) — so their 2014 roof plane may replace the
@@ -392,7 +439,49 @@ const MEASURE_MINUS_CONTAINED = {
         4.8 — the mapper under-tagged a tall single-storey shell.
      335: the center pavilion cluster of the same mall (3,173 returns,
         p98 7.8 on the targeted re-sample; the build's own tiling reads
-        7.7): plane 7.7, same under-tagged 4.8. */
+        7.7): plane 7.7, same under-tagged 4.8.
+   r2c0 judge sweep (2026-08-05) — the SIO shore and the La Jolla Shores
+   edge, each ring re-sampled full-depth and standing unchanged on today's
+   Apple:
+     403: the round white seawater tank on the beach below the Scripps
+        pier bluff — lettering on its top, standing today exactly as the
+        flight saw it. 381 returns split between the access deck and one
+        tight plane at 9-10 m (band p98 9.8 on the targeted re-sample;
+        the build's own tiling reads 9.9); the area guess was 4.5. No
+        facilities ring covers it.
+     1036: the house on La Jolla Farms' east edge (4,169 returns, band
+        4-5 m at 77%, roofOf 6.2; guessed 9).
+     1048: a one-storey flat-roof house (2,522 returns, 77% in the 2 m
+        bin alone, re-sample 3.2, the build's tiling 3.1; guessed 9).
+     1053: a low ranch house (1,184 returns, band 3-4 at 86%, roofOf 4.8;
+        guessed 9).
+     1073: a flat pad house (2,007 returns, 91% in a 2-3 m band, roofOf
+        3.7; guessed 9).
+     1141: the shore-colony house north of the aquarium bluff (1,408
+        returns, band 3-4 at 53% with a clean 5 m tail, roofOf 5.3;
+        guessed 9).
+     1145: its flat-roofed neighbour — 95% of its 903 returns in the 2 m
+        bin alone, the tightest plane in the batch; guessed 9. Its ring
+        pokes past AREA's south edge, so the build reads the in-box
+        subset: p98 2.5, against the full ring's 3.1 — both sit on the
+        SAME single band (the full read rides the band's 19-return
+        upper tail), so the in-box number ships, unlike the stepped
+        Ritter case where the box hid a different-height section.
+   Verified and deliberately NOT admitted:
+     216: an unnamed re-trace 75% covered by the university's "9369
+        Discovery Way" mass, which already is the building — the r2c1
+        coverage floor suppresses it at render, and its own trace is
+        canopy-smeared anyway (p50 5.6 under a p75 of 17.4).
+     1033: the bluff-rim terrace compound NW of NOAA. 1,000 returns and
+        not one of them rises a metre above the rim grade — the "roof" IS
+        the upper terrace, and the structures Apple shows descend the
+        cliff face BELOW it. An extrusion cannot say this shape honestly
+        in either direction; the ring keeps its guess and the limitation
+        is logged, the Scripps Memorial verdict again.
+     1068: a house whose returns are 73% eucalyptus (p50 17.1 over a
+        one-storey band at 2-3 m). The dense band is only 27% — below
+        every precedent this list has admitted — so the laser cannot see
+        this roof and the guess stands. */
 const OSM_UNNAMED_VERIFIED = new Set([
   786, 893,
   93, 77, 333, 335,
@@ -409,6 +498,7 @@ const OSM_UNNAMED_VERIFIED = new Set([
   1387, 1388,
   224, 826,
   764, 775,
+  403, 1036, 1048, 1053, 1073, 1141, 1145,
 ]);
 
 /* Hand-audited stats where the automatic roofOf() percentile choice is
@@ -466,6 +556,44 @@ const OSM_UNNAMED_VERIFIED = new Set([
      failure at half the height. The roof is the dense band's p50,
      4.2 m: its unshaded siblings Laurel Extension and Magnolia measure
      4.4 and 4.3 clean, and the record's eave is 4.3.
+   r2c0 judge sweep (2026-08-05), the SIO shore. AREA's south edge cuts
+   through the Scripps campus at z≈1382, so three pre-2014 buildings
+   straddling it measured a TRUNCATED footprint — the Qualcomm AA failure,
+   which is a different quantity, not a worse sample. Each value below is
+   the full-ring re-sample of the same EPT (2026-08-05):
+   - Ritter Hall (1931/1959, unchanged): the in-box subset read 12.5,
+     which sat 8.8 m under the university's 21.3 m record and tripped the
+     newer heuristic — a 2014 building rendering at a record height its
+     own roof contradicts. The full ring reads 14.6 (5,798 returns, p98,
+     no guard, body tight); 21.3 over 5 recorded levels was never this
+     building's roof.
+   - Vaughan Hall: in-box 14.4 off 87% of the ring; the full ring reads
+     14.9 (13,623 returns, 49% in one 13 m band).
+   - Nigella Hillgarth Education Center (1992, Birch's south pavilions):
+     in-box 4.7 off 81% of the ring reads the flat tops only; the full
+     ring's p98 of 6.2 is the pitched-pavilion ridges (1,884 returns —
+     the 5-7 m tail caps at 7.4, far too low to be the crowns Apple shows
+     only at the ring's edge).
+   Two more audits in this sweep are canopy/bleed failures, not clipping:
+   - Hubbs Hall Confrence Center (sic, OSM's spelling — the low
+     conference annex west of Hubbs Hall): its returns are 23% one tight
+     3-4 m band (the roof) and the rest a continuous 5-19 m smear off
+     Hubbs Hall's overhanging block and the palms between them, so
+     roofOf's p98 read 17.9 — and the name ALSO fuzzy-matched the "Hubbs
+     Hall" record (17.1 m, four levels) in the storeys map, wearing the
+     hall's identity twice over. The roof is the dense band's p50, 4.0 m;
+     the two-pass match in build-campus-arcgis.mjs now stops the record
+     theft, and this entry stops the smear.
+   - T-30 (the 1913-24 Scripps cottage rows): its own ring is clean to
+     p90 but the p98 (6.8) rides 27 crown returns from the overhanging
+     grove; the dense band's p98 is 5.0 — in family with its measured
+     siblings T-29 (3.8), T-31 (4.1) and the record's one-storey 4.3
+     eave. The audit also bars the "T-30 Cottage" GIS ring, drawn wide
+     into the grove (p98 10.7 — pure canopy), from shipping a mass plane.
+   - T-25: its OSM ring measures a clean 4.8 (157 returns, no canopy),
+     but the "T-25 Cottage" GIS ring is drawn wide like T-30's and
+     shipped a 9 m mass plane off the crowns. The audit pins the roof and
+     bars the mass — same failure, one grove.
    A null here means "measured, but not trustworthy: emit nothing". */
 const HAND_AUDITED = {
   "Tenaya Hall": 27.6,
@@ -478,6 +606,12 @@ const HAND_AUDITED = {
   "Solis Hall": 6.4,
   "Che Café Collective": 3.8,
   "Laurel": 4.2,
+  "Ritter Hall": 14.6,
+  "Vaughan Hall": 14.9,
+  "Nigella Hillgarth Education Center": 6.2,
+  "Hubbs Hall Confrence Center": 4.0,
+  "T-30": 5.0,
+  "T-25": 4.8,
 };
 
 const R = 6378137;
@@ -756,6 +890,18 @@ async function build() {
       }
       massTargets.push(t);
     }
+  }
+  /* Host targets carrying a minus-contained correction: subtract the listed
+     GIS rings from the OSM outline's returns so the outline measures the
+     part of the building it alone describes (see the map's comment). The
+     fold()'s generic exclude test does the rest. */
+  for (const t of targets) {
+    if (!t.isHost || !t.name || !(t.name in MEASURE_MINUS_CONTAINED_HOSTS)) continue;
+    const minus = MEASURE_MINUS_CONTAINED_HOSTS[t.name];
+    const rings = (arcgisData?.massing || [])
+      .filter((m) => minus.includes(m.n))
+      .map((m) => m.r[0].map(([x, z]) => localToMerc(x / 10, z / 10)));
+    if (rings.length) t.exclude = rings;
   }
   const HCELL = 60; // mercator metres per hash cell
   const hcell = new Map();

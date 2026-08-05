@@ -441,6 +441,48 @@ that pasted the grove onto the Che Café survives exactly one place campus-wide 
 fixes: Jacobs Hall, whose 33.2 m host plane over a 17.1 m four-level record is the cruciform
 core being genuinely taller than the record — the r1c1 verdict, unchanged.
 
+**The Scripps Oceanography judge pass (2026-08-05, r2c0).** The pier to La Jolla Shores. Ten
+screened candidates; the two loudest were dates, not errors, and the strangest was the survey's
+own box lying about a building that never changed:
+
+| Building | Shipped | Measured | Why it was wrong |
+|---|---|---|---|
+| Ritter Hall (1931/1959) | 21.3 m (the record, through a false `newer` flag) | **14.6 m** | AREA's south edge cuts the SIO shore, so Ritter measured only its in-box subset — 12.5 m, which sat 8.8 m under the 21.3 m five-level record and tripped the built-after-the-flight heuristic. The full ring reads one tight plane at 14.6 (5,798 returns); 21.3 was never this building's roof. A clipped footprint is a different quantity — the Qualcomm AA lesson, now audited the same way. |
+| Vaughan Hall | 14.4 m (in-box, 87 % of the ring) | **14.9 m** | same truncation, quieter failure: no flag fired, the number was just short. |
+| Nigella Hillgarth Education Center | 4.7 m (in-box, 81 %) | **6.2 m** | the clipped read caught only the flat tops; the full ring's p98 is the pitched-pavilion ridges, capping at 7.4 — far too low to be the crowns Apple shows only at the ring's edge. |
+| Hubbs Hall Confrence Center (sic) | 17.9 m, wearing Hubbs Hall's four-storey record | **4.0 m** | the low conference annex beside Hubbs Hall: 23 % of its returns are one tight 3–4 m band (the roof), the rest a 5–19 m smear off the hall's block and the palms between — and the fuzzy name match handed it the hall's 17.1 record on top. Hand-audited at the dense band's p50. |
+| T-25 / T-30 cottages (1913-24) | 9.0 / 10.7 m (GIS rings drawn into the grove) | **4.8 / 5.0 m** | the cottages measure clean on their own rings; the record rings reach into the eucalyptus and shipped canopy as mass planes. T-30's own p98 (6.8) rides 27 crown returns — the dense band says 5.0, in family with T-29 (3.8) and T-31 (4.1/5.0). |
+| NOAA Southwest Fisheries complex | outline 14.7 m z-fighting its 13.8 m core | **13.5 m wings + 13.8 m core** | OSM traces the whole complex, the university's ring is the tall centre block alone — measured whole, the outline's p98 lands ON the core and the low wings extrude a metre above their own roof. The outline now measures minus its contained mass (the Atkinson fix, host-side). |
+| Fred N. Spiess Hall | 17.1 m record, unchallenged | **14.3 m** | OSM drops the honorific and the mass centroid misses the offset OSM ring, so no path ever challenged the record. Renamed to its OSM name; the mass measures 14.3 (6,133 returns). |
+| Birch Aquarium / Hillgarth Center | one 6.5 m union mass; Hillgarth suppressed under it | **7.2 m + 6.2 m, own rings** | the record ring wraps both buildings (Hillgarth 97 % inside it) — the union drops (the Earth Hall fix, pre-registered by r0c1) and each renders its own plane. Birch's stepped gallery hall above 7.2 stays unrendered: a single plane cannot say it, better absent than wrong. |
+| Seawater tank, Scripps beach (unnamed, osm:403) | 4.5 m (area guess) | **9.9 m** | the round white tank below the pier bluff, lettering on its top, standing on today's Apple exactly as the flight saw it: half deck returns, half one tight 9–10 m plane. |
+| Six Shores/Farms houses (unnamed) | 9 m guesses | **2.5–6.2 m** | each with a dense single band (77–95 % of returns) and an Apple currency check; the flat-roof outlier ships 2.5 off a 95 %-dense band. |
+
+The epoch work: **Center for Coastal Studies** (renovated 2019-20, upper floor rebuilt) and the
+**Marine Conservation Facility** (the 1963-64 fisheries lab converted 2021-23, new pavilion and
+winged roof on the old frame) both join `POST_2014_SITES` — the flight's tight planes under them
+are the pre-renovation roofs, so the university's current records ship unchallenged (12.8 m/L3,
+17.1 m/L4; Street View 2025-02 shows both finished). And the unnamed ring in the Eighth College
+courtyard is a real 2023 dining pavilion the massing does not model (Apple z20: dark pitched
+roof, three vents) — the flight saw bare ground, so it joins `POST_2014_OSM_RINGS` and keeps its
+stated one-storey guess.
+
+One name-matching class fell: the storeys map's fuzzy match exists for honorific drift ("Fred
+N. Spiess Hall" → "Spiess Hall"), but it also let a name that merely CONTAINS a real building's
+name walk off with that building's record — the Hubbs annex failure. Matching is two-pass now:
+every exact claim registers first, and fuzzy may not take a claimed record. The campus-wide
+rebuild diff shows exactly the intended drops, plus two buildings the old order had wrongly
+starved (T-30 and Laurel now wear their own agreeing one-level records).
+
+The withhelds, better absent than wrong: Birch's gallery hall (above), and two rings whose
+guesses stand because no source resolves them — the bluff-rim terrace compound NW of NOAA
+(1,000 returns, none a metre above the rim grade: the "roof" is the upper terrace and the real
+structures descend the cliff below it — an extrusion cannot say that shape honestly) and a
+Shores house under 73 % eucalyptus. The rejections: Kaplan Lab's two rings agree at 8.1/8.2,
+nothing to fix; T-31 measures its own clean 5.0 and is pinned so its audited siblings' fixes
+never leak onto it; and an unnamed re-trace 75 % covered by the university's "9369 Discovery
+Way" mass needs no entry at all — the r2c1 unnamed-ring floor already suppresses it.
+
 ### The colours, measured off footage
 
 Satellite imagery sees roofs and ground; it cannot see a wall, a tree trunk, or the sky. For

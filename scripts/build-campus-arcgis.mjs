@@ -167,15 +167,25 @@ const norm = (s) =>
    10.4, the Forum's own plane), so both record rings drop and the OSM
    division renders. One entry catches both: the rings' centroids sit
    39.7 m apart, inside the 40 m match radius.
+   "Birch Aquarium at Scripps" (r2c0 judge sweep, 2026-08-05): the record
+   ring wraps the aquarium AND the Nigella Hillgarth Education Center —
+   Hillgarth's OSM ring is 97% inside it, Birch's own 94% — so Hillgarth
+   suppressed under the union and took its name down with it, while the
+   whole complex extruded at the union trace's guarded 6.5. The OSM
+   division measures the two buildings apart (Birch 7.2 — the guard's p75,
+   the 10-12 m gallery hall being a stepped 24% no single plane can carry;
+   Hillgarth 6.2, its audited full-ring ridge), so the union drops and each
+   footprint renders its own plane. The Splash Cafe record ring is its own
+   separate mass and keeps measuring itself (2.9).
    Same class, out of this shard's scope, left for their own sweeps:
-   64 Degrees (covers Revelle Commons/64 North), Birch Aquarium (covers
-   Hillgarth Center), Biomedical Sciences (covers WongAvery), Mandeville
-   Center (covers Print Labs). */
+   64 Degrees (covers Revelle Commons/64 North), Biomedical Sciences
+   (covers WongAvery), Mandeville Center (covers Print Labs). */
 const UNION_OUTLINES = [
   { n: "Earth Hall", near: [-156, -806] },
   { n: "Canyon Vista", near: [743, -669] },
   { n: "Seventh College East #4", near: [-42, -1099] },
   { n: "Mandell Weiss Forum", near: [29, 647] },
+  { n: "Birch Aquarium at Scripps", near: [-886, 1339] },
 ];
 
 /* Sites whose 2014 building has been demolished for a rebuild that has not
@@ -200,16 +210,22 @@ const UNDER_RECONSTRUCTION = [
    courtyard so no host was ever found, and the 18.3 m record shipped
    against a measured 16.1 m plane (5,446 returns, p98 16.1) — while the
    OSM ring, suppressed by coverage, took the "Black Hall" name down
-   with it. */
+   with it.
+   "Fred N. Spiess Hall" (r2c0 judge sweep, 2026-08-05): OSM drops the
+   honorific — "Spiess Hall" — and the mass's centroid lands outside the
+   offset OSM ring, so neither host containment nor the exact-name twin
+   ever fired and the 17.1 m record stood unchallenged over a measured
+   14.3 m roof plane (6,133 returns, p98, no guard). */
 const MASS_RENAMES = [
   { n: "Douglas Apartments", near: [769, -589], to: "Douglas Hall" },
   { n: "Black Apartments", near: [790, -451], to: "Black Hall" },
+  { n: "Fred N. Spiess Hall", near: [-918, 990], to: "Spiess Hall" },
 ];
 
 const massCorrection = (list, name, cx, cz) =>
   list.find((u) => u.n === name && Math.hypot(u.near[0] - cx, u.near[1] - cz) < 40);
 
-function matchName(campusName, byNorm) {
+function matchName(campusName, byNorm, exactClaimed) {
   const candidates = [campusName, ALIASES[campusName]].filter(Boolean).map(norm);
   /* EVERY exact candidate before ANY fuzzy one. Interleaved, "Biology"'s
      fuzzy pass startsWith-matched "Biology Field Station - Greenhouse 2"
@@ -220,6 +236,15 @@ function matchName(campusName, byNorm) {
   }
   for (const n of candidates) {
     for (const [k, v] of byNorm) {
+      /* A record some OSM name claims EXACTLY is that building's record —
+         fuzzy may not take it. The prefix/suffix rules exist for honorific
+         drift ("Fred N. Spiess Hall" -> "Spiess Hall"), but they also let a
+         name that merely CONTAINS a real building's name walk off with its
+         neighbour's storeys: "Hubbs Hall Confrence Center" (sic — the low
+         conference annex) startsWith-matched "Hubbs Hall" and wore the
+         four-storey record of the hall next door (r2c0 judge sweep,
+         2026-08-05). */
+      if (exactClaimed?.has(v)) continue;
       if (k.endsWith(` ${n}`) || n.endsWith(` ${k}`)) return v; // dropped honorific
       if (k.startsWith(`${n} `) || n.startsWith(`${k} `)) return v; // dropped suffix
     }
@@ -349,9 +374,20 @@ async function build() {
   const buildings = {};
   const unmatched = [];
   const rejected = [];
+  /* Two passes over the names: register every EXACT claim first, so no
+     fuzzy match can take a record whose building is on the map under the
+     record's own name (see matchName). */
+  const exactClaimed = new Set();
   for (const b of campus.buildings) {
     if (!b.n) continue;
-    const hit = matchName(b.n, byNorm);
+    for (const cand of [b.n, ALIASES[b.n]].filter(Boolean).map(norm)) {
+      const rec = byNorm.get(cand);
+      if (rec) { exactClaimed.add(rec); break; }
+    }
+  }
+  for (const b of campus.buildings) {
+    if (!b.n) continue;
+    const hit = matchName(b.n, byNorm, exactClaimed);
     if (!hit) { unmatched.push(b.n); continue; }
     /* A name match is a CLAIM, and LiDAR is the referee. Fuzzy matching once
        handed "Biology" the levels of a greenhouse at the Biology Field

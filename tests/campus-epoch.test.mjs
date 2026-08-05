@@ -73,6 +73,17 @@
  *      rings ship their planes, the post-2014 rings keep their declared
  *      guesses, and no unnamed ring renders while half-covered by the
  *      massing that already is the building.
+ *  16. The r2c0 judge pass's measurements hold: the SIO buildings the
+ *      survey box truncates ship their full-ring planes (and Ritter's
+ *      clipped subset stops firing the newer heuristic), the Hubbs
+ *      conference annex stops wearing the hall's record through the
+ *      fuzzy match, the T-cottages wear their roofs while the grove-wide
+ *      GIS rings ship no plane, Coastal Studies and MCF render their
+ *      post-renovation records once each, the NOAA outline measures
+ *      minus its contained core, Spiess Hall's record answers to its
+ *      measured roof, the Birch union splits so Hillgarth is its own
+ *      building, the verified shore rings ship their planes, and the
+ *      withheld rings stay withheld.
  */
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
@@ -131,6 +142,11 @@ const POST_2014 = [
   // the name-keyed checks are dormant — the per-ring guard on osm:718 and the
   // massHeights check below are the live ones.)
   "Satellite Utility Plant",
+  // r2c0 judge sweep: two SIO buildings whose 2014 roofs were rebuilt —
+  // Coastal Studies' upper floor in the 2019-20 renovation, MCF's whole
+  // roofline in the 2021-23 conversion. The flight measured predecessors.
+  "Center for Coastal Studies",
+  "Marine Conservation Facility",
 ];
 
 describe("1. LiDAR never claims a measurement of a post-2014 building", () => {
@@ -1438,5 +1454,177 @@ describe("15. the r2c1 judge pass (2026-08-05)", () => {
     assert.equal(potiker.length, 2, `the Potiker complex renders ${potiker.length} masses`);
     assert.deepEqual(potiker.map((m) => m.h).sort((a, b) => a - b), [9.4, 13.5],
       "each mass wears its own measured plane");
+  });
+});
+
+describe("16. the r2c0 judge pass (2026-08-05)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("the survey-box stragglers ship their full-ring planes, and Ritter sheds the false newer flag", () => {
+    /* AREA's south edge cuts the Scripps campus at z≈1382, so three
+       pre-2014 SIO buildings measured a TRUNCATED footprint — the
+       Qualcomm AA failure. Ritter Hall's in-box 12.5 sat 8.8 m under
+       the university's 21.3 m record and tripped the newer heuristic:
+       a 1931/1959 building rendered at a record height its own 2014
+       roof contradicts. The full-ring re-samples: Ritter 14.6 (5,798
+       returns), Vaughan 14.9 (13,623), Hillgarth 6.2 (1,884 — the
+       5-7 m tail is pitched-pavilion ridges capping at 7.4, not
+       crowns). */
+    assert.equal(LIDAR.heights["Ritter Hall"], 14.6, "Ritter's audited full-ring plane");
+    assert.equal(LIDAR.heights["Vaughan Hall"], 14.9, "Vaughan's audited full-ring plane");
+    assert.equal(LIDAR.heights["Nigella Hillgarth Education Center"], 6.2, "Hillgarth's ridges");
+    assert.equal(ARCGIS.buildings["Ritter Hall"]?.newer, undefined,
+      "the clipped measurement is firing the newer heuristic again");
+    assert.equal(tallest("Ritter Hall"), 14.6, `Ritter renders ${tallest("Ritter Hall")}`);
+    assert.equal(tallest("Vaughan Hall"), 14.9, `Vaughan renders ${tallest("Vaughan Hall")}`);
+  });
+
+  test("the Hubbs conference annex stops wearing the hall's record", () => {
+    /* "Hubbs Hall Confrence Center" (sic) startsWith-matched the "Hubbs
+       Hall" record in the storeys map and wore the four-storey 17.1 —
+       while its own returns (23% a tight 3-4 m band, the rest a 5-19 m
+       smear off Hubbs Hall's block and the palms between) pushed roofOf
+       to 17.9. Two fixes, both pinned: the exact-claim pass keeps the
+       record with the hall, and the audit ships the dense band's p50. */
+    assert.equal(LIDAR.heights["Hubbs Hall Confrence Center"], 4.0, "the audited roof");
+    assert.equal(ARCGIS.buildings["Hubbs Hall Confrence Center"], undefined,
+      "the annex fuzzy-matched its neighbour's record again");
+    assert.ok(ARCGIS.buildings["Hubbs Hall"], "the hall keeps its own record");
+    assert.equal(tallest("Hubbs Hall Confrence Center"), 4.0,
+      `the annex renders ${tallest("Hubbs Hall Confrence Center")}`);
+  });
+
+  test("the T-cottages wear their roofs and the grove-wide GIS rings ship no plane", () => {
+    /* The 1913-24 Scripps cottages measure clean on their own rings
+       (T-25: 4.8 off 157 returns; T-30: the dense band's p98 5.0 — its
+       raw p98 6.8 rides 27 crown returns), but the "T-25/T-30 Cottage"
+       GIS rings are drawn wide into the eucalyptus and shipped mass
+       planes of 9 and 10.7 — pure canopy wearing a roof's key. The
+       audits pin the roofs and bar the masses. */
+    assert.equal(LIDAR.heights["T-25"], 4.8);
+    assert.equal(LIDAR.heights["T-30"], 5.0);
+    assert.equal(LIDAR.massHeights["m:-1072,976"], undefined, "the T-25 Cottage canopy plane is back");
+    assert.equal(LIDAR.massHeights["m:-1097,965"], undefined, "the T-30 Cottage canopy plane is back");
+    assert.equal(tallest("T-25"), 4.8, `T-25 renders ${tallest("T-25")}`);
+    assert.equal(tallest("T-30"), 5.0, `T-30 renders ${tallest("T-30")}`);
+    /* The untouched sibling: T-31's own mass ring measures a clean 5.0
+       (its OSM-ring read is 4.1 — the mass's plane wins per-mass), so it
+       needed no audit and must not silently inherit one. */
+    assert.equal(tallest("T-31"), 5.0, "the untouched sibling's own mass plane");
+    assert.equal(LIDAR.heights["T-31"], 4.1, "T-31's OSM-ring read");
+  });
+
+  test("Coastal Studies and MCF render their post-renovation records, once each", () => {
+    /* Both buildings' 2014 roofs no longer exist — Coastal's upper floor
+       was rebuilt 2019-20, MCF's whole roofline in the 2021-23
+       conversion — so no 2014 number may ship for either (the flight
+       read Coastal's PRE-renovation 3-4 m band, and MCF's returns mix
+       the old lab with pine canopy). The university's current records
+       render instead: 12.8 and 17.1. */
+    assert.equal(LIDAR.heights["Center for Coastal Studies"], undefined);
+    assert.equal(LIDAR.heights["Marine Conservation Facility"], undefined);
+    assert.equal(LIDAR.massHeights["m:-1194,1291"], undefined,
+      "the pre-renovation Coastal plane shipped on the mass");
+    const coastal = MASSES.filter((m) => m.name === "Center for Coastal Studies");
+    assert.equal(coastal.length, 1, `Coastal renders ${coastal.length} times`);
+    assert.equal(coastal[0].h, 12.8, `Coastal ships ${coastal[0].h} — the 2014 predecessor again?`);
+    const mcf = MASSES.filter((m) => m.name === "Marine Conservation Facility");
+    assert.equal(mcf.length, 1, `MCF renders ${mcf.length} times`);
+    assert.equal(mcf[0].h, 17.1, `MCF ships ${mcf[0].h} — the canopy smear again?`);
+  });
+
+  test("the NOAA outline measures minus its contained core", () => {
+    /* OSM traces the full fisheries complex; the university's ring is
+       the tall centre block alone (98% inside the outline). Measured
+       whole, the outline's p98 landed ON the core, extruding the low
+       wings a metre above the core's own plane. Minus the contained
+       mass the wings read 13.5 (12,697 returns) and the core keeps its
+       13.8. */
+    assert.equal(LIDAR.heights["NOAA - Southwest Fisheries Science Center Laboratory"], 13.5,
+      "the wings' own plane, minus the core");
+    assert.equal(LIDAR.massHeights["m:-908,838"], 13.8, "the core's own plane");
+  });
+
+  test("the Spiess Hall record answers to its measured roof through the rename", () => {
+    /* OSM drops the honorific from "Fred N. Spiess Hall" and the mass
+       centroid misses the offset OSM ring, so the 17.1 m record stood
+       unchallenged over a 14.3 m measured plane. The rename gives the
+       mass its OSM name; measurement does the rest. */
+    assert.equal(LIDAR.massHeights["m:-918,990"], 14.3, "Spiess's measured plane");
+    const spiess = MASSES.filter((m) => m.name === "Spiess Hall");
+    assert.equal(spiess.length, 1, `Spiess renders ${spiess.length} times`);
+    assert.equal(spiess[0].src, "gis", "the mass wears the OSM name");
+    assert.equal(spiess[0].h, 14.3, `Spiess ships ${spiess[0].h}`);
+  });
+
+  test("the Birch Aquarium union splits — Hillgarth is its own building again", () => {
+    /* The record ring wraps the aquarium AND the Hillgarth Center (97%
+       of Hillgarth's ring inside it), so Hillgarth suppressed under the
+       union and the complex extruded at one guarded 6.5. The OSM
+       division renders: Birch at its own guarded 7.2 (the 10-12 m
+       gallery hall is a stepped 24% no single plane can carry — logged,
+       not invented), Hillgarth at its audited 6.2, and the Splash Cafe
+       record ring keeps measuring itself. */
+    assert.equal(MASSES.filter((m) => m.src === "gis" && m.name === "Birch Aquarium").length,
+      0, "the union outline is back");
+    const birch = MASSES.filter((m) => m.name === "Birch Aquarium");
+    assert.equal(birch.length, 1, `Birch renders ${birch.length} times`);
+    assert.equal(birch[0].src, "osm", "Birch renders from its own OSM footprint");
+    assert.equal(birch[0].h, 7.2, `Birch ships ${birch[0].h}`);
+    const hillgarth = MASSES.filter((m) => m.name === "Nigella Hillgarth Education Center");
+    assert.equal(hillgarth.length, 1, `Hillgarth renders ${hillgarth.length} times`);
+    assert.equal(hillgarth[0].h, 6.2, `Hillgarth ships ${hillgarth[0].h}`);
+    assert.equal(LIDAR.massHeights["m:-833,1350"], 2.9, "Splash keeps its own plane");
+  });
+
+  test("the verified SIO-shore and Shores-edge rings ship their planes", () => {
+    /* Each re-sampled full-depth and standing unchanged on today's
+       Apple. 403 is the round seawater tank on the beach below the
+       pier bluff — half its returns are the access deck, half one
+       tight 9-10 m plane; the guess was 4.5. 1145 pokes past AREA's
+       south edge, so the shipped 2.5 is the in-box read of its single
+       95%-dense band (the full ring's 3.1 rides the band's upper
+       tail). */
+    for (const [i, h, x, z] of [
+      [403, 9.9, -1015.6, 630.9], [1036, 6.2, -895.1, 594.0],
+      [1048, 3.1, -770.9, 694.9], [1053, 4.8, -714.3, 595.9],
+      [1073, 3.7, -475.7, 607.4], [1141, 5.3, -389.5, 1308.2],
+      [1145, 2.5, -372.9, 1394.3],
+    ]) {
+      assert.equal(LIDAR.osmHeights?.[i], h, `osm:${i}'s plane`);
+      assert.equal(rendersNear(x, z, 4).find((m) => m.src === "osm")?.h, h,
+        `osm:${i} renders at its plane`);
+    }
+  });
+
+  test("the withheld rings stay withheld and the Eighth pavilion keeps its guess", () => {
+    /* 1345: the courtyard pavilion between the Eighth College blocks —
+       built 2023; the flight read 549 returns, ALL below grade. Its
+       POST_2014_OSM_RINGS entry means no 2014 number may ever ship;
+       the stated 4.5 guess stands, which a one-storey pavilion
+       supports (Apple z20, 2026-08-05).
+       1033: the bluff-rim terrace NW of NOAA — not one return rises a
+       metre above the rim grade; an extrusion cannot say a cliff-face
+       compound honestly, so the guess stands and the gap is logged.
+       1068: 73% eucalyptus over a one-storey band; the laser cannot
+       see the roof.
+       216: an unnamed re-trace 75% covered by the "9369 Discovery Way"
+       mass — the r2c1 coverage floor suppresses it at render. */
+    for (const i of [1345, 1033, 1068, 216]) {
+      assert.equal(LIDAR.osmHeights?.[i], undefined, `a 2014 number shipped for osm:${i}`);
+    }
+    assert.equal(rendersNear(-178.0, 585.6, 4).find((m) => m.src === "osm")?.h, 4.5,
+      "the Eighth pavilion keeps its declared guess");
+    assert.equal(rendersNear(-573.3, 797.5, 4).filter((m) => m.src === "osm").length, 0,
+      "osm:216 renders through the massing that is the building");
   });
 });

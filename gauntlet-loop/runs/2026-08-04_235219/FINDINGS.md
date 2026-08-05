@@ -89,3 +89,106 @@ The reconcile branch that pasted the grove onto the Che Café survives exactly o
 campus-wide: Jacobs Hall, whose 33.2 m host plane over a 17.1 m / L4 record is the cruciform
 core being genuinely taller than the record — the r1c1 verdict, re-confirmed and unchanged.
 Every other paste is a HAND_AUDITED value or a measured plane replacing a default record.
+
+## Pass 1, shard r2c0 (lat 32.864542..32.873467, lng −117.254117..−117.242934 — 182 buildings, 43 named)
+
+`npm test`: **394/394 pass** (was 385; §16 of `campus-epoch.test.mjs` is new — 9 tests).
+`npm run check`: all five validators pass (285 measured heights — two fewer than r2c1 left it,
+because Coastal Studies and MCF are now epoch withholds; 502 massing parts — one fewer, the
+Birch union ring; campus-colors rebuilt to match). Every candidate in `pass1-r2c0.screen.json`
+was re-derived before judgement with a full-depth targeted EPT re-sample (33 targets, cross-
+checked against the screener's counts after an octree-pruning typo in the first grid probe was
+found and fixed — its numbers were undersampled and NONE were used), Apple snapshots for every
+site including a z20 closeup where a structure's existence was the question, crops of the
+registered Google chunks, and Street View metadata (pano dates re-derived, not remembered).
+Probe artifacts in `.cache/gauntlet-r2c0/judge/` (miniprobe.out, evidence/, eyelevel/).
+
+Eye-level verified through the real page (screenshots in `.cache/gauntlet-r2c0/judge/eyelevel/`):
+Ritter and Vaughan stand on their grade with the HUD measuring 14.6/14.9; the Hubbs conference
+annex reads as the low slab in front of the four-storey hall; the T-cottages sit one-storey
+among the labs; the NOAA wings and core step without z-fighting; Spiess reads four storeys at
+14.3; Birch and Hillgarth stand as two labelled low buildings with the gap between them; the
+beach tank rises against the bluff toe; the Eighth courtyard pavilion is a one-storey box among
+the towers; the Shores houses sit on their lawns.
+
+### Fixed — heights (every value from this pass's full-depth re-sample or the build's own tiling)
+
+| Entity | Was shipping | Now ships | Source | Test |
+|---|---|---|---|---|
+| Ritter Hall (`ritter-newer-overheight`) | 21.3 m — the record height through a false `newer` flag | **14.6 m** | HAND_AUDITED full-ring re-sample (5,798 returns, p98 14.6, no guard, body tight). AREA's south edge truncated the in-box measurement to 12.5, which sat 8.8 m under the 21.3 m / L5 record and tripped `gisTaller` — a 1931/1959 building "newer" than the flight. The Qualcomm AA failure: a clipped footprint is a different quantity | epoch §16 |
+| Vaughan Hall (same class, found by the class check) | 14.4 m (in-box, 87 % of the ring) | **14.9 m** | HAND_AUDITED full-ring re-sample, 13,623 returns, 49 % in one 13 m band | epoch §16 |
+| Nigella Hillgarth Education Center (same class) | 4.7 m (in-box, 81 %) | **6.2 m** | HAND_AUDITED full-ring p98 — the 5–7 m tail is the pitched-pavilion ridges capping at 7.4, far too low to be crowns; Apple shows the trees only at the ring's edge | epoch §16 |
+| Hubbs Hall Confrence Center (`hubbs-conf-canopy-bleed`) | 17.9 m, wearing the hall's L4 record | **4.0 m** | HAND_AUDITED dense band p50 (803 of 3,426 returns in the 3 m bin; the 5–19 m smear is Hubbs Hall's block and the palms). The name theft is a class fix, below | epoch §16 |
+| T-25 / T-30 (`t25-t30-cottage-canopy`) | masses at 9.0 / 10.7 m (grove-wide GIS rings) | **4.8 / 5.0 m** | HAND_AUDITED: T-25's own ring is clean (157 returns, roofOf 4.8); T-30's dense band p98 is 5.0 (its raw p98 6.8 rides 27 crown returns; siblings T-29 3.8, T-31 4.1/5.0, record eave 4.3). The audits also bar both cottage masses from shipping canopy planes | epoch §16 |
+| NOAA outline (`noaa-name-mismatch-double`) | 14.7 m over the whole complex, z-fighting the 13.8 core | **13.5 m wings + 13.8 m core** | MEASURE_MINUS_CONTAINED_HOSTS: the record ring is the centre block alone (98 % inside the outline); minus it, the wings read one plane (12,697 returns, p98 13.5, body tight) and the core keeps its own | epoch §16 |
+| Fred N. Spiess Hall (`spiess-hostless-unchallenged`) | 17.1 m record, unchallenged | **14.3 m** | MASS_RENAMES to OSM's "Spiess Hall" (honorific drop; centroid misses the offset OSM ring so no host path ever fired); the renamed mass measures 6,133 returns, p98 14.3 | epoch §16 |
+| Birch Aquarium / Hillgarth (`birch-aquarium-step`) | one union mass at 6.5 m; Hillgarth suppressed | **7.2 m Birch + 6.2 m Hillgarth, own rings** | UNION_OUTLINES (pre-registered by r0c1 as out-of-scope, now done): the record ring wraps both buildings — Hillgarth 97 % inside it. Birch's 7.2 is its own guarded p75; the 10–12 m gallery hall is a stepped 24 % no single plane can carry (logged below) | epoch §16 |
+| Seawater tank, Scripps beach (`osm403-underheight`, osm:403) | 4.5 m area guess | **9.9 m** | OSM_UNNAMED_VERIFIED: 381 returns split deck / one tight 9–10 m plane (re-sample p98 9.8, the build's tiling 9.9 — the shipped number is the pipeline's); standing lettered on today's Apple | epoch §16 |
+| Shores/Farms houses (from `unnamed-guess-class-hole`): osm:1036, 1048, 1053, 1073, 1141, 1145 | 9 m guesses | **6.2 / 3.1 / 4.8 / 3.7 / 5.3 / 2.5 m** | OSM_UNNAMED_VERIFIED, each with a dense single band (77–95 %) and an Apple check. 1145 pokes past AREA's south edge; its 2.5 is the in-box read of a 95 %-dense single band (full ring 3.1 rides the band's tail) — same plane, stated | epoch §16 |
+
+### Fixed — classes (the case was never the fix)
+
+| Class | Members found | Root cause | Fix | Test |
+|---|---|---|---|---|
+| Fuzzy name match stealing a claimed record | "Hubbs Hall Confrence Center" wearing "Hubbs Hall"'s L4/17.1 record. Campus-wide rebuild diff shows exactly the intended drops plus two GAINS the old order missed (T-30 and Laurel now match their own agreeing L1 records) | `matchName`'s prefix/suffix rules exist for honorific drift, but they also let a name that merely CONTAINS a real building's name take that building's record | two passes in `build-campus-arcgis.mjs`: every EXACT claim registers first; fuzzy skips claimed records | epoch §16 |
+| Survey-box truncation firing `gisTaller` | Ritter (fired, rendered 21.3), Vaughan and Hillgarth (same truncation, undershipped without firing) | AREA's south edge cuts the SIO shore; an in-box measurement of a straddling ring is a different quantity, and the reconcile heuristics consumed it as THE height | the three full-ring HAND_AUDITED entries above (the established Qualcomm AA remedy). The AREA box itself stands — widening it re-fetches the whole survey and is not this pass's call; noted as a standing hazard for any shard the box edge crosses | epoch §16 |
+| MEASURE_MINUS_CONTAINED, OSM-host form | NOAA (the only member found) | the existing map keys GIS mass names; NOAA's containment runs the other way (record ring inside OSM outline). A separate map because the namespaces collide — an "Atkinson Hall" host entry would silently change what that host's number means | `MEASURE_MINUS_CONTAINED_HOSTS` in `build-campus-lidar.mjs`, applied to host targets through the same generic exclude the fold already tests | epoch §16 |
+
+### Epoch verdicts (dates, not errors)
+
+- **`coastal-studies-low-plane`** — the screen read the 3.8 m mass plane as the error; the epoch
+  is. The Center for Coastal Studies was renovated 2019-20 (Miller Hull; upper floor rebuilt):
+  the flight's tight 3–4 m band (83 % of 1,826 returns) is the PRE-renovation roof, and Street
+  View 2025-02 shows the finished multi-level block. "Center for Coastal Studies" joins
+  `POST_2014_SITES`; the 12.8 m / L3 record ships unchallenged; the stale `newer` flag drops.
+- **`mcf-host-bleed-guard`** — same shape. The 1963-64 fisheries lab was converted 2021-23
+  (Miller Hull; new top pavilion and winged roof on the old frame), so the 18.9 m host paste
+  (p75 of a returns mix: old roof at 10–11, pines to 27) described a roofline that no longer
+  exists. "Marine Conservation Facility" joins `POST_2014_SITES`; the 17.1 m / L4 record ships
+  unchallenged; Street View 2025-02 (the MCTF sign is up) supports it.
+- **osm:1345** (from `unnamed-guess-class-hole`) — the unnamed ring in the Eighth College
+  courtyard is a REAL one-storey dining pavilion (Apple z20: dark pitched roof, three vents, on
+  a terrace the massing does not model — 0.00 coverage), built with the 2023 neighbourhood. The
+  flight read 549 returns, all below grade. Joins `POST_2014_OSM_RINGS`; keeps its stated 4.5
+  guess, which a one-storey pavilion supports.
+
+### Withheld (better absent than wrong)
+
+- **Birch Aquarium's gallery hall** above the 7.2 m plane: a stepped mass with no OSM parts —
+  extruding p98 12.4 would inflate the whole footprint. The Scripps Memorial verdict again;
+  the hall stays unrendered above the main plane until a parts-level source exists.
+- **osm:1033**, the bluff-rim terrace compound NW of NOAA: 1,000 returns and not one rises a
+  metre above the rim grade — the "roof" IS the upper terrace and the real structures descend
+  the cliff face below it. An extrusion cannot say this shape honestly in either direction;
+  the 9 m guess stands, stated as a guess, and the limitation is logged here.
+- **osm:1068**: 73 % of its returns are eucalyptus (p50 17.1 over a one-storey 2–3 m band at
+  27 % — below every admission precedent). The laser cannot see this roof; the guess stands.
+
+### Rejected candidates (each re-measured before rejection; do not re-find these)
+
+- **Kaplan Lab clipping concern** (screener margin note) — REJECTED: the OSM ring and the GIS
+  ring agree, 8.1/8.2, full agreement with the shipped value. Nothing to fix.
+- **T-31** — untouched on purpose, and now pinned so it stays that way: its own mass ring
+  measures a clean 5.0 (OSM-ring read 4.1); no audit, no inheritance from its audited siblings.
+- **osm:216** (from `unnamed-guess-class-hole`) — no builder entry needed: it is an unnamed
+  re-trace 75 % covered by the university's "9369 Discovery Way" mass, so the r2c1 unnamed-ring
+  coverage floor already suppresses it at render, and its own trace is canopy-smeared anyway
+  (p50 5.6 under a p75 of 17.4). Pinned as a render assertion in §16.
+- **`unnamed-guess-class-hole`** as a wholesale demand — REJECTED as scoped, same verdict as
+  r2c1: the mechanism exists and this pass used it for seven admissions and four explicit
+  refusals; admitting every in-box unnamed ring needs a per-ring Apple currency check each,
+  which stays a batch job, not a reason to ship unverified numbers.
+
+### Handoffs / observations for later shards
+
+- **Piedra / Tierra (Nuevo East)**: post-2014 towers whose partial LiDAR planes (~19.4/17.8 in
+  the abandoned grid probe) were UNDERSAMPLED — the numbers are not trustworthy and were not
+  used. A future east-shard judge should re-derive from a full-depth probe before touching them.
+- **AREA's south edge** crosses the SIO shore strip (z≈1382): any building or ring straddling
+  it measures a truncated footprint. Ritter/Vaughan/Hillgarth are audited; osm:1145 is admitted
+  with the in-box read of its single band; anything else a screener flags on that line should
+  be checked for the same class before its number is believed.
+- **Splash Cafe / Blue Wave Bistro** (Birch's café): renders at its measured 2.9 m plane under
+  the rename to OSM's current name. The record ring stood in 2014 (tight 84 % band at 2.8 —
+  a same-footprint predecessor structure); if a future pass dates the current café fit-out as a
+  full rebuild, the epoch entry goes in then — the present render is measured, not guessed.
