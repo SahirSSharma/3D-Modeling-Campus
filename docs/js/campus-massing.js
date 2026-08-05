@@ -625,7 +625,50 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
     delete m._hostNameOnly;
   }
   for (const m of masses) if (m.h === undefined) m.h = m.gisH;
+
+  /* Wayfinding pins are published from OSM building centroids in
+     build-campus-3d.mjs — before this function knows which rings will
+     actually render. An oversized OSM union outline (Environmental
+     Management Facility, Electric Shop) has its centroid inside a
+     neighbour's GIS pad; ringCoveredBy suppresses the outline, the GIS
+     mass that already wears the name renders 40–80 m away, and
+     nearestPlace / teleport / search still name the neighbour. When the
+     OSM ring for a name did not render but a mass now carries that name,
+     the place pin moves onto the (tallest) mass. Pure swaps
+     (Meteor/Galathea) land on the post-rename mass, which is the same
+     footprint the OSM centroid already marked — a no-op to the metre.
+     Seeded / surface / path anchors are untouched: they have no OSM
+     building ring to suppress. */
+  reanchorPlacesToMasses(campus, masses);
   return masses;
+}
+
+/**
+ * Move campus.places[N] onto the rendered mass named N whenever the OSM
+ * ring that originally published the pin was suppressed. Mutates
+ * campus.places in place; safe to call more than once.
+ */
+export function reanchorPlacesToMasses(campus, masses) {
+  if (!campus?.places || !masses?.length) return;
+  const byName = new Map();
+  for (const m of masses) {
+    if (!m.name || !m.rings?.[0]) continue;
+    const [cx, cz] = centroidOf(m.rings[0]);
+    const prev = byName.get(m.name);
+    if (!prev || (m.h ?? 0) > prev.h) byName.set(m.name, { x: cx, z: cz, h: m.h ?? 0 });
+  }
+  const osmRenders = new Set();
+  for (const m of masses) {
+    if (m.src === "osm" && m.name) osmRenders.add(m.name);
+  }
+  const round1 = (v) => Math.round(v * 10) / 10;
+  for (const b of campus.buildings) {
+    if (!b.n || !campus.places[b.n]) continue;
+    if (osmRenders.has(b.n)) continue;
+    const hit = byName.get(b.n);
+    if (!hit) continue;
+    campus.places[b.n] = { x: round1(hit.x), z: round1(hit.z) };
+  }
 }
 
 /**
@@ -642,6 +685,8 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
  *   roofs  EVERY mass that got built, as { topY, ring } — see below.
  */
 export function createBuildings(scene, { campus, lidar, arcgis, colors, facades, heightAt }) {
+  /* assembleMasses also reanchors campus.places onto rendered masses when
+     an OSM outline was suppressed — nearestPlace reads those pins. */
   const masses = assembleMasses({ campus, lidar, arcgis, colors });
 
   /* facades is the whole campus-facades.json object; older callers/tests may

@@ -865,6 +865,23 @@ East 2,871 pts → 11.7). Same Alianza/Umoja courtyard-fill class, but those two
 | Geneva Hall | OSM 11.7 m outline **and** GIS West 13.7 / East 11.7 | **West 13.7 + East 11.7 only** | Wing-prefix outline rule in `assembleMasses`: ≥2 GIS masses whose names start with the OSM name have centroids inside → skip the outline. No hand list of halls. |
 | Student Center | OSM 8.6 m outline through A-wing plazas **and** the GIS A-buildings | **GIS A/B wings only** | Same rule — coverage ~0.69 under Buildings A/C/F/H/ES; ~663 m² of courtyard was extruding solid. Each wing keeps its own massHeights plane. |
 
+**The east-campus CSC place-pin pass (2026-08-05, r0c2 pass-3).** One high candidate:
+Environmental Management Facility's wayfinding pin sat at (1096.4, −606.7) — the centroid of
+an oversized OSM union outline whose ring is suppressed because that centroid falls inside
+Campus Services Complex - Building H. The university mass that actually wears the EMF name
+renders 77 m south at (1096.1, −683.8), height already honest (massHeights 7.7). Apple shows
+both pads finished today; this is identity/placement, not a date. `campus.places` is published
+from OSM centroids before `assembleMasses` knows which rings will render, so nearestPlace /
+teleport / search named Building H as "Environmental Management Facility".
+
+| Entity | Was shipping | Now ships | Why |
+|---|---|---|---|
+| Environmental Management Facility (place pin) | (1096.4, −606.7) on Building H | **(1096.1, −683.8)** on the GIS EMF mass | When an OSM named ring is suppressed but a rendered mass carries that name, `assembleMasses` reanchors `campus.places` onto the (tallest) mass. |
+| Electric Shop (place pin) | (1103.5, −465.9) on the suppressed hull | **(1099.1, −507.2)** on the GIS Electric Shop | Same rule, same CSC yard. |
+
+Pure swaps (Meteor/Galathea) stay put — the post-rename mass is the footprint OSM already
+marked. The Dean's Residence pin, outside this shard, lands on its house by the same rule.
+
 ### The colours, measured off footage
 
 Satellite imagery sees roofs and ground; it cannot see a wall, a tree trunk, or the sky. For

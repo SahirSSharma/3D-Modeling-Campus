@@ -1331,3 +1331,46 @@ None — the single screen candidate was accepted as a class hit.
   Vista, etc.) unchanged — not in this screen.
 - **Unnamed area-guess residual** in-box: not screened this pass (screen
   returned one high outline candidate only).
+
+---
+
+# FINDINGS — run `2026-08-05_033905` · shard r0c2 (pass 3)
+
+Pass 3 of the NE/east-campus CSC shard (Qualcomm / EMF / Scripps parking /
+greenhouses). Screen: 1 candidate (high). Judged by `cursor-grok-4.5-high`.
+
+Candidate in `pass3-r0c2.screen.json` was re-derived before judgement against
+shipped `campus-3d.json` / `campus-arcgis.json` / `campus-lidar.json` and the
+assembled mass list. Numbers matched the screener: OSM EMF area 6965 m²,
+centroid (1096.4, −606.7) inside Building H (1091.8, −608.9), GIS EMF at
+(1096.1, −683.8) Δ=77.1 m, massHeights `m:1096,-684`=7.7.
+
+### Fixed — place-pin class (not a one-name seed)
+
+| Entity | Was shipping | Now ships | Source | Test |
+|---|---|---|---|---|
+| Environmental Management Facility (`emf-place-mispin`) | place pin (1096.4, −606.7) on Building H | **(1096.1, −683.8)** on the GIS EMF mass | `reanchorPlacesToMasses` in `assembleMasses`: when an OSM named ring is suppressed but a rendered mass carries that name, `campus.places` moves onto the (tallest) mass. Height was already honest (7.7). Apple: both CSC pads finished today — identity, not epoch. | epoch §37 |
+| Electric Shop (class sibling, same CSC yard) | place pin (1103.5, −465.9) on suppressed hull | **(1099.1, −507.2)** on GIS Electric Shop | Same rule. OSM 3582 m² hull suppressed under facilities masses. | epoch §37 |
+
+Bonus outside-shard hit of the same rule: Pepper Canyon Assistant Dean's
+Residence place pin moves from the PC1300 block onto the house at (946.2, −2).
+
+### Rejected candidates
+
+None — the single screen candidate was accepted as a class hit.
+
+### Withheld
+
+None.
+
+### Handoffs / observations
+
+- **Meteor/Galathea**: reanchor is a no-op to the metre (post-rename mass =
+  OSM centroid). Pinned in §37 so a future pass cannot flip the labels back
+  onto the GIS spellings.
+- **Raw `campus-3d.json` places** still publish OSM centroids by design —
+  the OSM file stays OSM. Runtime assembly is where suppression is known.
+- **Remaining place-vs-GIS Δ without host-foreign pin** (SDSC, Wells Fargo,
+  Mayer, …): OSM ring often still represents the same building; not the
+  "pin on the wrong neighbour" class this pass fixed. Leave until a screen
+  claims nearestPlace misnames them.

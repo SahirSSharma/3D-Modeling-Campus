@@ -171,6 +171,11 @@
  *      detected by ≥2 GIS names that start with the OSM name), and the
  *      Student Center A outline yields the same way; each wing keeps
  *      its own massHeights plane.
+ *  37. The r0c2 pass-3 re-sweep's measurements hold: a suppressed OSM
+ *      union outline no longer publishes its centroid as campus.places
+ *      when a rendered mass already wears the name — Environmental
+ *      Management Facility and Electric Shop reanchor onto their GIS
+ *      masses; Meteor/Galathea stay on the post-rename footprints.
  */
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
@@ -3268,5 +3273,70 @@ describe("campus epoch — r0c1 pass-3 wing-prefix outlines (2026-08-05)", () =>
     const buildingA = rendersNear(79.1, 68.3, 4).find((m) => m.src === "gis");
     assert.ok(buildingA, "Student Center Building A vanished");
     assert.equal(buildingA.h, 10.6, `Building A renders ${buildingA.h}, plane is 10.6`);
+  });
+});
+
+describe("campus epoch — r0c2 pass-3 suppressed-outline place pins (2026-08-05)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+
+  test("Environmental Management Facility's place pin sits on its GIS mass, not Building H", () => {
+    /* OSM way named EMF is a 6,965 m² union outline whose centroid falls
+       inside Campus Services Complex - Building H at (1096.4, −606.7).
+       ringCoveredBy suppresses the outline (centroid hit); the university
+       mass named EMF renders at (1096.1, −683.8), 77 m south. Height path
+       was already honest — massHeights 7.7 — but nearestPlace / teleport
+       named Building H as "Environmental Management Facility" because
+       places still published the suppressed outline's centroid.
+       assembleMasses now reanchors places onto the rendered mass when the
+       OSM ring for that name did not render. Apple (2026-08-04) shows both
+       the north CSC shop cluster and the south solar-covered EMF pad
+       finished today — identity/placement, not a date conflict. */
+    const place = CAMPUS.places["Environmental Management Facility"];
+    assert.ok(place, "EMF place anchor vanished");
+    const mass = MASSES.find((m) => m.name === "Environmental Management Facility");
+    assert.ok(mass, "EMF mass vanished");
+    const [mx, mz] = centroidOf(mass.rings[0]);
+    assert.ok(Math.hypot(place.x - mx, place.z - mz) < 2,
+      `EMF place at (${place.x}, ${place.z}), mass at (${mx.toFixed(1)}, ${mz.toFixed(1)})`);
+    /* The old pin sat inside Building H — that neighbour must not own the name. */
+    const buildingH = MASSES.find((m) => m.name === "Campus Services Complex - Building H");
+    assert.ok(buildingH, "Building H vanished");
+    const [hx, hz] = centroidOf(buildingH.rings[0]);
+    assert.ok(Math.hypot(place.x - hx, place.z - hz) > 40,
+      `EMF place still near Building H (${Math.hypot(place.x - hx, place.z - hz).toFixed(1)} m)`);
+    assert.equal(mass.h, 7.7, `EMF height drifted to ${mass.h}`);
+  });
+
+  test("Electric Shop's place pin follows the same suppressed-outline rule", () => {
+    /* Same class, same CSC yard: OSM Electric Shop is a 3,582 m² hull
+       suppressed under the facilities masses; its centroid sat 42 m north
+       of the GIS Electric Shop. Reanchor lands the pin on the rendered
+       mass. */
+    const place = CAMPUS.places["Electric Shop"];
+    assert.ok(place, "Electric Shop place anchor vanished");
+    const mass = MASSES.find((m) => m.name === "Electric Shop");
+    assert.ok(mass, "Electric Shop mass vanished");
+    const [mx, mz] = centroidOf(mass.rings[0]);
+    assert.ok(Math.hypot(place.x - mx, place.z - mz) < 2,
+      `Electric Shop place at (${place.x}, ${place.z}), mass at (${mx.toFixed(1)}, ${mz.toFixed(1)})`);
+  });
+
+  test("Meteor/Galathea place pins stay on the post-rename footprints", () => {
+    /* Pure swap: OSM is the name authority. After the rename, Galathea's
+       mass stands where OSM Galathea's centroid always was — reanchor is
+       a no-op to the metre, and must not flip the labels back onto the
+       GIS spellings. */
+    for (const n of ["Galathea Hall", "Meteor Hall"]) {
+      const place = CAMPUS.places[n];
+      const mass = MASSES.find((m) => m.name === n);
+      assert.ok(place && mass, `${n} missing`);
+      const [mx, mz] = centroidOf(mass.rings[0]);
+      assert.ok(Math.hypot(place.x - mx, place.z - mz) < 3,
+        `${n} place at (${place.x}, ${place.z}), mass at (${mx.toFixed(1)}, ${mz.toFixed(1)})`);
+    }
   });
 });

@@ -1,0 +1,19 @@
+[
+  {
+    "id": "emf-place-mispin",
+    "entity": "Environmental Management Facility",
+    "where": {"x": 1096.4, "z": -606.7},
+    "claim": "campus.places[\"Environmental Management Facility\"] = (1096.4, −606.7), taken from the OSM way centroid. That same name also ships on the GIS mass at (1096.1, −683.8) h=7.7. Free-roam nearestPlace() and teleport/search read campus.places.",
+    "observed": "Place pin sits 5.1 m from Campus Services Complex - Building H (1091.8, −608.9, h=4.8) and 77.1 m north of the rendered GIS EMF mass. OSM EMF ring is an oversized union (area≈6965 m², 21 verts); its centroid falls inside the Building H GIS footprint (ringCoveredBy centroid test — that is why the OSM outline does not double-render). Interior GIS coverage of the OSM ring is 1414/1750 = 0.808 (under the 0.85 area floor; suppression survives only via the Building H centroid hit). Fresh EPT of the GIS EMF ring: 4,422 pts, roofOf=7.7, p50=6.2, p75=6.5, p98=7.7, dense 82.5% in 5–6 m, gap=1.2 — height itself is not the claim. Standing within 60 m of Building H, nearestPlace returns \"Environmental Management Facility\"; standing at the real EMF (Δ=77 m > 60 m callout radius) the place pin does not identify it.",
+    "evidence": {
+      "lidar": "gis:EMF 4422 pts roofOf=7.7 p50=6.2 p75=6.5 p98=7.7 gap=1.2 dense=82.5%@5–6 bodyTight massOk; massHeights[m:1096,-684]=7.7; OSM host lidar.heights[\"Environmental Management Facility\"]=9.4 (composite over the 6965 m² union, not rendered)",
+      "gis": "Environmental Management Facility @(1096.1,-683.8) gisH=4.3 L1 massH=7.7 area≈1812; Environmental Management Facility 2 @(1116,-717) gisH=4.3 massH=null ships 4.3 (EPT roofOf=4.0); Building H @(1091.8,-608.9) gisH=4.3 massH=4.8 — contains the OSM EMF centroid",
+      "osm": "way named Environmental Management Facility index 148, campus-3d h=20, centroid (1096.4,-606.7), area≈6965; places pin copies that centroid; OSM outline suppressed (centroid inside Building H); verts inside some GIS 4/21",
+      "apple": "Apple snapshots osm-emf-centroid.jpg z18 at 32.883490,-117.229477 (2738 kB, centerRGB≈152,152,148 ent=4.17) and emf-gis.jpg z18 at 32.884186,-117.229477 (2730 kB) — finished CSC yard today; Building H / Landscape Trailer / CSC Shops cluster at the place pin; the larger solar-covered EMF pad is visibly further south in the same yard, matching the GIS mass not the place pin; no crane",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "OSM union outline centroid published as campus.places pin while GIS already renders the correctly named mass elsewhere — nearestPlace/search name on the wrong building (Asante-host / oversized-ring identity family; height path already suppressed)",
+    "epoch_risk": "Low for existence — Apple shows both the north CSC shop cluster and the south EMF pad finished today, and 2014 LiDAR planes match the shipped GIS heights. This is an identity/placement failure from an oversized OSM name ring, not a date conflict between sources."
+  }
+]
