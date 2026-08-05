@@ -176,6 +176,12 @@
  *      when a rendered mass already wears the name — Environmental
  *      Management Facility and Electric Shop reanchor onto their GIS
  *      masses; Meteor/Galathea stay on the post-rename footprints.
+ *  38. The r1c1 pass-3 re-sweep's measurements hold: co-named GIS
+ *      micro-slivers (Bonner Hall 22 m² east fringe, Student Center B
+ *      16 m² canopy sliver) stay dropped — same-name sibling ≥5× the
+ *      area within 40 m, area <50 m²; nested-plaza coverage cannot
+ *      fire because coverage=0. Main Bonner (19.2) and International
+ *      Center West (8.2) keep their measured planes.
  */
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
@@ -544,7 +550,6 @@ describe("9. the north-west shard sweep (r0c0, 2026-08-04)", () => {
       "m:-28,-982": [26.1, "Wells Fargo Hall — GIS said 22.6"],
       "m:665,-123": [11.9, "Visual Arts Facility Building 2 — GIS said 10.4"],
       "m:-89,-131": [14.8, "Mandler Hall — GIS said 13.4"],
-      "m:99,201": [3.1, "Bonner Hall annex — GIS said 3.0, now measured"],
       "m:538,-290": [12.9, "Center for Memory and Recording Research"],
       "m:-172,-727": [4.2, "ERC Laundry South — GIS said 3.0"],
       "m:517,-85": [22.7, "Student Services Center — GIS said 21.9"],
@@ -552,6 +557,13 @@ describe("9. the north-west shard sweep (r0c0, 2026-08-04)", () => {
     for (const [key, [h, why]] of Object.entries(PLANES)) {
       assert.equal(LIDAR.massHeights[key], h, `${why} — massHeights[${key}]`);
     }
+    /* Bonner Hall's 22 m² east fringe (was m:99,201 at 3.1) measured a real
+       3 m plane in 2014, but Apple + Nominatim place it on amenity/parking
+       pavement — a co-named micro-sliver, not a second Bonner Hall. Dropped
+       by the class rule in build-campus-arcgis (r1c1 pass-3); the plane
+       key must stay absent so a future rebuild cannot quietly restore it. */
+    assert.equal(LIDAR.massHeights["m:99,201"], undefined,
+      "Bonner micro-sliver massHeights leaked back");
     /* The one fallback candidate whose returns are canopy-stepped emits
        nothing: Pepper Canyon Assistant Dean's Residence (p75−p50 > 2 under
        eucalyptus). Better absent than wrong. */
@@ -3338,5 +3350,61 @@ describe("campus epoch — r0c2 pass-3 suppressed-outline place pins (2026-08-05
       assert.ok(Math.hypot(place.x - mx, place.z - mz) < 3,
         `${n} place at (${place.x}, ${place.z}), mass at (${mx.toFixed(1)}, ${mz.toFixed(1)})`);
     }
+  });
+});
+
+describe("campus epoch — r1c1 pass-3 co-named micro-slivers (2026-08-05)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const areaOf = (ring) => {
+    let a = 0;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      a += (ring[j][0] + ring[i][0]) * (ring[j][1] - ring[i][1]);
+    }
+    return Math.abs(a) / 2;
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("Bonner Hall's 22 m² east fringe and Student Center B's 16 m² canopy sliver stay dropped", () => {
+    /* Facilities shipped co-named micro-rings outside the parent footprint
+       (coverage=0 — nested-plaza cannot fire). Fresh EPT: BonnerTiny 52 pts
+       roofOf=3 thinShelf (88.5% in 2–3 m, 6 spill at 19 m); SCB-tiny 91 pts
+       roofOf=8.6 matching the main hall plane. Nominatim: amenity/parking
+       and highway/Mandeville Lane. Apple z20 centres: grey asphalt /
+       dark canopy — not separate halls. Class rule in build-campus-arcgis:
+       same-name sibling ≥5× area within 40 m, tiny <50 m². Campus-wide
+       scan found only these two. */
+    assert.equal(rendersNear(99.4, 201.4, 4).find((m) => m.src === "gis"), undefined,
+      "Bonner Hall micro-sliver still extrudes at (99.4, 201.4)");
+    assert.equal(rendersNear(227.9, 90.9, 4).find((m) => m.src === "gis"), undefined,
+      "Student Center B micro-sliver still extrudes at (227.9, 90.9)");
+    assert.equal(LIDAR.massHeights["m:99,201"], undefined,
+      "Bonner micro-sliver massHeights leaked back");
+    /* No mass may wear "Student Center B" — the 777 m² sibling is
+       International Center West via host rename; the orphan name died
+       with the sliver. */
+    assert.equal(MASSES.find((m) => m.name === "Student Center B"), undefined,
+      "Student Center B name still ships on a mass");
+  });
+
+  test("main Bonner Hall and International Center West keep their measured planes", () => {
+    const bonner = MASSES.find((m) => m.name === "Bonner Hall" && m.src === "gis");
+    assert.ok(bonner, "main Bonner Hall vanished with its sliver");
+    assert.equal(bonner.h, 19.2, `Bonner Hall ships ${bonner.h}`);
+    assert.ok(areaOf(bonner.rings[0]) > 2000, `Bonner main area ${areaOf(bonner.rings[0]).toFixed(0)}`);
+    assert.equal(LIDAR.massHeights["m:80,205"], 19.2);
+
+    const icw = MASSES.find((m) => m.name === "International Center West" && m.src === "gis");
+    assert.ok(icw, "International Center West vanished");
+    assert.equal(icw.h, 8.2, `ICW ships ${icw.h}`);
+    assert.ok(areaOf(icw.rings[0]) > 500, `ICW area ${areaOf(icw.rings[0]).toFixed(0)}`);
+    assert.equal(LIDAR.massHeights["m:225,82"], 8.2);
   });
 });

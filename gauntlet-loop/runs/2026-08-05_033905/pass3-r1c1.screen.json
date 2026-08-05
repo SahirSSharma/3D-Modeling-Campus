@@ -1,0 +1,36 @@
+[
+  {
+    "id": "scb-orphan-sliver",
+    "entity": "Student Center B (16 m² GIS sliver) / International Center West",
+    "where": {"x": 227.9, "z": 90.9},
+    "claim": "assembleMasses ships a 16 m² GIS mass still named Student Center B (h=8.5, L2) at (227.9, 90.9). The 777 m² GIS Student Center B sibling at (224.6, 81.8) is renamed to International Center West (h=8.2) because its centroid sits inside the OSM International Center West ring. campus.places has no Student Center B pin; International Center West reanchors onto the 777 m² mass.",
+    "observed": "Only in-box orphan-name-on-sliver: tiny keeps the GIS name, macro is renamed away. Tiny→macro footprint coverage = 0 (centroid and all 6 verts outside the main ring). Fresh EPT: tiny 91 pts roofOf=8.6 p50=7.7 p75=8.0 p98=8.6 gap=0.6 dense=0.824 bodyTight massOk — plane matches the main hall, consistent with edge spill / annex smear, not a separate building. Main 4,920 pts roofOf=8.2 (guarded) ships 8.2 via massHeights[m:225,82]. Nominatim reverse at the tiny centroid → highway/unclassified Mandeville Lane. Apple scb-tiny.jpg z20 centerRGB=31,37,47 ent=6.83 — dark canopy, no separate roof pad.",
+    "evidence": {
+      "lidar": "gis:SCB-tiny 91 pts roofOf=8.6 p50=7.7 p75=8.0 p98=8.6 gap=0.6 dense2m=0.824 bodyTight massOk; gis:SCB-main(=ICW) 4920 pts roofOf=8.2 p50=6.6 p75=8.2 p98=21.1 guard bodyTight massOk; massHeights[m:225,82]=8.2; no massHeights for tiny",
+      "gis": "two Student Center B rings: a=777 L2 gisH=8.5 @(224.6,81.8) and a=16 L2 gisH=8.5 @(227.9,90.9)",
+      "osm": "International Center West way h=8.4 area≈744 centroid (222.3,84.6); contains the 777 m² GIS centroid; does not contain the 16 m² centroid — rename fires only on the macro",
+      "apple": "Apple snapshot scb-tiny.jpg z20 at 32.877178,-117.238762 (1862 kB) — centerRGB=31,37,47 ent=6.83 (tree canopy); scb-main.jpg z18 confirms the finished ICW/SCB hall roof standing today",
+      "probe": "Nominatim reverse @ tiny → class=highway type=unclassified name≈Mandeville Lane; campus-wide orphan-sliver scan of area<100 same-GIS-name pairs: only this hit in-box"
+    },
+    "severity": "high",
+    "suspected_class": "GIS micro-ring outside the OSM host outline keeps the facilities name after the real mass is host-renamed — orphan label on a non-building sliver (sibling of nested-plaza / Dean's-residence rename guards, but coverage=0 so nested rule cannot fire).",
+    "epoch_risk": "Low for existence of the main hall today (Apple + 2014 agree). The 16 m² ring is a records/rename shape, not a post-2014 rebuild. Do not admit the tiny plane as a second Student Center B."
+  },
+  {
+    "id": "bonner-gis-sliver",
+    "entity": "Bonner Hall (22 m² GIS sliver east of main)",
+    "where": {"x": 99.4, "z": 201.4},
+    "claim": "assembleMasses ships a second Bonner Hall mass: h=3.1 via massHeights[m:99,201] on a 22 m² GIS ring (gisH=17.1 L4) at (99.4, 201.4), 20.2 m from the main Bonner Hall (h=19.2, area≈3017).",
+    "observed": "Fresh EPT: 52 pts, roofOf=3.0, p50=2.5, p75=3.0, p98=19.9, guard=true, thinShelf=true (dense 88.5% in 2–3 m; 6 spill pts at 19 m from the adjacent hall). Footprint coverage tiny→main = 0; centroid 4.12 m outside the main edge. Nominatim reverse → amenity/parking on Gilman Drive. Apple bonner-tiny.jpg z20 centerRGB=113,116,117 ent=7.04 — dark pavement / east fringe of the white Bonner roof, not a separate L4 hall. Only in-box co-named micro+macro pair after the PCWest L1 pads were removed.",
+    "evidence": {
+      "lidar": "gis:BonnerTiny 52 pts roofOf=3 p50=2.5 p75=3 p98=19.9 gap=16.9 dense2m=0.885@2 thinShelf guard bodyTight massOk; hist 2m:36 3m:10 19m:6; massHeights[m:99,201]=3.1; gis:BonnerMain 8800 pts roofOf=19.2 p50=15.5 p75=15.5 p98=19.2 massOk",
+      "gis": "Bonner Hall a=3017 L4 gisH=17.1 @(79.5,205.1) AND Bonner Hall a=22 L4 gisH=17.1 @(99.4,201.4)",
+      "osm": "Bonner Hall way centroid ~(64.2,210.7); does not suppress either GIS ring",
+      "apple": "Apple snapshot bonner-tiny.jpg z20 at 32.876179,-117.240137 (1206 kB) — centerRGB=113,116,117 ent=7.04; bonner-main.jpg z18 shows the finished white Bonner roof with east mechanical protrusion standing today",
+      "probe": "Nominatim reverse @ tiny → class=amenity type=parking; campus-wide co-named micro+macro scan: only this pair remains in-box after pass-2 nested-plaza removals"
+    },
+    "severity": "medium",
+    "suspected_class": "GIS micro-ring / east-fringe sliver co-named with the parent hall — nested-plaza rule misses it (levels=4, coverage=0). Height path already took the dense 3 m body; the residual is the named extrusion itself.",
+    "epoch_risk": "Low — Apple and 2014 both see standing Bonner fabric. The 3 m plane may be a real low annex or parking-adjacent pad from 2014; shipping it as a second Bonner Hall L4 is a records label error, not a date conflict. Better absent as Bonner Hall than a 22 m² namesake."
+  }
+]

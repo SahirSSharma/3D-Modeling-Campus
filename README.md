@@ -162,9 +162,12 @@ checked building by building against a targeted re-sample of the same EPT:
 The Sanford case exposed a hole the whole campus shared: a massing ring whose centroid misses
 every named OSM footprint had no host, so its GIS value stood **unchallenged** — the epoch guard
 could not even ask the question. `build-campus-lidar.mjs` now falls back to the mass's own GIS
-name when it exactly matches an OSM building within 150 m; nine masses campus-wide are in that
+name when it exactly matches an OSM building within 150 m; eight masses campus-wide are in that
 class (Wells Fargo Hall 26.1, Mandler Hall 14.8, CMRR 12.9, Student Services Center 22.7, Visual
-Arts Building 2 11.9, Bonner Hall's annex 3.0, plus the three above). The tenth — Pepper Canyon
+Arts Building 2 11.9, plus the three above). A ninth — Bonner Hall's 22 m² east fringe — once
+measured 3.0 m on the same path, but Apple and Nominatim place that ring on amenity/parking
+pavement, so the co-named micro-sliver rule drops it rather than shipping a second Bonner Hall
+(r1c1 pass-3). The tenth — Pepper Canyon
 Assistant Dean's Residence — reads canopy-stepped under its eucalyptus and emits nothing.
 
 Two rendering fixes rode along. The SanGIS footprint for the Marshall Lower Apartments traces
@@ -644,6 +647,20 @@ thin-shelf cut (Sanford / Otterson); pasting the dense body flattens a real uppe
 VAF-3 position double still open (coverage 0). osm:441 bicycle shelter and osm:39 CVS pad —
 Δ under a storey vs their guesses; not a height class this pass. Roof-anchor class
 (Mandeville Δ −4.3 / CMME +4.2) remains a renderer handoff.
+
+**The academic-core pass-3 (2026-08-05, r1c1).** Same shard, third decide pass. Fresh screen
+of 2 candidates (1 high / 1 medium). Every claim re-derived from the screener's full-depth
+EPT (`/tmp/gauntlet-r1c1-p3/probe.json`); Apple currency re-checked per site; campus-wide
+scan of same-name micro+macro pairs before the class rule shipped.
+
+| Entity | Was shipping | Now ships | Why |
+|---|---|---|---|
+| Bonner Hall 22 m² east fringe | 3.1 m GIS L4 co-named with the 3,017 m² hall | **removed** | Coverage 0 under the parent (nested-plaza cannot fire). 52 returns, thinShelf dense 3 m body; Nominatim amenity/parking; Apple centre grey asphalt. Not a second L4 Bonner Hall. |
+| Student Center B 16 m² canopy sliver | 8.5 m GIS L2 still named Student Center B | **removed** | Macro sibling host-renamed to International Center West; the orphan kept the facilities name. 91 returns match the main 8.2 plane (edge spill); Nominatim highway/Mandeville Lane; Apple centre dark canopy. |
+
+Class rule in `build-campus-arcgis.mjs`: drop any mass <50 m² co-named with a sibling ≥5× its
+area within 40 m. Campus-wide, only these two hit. Main Bonner (19.2) and International Center
+West (8.2) keep their measured planes.
 
 **The health-campus / Pepper Canyon re-sweep (2026-08-05, r1c2).** Fresh screen of 13
 candidates (4 high / 6 medium / 3 low). Every height re-derived from the screener's

@@ -1374,3 +1374,53 @@ None.
   Mayer, …): OSM ring often still represents the same building; not the
   "pin on the wrong neighbour" class this pass fixed. Leave until a screen
   claims nearestPlace misnames them.
+
+---
+
+# FINDINGS — run `2026-08-05_033905` · shard r1c1 (pass 3)
+
+Pass 3 of the academic-core shard (Warren Mall / VA fringe / Mandeville /
+Bonner / International Center). Screen: 2 candidates (1 high / 1 medium).
+Judged by `cursor-grok-4.5-high`.
+
+Every candidate in `pass3-r1c1.screen.json` was re-derived before judgement
+against the screener's full-depth EPT (`/tmp/gauntlet-r1c1-p3/probe.json` —
+copied to `.cache/gauntlet-r1c1-p3/judge/`; point counts taken as the
+re-measurement: gis:BonnerTiny 52 / gis:BonnerMain 8,800 / gis:SCB-tiny 91 /
+gis:SCB-main 4,920), Apple snapshots in `/tmp/gauntlet-r1c1-p3/apple/`
+(copied to `.cache/gauntlet-r1c1-p3/evidence/`), an independent campus-wide
+scan of same-name micro+macro pairs in `campus-arcgis.json` (tiny <50 m²,
+macro ≥5×, within 40 m), and Nominatim reverse cited by the screener.
+
+### Fixed — phantoms (class rule, not a one-row patch)
+
+| Entity | Was shipping | Now ships | Source | Test |
+|---|---|---|---|---|
+| Bonner Hall 22 m² east fringe (`bonner-gis-sliver`) | 3.1 m via massHeights on a 22 m² L4 ring | **removed** | Co-named micro-sliver rule in `build-campus-arcgis.mjs`: area <50 + same-name sibling ≥5× within 40 m. Coverage 0 under parent (nested-plaza cannot fire). EPT: 52 pts, thinShelf dense 3 m; Nominatim amenity/parking; Apple centreRGB 113,116,117. | epoch §38 |
+| Student Center B 16 m² canopy sliver (`scb-orphan-sliver`) | 8.5 m GIS L2 still named Student Center B | **removed** | Same rule. Macro host-renamed to International Center West; orphan kept the facilities name. EPT: 91 pts roofOf 8.6 matching main plane (edge spill); Nominatim highway/Mandeville Lane; Apple centreRGB 31,37,47. | epoch §38 |
+
+Campus-wide scan found only these two co-named micro+macro pairs. Main
+Bonner (19.2 via `m:80,205`) and International Center West (8.2 via
+`m:225,82`) keep their measured planes. The prior §9 pin of `m:99,201`=3.1
+("Bonner Hall annex") is overturned: the plane was real, the named
+extrusion was not.
+
+### Rejected candidates
+
+None — both screen candidates were accepted as the same class hit.
+
+### Withheld (better absent than wrong)
+
+- **Bonner 22 m² / SCB 16 m²**: removed from the world, not given a height
+  or a rename. Pavement fringe and canopy smear forbid shipping either the
+  2014 plane or the facilities L4/L2 record under those names.
+
+### Handoffs / observations
+
+- **Nested-plaza vs micro-sliver**: nested-plaza needs levels=1 + coverage
+  ≥0.85; these rings fail both (L2/L4, coverage 0). The new rule is the
+  outside-parent complement — do not merge the cuts.
+- **massHeights `m:99,201`**: deleted with the mass. A future full
+  `build:lidar` will not re-admit it because the GIS ring is gone.
+- **VAF-3 position / roof-anchor class**: still open from prior r1c1
+  passes — not in this screen.

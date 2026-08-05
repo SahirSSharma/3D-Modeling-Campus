@@ -272,6 +272,61 @@ function dropNestedPlazaPads(massing) {
   return massing.filter((_, i) => !drop.has(i));
 }
 
+/* CO-NAMED MICRO-SLIVERS (r1c1 pass-3, 2026-08-05). Sibling of nested-
+   plaza, but coverage=0 so that rule cannot fire: facilities ships a
+   tiny GIS ring (<50 m²) co-named with a much larger sibling nearby,
+   outside the parent footprint. Bonner Hall's 22 m² east fringe wore
+   the L4=17.1 record on a 3 m pavement pad (Nominatim amenity/parking;
+   Apple centre grey asphalt). Student Center B's 16 m² canopy sliver
+   kept the facilities name after the 777 m² mass was host-renamed to
+   International Center West (Nominatim highway/Mandeville Lane; Apple
+   centre dark canopy). Campus-wide scan of same-name pairs with
+   tiny <50 m² and macro ≥5× found only these two. Better absent as a
+   named hall than a records smear on pavement / canopy. */
+const MICRO_SLIVER_AREA_M2 = 50;
+const MICRO_SLIVER_RATIO = 5;
+const MICRO_SLIVER_NEAR_M = 40;
+
+function dmRingAreaM2(ring) {
+  let a = 0;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    a += (ring[j][0] + ring[i][0]) * (ring[j][1] - ring[i][1]);
+  }
+  return Math.abs(a) / 2 / 100; /* dm² → m² */
+}
+
+function dmRingCentroidM(ring) {
+  let x = 0, z = 0;
+  for (const [X, Z] of ring) { x += X / 10; z += Z / 10; }
+  return [x / ring.length, z / ring.length];
+}
+
+function dropCoNamedMicroSlivers(massing) {
+  const drop = new Set();
+  const meta = massing.map((m) => {
+    if (!m.r?.[0]) return null;
+    const [cx, cz] = dmRingCentroidM(m.r[0]);
+    return { a: dmRingAreaM2(m.r[0]), cx, cz };
+  });
+  for (let i = 0; i < massing.length; i++) {
+    const tiny = massing[i];
+    const tm = meta[i];
+    if (!tiny.n || !tm || tm.a >= MICRO_SLIVER_AREA_M2) continue;
+    for (let j = 0; j < massing.length; j++) {
+      if (i === j) continue;
+      const macro = massing[j];
+      const mm = meta[j];
+      if (!macro.n || macro.n !== tiny.n || !mm) continue;
+      if (mm.a < tm.a * MICRO_SLIVER_RATIO) continue;
+      if (Math.hypot(tm.cx - mm.cx, tm.cz - mm.cz) > MICRO_SLIVER_NEAR_M) continue;
+      drop.add(i);
+      break;
+    }
+  }
+  if (!drop.size) return massing;
+  return massing.filter((_, i) => !drop.has(i));
+}
+
 /* What the facilities inventory calls a mass -> the OSM building it IS.
    "Douglas Apartments" is Warren's Douglas Hall (the ring spans the hall
    and its east annex — one complex, one height class); without the OSM
@@ -419,14 +474,21 @@ async function build() {
       });
     }
   }
-  const beforeNested = massing.length;
-  const filtered = dropNestedPlazaPads(massing);
+  const beforeFilter = massing.length;
+  let filtered = dropNestedPlazaPads(massing);
+  const afterNested = filtered.length;
+  filtered = dropCoNamedMicroSlivers(filtered);
   massing.length = 0;
   massing.push(...filtered);
+  const notes = [];
+  if (beforeFilter > afterNested) {
+    notes.push(`dropped ${beforeFilter - afterNested} nested L1 plaza pads`);
+  }
+  if (afterNested > filtered.length) {
+    notes.push(`dropped ${afterNested - filtered.length} co-named micro-slivers`);
+  }
   console.log(`  ${massing.length} massing parts` +
-    (beforeNested > massing.length
-      ? ` (dropped ${beforeNested - massing.length} nested L1 plaza pads)`
-      : ""));
+    (notes.length ? ` (${notes.join("; ")})` : ""));
   /* Geisel keeps its own per-floor layer — and unlike everything else, its
      GEOMETRY ships too. Geisel is not a prism: the drum steps out then back
      in as it rises, and the university's floor polygons are the only public
