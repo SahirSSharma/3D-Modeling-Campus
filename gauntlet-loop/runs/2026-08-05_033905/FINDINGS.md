@@ -453,3 +453,68 @@ from each mass's histogram (builder `denseBandFraction`).
   blanket-admit.
 - **IGPP 2000 near-miss**: dense 84.9% — 0.1 pp under the cut. Do not lower
   the floor; a parts split for the plant shelf would let both planes ship.
+
+---
+
+# FINDINGS — run `2026-08-05_033905` · shard r2c1 (re-sweep)
+
+Pass 1 re-sweep of the theatre-district / Village Square / Villa La Jolla shard.
+Screen: 9 candidates (3 high / 5 medium / 1 low). Judged by `cursor-grok-4.5-high`.
+
+Every candidate in `pass1-r2c1.screen.json` was re-derived before judgement with an
+independent full-depth targeted EPT re-sample (8 targets in
+`.cache/gauntlet-r2c1b/judge/reprobe.json`; point counts matched the screener's
+`/tmp/gauntlet-r2c1b/probe.json` exactly — 588 / 726 / 1,373 / 1,757 / 1,362 /
+2,134 / 391 / 583), Apple snapshots from the screener's `/tmp/gauntlet-r2c1b/apple/`,
+and thin-shelf arithmetic re-computed per sample from each mass's histogram
+(builder `denseBandFraction`).
+
+### Fixed — heights (class admission, not a one-row patch)
+
+| Entity | Was shipping | Now ships | Source | Test |
+|---|---|---|---|---|
+| osm:103 (`osm-103-underheight`) | 4.8 m OSM under-tag | **8.2** | `OSM_UNNAMED_VERIFIED`: 1,757 pts, clean p98 8.2, bodyTight; sibling of 333 @ 8.2; Apple finished Village Square white roofs | epoch §25 |
+| osm:334 (`osm-334-underheight`) | 4.8 m OSM under-tag | **7.7** | `OSM_UNNAMED_VERIFIED`: 1,362 pts, clean p98 7.7; sibling of 335 @ 7.7 | epoch §25 |
+| osm:129 (`osm-129-underheight`) | 9 m area guess | **11.3** | `OSM_UNNAMED_VERIFIED`: 2,134 pts, clean single plane (p50 11.0 / p75 11.1 / p98 11.3) | epoch §25 |
+
+### Withheld (better absent than wrong)
+
+- **osm:708 (`osm-708-underheight`)**: multimodal hist (dense only 29.7% in the
+  5 m bin, bins spread 0–7). Apple shows finished commercial fabric north of the
+  teal-arch strip, but the 2014 sample has no clean body plane to admit. Keep the
+  4.8 m guess. Pinned as EXCLUDED from osmHeights.
+
+### Rejected candidates (each re-measured before rejection; do not re-find these)
+
+- **`osm-707-underheight`** — REJECTED. Dense body 5.2 ≈ the 4.8 area guess
+  (Δ 0.4); roofOf 6.7 is a modest HVAC shelf (gap 1.5 under the 2 m thin-shelf
+  cut). Not an underheight miss. Guess stands; pinned in §25.
+- **`union-bank-thin-shelf`** — REJECTED. Dense 79.9% under the 85% thin-shelf
+  cut (IGPP / Perlman near-miss family), gap 2.7. Apple shows HVAC on the
+  finished Villa La Jolla strip roof; pasting the dense 5.3 body would flatten a
+  real plant shelf. heights['Union Bank']=8 stands. Pinned in §25.
+- **`uc-cyclery-thin-shelf`** — REJECTED. Gap 1.5 under the 2 m thin-shelf cut
+  entirely; dense body 5.2 under roofOf 6.8 is plant noise on the same strip,
+  not a thin shelf. heights['UC Cyclery']=6.8 stands. Pinned in §25.
+- **`james-place-interior-forum`** — REJECTED as a height bug. James ships
+  massHeights 5.1; Forum ships host 10.5 — both correct. Residual is the OSM
+  Forum ring still containing James' Place (84% of interior samples) — a
+  mapping / outline handoff, same class as NOAA's missing courtyard hole.
+  Prior r2c1 pass already fixed the rename-into-rendering guard. Both planes
+  re-pinned in §25.
+- **`unnamed-guess-class-hole`** — REJECTED as scoped, same verdict as every
+  other shard: the mechanism exists and this pass used it for three admissions
+  and one explicit withhold; remaining in-shard unnamed guesses need per-ring
+  Apple + EPT, not a blanket admit.
+
+### Handoffs / observations for later shards / passes
+
+- **James' Place / Mandell Weiss Forum OSM split**: adding a hole (or a
+  separate way) for the cafe footprint inside the Forum ring would remove the
+  coincident extrusion without losing either plane. Mapping pass, not a height
+  pass — prior r2c1 FINDINGS already said this.
+- **Remaining unnamed guesses in-box**: ~360+ after this pass's three
+  admissions. Batch Apple+EPT verification remains the right shape; do not
+  blanket-admit.
+- **Union Bank near-miss**: dense 79.9% — 5.1 pp under the cut. Do not lower
+  the floor; a parts split for the HVAC shelf would let both planes ship.

@@ -651,6 +651,26 @@ const OSM_UNNAMED_VERIFIED = new Set([
        Coast / Discovery hostless GIS pads: L2=6.1 already matches the
              dense ~5.6 body; canopy neighbours are massOk=false. */
   1039, 1079, 1143, 1055, 1059,
+  /* r2c1 re-sweep 2026-08-05 — La Jolla Village Square / Villa La Jolla
+     corridor unnamed pads beside the already-admitted 93 / 77 / 333 / 335
+     set. Independent full-depth EPT (point counts matched the screener
+     exactly); Apple currency confirmed finished white commercial /
+     institutional roofs, no crane:
+       103: 1,757 returns, clean p98 8.2 (p50 7.3 / p75 7.4, dense 55% in
+            the 7 m bin) — was 4.8 under-tag (sibling of 333 @ 8.2).
+       334: 1,362 returns, clean p98 7.7 (p50 7.3 / p75 7.4, dense 60.8%)
+            — was 4.8 (sibling of 335 @ 7.7).
+       129: 2,134 returns, clean p98 11.3 (p50 11.0 / p75 11.1, dense
+            58.2% in the 11 m bin) — was 9 area guess.
+     Deliberately NOT admitted this pass:
+       707: dense body 5.2 ≈ the 4.8 guess (Δ 0.4); roofOf 6.7 is a modest
+            HVAC shelf (gap 1.5 under the 2 m thin-shelf cut). Not a miss.
+       708: multimodal (dense 29.7% @5, hist spread 0–7); no clean body
+            plane — keep the 4.8 guess rather than invent 7.2.
+       Union Bank / UC Cyclery (named hosts): thin-shelf near-misses —
+            dense 79.9% / gap 2.7 and gap 1.5 under the cut; Apple shows
+            HVAC on both finished strip roofs. Keep roofOf 8 / 6.8. */
+  103, 334, 129,
 ]);
 
 /* Hand-audited stats where the automatic roofOf() percentile choice is

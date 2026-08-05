@@ -640,6 +640,25 @@ thin-shelf cut (Perlman / McGill near-miss); massHeights 11.3 stands. NOAA dual 
 hostless GIS pads — L2=6.1 already matches the dense ~5.6 body; canopy neighbours stay
 `massOk=false` so roofOf 17 never auto-admits.
 
+**The theatre-district / Village Square re-sweep (2026-08-05, r2c1).** Fresh screen of 9
+candidates (3 high / 5 medium / 1 low). Every height re-derived from an independent
+full-depth EPT (point counts matched the screener's 1,757 / 1,362 / 2,134 / … exactly);
+Apple currency re-checked per site.
+
+| Entity | Was shipping | Now ships | Why |
+|---|---|---|---|
+| Village Square commercial (unnamed, osm:103) | 4.8 m OSM under-tag | **8.2 m** | Clean single plane (1,757 returns, p50 7.3 / p75 7.4); sibling of already-admitted 333 at 8.2. |
+| Village Square commercial (unnamed, osm:334) | 4.8 m OSM under-tag | **7.7 m** | Clean single plane (1,362 returns); sibling of already-admitted 335 at 7.7. |
+| Pad south of La Jolla Village Dr (unnamed, osm:129) | 9 m area guess | **11.3 m** | Textbook single plane (2,134 returns, p50 11.0 / p75 11.1 / p98 11.3). |
+
+Rejected / withheld, each re-measured: osm:707 — dense body already matches the 4.8 guess
+(Δ 0.4); roofOf 6.7 is HVAC (gap 1.5 under the 2 m cut). osm:708 — multimodal (dense
+29.7%), no clean body; guess stands. Union Bank / UC Cyclery — thin-shelf near-misses on
+the same strip (dense 79.9% / gap 1.5 under cut); Apple shows HVAC on both finished roofs,
+so roofOf 8 / 6.8 stands. James' Place inside the Forum ring — heights already correct
+(5.1 / 10.5); residual is an OSM outline handoff, not a height bug. Class-hole rejected
+as scoped.
+
 ### The colours, measured off footage
 
 Satellite imagery sees roofs and ground; it cannot see a wall, a tree trunk, or the sky. For

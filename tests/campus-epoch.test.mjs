@@ -2279,3 +2279,75 @@ describe("campus epoch — r2c0 re-sweep (2026-08-05)", () => {
       "9369 Discovery Way keeps L2 against eucalyptus");
   });
 });
+
+describe("campus epoch — r2c1 re-sweep (2026-08-05)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("three Village Square / Villa La Jolla unnamed pads ship their measured planes", () => {
+    /* Independent full-depth EPT re-sample matched the screener's point
+       counts exactly. Each stands finished on today's Apple (no crane).
+       103 / 334: La Jolla Village Square commercial under-tags — siblings
+       of the already-admitted 333 (8.2) / 335 (7.7). 129: institutional
+       pad south of La Jolla Village Dr, clean single plane at 11.3. */
+    for (const [i, h, x, z] of [
+      [103, 8.2, 840.1, 975.0], [334, 7.7, 804.2, 983.4],
+      [129, 11.3, 734.6, 802.5],
+    ]) {
+      assert.equal(LIDAR.osmHeights?.[i], h, `osm:${i}'s plane`);
+      assert.equal(rendersNear(x, z, 4).find((m) => m.src === "osm")?.h, h,
+        `osm:${i} renders at its plane`);
+    }
+  });
+
+  test("multimodal and near-guess Village Square pads keep their declared guesses", () => {
+    /* 707: dense body 5.2 ≈ the 4.8 area guess (Δ 0.4); roofOf 6.7 is a
+       modest HVAC shelf (gap 1.5 under the 2 m thin-shelf cut) — not a
+       miss. 708: multimodal hist (dense only 29.7% @5, bins spread 0–7);
+       no clean body plane to admit. Better keep the guesses. */
+    assert.equal(LIDAR.osmHeights?.[707], undefined, "a HVAC shelf shipped for osm:707");
+    assert.equal(LIDAR.osmHeights?.[708], undefined, "a multimodal smear shipped for osm:708");
+    assert.equal(rendersNear(789.0, 1108.1, 4).find((m) => m.src === "osm")?.h, 4.8,
+      "osm:707 keeps its declared guess");
+    assert.equal(rendersNear(758.2, 1110.5, 4).find((m) => m.src === "osm")?.h, 4.8,
+      "osm:708 keeps its declared guess");
+  });
+
+  test("Union Bank and UC Cyclery keep their roofOf shelves", () => {
+    /* Same Villa La Jolla commercial strip. Union Bank: dense 79.9% in
+       5–6 m under the 85% thin-shelf cut, gap 2.7 — IGPP / Perlman near-
+       miss; Apple shows HVAC on the finished roof, so pasting the dense
+       5.3 body would flatten a real plant shelf. UC Cyclery: gap 1.5
+       under the 2 m cut entirely; dense body 5.2 under a 6.8 roofOf is
+       plant noise, not a thin shelf. Both stand. */
+    assert.equal(LIDAR.heights["Union Bank"], 8);
+    assert.equal(LIDAR.heights["UC Cyclery"], 6.8);
+    assert.equal(rendersNear(777.2, 1173.1).find((m) => m.name === "Union Bank")?.h, 8);
+    assert.equal(rendersNear(795.9, 1169.8).find((m) => m.name === "UC Cyclery")?.h, 6.8);
+  });
+
+  test("James' Place keeps its own plane inside the Forum ring", () => {
+    /* Heights are correct (James 5.1 via massHeights; Forum 10.5 via
+       host). Prior r2c1 pass fixed the rename-into-rendering guard; the
+       residual is an OSM union outline that still contains James'
+       centroid — a mapping handoff, not a height bug. Pin both planes
+       so a future pass cannot "fix" either by pasting. */
+    assert.equal(LIDAR.massHeights["m:31,674"], 5.1);
+    assert.equal(LIDAR.heights["Mandell Weiss Forum"], 10.5);
+    const james = rendersNear(31.1, 674.1, 4).find((m) => /James/i.test(m.name || ""));
+    assert.ok(james, "James' Place vanished");
+    assert.equal(james.h, 5.1, `James' Place ships ${james.h}`);
+    assert.equal(james.src, "gis");
+    const forum = rendersNear(6.0, 657.6, 8).find((m) => m.name === "Mandell Weiss Forum");
+    assert.ok(forum, "Mandell Weiss Forum vanished");
+    assert.equal(forum.h, 10.5);
+  });
+});

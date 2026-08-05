@@ -1,0 +1,155 @@
+[
+  {
+    "id": "osm-103-underheight",
+    "entity": "unnamed osm:103 (La Jolla Village Square commercial pad)",
+    "where": {"x": 840.1, "z": 975.0},
+    "claim": "OSM area guess ships h=4.8 (src=osm); not in OSM_UNNAMED_VERIFIED / lidar.osmHeights.",
+    "observed": "Fresh full-depth EPT (1757 pts): roofOf=8.2, p50=7.3, p75=7.4, p90=7.5, p98=8.2, guard=false, bodyTight=true, massOk=true, dense 7 m bin 55% (967/1757). Shipping 4.8 is −3.4 m under the measured commercial roof — same under-tag class as prior-pass osm:333/335 (already admitted). Apple z18 at 32.869183,-117.232214 shows finished white-roof retail fabric standing today.",
+    "evidence": {
+      "lidar": "osm:103 1757 pts roofOf=8.2 p50=7.3 p75=7.4 p90=7.5 p98=8.2 no-guard bodyTight massOk dense7=55%; lidar.osmHeights[103] absent",
+      "gis": null,
+      "osm": "index 103 unnamed h=4.8 area≈709 verts=9; assembleMasses ships src=osm h=4.8",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c1b/apple/osm103.jpg z18 — finished La Jolla Village Square white commercial roofs + packed parking; no crane",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Unnamed OSM under-tagged commercial shell — sibling of osm:333/335 admissions from the prior r2c1 pass.",
+    "epoch_risk": "Low — Apple and 2014 plane both describe a standing retail pad. Disagreement is guess vs laser, not a date."
+  },
+  {
+    "id": "osm-334-underheight",
+    "entity": "unnamed osm:334 (La Jolla Village Square commercial pad)",
+    "where": {"x": 804.2, "z": 983.4},
+    "claim": "OSM area guess ships h=4.8 (src=osm); not in OSM_UNNAMED_VERIFIED / lidar.osmHeights.",
+    "observed": "Fresh full-depth EPT (1362 pts): roofOf=7.7, p50=7.3, p75=7.4, p90=7.5, p98=7.7, guard=false, bodyTight=true, massOk=true, dense 7 m bin 60.8% (828/1362). Shipping 4.8 is −2.9 m under the measured plane. Neighbour of Nordstrom Rack (which already ships lidar 9.8 correctly). Apple z18 at 32.869106,-117.232598 shows finished white retail roofs standing today.",
+    "evidence": {
+      "lidar": "osm:334 1362 pts roofOf=7.7 p50=7.3 p75=7.4 p90=7.5 p98=7.7 no-guard bodyTight massOk dense7=60.8%; lidar.osmHeights[334] absent; Nordstrom osm:706 ships roofOf=9.8 OK",
+      "gis": null,
+      "osm": "index 334 unnamed h=4.8 area≈506 verts=15; assembleMasses ships src=osm h=4.8",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c1b/apple/osm334.jpg z18 — finished Village Square white roofs beside Nordstrom Rack block; no crane",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Same unnamed commercial under-tag class as osm:103 / prior 333/335.",
+    "epoch_risk": "Low — commercial strip present in both 2014 and Apple today."
+  },
+  {
+    "id": "union-bank-thin-shelf",
+    "entity": "Union Bank",
+    "where": {"x": 777.2, "z": 1173.1},
+    "claim": "Named OSM ships src=osm h=8 via lidar.heights['Union Bank']=8 (auto roofOf/p98).",
+    "observed": "Fresh full-depth EPT (588 pts): roofOf=8.0, p50=5.2, p75=5.3, p90=6.1, p98=8.0, guard=false, bodyTight=true, massOk=true, dense 5 m bin 79.9% (470/588) with only 9 returns in the 8 m bin. Shipping p98=8 rides a thin mechanical/peak shelf ~2.7–3.0 m above the dense one-storey body. Thin-shelf host rule needs ≥85% dense band — this is 79.9% (near-miss of the IGPP/Asante cut). Apple z19 at 32.867391,-117.232887 shows the finished Villa La Jolla commercial strip (teal arched section + flat white roof with HVAC) standing today.",
+    "evidence": {
+      "lidar": "osm:UnionBank 588 pts roofOf=8 p50=5.2 p75=5.3 p90=6.1 p98=8 hist 5:470 6:54 4:41 8:9; lidar.heights['Union Bank']=8; dense5=79.9% gap(p98−p75)=2.7",
+      "gis": null,
+      "osm": "Union Bank way index 181 osmH=4.5 lidarH=8 area≈234; assembleMasses ships src=osm h=8",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c1b/apple/union-bank.jpg z19 — finished strip-mall roofs (teal arch + grey gable + white flat w/ HVAC) at Villa La Jolla Dr; no crane",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Named host thin-shelf — dense one-storey body with a sparse p98 shelf pasting ~1 storey of wrong height (Asante Meeting Rooms / IGPP near-miss family).",
+    "epoch_risk": "Low for existence — Apple shows the strip standing. The 5 vs 8 split is body vs thin roof feature on a pre-2014 pad, not a rebuild. Judge whether the 8 m shelf is real HVAC/parapet worth keeping or a paste to shed."
+  },
+  {
+    "id": "uc-cyclery-thin-shelf",
+    "entity": "UC Cyclery",
+    "where": {"x": 795.9, "z": 1169.8},
+    "claim": "Named OSM ships src=osm h=6.8 via lidar.heights['UC Cyclery']=6.8.",
+    "observed": "Fresh full-depth EPT (726 pts): roofOf=6.8, p50=5.2, p75=5.3, p90=5.4, p98=6.8, guard=false, bodyTight=true, massOk=true, dense 5 m bin 84.8% (616/726). Same strip as Union Bank; dense body sits ~1.5–1.8 m under shipped p98. Dense fraction is 0.2 pp under the 85% thin-shelf cut (IGPP-class near-miss). Apple z19 at 32.867421,-117.232687 shows the same finished commercial fabric.",
+    "evidence": {
+      "lidar": "osm:UCCyclery 726 pts roofOf=6.8 p50=5.2 p75=5.3 p90=5.4 p98=6.8 hist 5:616 6:60 4:33; lidar.heights['UC Cyclery']=6.8; dense5=84.8%",
+      "gis": null,
+      "osm": "UC Cyclery way index 230 osmH=4.5 lidarH=6.8 area≈287; assembleMasses ships src=osm h=6.8",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c1b/apple/uc-cyclery.jpg z19 — finished flat commercial roof with HVAC on the Villa La Jolla strip; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Named host thin-shelf near-miss (84.8% < 85% cut) — sibling of Union Bank on the same strip.",
+    "epoch_risk": "Low — finished pre-style commercial pad on Apple and 2014. Not a date conflict."
+  },
+  {
+    "id": "osm-129-underheight",
+    "entity": "unnamed osm:129 (pad south of La Jolla Village Dr / west of Villa La Jolla)",
+    "where": {"x": 734.6, "z": 802.5},
+    "claim": "OSM area guess ships h=9 (src=osm); not in OSM_UNNAMED_VERIFIED.",
+    "observed": "Fresh full-depth EPT (2134 pts): roofOf=11.3, p50=11.0, p75=11.1, p90=11.1, p98=11.3, guard=false, bodyTight=true, massOk=true, dense 11 m bin 58.2% (1242/2134). Shipping 9 is −2.3 m under a textbook single plane. Apple z18 at 32.870743,-117.233342 shows finished institutional/commercial white roof standing today.",
+    "evidence": {
+      "lidar": "osm:129 2134 pts roofOf=11.3 p50=11.0 p75=11.1 p90=11.1 p98=11.3 no-guard bodyTight massOk dense11=58.2%; lidar.osmHeights[129] absent",
+      "gis": null,
+      "osm": "index 129 unnamed h=9 area≈912 verts=18; assembleMasses ships src=osm h=9",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c1b/apple/osm129.jpg z18 — finished white roof south of La Jolla Village Dr; mature landscaping; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Unnamed area-guess underheight with a clean single-plane admission path.",
+    "epoch_risk": "Low — Apple and LiDAR agree a multi-storey pad stands here; the miss is 9 vs 11.3."
+  },
+  {
+    "id": "osm-708-underheight",
+    "entity": "unnamed osm:708 (commercial pad north of Urban Plates strip)",
+    "where": {"x": 758.2, "z": 1110.5},
+    "claim": "OSM area guess ships h=4.8 (src=osm); not in OSM_UNNAMED_VERIFIED.",
+    "observed": "Fresh full-depth EPT (583 pts): roofOf=7.2, p50=4.9, p75=5.4, p90=6.5, p98=7.2, guard=false, bodyTight=true, massOk=true, dense 5 m bin only 29.7% (stepped/plant mix). Shipping 4.8 is −2.4 m under roofOf. Apple z18 at 32.867957,-117.233090 shows finished commercial roofs north of the teal-arch strip.",
+    "evidence": {
+      "lidar": "osm:708 583 pts roofOf=7.2 p50=4.9 p75=5.4 p90=6.5 p98=7.2 bodyTight massOk dense5=29.7% (multimodal); lidar.osmHeights[708] absent",
+      "gis": null,
+      "osm": "index 708 unnamed h=4.8 area≈558 verts=10; assembleMasses ships src=osm h=4.8",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c1b/apple/osm708.jpg z18 — finished commercial fabric north of Villa La Jolla retail strip; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Unnamed commercial under-tag — plane less textbook than 103/334 (multimodal hist); admit roofOf only if judge reads the upper shelf as roof not plant.",
+    "epoch_risk": "Low for existence. Stepped hist could be real roof + HVAC rather than a date; do not invent a number past the clean body without Apple/SV storey check."
+  },
+  {
+    "id": "osm-707-underheight",
+    "entity": "unnamed osm:707 (commercial pad north of Urban Plates strip)",
+    "where": {"x": 789.0, "z": 1108.1},
+    "claim": "OSM area guess ships h=4.8 (src=osm); not in OSM_UNNAMED_VERIFIED.",
+    "observed": "Fresh full-depth EPT (391 pts): roofOf=6.7, p50=5.2, p75=5.2, p90=6.3, p98=6.7, guard=false, bodyTight=true, massOk=true, dense 5 m bin 57.8% (226/391). Shipping 4.8 is −1.9 m under roofOf / ~−0.4 under the dense body. Sibling of osm:708. Apple z18 at 32.867979,-117.232761 shows finished commercial roofs.",
+    "evidence": {
+      "lidar": "osm:707 391 pts roofOf=6.7 p50=5.2 p75=5.2 p90=6.3 p98=6.7 bodyTight massOk dense5=57.8%; lidar.osmHeights[707] absent",
+      "gis": null,
+      "osm": "index 707 unnamed h=4.8 area≈659 verts=10; assembleMasses ships src=osm h=4.8",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c1b/apple/osm707.jpg z18 — finished commercial roofs / parking north of the strip; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Unnamed commercial under-tag sibling of osm:708; denser body than 708 but smaller Δ.",
+    "epoch_risk": "Low — standing commercial pad in both epochs."
+  },
+  {
+    "id": "james-place-interior-forum",
+    "entity": "James' Place (GIS) inside Mandell Weiss Forum (OSM)",
+    "where": {"x": 31.1, "z": 674.1},
+    "claim": "James' Place ships src=gis h=5.1 (own massHeights). Mandell Weiss Forum ships src=osm h=10.5 on a ring that still contains James' Place.",
+    "observed": "Point-in-ring sample: 182/216 (84%) of James' Place interior samples fall inside Forum OSM way 802. EPT James: 1373 pts roofOf=5.1 p50=4.4 p75=4.5 p98=5.1 massOk=true (height OK). Forum OSM: prior probe 4407 pts roofOf=10.5 bodyTight. Net: a 10.5 m Forum extrusion occupies most of the 5.1 m cafe footprint — identity was fixed in the prior r2c1 pass (rename-into-rendering guard), but the geometry handoff remains. Apple z17 wagner/james-forum contact shows both volumes in the finished theatre grove.",
+    "evidence": {
+      "lidar": "gis:JamesPlace 1373 pts roofOf=5.1 p50=4.4 p75=4.5 p98=5.1 massOk; osm:Forum (prior) 4407 pts roofOf=10.5; massHeights m:31,674=5.1",
+      "gis": "James' Place gisH=8.5 L2 area≈527 at (31.1,674.1) — massHeights 5.1 overrides",
+      "osm": "Mandell Weiss Forum way 802 lidarH=10.5 area≈2029 at (6.0,657.6) still contains James centroid",
+      "apple": "Apple snapshots /tmp/gauntlet-r2c1b/apple/wagner.jpg + james-forum.jpg — finished Mandell Weiss / Shank / cafe grove; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "OSM union outline still covers a separate GIS volume — heights correct, coincident extrusion / walk-through risk. Prior r2c1 FINDINGS handoff: needs an OSM split of James' Place out of the Forum ring.",
+    "epoch_risk": "None for existence — both are pre-2014 theatre-district fabric on Apple. This is a mapping/outline problem, not a date."
+  },
+  {
+    "id": "unnamed-guess-class-hole",
+    "entity": "unnamed OSM buildings in shard r2c1 (367 still shipping area-guesses)",
+    "where": {"x": 500, "z": 900},
+    "claim": "assembleMasses still extrudes 367 unnamed OSM rings in-box from area-guesses (not in lidar.osmHeights). Prior r2c1 pass admitted 93/77/333/335; this re-sweep's outliers are 103/334/129/707/708.",
+    "observed": "Re-enumeration against current data: 400 OSM in-box, 22 named, 367 unnamed guesses still rendered. Spot checks where |ship−roofOf|<1 m (Mesa-style 516/517/523/527/687; grid-roof 41/309 at 12 vs roofOf 11.7–11.8) agree. Residential 652–656 dense modes sit on the 9 m guess even when roofOf reads 10.9–11.5 (stepped/ridge — not auto-admit). The class hole is missing per-index verification; the visible misses are the flagged outliers above.",
+    "evidence": {
+      "lidar": "sample agree: osm:41 roofOf=11.8 vs ship 12; 309=11.7 vs 12; 687=9.2 vs 9; 137=9.0 vs 9. Outliers: 103/334/129/707/708 as above. OSM_UNNAMED_VERIFIED campus-wide size=216 after r2c0 admits.",
+      "gis": "22 GIS masses in-box; most unnamed commercial/residential pads have no GIS twin",
+      "osm": "367 unnamed rings still shipping area guesses after prior admissions",
+      "apple": "Contact sheet under /tmp/gauntlet-r2c1b/apple/ — finished residential/commercial fabric; currency OK on probed pads",
+      "probe": null
+    },
+    "severity": "low",
+    "suspected_class": "Shard-wide OSM_UNNAMED_VERIFIED coverage gap — mechanism exists; do not blanket-admit. Outliers are the real defects.",
+    "epoch_risk": "Mixed per pad. TDLLN/Eighth (Sankofa/Pulse/Podemos/Survivance) and Satellite Utility Plant are already POST_2014; Mesa/commercial unnamed rings are mostly pre-2014. Treat each outlier's epoch separately."
+  }
+]
