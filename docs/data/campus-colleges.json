@@ -1,0 +1,1079 @@
+{
+ "_": "College boundaries and per-building affiliation. Seven polygons are OSM neighbourhoods; Eighth is derived from the member buildings Sahir named. A building outside every polygon has NO affiliation — that is a real answer, not a gap to fill.",
+ "generated": "2026-08-05T01:28:13.554Z",
+ "origin": {
+  "lat": 32.878,
+  "lng": -117.2412,
+  "mPerDegLat": 110574,
+  "mPerDegLng": 93489.7
+ },
+ "colleges": {
+  "Seventh College": {
+   "source": "OSM way/674120531",
+   "kind": "surveyed",
+   "ring": [
+    [
+     -215.5,
+     -1053.5
+    ],
+    [
+     -211.4,
+     -1084.1
+    ],
+    [
+     -193.4,
+     -1136.5
+    ],
+    [
+     -183.3,
+     -1162.1
+    ],
+    [
+     -153.4,
+     -1226.7
+    ],
+    [
+     -101.2,
+     -1205.4
+    ],
+    [
+     -94,
+     -1202.4
+    ],
+    [
+     -86.4,
+     -1199.7
+    ],
+    [
+     -78.2,
+     -1197.2
+    ],
+    [
+     -75.5,
+     -1194.5
+    ],
+    [
+     -55.9,
+     -1191.6
+    ],
+    [
+     -52.3,
+     -1193.5
+    ],
+    [
+     12.5,
+     -1193
+    ],
+    [
+     12.7,
+     -1165.4
+    ],
+    [
+     3,
+     -1146.6
+    ],
+    [
+     -16.7,
+     -1112.9
+    ],
+    [
+     -31.2,
+     -1071.2
+    ],
+    [
+     -39.1,
+     -1043.6
+    ],
+    [
+     -116.3,
+     -1043.4
+    ],
+    [
+     -123.1,
+     -1002.2
+    ],
+    [
+     -215.5,
+     -1053.5
+    ]
+   ]
+  },
+  "Eleanor Roosevelt College": {
+   "source": "OSM way/911401522",
+   "kind": "surveyed",
+   "ring": [
+    [
+     -231.6,
+     -922.2
+    ],
+    [
+     -231.6,
+     -920.6
+    ],
+    [
+     -232.8,
+     -660.3
+    ],
+    [
+     -232.8,
+     -659
+    ],
+    [
+     -229.3,
+     -654.7
+    ],
+    [
+     -228.9,
+     -648
+    ],
+    [
+     -109.8,
+     -650.9
+    ],
+    [
+     -108.5,
+     -638.6
+    ],
+    [
+     53.3,
+     -640.5
+    ],
+    [
+     53.6,
+     -612
+    ],
+    [
+     64.4,
+     -603.8
+    ],
+    [
+     222.3,
+     -604.2
+    ],
+    [
+     233.8,
+     -612.9
+    ],
+    [
+     236.2,
+     -749.2
+    ],
+    [
+     174.9,
+     -749.5
+    ],
+    [
+     150.4,
+     -757.7
+    ],
+    [
+     45.3,
+     -757.8
+    ],
+    [
+     44.7,
+     -810.4
+    ],
+    [
+     41.6,
+     -909.5
+    ],
+    [
+     41.6,
+     -911
+    ],
+    [
+     -23.4,
+     -923.3
+    ],
+    [
+     -201.7,
+     -922.3
+    ],
+    [
+     -231.6,
+     -922.2
+    ]
+   ]
+  },
+  "Thurgood Marshall College": {
+   "source": "OSM way/399594738",
+   "kind": "surveyed",
+   "ring": [
+    [
+     -228.6,
+     -638.1
+    ],
+    [
+     -116.9,
+     -638.5
+    ],
+    [
+     -115.9,
+     -633.3
+    ],
+    [
+     43.3,
+     -633.4
+    ],
+    [
+     43.9,
+     -594.9
+    ],
+    [
+     230,
+     -592.4
+    ],
+    [
+     230.3,
+     -454.9
+    ],
+    [
+     223.7,
+     -442.4
+    ],
+    [
+     224.7,
+     -384.3
+    ],
+    [
+     231.7,
+     -352.4
+    ],
+    [
+     230.1,
+     -317
+    ],
+    [
+     227.6,
+     -274.9
+    ],
+    [
+     199.5,
+     -242.6
+    ],
+    [
+     168,
+     -242.8
+    ],
+    [
+     163.1,
+     -241
+    ],
+    [
+     131.7,
+     -212.5
+    ],
+    [
+     124.4,
+     -208.8
+    ],
+    [
+     118,
+     -202.8
+    ],
+    [
+     111.8,
+     -194.8
+    ],
+    [
+     108.4,
+     -193.4
+    ],
+    [
+     61.5,
+     -193
+    ],
+    [
+     60.7,
+     -229.9
+    ],
+    [
+     60.4,
+     -245.1
+    ],
+    [
+     58.4,
+     -325.1
+    ],
+    [
+     54.1,
+     -346.3
+    ],
+    [
+     -19.5,
+     -346.3
+    ],
+    [
+     -230.1,
+     -346.2
+    ],
+    [
+     -234.2,
+     -352.4
+    ],
+    [
+     -232.2,
+     -626.4
+    ],
+    [
+     -228.4,
+     -630
+    ],
+    [
+     -228.6,
+     -638.1
+    ]
+   ]
+  },
+  "Sixth College": {
+   "source": "OSM way/911401521",
+   "kind": "surveyed",
+   "ring": [
+    [
+     -225.1,
+     -332.7
+    ],
+    [
+     43.1,
+     -334.7
+    ],
+    [
+     43.9,
+     -214.6
+    ],
+    [
+     36.3,
+     -201.6
+    ],
+    [
+     21.1,
+     -199.5
+    ],
+    [
+     10.1,
+     -196.8
+    ],
+    [
+     -23.6,
+     -188.9
+    ],
+    [
+     -224.7,
+     -185.6
+    ],
+    [
+     -225.1,
+     -332.7
+    ]
+   ]
+  },
+  "John Muir College": {
+   "source": "OSM way/399594737",
+   "kind": "surveyed",
+   "ring": [
+    [
+     -205.7,
+     180.6
+    ],
+    [
+     -106.5,
+     180.8
+    ],
+    [
+     -101,
+     178.4
+    ],
+    [
+     -98.7,
+     174.3
+    ],
+    [
+     -97.8,
+     172.8
+    ],
+    [
+     -97.5,
+     140.1
+    ],
+    [
+     -83,
+     140
+    ],
+    [
+     -44.3,
+     139.9
+    ],
+    [
+     -43.5,
+     159.5
+    ],
+    [
+     100.8,
+     157.9
+    ],
+    [
+     109.6,
+     140.1
+    ],
+    [
+     140.9,
+     128.7
+    ],
+    [
+     164.6,
+     126.5
+    ],
+    [
+     241.1,
+     97.4
+    ],
+    [
+     245.7,
+     93.1
+    ],
+    [
+     247,
+     88.5
+    ],
+    [
+     225.4,
+     6.2
+    ],
+    [
+     209.7,
+     -9.3
+    ],
+    [
+     191.1,
+     -11
+    ],
+    [
+     166.9,
+     -29.2
+    ],
+    [
+     159.5,
+     -58.2
+    ],
+    [
+     146.6,
+     -72.8
+    ],
+    [
+     86.9,
+     -73.9
+    ],
+    [
+     70.2,
+     -81.1
+    ],
+    [
+     53.4,
+     -90.8
+    ],
+    [
+     51.7,
+     -132
+    ],
+    [
+     38,
+     -141.5
+    ],
+    [
+     34.6,
+     -186.8
+    ],
+    [
+     20.8,
+     -187.6
+    ],
+    [
+     12.4,
+     -186.9
+    ],
+    [
+     -16,
+     -183.1
+    ],
+    [
+     -209.4,
+     -181.3
+    ],
+    [
+     -214,
+     -181.1
+    ],
+    [
+     -221.3,
+     -176.8
+    ],
+    [
+     -224.5,
+     -170.6
+    ],
+    [
+     -225.9,
+     34.8
+    ],
+    [
+     -225.4,
+     49.8
+    ],
+    [
+     -213.9,
+     157.2
+    ],
+    [
+     -212.1,
+     165.8
+    ],
+    [
+     -205.7,
+     180.6
+    ]
+   ]
+  },
+  "Revelle College": {
+   "source": "OSM way/399594736",
+   "kind": "surveyed",
+   "ring": [
+    [
+     -201.4,
+     505.2
+    ],
+    [
+     -183.4,
+     505.7
+    ],
+    [
+     -158.1,
+     497.9
+    ],
+    [
+     -117.3,
+     497.4
+    ],
+    [
+     -117.8,
+     483.9
+    ],
+    [
+     -10.8,
+     481.1
+    ],
+    [
+     -7.4,
+     589.5
+    ],
+    [
+     79.5,
+     598.9
+    ],
+    [
+     91.7,
+     599.1
+    ],
+    [
+     106.4,
+     597
+    ],
+    [
+     118.7,
+     592.1
+    ],
+    [
+     125.1,
+     587.3
+    ],
+    [
+     135.3,
+     575.9
+    ],
+    [
+     141.4,
+     562.8
+    ],
+    [
+     146.6,
+     552.8
+    ],
+    [
+     146.2,
+     551
+    ],
+    [
+     157.1,
+     541.4
+    ],
+    [
+     160.8,
+     541.7
+    ],
+    [
+     174.4,
+     534.4
+    ],
+    [
+     180,
+     528.8
+    ],
+    [
+     202,
+     509.9
+    ],
+    [
+     208.6,
+     502.4
+    ],
+    [
+     219.9,
+     486.9
+    ],
+    [
+     226,
+     466.5
+    ],
+    [
+     231.6,
+     454.3
+    ],
+    [
+     240.8,
+     442
+    ],
+    [
+     257.6,
+     424.6
+    ],
+    [
+     225.9,
+     357.8
+    ],
+    [
+     206.4,
+     319.7
+    ],
+    [
+     179.2,
+     332.5
+    ],
+    [
+     168,
+     309.9
+    ],
+    [
+     164,
+     296.3
+    ],
+    [
+     103.5,
+     199.1
+    ],
+    [
+     100.8,
+     157.9
+    ],
+    [
+     -43.5,
+     159.5
+    ],
+    [
+     -44.3,
+     139.9
+    ],
+    [
+     -83,
+     140
+    ],
+    [
+     -83.1,
+     193.4
+    ],
+    [
+     -175.9,
+     193.6
+    ],
+    [
+     -186.8,
+     198
+    ],
+    [
+     -174.2,
+     216.7
+    ],
+    [
+     -167.8,
+     232.6
+    ],
+    [
+     -163,
+     246.4
+    ],
+    [
+     -166.3,
+     270.1
+    ],
+    [
+     -171.7,
+     285.6
+    ],
+    [
+     -179.6,
+     295.7
+    ],
+    [
+     -192,
+     310.2
+    ],
+    [
+     -197.9,
+     322.4
+    ],
+    [
+     -200.8,
+     336.3
+    ],
+    [
+     -201.4,
+     505.2
+    ]
+   ]
+  },
+  "Earl Warren College": {
+   "source": "OSM way/399600309",
+   "kind": "surveyed",
+   "ring": [
+    [
+     489.1,
+     -566.1
+    ],
+    [
+     538.5,
+     -660.4
+    ],
+    [
+     590.5,
+     -720.9
+    ],
+    [
+     639.4,
+     -718.7
+    ],
+    [
+     641.2,
+     -648.1
+    ],
+    [
+     678.2,
+     -648.5
+    ],
+    [
+     756.3,
+     -770.5
+    ],
+    [
+     821.4,
+     -787.8
+    ],
+    [
+     867.3,
+     -770
+    ],
+    [
+     881,
+     -681
+    ],
+    [
+     881,
+     -593.1
+    ],
+    [
+     861,
+     -562.4
+    ],
+    [
+     843.6,
+     -492.3
+    ],
+    [
+     842.7,
+     -488.8
+    ],
+    [
+     837,
+     -414.3
+    ],
+    [
+     832.4,
+     -400
+    ],
+    [
+     806.3,
+     -365
+    ],
+    [
+     811.9,
+     -354.6
+    ],
+    [
+     815.1,
+     -341.5
+    ],
+    [
+     813.8,
+     -328.3
+    ],
+    [
+     809.5,
+     -317.5
+    ],
+    [
+     760.4,
+     -263.1
+    ],
+    [
+     738.8,
+     -244.4
+    ],
+    [
+     728.3,
+     -238.7
+    ],
+    [
+     710.6,
+     -234.2
+    ],
+    [
+     550.6,
+     -240.5
+    ],
+    [
+     524.5,
+     -240.7
+    ],
+    [
+     495.4,
+     -271.8
+    ],
+    [
+     490.3,
+     -294
+    ],
+    [
+     480.5,
+     -486.1
+    ],
+    [
+     489.1,
+     -566.1
+    ]
+   ]
+  },
+  "Eighth College": {
+   "source": "Sahir 2026-08-04 — named its five member buildings; no OSM polygon exists",
+   "kind": "derived",
+   "members": [
+    "Sankofa",
+    "Pulse",
+    "Podemos",
+    "Azad",
+    "Survivance"
+   ],
+   "ring": [
+    [
+     -259.8,
+     652.3
+    ],
+    [
+     -172.1,
+     506.1
+    ],
+    [
+     -17.8,
+     484.5
+    ],
+    [
+     -17.9,
+     646.7
+    ],
+    [
+     -196.6,
+     742.3
+    ]
+   ]
+  }
+ },
+ "affiliation": {
+  "Tioga Hall": "John Muir College",
+  "Peterson Hall": "Thurgood Marshall College",
+  "Earth Hall": "Eleanor Roosevelt College",
+  "Warren Student Activity Center": "Earl Warren College",
+  "Robinson Auditorium": "Eleanor Roosevelt College",
+  "Marshall Lower Apartments": "Thurgood Marshall College",
+  "Oceanview Terrace Lounge": "Thurgood Marshall College",
+  "Charles Lee Powell Structural Systems Laboratory": "Earl Warren College",
+  "York Hall": "Revelle College",
+  "Humanities & Social Sciences": "John Muir College",
+  "Brennan Hall": "Earl Warren College",
+  "Mandeville Center": "John Muir College",
+  "Powell-Focht Bioengineering Hall": "Earl Warren College",
+  "Solis Hall": "Thurgood Marshall College",
+  "Stewart Hall": "Earl Warren College",
+  "Center for Memory and Recording Research": "Earl Warren College",
+  "Gildred Latin American Studies": "Eleanor Roosevelt College",
+  "Brown Hall": "Earl Warren College",
+  "Bates Hall": "Earl Warren College",
+  "Institute of the Americas": "Eleanor Roosevelt College",
+  "Pacific Hall": "Revelle College",
+  "Cognitive Science Building": "Thurgood Marshall College",
+  "Tuolumne Apartments": "John Muir College",
+  "Douglas Hall": "Earl Warren College",
+  "Canyon Vista Administration building": "Earl Warren College",
+  "Jacobs Hall": "Earl Warren College",
+  "Urey Hall": "Revelle College",
+  "Black Hall": "Earl Warren College",
+  "Applied Physics and Mathematics": "John Muir College",
+  "Frankfurter Hall": "Earl Warren College",
+  "Central Utilities Building": "Revelle College",
+  "Copley International Conference Center": "Eleanor Roosevelt College",
+  "Harlan Hall": "Earl Warren College",
+  "Discovery Hall": "Revelle College",
+  "Goldberg Hall": "Earl Warren College",
+  "Communications": "Thurgood Marshall College",
+  "Biology": "John Muir College",
+  "Africa Hall": "Eleanor Roosevelt College",
+  "Atlantis Hall": "Revelle College",
+  "Social Sciences Research Building": "Thurgood Marshall College",
+  "Great Hall": "Eleanor Roosevelt College",
+  "Galbraith Hall": "Revelle College",
+  "Beagle Hall": "Revelle College",
+  "Rec Gym": "John Muir College",
+  "ERC Laundry South": "Eleanor Roosevelt College",
+  "Middle East Hall": "Eleanor Roosevelt College",
+  "International Center West": "John Muir College",
+  "Challenger Hall": "Revelle College",
+  "Literature": "Earl Warren College",
+  "Oceania Hall": "Eleanor Roosevelt College",
+  "Galathea Hall": "Revelle College",
+  "Meteor Hall": "Revelle College",
+  "Warren Lecture Hall": "Earl Warren College",
+  "Tenaya Hall": "John Muir College",
+  "Computer Science & Engineering": "Earl Warren College",
+  "Atkinson Hall (Calit2)": "Earl Warren College",
+  "Hopkins Parking Structure": "Eleanor Roosevelt College",
+  "Village West Building 4": "Seventh College",
+  "Village West Building 6": "Seventh College",
+  "Village West Building 8": "Seventh College",
+  "Village West Building 3": "Seventh College",
+  "Village West Building 2": "Seventh College",
+  "Village West Building 7": "Seventh College",
+  "Village West Building 1": "Seventh College",
+  "Stage Room at the Pub": "John Muir College",
+  "Student Center": "John Muir College",
+  "Pangea Parking Structure": "Eleanor Roosevelt College",
+  "Village East Building 5": "Seventh College",
+  "The Bistro at the Strand": "Seventh College",
+  "Village East Building 1": "Seventh College",
+  "Village East Building 3": "Seventh College",
+  "Village East Building 2": "Seventh College",
+  "Village East Building 4": "Seventh College",
+  "Main Gym": "John Muir College",
+  "Mayer Hall": "Revelle College",
+  "Argo Hall": "Revelle College",
+  "Revelle Commons": "Revelle College",
+  "Natural Science Building": "Revelle College",
+  "Blake Hall": "Revelle College",
+  "Bonner Hall": "Revelle College",
+  "McGill Hall": "John Muir College",
+  "Mandler Hall": "John Muir College",
+  "Keeling Apartments North Tower": "Revelle College",
+  "Keeling Apartments West Bar": "Revelle College",
+  "Keeling Apartments South Tower": "Revelle College",
+  "64 Degrees": "Revelle College",
+  "Housing Dining and Hospitality Administration Building": "Revelle College",
+  "Tamarack Apartments": "John Muir College",
+  "Stewart Commons Annex": "John Muir College",
+  "64 North": "Revelle College",
+  "Canyon Vista Restaurant": "Earl Warren College",
+  "Village West Building 5": "Seventh College",
+  "Print Labs": "John Muir College",
+  "Asante Hall": "Eleanor Roosevelt College",
+  "Cuzco Hall": "Eleanor Roosevelt College",
+  "Kathmandu Hall": "Eleanor Roosevelt College",
+  "Warren Administrative Module": "Earl Warren College",
+  "Stewart Commons": "John Muir College",
+  "Tata Hall for the Sciences": "Revelle College",
+  "Kaleidoscope": "Sixth College",
+  "Tapestry": "Sixth College",
+  "Catalyst": "Sixth College",
+  "Arts and Humanities": "Sixth College",
+  "Social Sciences Public Engagement Building": "Sixth College",
+  "The Jeannie": "Sixth College",
+  "Mosaic": "Sixth College",
+  "Franklin Antonio Hall": "Earl Warren College",
+  "Sankofa": "Eighth College",
+  "Podemos": "Eighth College",
+  "Survivance": "Eighth College",
+  "Azad": "Eighth College",
+  "Pulse": "Eighth College",
+  "Asia Hall": "Eleanor Roosevelt College",
+  "Europe Hall": "Eleanor Roosevelt College",
+  "Latin America Hall": "Eleanor Roosevelt College",
+  "North America Hall": "Eleanor Roosevelt College",
+  "ERC Laundry East": "Eleanor Roosevelt College",
+  "Malk Hall": "Thurgood Marshall College",
+  "Alianza": "Thurgood Marshall College",
+  "Coalition": "Thurgood Marshall College",
+  "Umoja": "Thurgood Marshall College",
+  "San Diego Supercomputer Center": "Eleanor Roosevelt College",
+  "ERC Administration": "Eleanor Roosevelt College",
+  "Geneva Hall": "Eleanor Roosevelt College",
+  "Engineering Building Unit 2 (EBU2)": "Earl Warren College",
+  "Café Ventanas": "Eleanor Roosevelt College",
+  "Mesa Verde Hall": "Eleanor Roosevelt College",
+  "Middle Earth Lounge": "Eleanor Roosevelt College"
+ },
+ "anchors": {
+  "Seventh College": {
+   "x": -108.4,
+   "z": -1112.7,
+   "from": "14 affiliated buildings"
+  },
+  "Eleanor Roosevelt College": {
+   "x": -95.4,
+   "z": -784.9,
+   "from": "27 affiliated buildings"
+  },
+  "Thurgood Marshall College": {
+   "x": 69.9,
+   "z": -430.9,
+   "from": "11 affiliated buildings"
+  },
+  "Sixth College": {
+   "x": -62.3,
+   "z": -255.2,
+   "from": "7 affiliated buildings"
+  },
+  "John Muir College": {
+   "x": -27.5,
+   "z": -31.8,
+   "from": "18 affiliated buildings"
+  },
+  "Revelle College": {
+   "x": -57.8,
+   "z": 370.3,
+   "from": "24 affiliated buildings"
+  },
+  "Earl Warren College": {
+   "x": 713.7,
+   "z": -504.2,
+   "from": "23 affiliated buildings"
+  },
+  "Eighth College": {
+   "x": -131.4,
+   "z": 593.5,
+   "from": "5 affiliated buildings"
+  }
+ }
+}
