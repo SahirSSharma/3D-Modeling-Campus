@@ -2980,3 +2980,95 @@ describe("campus epoch — r2c0 pass-2 re-sweep (2026-08-05)", () => {
     assert.equal(rendersNear(-1150.1, 1402.0, 4).find((m) => m.src === "osm")?.h, 14.6);
   });
 });
+
+describe("campus epoch — r2c1 pass-2 re-sweep (2026-08-05)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("Boardwalk / Villa La Jolla apartment connectors ship their ~8.5 m planes", () => {
+    /* Screener full-depth EPT re-derived (point counts matched). Shared
+       ~8.5 m 2014 plane under the 4.5 shed default — Village Square
+       103/334 under-tag class, residential. Apple: finished Boardwalk /
+       Villa La Jolla multi-unit tan gabled roofs + courtyards today.
+       518 takes thin-shelf p75 (dense 85.4%, gap 3.2); 530 takes the
+       canopy guard's p75 under a 23.7 tail; the rest are clean p98. */
+    for (const [i, h] of [
+      [518, 8.5], [519, 8.8], [522, 8.8], [524, 8.8], [526, 8.9],
+      [530, 8.6], [531, 8.9], [532, 8.5], [534, 8.7],
+    ]) {
+      assert.equal(LIDAR.osmHeights?.[i], h, `osm:${i}'s plane`);
+      const [cx, cz] = centroidOf(CAMPUS.buildings[i].p);
+      assert.equal(rendersNear(cx, cz, 4).find((r) => r.src === "osm")?.h, h,
+        `osm:${i} renders at its plane`);
+    }
+  });
+
+  test("Residence Inn connectors ship their measured planes beside the host", () => {
+    /* Same stepped hist as siblings 547/551/552 (dense ~24% @7, gap ≤2).
+       roofOf returns p98 ≈10 — matching the named Residence Inn host at
+       10.5. Apple: finished dark-hipped complex + courtyard pool today.
+       Was 4.5 shed default. */
+    assert.equal(LIDAR.heights["Residence Inn"], 10.5);
+    for (const [i, h] of [[548, 9.9], [549, 10.0], [550, 10.0]]) {
+      assert.equal(LIDAR.osmHeights?.[i], h, `osm:${i}'s plane`);
+      const [cx, cz] = centroidOf(CAMPUS.buildings[i].p);
+      assert.equal(rendersNear(cx, cz, 4).find((r) => r.src === "osm")?.h, h,
+        `osm:${i} renders at its plane`);
+    }
+  });
+
+  test("Villas Mallorca and La Jolla Scenic pads ship their measured planes", () => {
+    /* 657: 1,517 pts, clean p98 11.2 (was 9) — in-grid sibling of the
+       OOB 656/658/661 cluster. 1373: 5,567 pts, clean p98 9.3 (was 12
+       over-guess at 8745 La Jolla Scenic Drive North). Both finished
+       on today's Apple. */
+    for (const [i, h] of [[657, 11.2], [1373, 9.3]]) {
+      assert.equal(LIDAR.osmHeights?.[i], h, `osm:${i}'s plane`);
+      const [cx, cz] = centroidOf(CAMPUS.buildings[i].p);
+      assert.equal(rendersNear(cx, cz, 4).find((r) => r.src === "osm")?.h, h,
+        `osm:${i} renders at its plane`);
+    }
+  });
+
+  test("canopy-shelf, multimodal, and south-apron withholds keep their guesses", () => {
+    /* 520: gap 4.5 / dense 69.5% under the 85% thin-shelf cut — roofOf
+       would paste the 13.2 shelf. 1218: dense ~3.6 body under a 6.2
+       shelf (dense 46.9% / gap 2.6 under cut). 1339: dense 28.7% (1062
+       multimodal family). 656/658/661: centroids past z_max=1386 → 0
+       EPT pts. Keep the declared guesses rather than invent. */
+    for (const i of [520, 1218, 1339, 656, 658, 661]) {
+      assert.equal(LIDAR.osmHeights?.[i], undefined, `a plane shipped for osm:${i}`);
+    }
+    assert.equal(rendersNear(centroidOf(CAMPUS.buildings[520].p)[0],
+      centroidOf(CAMPUS.buildings[520].p)[1], 4).find((r) => r.src === "osm")?.h, 4.5);
+    assert.equal(rendersNear(centroidOf(CAMPUS.buildings[1218].p)[0],
+      centroidOf(CAMPUS.buildings[1218].p)[1], 4).find((r) => r.src === "osm")?.h, 9);
+    assert.equal(rendersNear(centroidOf(CAMPUS.buildings[1339].p)[0],
+      centroidOf(CAMPUS.buildings[1339].p)[1], 4).find((r) => r.src === "osm")?.h, 4.5);
+    assert.equal(rendersNear(centroidOf(CAMPUS.buildings[656].p)[0],
+      centroidOf(CAMPUS.buildings[656].p)[1], 4).find((r) => r.src === "osm")?.h, 9);
+  });
+
+  test("Mobil Mart strip pads stay within noise of their guesses; CRS height stands", () => {
+    /* 805/806: perfect single planes at 5.3/5.4 against a 4.5 guess
+       (Δ 0.8–0.9 under the storey bar); Mobil Mart host already ships
+       5.1. Not a miss — leave the guesses. CRS: massHeights 17.5 within
+       0.8 of roofOf 18.3; residual is a 4.6 m grade span (renderer
+       handoff), not a height bug. */
+    assert.equal(LIDAR.osmHeights?.[805], undefined);
+    assert.equal(LIDAR.osmHeights?.[806], undefined);
+    assert.equal(rendersNear(centroidOf(CAMPUS.buildings[805].p)[0],
+      centroidOf(CAMPUS.buildings[805].p)[1], 4).find((r) => r.src === "osm")?.h, 4.5);
+    assert.equal(LIDAR.heights["Central Research Services Facility"], 17.5);
+    assert.equal(LIDAR.massHeights["m:465,502"], 17.5);
+    assert.equal(rendersNear(464.8, 501.6, 6).find((r) => /Central Research/i.test(r.name || ""))?.h, 17.5);
+  });
+});

@@ -1073,3 +1073,83 @@ re-computed per GIS ring vertex from the terrain grid.
   planes ship.
 - **Remaining unnamed guesses in-box**: still ~110+ after this pass's two
   admissions. Batch Apple+EPT verification remains the right shape.
+
+---
+
+# FINDINGS — run `2026-08-05_033905` · shard r2c1 (pass 2)
+
+Pass 2 of the theatre-district / Boardwalk / Villa La Jolla / Residence Inn /
+south-apron shard. Screen: 13 candidates (5 high / 7 medium / 1 low). Judged by
+`cursor-grok-4.5-high`.
+
+Every candidate in `pass2-r2c1.screen.json` was re-derived before judgement against
+the screener's full-depth EPT (`/tmp/gauntlet-r2c1-p2/probe.json` + `probe2.json` —
+copied to `.cache/gauntlet-r2c1-p2/judge/`; point counts taken as the
+re-measurement: osm:518 665 / 519 653 / 520 776 / 522 841 / 524 656 / 526 677 /
+530 942 / 531 858 / 532 999 / 534 1040 / 548 623 / 549 606 / 550 628 / 657 1517 /
+1373 5567 / 1218 1364 / 1339 656 / 805 411 / 806 385 / 656·658·661 0 /
+gis:CRS 4112), Apple snapshots in `/tmp/gauntlet-r2c1-p2/apple/` (copied to
+`.cache/gauntlet-r2c1-p2/evidence/`), and thin-shelf / canopy-guard arithmetic
+re-computed per sample from each mass's histogram (builder `roofOf` rules).
+
+### Fixed — heights (class admission, not a one-row patch)
+
+| Entity | Was shipping | Now ships | Source | Test |
+|---|---|---|---|---|
+| osm:518 (`osm-518-underheight`) | 4.5 m shed default | **8.5** | Thin-shelf host rule: dense 85.4% @8, gap 3.2 → p75. Unguarded roofOf would paste 11.8. | epoch §34 |
+| osm:519 (`osm-519-underheight`) | 4.5 | **8.8** | Clean p98 (653 pts, dense 86.8%, gap 0.2) | epoch §34 |
+| osm:522 (from `mesa-villa-4.5-underheight-class`) | 4.5 | **8.8** | Clean p98 (841 pts, gap 0.4) | epoch §34 |
+| osm:524 / 526 (`osm-524-526-underheight-pair`) | 4.5 / 4.5 | **8.8 / 8.9** | Clean p98 (656 / 677 pts) | epoch §34 |
+| osm:530 (from mesa class) | 4.5 | **8.6** | Canopy-guarded p75 (942 pts, dense 72.2% @8 under a 23.7 tail) | epoch §34 |
+| osm:531 (`osm-531-underheight`) | 4.5 | **8.9** | Clean p98 (858 pts, dense 85%, gap 0.4) | epoch §34 |
+| osm:532 / 534 (from mesa class) | 4.5 / 4.5 | **8.5 / 8.7** | Clean p98 (999 / 1040 pts) | epoch §34 |
+| osm:548 / 549 / 550 (`residence-inn-connectors-underheight`) | 4.5 | **9.9 / 10.0 / 10.0** | Clean p98 matching Residence Inn host 10.5; gap ≤2 under thin-shelf cut | epoch §34 |
+| osm:657 (`osm-657-underheight`) | 9 m area guess | **11.2** | Clean p98 (1517 pts); Villas Mallorca in-grid sibling | epoch §34 |
+| osm:1373 (`osm-1373-overheight-oob`) | 12 m area guess | **9.3** | Clean p98 (5567 pts, gap 0.5); was ~3 m over | epoch §34 |
+
+Class change: nine Boardwalk / Villa La Jolla apartment connectors join
+`OSM_UNNAMED_VERIFIED` under the same Village Square under-tag rule (103 / 334 /
+81) — a shared ~8.5 m 2014 plane the 4.5 shed default never saw. 518 is the
+thin-shelf exemplar; 530 is the canopy-guard exemplar; the rest are clean p98.
+
+### Withheld (better absent than wrong)
+
+- **osm:520** (from mesa class): gap 4.5 / dense 69.5% under the 85% thin-shelf
+  cut. roofOf would paste the 13.2 canopy/HVAC shelf over an 8.8 body. Keep the
+  4.5 guess. Pinned as EXCLUDED from osmHeights.
+- **osm:1218 (`osm-1218-overheight`)**: dense body ~3.6 under a 6.2 shelf
+  (dense 46.9% / gap 2.6 under cut). Do not paste either plane. Keep the 9 guess.
+- **osm:1339 (`osm-1339-underheight`)**: dense 28.7% (±1 72.9%) — 1062 multimodal
+  family. Body sits above the 4.5 guess but no single dominant plane. Keep the
+  guess.
+- **osm:656 / 658 / 661 (`south-apron-terrain-oob`)**: centroids past terrain
+  z_max=1386 → 0 EPT pts via groundAt-null. Apple shows finished Villas Mallorca
+  roofs today, but no 2014 plane resolves. Keep the 9 guesses. Survey-box handoff.
+
+### Rejected candidates (each re-measured before rejection; do not re-find these)
+
+- **`osm-805-806-underheight`** — REJECTED. Perfect single planes at 5.3 / 5.4
+  against a 4.5 guess (Δ 0.8–0.9 under the storey bar). Mobil Mart host already
+  ships 5.1. Not a miss; guesses stand. Pinned in §34.
+- **`crs-grade-span`** — REJECTED as a height bug. Shipped 17.5 within 0.8 of
+  roofOf 18.3 (noise line). Residual is a 4.6 m footprint grade span — Voigt /
+  roof-anchor renderer class, already on the handoff list. massHeights 17.5
+  stands. Pinned in §34.
+- **`mesa-villa-4.5-underheight-class`** — ACCEPTED as scoped (nine of ten
+  pads admitted above); osm:520 withheld. Not re-logged as a blanket class-hole.
+
+### Handoffs / observations
+
+- **South-apron terrain OOB**: 656 / 658 / 661 join Vaughan / Ritter / shore-colony
+  1144 / 1146 / 1160 at or past z_max=1386. Expanding `AREA` / the terrain grid
+  is a rebuild call — same QAA family. Sibling 657 was admit-able because its
+  centroid sits in-grid.
+- **Roof-anchor / grade-span**: CRS (span 4.6 m) joins Keck2 south / Eckart /
+  Hopkins Parking / Canyon Vista / Cuzco / VE4. Do not "fix" massHeights by
+  switching the measurement base to centroid.
+- **Thin-shelf cut**: osm:520 at dense 69.5% stays a near-miss under 85% — do
+  not lower the floor. A parts split for the canopy shelf would let the 8.8
+  body ship.
+- **Remaining unnamed guesses in-box**: still hundreds after this pass's
+  fourteen admissions. Batch Apple+EPT verification remains the right shape;
+  do not blanket-admit.

@@ -780,6 +780,49 @@ const OSM_UNNAMED_VERIFIED = new Set([
        Vaughan / Ritter / Eckart: heights already measured; residuals
              are terrain-apron / roof-anchor renderer handoffs. */
   1097, 1147,
+  /* r2c1 pass-2 (2026-08-05) — Boardwalk / Villa La Jolla apartment
+     connectors + Residence Inn pads + Villas Mallorca / La Jolla Scenic
+     fringe. Screener full-depth EPT re-derived (point counts matched);
+     Apple currency confirmed finished multi-storey / hotel / residential
+     roofs standing today, no crane:
+       Mesa / Boardwalk under-tags (was 4.5 shed default under a shared
+       ~8.5 m 2014 plane — Village Square 103/334 class, residential):
+         518: thin-shelf → p75 8.5 (665 pts, dense 85.4% @8, gap 3.2;
+              unguarded roofOf would paste the 11.8 HVAC shelf)
+         519: clean p98 8.8 (653 pts, dense 86.8%, gap 0.2)
+         522: clean p98 8.8 (841 pts, gap 0.4)
+         524: clean p98 8.8 (656 pts, dense 84.1%, gap 0.2)
+         526: clean p98 8.9 (677 pts, dense 80.4%, gap 0.4)
+         530: canopy-guarded p75 8.6 (942 pts, dense 72.2% @8 under a
+              23.7 canopy tail; gap 15.1 → tree guard)
+         531: clean p98 8.9 (858 pts, dense 85%, gap 0.4)
+         532: clean p98 8.5 (999 pts, dense 75.6%, gap 0.2)
+         534: clean p98 8.7 (1040 pts, gap 0.4)
+       Residence Inn connectors beside the already-measured host (10.5):
+         548: clean p98 9.9 (623 pts, gap 1.9 under thin-shelf cut)
+         549: clean p98 10.0 (606 pts, gap 2.0)
+         550: clean p98 10.0 (628 pts, gap 1.7)
+       South-fringe residential:
+         657: clean p98 11.2 (1517 pts, Villas Mallorca / Villa La Jolla
+              Driveway; sibling of OOB 656/658/661)
+         1373: clean p98 9.3 (5567 pts; was 12 over-guess at 8745 La
+               Jolla Scenic Drive North)
+     Deliberately NOT admitted this pass:
+       520: gap 4.5 / dense 69.5% under the 85% thin-shelf cut — roofOf
+            would paste the 13.2 canopy shelf; keep the 4.5 guess.
+       1218: dense body ~3.6 under a 6.2 shelf (dense 46.9% / gap 2.6
+             under cut); do not paste either plane. Keep the 9 guess.
+       1339: dense 28.7% (1062 multimodal family); keep the 4.5 guess.
+       656 / 658 / 661: centroids past terrain z_max=1386 → 0 EPT pts
+            (Vaughan / Ritter apron class); keep the 9 guesses.
+       805 / 806: Mobil Mart strip — clean planes at 5.3 / 5.4 against
+            a 4.5 guess (Δ 0.8–0.9, under the storey bar); host already
+            ships 5.1. Not a miss.
+       CRS (named GIS): shipped 17.5 within 0.8 of roofOf 18.3; residual
+            is a 4.6 m grade span (Voigt / roof-anchor renderer class). */
+  518, 519, 522, 524, 526, 530, 531, 532, 534,
+  548, 549, 550,
+  657, 1373,
 ]);
 
 /* Hand-audited stats where the automatic roofOf() percentile choice is

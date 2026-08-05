@@ -723,6 +723,28 @@ apron past z_max=1386; heights (where measured) correct, survey-box handoff. Eck
 15.2 m grade span already past the Voigt per-vertex rule in spirit; height near the
 guarded body.
 
+**The theatre-district / Boardwalk pass-2 (2026-08-05, r2c1).** Fresh screen of 13
+candidates (5 high / 7 medium / 1 low). Every height re-derived from the screener's
+full-depth EPT (point counts matched exactly: 665 / 653 / 858 / 623 / 1,517 / 5,567 /
+…); Apple currency re-checked per site — finished Boardwalk / Villa La Jolla apartment
+roofs, Residence Inn courtyard pool, Villas Mallorca fabric, no crane.
+
+| Entity | Was shipping | Now ships | Why |
+|---|---|---|---|
+| Boardwalk / Villa La Jolla connectors (unnamed, osm:518–534 nine pads) | 4.5 m shed default | **8.5–8.9 m** | Shared ~8.5 m 2014 plane under the Village Square under-tag class. 518 takes thin-shelf p75 (dense 85.4%, gap 3.2); 530 takes the canopy guard's p75 under a 23.7 tail; the rest are clean p98. |
+| Residence Inn connectors (unnamed, osm:548 / 549 / 550) | 4.5 m shed default | **9.9 / 10.0 / 10.0 m** | Same stepped hist as siblings shipping 9; roofOf ≈10 matches the named Residence Inn host at 10.5. |
+| Villas Mallorca pad (unnamed, osm:657) | 9 m area guess | **11.2 m** | Clean single plane (1,517 returns); in-grid sibling of the OOB 656/658/661 cluster. |
+| 8745 La Jolla Scenic (unnamed, osm:1373) | 12 m area guess | **9.3 m** | Clean p98 (5,567 returns, gap 0.5); was ~3 m over. |
+
+Rejected / withheld, each re-measured: osm:520 — gap 4.5 / dense 69.5% under the 85%
+thin-shelf cut; roofOf would paste the 13.2 canopy shelf. osm:1218 — dense ~3.6 body
+under a 6.2 shelf (dense 46.9% / gap 2.6 under cut). osm:1339 — dense 28.7% (1062
+multimodal family). osm:656 / 658 / 661 — centroids past terrain z_max=1386 → 0 EPT
+pts (Vaughan / Ritter apron class). Mobil Mart strip 805 / 806 — clean planes at
+5.3 / 5.4 against a 4.5 guess (Δ 0.8–0.9 under the storey bar); host already ships
+5.1. CRS — shipped 17.5 within 0.8 of roofOf 18.3; residual is a 4.6 m grade span
+(Voigt / roof-anchor renderer handoff).
+
 **The theatre-district / Village Square re-sweep (2026-08-05, r2c1).** Fresh screen of 9
 candidates (3 high / 5 medium / 1 low). Every height re-derived from an independent
 full-depth EPT (point counts matched the screener's 1,757 / 1,362 / 2,134 / … exactly);
