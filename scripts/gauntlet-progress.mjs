@@ -143,12 +143,41 @@ if (cur) {
 }
 
 /* ----------------------------------------------------------------- the budget */
-const POOL_M = 373, BUDGET_M = 190, ADJ_EST_M = 6;
+const POOL_M = 373, BUDGET_M = 190, ADJ_ASSUMED_M = 6;
 const quotaRaw = read(path.join(LOOP, ".quota")).replace(/[^0-9.]/g, "");
 const usedPct = quotaRaw ? +quotaRaw : null;
 const leftM = usedPct == null ? null : POOL_M * (1 - usedPct / 100);
 const leftBudgetPct = leftM == null ? null : Math.max(0, Math.round((leftM / BUDGET_M) * 100));
-const adjLeft = leftM == null ? null : Math.floor(leftM / ADJ_EST_M);
+
+/* What a Fable adjudication actually costs.
+ *
+ * The router was configured with a 6M guess and nothing ever checked it. Two
+ * dashboard readings bracket real work, so derive it instead: the spend between
+ * readings divided by the adjudications that ran between them. Screening is
+ * excluded by construction — it bills the Cursor Models pool, which this
+ * percentage does not measure.
+ *
+ * Reported as a range because an adjudication in flight at the second reading
+ * has spent an unknown fraction of itself. The high bound charges the whole
+ * delta to completed work only; the low bound credits the in-flight one as half
+ * done. Budget planning uses the HIGH bound — running out early is worse than
+ * finishing with headroom. */
+const history = read(path.join(LOOP, ".quota-history")).trim().split("\n").filter(Boolean)
+  .map((l) => l.split("\t")).filter((f) => f.length >= 3)
+  .map(([t, pct, adj]) => ({ t, pct: +pct, adj: +adj }));
+let adjCost = null;
+if (history.length >= 2) {
+  const a = history[0], b = history[history.length - 1];
+  const spentM = (b.pct - a.pct) / 100 * POOL_M;
+  const done = b.adj - a.adj;
+  if (done >= 1 && spentM > 0) {
+    adjCost = { high: spentM / done, low: spentM / (done + 0.5), samples: done, spentM };
+  }
+}
+const adjUseM = adjCost ? adjCost.high : ADJ_ASSUMED_M;
+const adjLeft = leftM == null ? null : Math.floor(leftM / adjUseM);
+/* When the ladder trips, in adjudications rather than percentages. */
+const tripAt = (pct) => (leftM == null ? null : Math.max(0, Math.floor((leftM - BUDGET_M * pct / 100) / adjUseM)));
 const tier = leftBudgetPct == null ? "?" : leftBudgetPct > 25 ? "1 — full Fable judging" : leftBudgetPct > 10 ? "2 — Fable only for high-severity shards" : "3 — Grok judges, withhold-on-doubt";
 
 /* ----------------------------------------------------------------- pass 1 state */
@@ -232,7 +261,13 @@ if (usedPct != null) {
 L.push("```");
 L.push("");
 L.push(`- routing tier: **${tier}**`);
-if (adjLeft != null) L.push(`- ~**${adjLeft}** Fable adjudications left at the ~${ADJ_EST_M}M estimate`);
+if (adjCost) {
+  L.push(`- a Fable adjudication measures **~${Math.round(adjCost.low)}–${Math.round(adjCost.high)}M** (${adjCost.samples} completed between readings, ${Math.round(adjCost.spentM)}M spent) — the router was configured for **${ADJ_ASSUMED_M}M**, so its own odometer is low by roughly **${(adjCost.high / ADJ_ASSUMED_M).toFixed(0)}×**`);
+  L.push(`- that miscount does **not** affect routing: the router prefers the \`.quota\` reading over its estimate, so tier decisions are made on real numbers`);
+} else {
+  L.push(`- per-adjudication cost is still the router's **unverified ${ADJ_ASSUMED_M}M assumption** — needs two \`.quota\` readings bracketing at least one adjudication`);
+}
+if (adjLeft != null) L.push(`- ~**${adjLeft}** Fable adjudications left; tier 2 in **${tripAt(25)}**, tier 3 in **${tripAt(10)}**`);
 L.push(`- Grok screening bills the **Cursor Models** pool, which is effectively free at this scale — the bar above is only the expensive half.`);
 L.push("");
 L.push(`Update it by writing the dashboard percentage into \`gauntlet-loop/.quota\`. A real reading always beats the router's own estimate.`);
