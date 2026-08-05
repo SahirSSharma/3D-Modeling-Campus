@@ -250,6 +250,11 @@ const POST_2014 = [
   // Mesa fabric — never today's buildings.
   "Outpatient Pavilion",
   "Piedra", "Tierra",
+  // r1c2 pass-2 / pass-3: Triton Ballpark 2015 renovation; Nuevo West
+  // marketplace (2020); Warren Field House (~2020, GIS typo "FIeld").
+  "Triton Stadium", "Triton Clubhouse",
+  "Street Corner Urban Market",
+  "Warren FIeld House",
 ];
 
 describe("1. LiDAR never claims a measurement of a post-2014 building", () => {
@@ -3406,5 +3411,55 @@ describe("campus epoch — r1c1 pass-3 co-named micro-slivers (2026-08-05)", () 
     assert.equal(icw.h, 8.2, `ICW ships ${icw.h}`);
     assert.ok(areaOf(icw.rings[0]) > 500, `ICW area ${areaOf(icw.rings[0]).toFixed(0)}`);
     assert.equal(LIDAR.massHeights["m:225,82"], 8.2);
+  });
+});
+
+describe("campus epoch — r1c2 pass-3 (2026-08-05)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("Preuss School D and E join A/B/C on the measured ~9.2 classroom plane", () => {
+    /* Incomplete PRE_2014_GIS_VERIFIED batch: A/B/C already ship 9.1–9.2
+       while D/E stood on the L2 default 8.5. Fresh EPT: D 893 / E 872 pts,
+       both roofOf 9.2 (gap 0.3, bodyTight). Preuss opened 2001; Apple
+       shows finished classroom roofs beside the soccer pitch today. */
+    assert.equal(LIDAR.massHeights["m:1789,-472"], 9.2);
+    assert.equal(LIDAR.massHeights["m:1764,-463"], 9.2);
+    assert.equal(rendersNear(1789.1, -471.9).find((m) => m.src === "gis")?.h, 9.2);
+    assert.equal(rendersNear(1764.2, -463.3).find((m) => m.src === "gis")?.h, 9.2);
+    assert.equal(rendersNear(1825.1, -537).find((m) => m.src === "gis")?.h, 9.2);
+    assert.equal(rendersNear(1822.7, -511).find((m) => m.src === "gis")?.h, 9.2);
+  });
+
+  test("Street Corner Urban Market and Warren FIeld House stay off 2014 planes", () => {
+    /* Nuevo West marketplace (2020): 1,533 pts near-grade / bleed
+       (massOk=false). Warren FIeld House (GIS typo): 0 pts. Both ship
+       their GIS L1 records; POST_2014_SITES bars any future admit. */
+    assert.equal(rendersNear(1555.8, 289.4).find((m) => /Street Corner/i.test(m.name || ""))?.h, 3);
+    assert.equal(LIDAR.heights["Street Corner Urban Market"], undefined);
+    assert.equal(LIDAR.massHeights["m:1556,289"], undefined);
+    assert.equal(LIDAR.osmHeights?.[769], undefined);
+    assert.equal(rendersNear(1119.1, -294.6, 6)[0]?.h, 4.6);
+    assert.equal(LIDAR.massHeights["m:1119,-295"], undefined);
+    assert.equal(LIDAR.heights["Warren FIeld House"], undefined);
+  });
+
+  test("Pepper Canyon North Laundry and ECEC keep unchallenged L1 records", () => {
+    /* North Laundry: 284 pts, dense 82.7% under the 85% thin-shelf cut;
+       roofOf 6.0 rides a 2-pt 6 m tail. ECEC A–D: Δ ≤0.6 vs GIS 4.3 on
+       the dense body (C would thin-shelf to 3.7). Withhold both classes. */
+    assert.equal(rendersNear(1103.8, -89.2).find((m) => /North Laundry/i.test(m.name || ""))?.h, 3);
+    assert.equal(LIDAR.massHeights["m:1104,-89"], undefined);
+    assert.equal(rendersNear(1660.1, 471.9).find((m) => /Education Center C/i.test(m.name || ""))?.h, 4.3);
+    assert.equal(LIDAR.massHeights["m:1660,472"], undefined);
+    assert.equal(LIDAR.massHeights["m:1670,455"], undefined);
   });
 });

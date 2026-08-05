@@ -1424,3 +1424,63 @@ None — both screen candidates were accepted as the same class hit.
   `build:lidar` will not re-admit it because the GIS ring is gone.
 - **VAF-3 position / roof-anchor class**: still open from prior r1c1
   passes — not in this screen.
+
+---
+
+# FINDINGS — run `2026-08-05_033905` · shard r1c2 (pass 3)
+
+Pass 3 of the east-campus / health-campus shard (Preuss / Pepper Canyon /
+Nuevo West / Warren Field). Screen: 5 candidates (3 medium / 2 low). Judged
+by `cursor-grok-4.5-high` (self-screen; Fable budget nearly spent — withheld
+when unsure).
+
+Every candidate in `pass3-r1c2.screen.json` was re-derived before judgement
+against the screener's full-depth EPT (`/tmp/gauntlet-r1c2-p3/probe.json` —
+copied to `.cache/gauntlet-r1c2-p3/judge/`; Preuss D 893 / E 872 / North
+Laundry 284 / Street Corner 1,533 / Warren FH 0 / ECEC A–D 3,001–3,346 —
+histograms and dense bands inspected independently), Apple snapshots in
+`/tmp/gauntlet-r1c2-p3/apple/` (copied to `.cache/gauntlet-r1c2-p3/evidence/`),
+and the shipped assembleMasses output.
+
+A full `npm run build:lidar` was attempted; tiling variance moved unrelated
+pins by up to metres (CSC-D 6.5→4.5, Union Bank 8→5.3, osm:453 19.9→16.2) —
+thin-shelf cut firing on near-misses. Restored HEAD lidar and surgically
+wrote only the two Preuss massHeights keys from this pass's EPT (both
+roofOf 9.2, matching the aborted rebuild). `POST_2014_SITES` additions need
+no rebuild.
+
+### Fixed — heights / epoch bookkeeping
+
+| Entity | Was shipping | Now ships | Source | Test |
+|---|---|---|---|---|
+| Preuss School D / E (`preuss-de-missing-pre2014`) | 8.5 m GIS L2 | **9.2 / 9.2 m** | Incomplete `PRE_2014_GIS_VERIFIED` batch — A/B/C already wear the matching plane. D 893 pts / E 872 pts, roofOf 9.2 (gap 0.3, bodyTight). Preuss opened 2001; Apple finished classrooms today. | epoch r1c2 pass-3 |
+| Street Corner Urban Market (`street-corner-marketplace-epoch`) | 3 m GIS L1 | **3 m, POST_2014** | Nuevo West amenity (2020) with Viento/Brisa. 1,533 pts near-grade / bleed (massOk=false). GIS record stands; Set bars any future 2014 admit. | epoch r1c2 pass-3 |
+| Warren FIeld House (`warren-fieldhouse-post2014-set-gap`) | 4.6 m GIS L1 | **4.6 m, POST_2014** | Zero 2014 returns; GIS typo spelling. Stadium/Clubhouse class sibling already cited in prose — Set now names the typo. | epoch r1c2 pass-3 |
+
+### Withheld (better absent than wrong)
+
+- **`pc-north-laundry-underheight`**: 284 pts, dense 82.7% under the 85%
+  thin-shelf cut; roofOf 6.0 rides a 2-pt 6 m tail (hist 6m:2). Dense body
+  ~4.1–4.7 vs GIS 3.0 is Δ≈1.7 — under the quieter-pass bar. Leave the L1
+  record. Pinned unchallenged in epoch r1c2 pass-3.
+- **`ecec-c-thin-shelf-hostless`**: ECEC A roofOf 3.9 (Δ −0.4 vs 4.3); C
+  would thin-shelf to 3.7 (Δ −0.6); B dual-plane under the cut; D matches
+  under guard. Visible error small — withhold the whole cluster rather than
+  admit C alone.
+
+### Rejected candidates
+
+None beyond the two withholds above — both are recorded so the next pass
+does not re-find them as height bugs.
+
+### Handoffs / observations
+
+- **Full `build:lidar` tiling drift**: this pass's aborted rebuild moved
+  CSC-yard near-misses onto the thin-shelf side of the 85% cut. Do not
+  retune the cut to chase noise; next agent who must rebuild should
+  re-pin from that rebuild's own EPT, not paste HEAD expectations.
+- **Pepper Canyon South Laundry** already ships 8.2; North stays at 3.
+  Not a sibling-batch miss the way Preuss D/E was — different planes,
+  different evidence quality.
+- **Nuevo West - Marketplace** GIS name host-renames to Street Corner;
+  the Set key is the OSM / assembled name.

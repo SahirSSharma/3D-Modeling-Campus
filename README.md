@@ -252,7 +252,7 @@ re-sampled against the same EPT:
 | Hospital-district carports (13 rings) | 4.5–9 m guesses | **3.8–8.7 m** | OSM's area heuristic reads a long PV canopy as a two-storey building. |
 | Qualcomm AA | 20 m (area guess) | **24.3 m** | the one building whose footprint pokes past the LiDAR survey box, so the standard pipeline never measures it; a targeted re-sample of the same EPT (30,780 returns) feeds `KNOWN_HEIGHTS` — the Tenaya precedent. |
 | CSC shops C/D, hostless Fleet row | 4.3 m (GIS records) | **6.9 / 6.5 / 5.7 m** | `PRE_2014_GIS_VERIFIED` extended east: twelve more hostless records with documented pre-flight build dates now answer the epoch question by date and get challenged like everything else. |
-| Preuss School A/B/C/F | 8.5 m (GIS default) | **9.2 / 9.2 / 9.2 / 11.7 m** | same class; the double-height gym hall was three metres taller than its record. The East Campus Substation ran the other way — 8.5 m record, 5.3 m building. |
+| Preuss School A/B/C/D/E/F | 8.5 m (GIS default) | **9.2 / 9.2 / 9.1 / 9.2 / 9.2 / 11.7 m** | same class; D/E completed the 2001 classroom batch in pass-3 (893 / 872 returns, gap 0.3). The double-height gym hall was three metres taller than its record. The East Campus Substation ran the other way — 8.5 m record, 5.3 m building. |
 | BFS greenhouses + Frog House | 4.3 m (GIS) | **4.9–5.3 m** | the GIS greenhouse rings span what OSM maps as PAIRS of houses, so their centroids fall in the gap between the named rings and host containment could never see them. |
 
 The sweep also closed an epoch hole in the PART pipeline: `partHeights` guarded named hosts
@@ -691,6 +691,21 @@ as the re-measurement); Apple currency re-checked per site.
 | Triton Stadium / Triton Clubhouse | 4.3 m GIS L1 (unchallenged) | **4.3 m, epoch-listed** | Ballpark renovation broke ground 2014-09-25; permanent grandstand + Marye Anne Fox Clubhouse opened 2015. Stadium ring 80% at grade (224 pts); Clubhouse 27 pts. Join `POST_2014_SITES` — Warren Field House class; do not admit the 5 m shelf. |
 | Thornton Supplemental Storage | 4.3 m GIS L1 | **2.6 m** | Hostless shed; 342 returns, clean p98 2.6. `PRE_2014_GIS_VERIFIED`. |
 | Medical Center Switching Station | 4.3 m GIS L1 | **5.4 m** | Hostless utility roof; 1,629 returns, clean p98 5.4. Same class. |
+
+**The health-campus / Pepper Canyon pass-3 (2026-08-05, r1c2).** Same shard, third decide
+pass. Screen of 5 candidates (3 medium / 2 low). Every claim re-derived from the screener's
+full-depth EPT (`/tmp/gauntlet-r1c2-p3/probe.json`; Preuss D 893 / E 872 / Street Corner
+1,533 / Warren FH 0 / North Laundry 284 / ECEC A–D 3,001–3,346).
+
+| Entity | Was shipping | Now ships | Why |
+|---|---|---|---|
+| Preuss School D / E | 8.5 m GIS L2 | **9.2 / 9.2 m** | Incomplete `PRE_2014_GIS_VERIFIED` batch — A/B/C already wear the matching plane. |
+| Street Corner Urban Market | 3 m GIS L1 | **3 m, epoch-listed** | Nuevo West 2020 amenity; 2014 near-grade + tower bleed. Join `POST_2014_SITES` with Viento/Brisa. |
+| Warren FIeld House (GIS typo) | 4.6 m GIS L1 | **4.6 m, epoch-listed** | Zero 2014 returns; Set now names the typo spelling Stadium/Clubhouse already cite. |
+
+Rejected / withheld: Pepper Canyon North Laundry (dense 82.7% under the 85% cut; roofOf 6.0
+rides a 2-pt tail) and ECEC A–D (Δ ≤0.6 vs the L1 record on the dense body). Leave both
+unchallenged.
 
 Rejected / withheld, each re-measured: Campus Emergency Services and CSC Building A — dense
 bodies ~4.5 under massHeights 6.5, but gaps 2.0 / 1.7 sit under the >2 thin-shelf cut

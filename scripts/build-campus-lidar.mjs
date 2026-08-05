@@ -182,6 +182,21 @@ const POST_2014_SITES = new Set([
   // ballpark today. Same posture as Warren Field House — the university
   // L1 records (4.3) ship unchallenged; no 2014 plane may ever answer.
   "Triton Stadium", "Triton Clubhouse",
+  // r1c2 pass-3 (2026-08-05). Two more names the Set still omitted while
+  // their siblings already barred 2014 admits:
+  // Street Corner Urban Market — Nuevo West amenity (opened 2020 with
+  // Viento/Brisa). GIS ring is "Nuevo West - Marketplace"; assembleMasses
+  // host-renames it to the OSM name. 1,533 returns over the ring are
+  // near-grade / predecessor / tower bleed (53% in −1..0, bodyTight=false,
+  // massOk=false, guarded p98 20.9). The GIS 3 m L1 record ships; no 2014
+  // number may ever answer. accuracy-2026-08-03 already flagged it.
+  "Street Corner Urban Market",
+  // Warren FIeld House — GIS typo spelling (capital I). Zero 2014 returns
+  // over the ring; Apple shows the finished ~2020 temporary fieldhouse
+  // beside Warren Field today. Epoch §14 / pass-2 prose already treat it
+  // as the Stadium/Clubhouse class sibling; the Set now names the typo
+  // so a future PRE_2014 admit cannot invent a plane from an empty lot.
+  "Warren FIeld House",
 ]);
 
 /* Post-2014 sites keyed by OSM ring INDEX — for what a name cannot say.
@@ -279,6 +294,14 @@ const PRE_2014_GIS_VERIFIED = new Set([
   "Preuss School - Building B",
   "Preuss School - Building C",
   "Preuss School - Building F",            // both F rings: gym hall and stage house
+  /* r1c2 pass-3 (2026-08-05). Preuss D/E were left off the 2001 classroom
+     batch above while A/B/C already ship the matching ~9.2 plane. Fresh
+     EPT: D 893 pts / E 872 pts, both roofOf 9.2 (p50 8.2–8.3, p75 8.9,
+     gap 0.3, bodyTight). Apple shows finished Preuss classroom roofs
+     beside the soccer pitch and Mid-Coast trolley today — same footprint
+     generation, not a rebuild. */
+  "Preuss School - Building D",
+  "Preuss School - Building E",
   /* r1c0 sweep (2026-08-04). The Extended Studies cottage rows off North
      Torrey Pines have no OSM rings at all, so every mass stood unchallenged
      at the record's uniform 4.3 m. The 2014 flight sees each roof as a
