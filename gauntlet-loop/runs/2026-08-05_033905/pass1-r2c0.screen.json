@@ -1,0 +1,189 @@
+[
+  {
+    "id": "osm-1039-overheight",
+    "entity": "unnamed osm:1039 (Shores-edge pad, Discovery Way / Redwood corridor)",
+    "where": {"x": -798.9, "z": 593.1},
+    "claim": "OSM area guess ships h=9 (src=osm); not in OSM_UNNAMED_VERIFIED.",
+    "observed": "Fresh full-depth EPT (3113 pts): roofOf=2.8, p50=2.5, p75=2.8, p90=8.9, p98=17.0, guard=true, bodyTight=true, massOk=true — dense low body ~2.5–2.8 m with a canopy/plant tail past the guard. Shipping 9 m is ~6 m / ~2 storeys over the measured body. Apple z18 at 32.872636,-117.249745 shows finished low residential/lab pads standing on this corridor today (no crane).",
+    "evidence": {
+      "lidar": "osm:1039 3113 pts roofOf=2.8 p50=2.5 p75=2.8 p90=8.9 p98=17.0 guard bodyTight massOk; lidar.osmHeights[1039] absent",
+      "gis": null,
+      "osm": "index 1039 unnamed h=9 area≈509 verts; assembleMasses ships src=osm h=9",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c0b/apple/osm1039.jpg z18 — finished low pads along the Shores winding road; mature planting; no construction",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Unnamed OSM area-guess overheight — guarded dense body (~2.8) replaceable via OSM_UNNAMED_VERIFIED if Apple currency holds (siblings 403/1048/1073 already admitted this shard).",
+    "epoch_risk": "Low for existence — Apple shows finished low fabric matching a 2014-scale pad. The p98=17 tail is canopy/plant, not a post-2014 tower; admitting roofOf's guarded p75/body (2.8) is the measurement, not inventing height from a newer epoch."
+  },
+  {
+    "id": "osm-1079-overheight",
+    "entity": "unnamed osm:1079 (Shores residential pad east of Discovery Way)",
+    "where": {"x": -501.1, "z": 626.1},
+    "claim": "OSM area guess ships h=9 (src=osm); not in OSM_UNNAMED_VERIFIED.",
+    "observed": "Fresh full-depth EPT (2192 pts): roofOf=3.3, p50=3.0, p75=3.3, p90=3.7, p98=8.5, guard=true, bodyTight=true, massOk=true — one-storey body with a short canopy tail. Shipping 9 m is ~5.7 m over the measured plane. Apple z18 at 32.872337,-117.246560 shows finished residential roofs (white flats / grey pitches / pools) standing today.",
+    "evidence": {
+      "lidar": "osm:1079 2192 pts roofOf=3.3 p50=3.0 p75=3.3 p90=3.7 p98=8.5 guard bodyTight massOk; lidar.osmHeights[1079] absent",
+      "gis": null,
+      "osm": "index 1079 unnamed h=9; assembleMasses ships src=osm h=9",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c0b/apple/osm1079.jpg z18 — finished La Jolla Shores residential fabric; pools; no crane",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Same unnamed area-guess overheight class as osm-1039 — clean guarded one-storey body vs 9 m guess.",
+    "epoch_risk": "Low — Apple matches a standing pre-style residential pad. Guard tail to 8.5 is canopy, not a post-2014 rebuild; do not admit unguarded p98."
+  },
+  {
+    "id": "osm-1143-overheight",
+    "entity": "unnamed osm:1143 (shore-colony house near aquarium bluff)",
+    "where": {"x": -417.4, "z": 1356.1},
+    "claim": "OSM area guess ships h=9 (src=osm); not in OSM_UNNAMED_VERIFIED. Sibling 1141 already verified at 5.3.",
+    "observed": "Fresh full-depth EPT (2873 pts): roofOf=5.1, p50=3.6, p75=4.1, p90=4.6, p98=5.1, guard=false, bodyTight=true, massOk=true — single clean plane, no canopy smear. Shipping 9 m is +3.9 m over the measured roof. Apple z18 at 32.865735,-117.245665 shows finished shore-colony roofs standing today.",
+    "evidence": {
+      "lidar": "osm:1143 2873 pts roofOf=5.1 p50=3.6 p75=4.1 p90=4.6 p98=5.1 no-guard bodyTight massOk; lidar.osmHeights[1143] absent (1141 already at 5.3)",
+      "gis": null,
+      "osm": "index 1143 unnamed h=9; assembleMasses ships src=osm h=9",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c0b/apple/osm1143.jpg z18 — finished hillside residential / shore-colony roofs; mature canopy; no crane",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Unnamed area-guess overheight with a textbook single-plane admission (sibling 1141 already in OSM_UNNAMED_VERIFIED).",
+    "epoch_risk": "Low — clean 2014 plane and Apple both describe a standing low house. No date conflict; the disagreement is guess vs laser."
+  },
+  {
+    "id": "osm-1055-overheight",
+    "entity": "unnamed osm:1055 (Shores pad west of Discovery Way cluster)",
+    "where": {"x": -683.6, "z": 614.1},
+    "claim": "OSM area guess ships h=9 (src=osm); not in OSM_UNNAMED_VERIFIED.",
+    "observed": "Fresh full-depth EPT (1169 pts): roofOf=4.8, p50=4.2, p75=4.8, p90=8.6, p98=11.1, guard=true, bodyTight=true, massOk=true — ~4.8 m body under a canopy tail. Shipping 9 m is +4.2 m over the guarded body. Apple z18 at 32.872446,-117.248512 shows finished low pads on the winding Shores road today.",
+    "evidence": {
+      "lidar": "osm:1055 1169 pts roofOf=4.8 p50=4.2 p75=4.8 p90=8.6 p98=11.1 guard bodyTight massOk; lidar.osmHeights[1055] absent",
+      "gis": null,
+      "osm": "index 1055 unnamed h=9 area≈431; assembleMasses ships src=osm h=9",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c0b/apple/osm1055.jpg z18 — finished low roofs along the canyon-edge road; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Unnamed area-guess overheight — guarded body admission class (same as 1039/1079), slightly less eye-level dramatic than a full storey+ miss at walking distance among trees.",
+    "epoch_risk": "Low — Apple finished low pad vs 2014 body plane. Guard tail is canopy, not a newer building."
+  },
+  {
+    "id": "osm-1059-dense-body-vs-roofof",
+    "entity": "unnamed osm:1059 (Shores pad)",
+    "where": {"x": -626.4, "z": 670.0},
+    "claim": "OSM area guess ships h=9 (src=osm); not in OSM_UNNAMED_VERIFIED.",
+    "observed": "Fresh full-depth EPT (1155 pts): roofOf=8.1, p50=3.6, p75=3.8, p90=4.0, p98=8.1, guard=false, bodyTight=true — dense body sits at ~3.6–3.8 m (prior hist 87.6% in the 3 m bin) while unguarded p98/roofOf rides an 8 m shelf. Shipping 9 m is near roofOf but ~5 m over the dense body. Eye-level wrongness depends on whether the 8 m shelf is real roof or crown bleed.",
+    "evidence": {
+      "lidar": "osm:1059 1155 pts roofOf=8.1 p50=3.6 p75=3.8 p90=4.0 p98=8.1 no-guard bodyTight; dense3≈87.6% (from parallel hist pass); lidar.osmHeights[1059] absent",
+      "gis": null,
+      "osm": "index 1059 unnamed h=9 area≈453; assembleMasses ships src=osm h=9",
+      "apple": "Corridor covered by coast-apts / osm1039 / osm1055 Apple z16–18 contact sheet under /tmp/gauntlet-r2c0b/apple/ — finished Shores residential fabric",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Dense-body vs unguarded roofOf on an unnamed ring — thin upper shelf / crown class (Asante / Sanford family). Do not auto-admit roofOf=8.1 without deciding the shelf.",
+    "epoch_risk": "Low for existence. The 3 m vs 8 m split could be stepped architecture OR overhanging trees — Apple can settle appearance but not height; LiDAR must."
+  },
+  {
+    "id": "osm-1075-canopy-smear",
+    "entity": "unnamed osm:1075 (Shores pad near La Jolla Shores Dr)",
+    "where": {"x": -535.9, "z": 580.3},
+    "claim": "OSM area guess ships h=9 (src=osm); not in OSM_UNNAMED_VERIFIED.",
+    "observed": "Fresh full-depth EPT (3521 pts): roofOf=14.3, p50=3.2, p75=10.4, p90=13.1, p98=14.3, guard=false, bodyTight=false, massOk=true — no single plane. Shipping 9 sits between a ~3 m dense suggestion and a 14 m smear. Apple z18 at 32.872752,-117.246932 shows finished residential roofs under heavy tree canopy.",
+    "evidence": {
+      "lidar": "osm:1075 3521 pts roofOf=14.3 p50=3.2 p75=10.4 p90=13.1 p98=14.3 bodyTight=false massOk; lidar.osmHeights[1075] absent",
+      "gis": null,
+      "osm": "index 1075 unnamed h=9 area≈405; assembleMasses ships src=osm h=9",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c0b/apple/osm1075b.jpg z18 — finished Shores houses under mature canopy; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Canopy-smeared unnamed ring — same withhold class as documented 1068 (better absent than wrong / keep guess). Not an auto-admission.",
+    "epoch_risk": "Low for existence (Apple standing). High risk of misreading eucalyptus as building height if roofOf=14.3 were admitted — that would be the 1068 failure mode."
+  },
+  {
+    "id": "osm-825-canopy-or-structure",
+    "entity": "unnamed osm:825 (small ring near Geodesic Dome / Electromagnetics corridor)",
+    "where": {"x": -788.5, "z": 1109.5},
+    "claim": "OSM area guess ships h=4.5 (src=osm); not in OSM_UNNAMED_VERIFIED.",
+    "observed": "Fresh full-depth EPT (599 pts): roofOf=15.2, p50=2.3, p75=11.2, p90=13.9, p98=15.2, guard=false, bodyTight=false, massOk=true — bimodal / smeared. Shipping 4.5 may understate a real structure or correctly avoid a canopy paste. Apple z18 at 32.867971,-117.249629 shows a U-loop service pad with small structures and heavy tree cover (Geodesic Dome 1/2 GIS neighbours ship L1=4.3).",
+    "evidence": {
+      "lidar": "osm:825 599 pts roofOf=15.2 p50=2.3 p75=11.2 p90=13.9 p98=15.2 bodyTight=false; lidar.osmHeights[825] absent",
+      "gis": "nearby Geodesic Dome 1/2 ship gisH=4.3 L1 unchallenged; Electromagnetics Research Facility gisH=4.3",
+      "osm": "index 825 unnamed h=4.5 area≈91; assembleMasses ships src=osm h=4.5",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c0b/apple/osm825.jpg z18 — U-loop pad, small structures, dense trees; finished campus scrub; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Tiny unnamed ring under canopy — withhold / keep-guess class unless a parts-level source separates structure from crowns.",
+    "epoch_risk": "Medium — small service structures can post-date 2014; Apple confirms something is there today, but the 15 m smear is not a trustworthy height for whatever stands."
+  },
+  {
+    "id": "igpp2000-upper-shelf",
+    "entity": "IGPP, Revelle Lab Building 2000",
+    "where": {"x": -1052.7, "z": 1124.4},
+    "claim": "GIS mass ships h=11.3 (massHeights) over gisH=8.5 L2 after host rename.",
+    "observed": "Fresh full-depth EPT on GIS ring (1191 pts): roofOf=11.3, p50=7.4, p75=7.4, p90=7.9, p98=11.3, guard=false, bodyTight=true — dense deck ~7.4 (79% in the 7 m bin on the parallel hist) with an upper shelf at ~11 m that becomes roofOf because p98−p75=3.9 < 5 (guard does not fire). Shipping 11.3 pastes the shelf across the whole mass. Apple z18 at 32.867831,-117.252460 shows finished IGPP/Revelle roofs with mechanical plant / solar standing today.",
+    "evidence": {
+      "lidar": "gis:IGPP2000 1191 pts roofOf=11.3 p50=7.4 p75=7.4 p90=7.9 p98=11.3 no-guard bodyTight; massHeights key ships 11.3; osm lidar.heights for Building 2000=10.4",
+      "gis": "IGPP 2000 - Revelle Laboratory gisH=8.5 L2 area≈465; assembled name IGPP, Revelle Lab Building 2000",
+      "osm": "IGPP, Revelle Lab Building 2000 index 58; host renamed under GIS",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c0b/apple/igpp2000.jpg z18 — finished multi-wing IGPP roofs, mechanical plant, solar; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Upper-shelf / stepped mass where guard threshold (5 m) does not fire — dense deck ~7.4 vs roofOf 11.3 (Sanford / Otterson family). Thin-shelf rule (p98−p75>2.5 + dense≥85%) may or may not apply at 79%.",
+    "epoch_risk": "Low — IGPP Revelle 2000 is pre-2014 fabric Apple still shows. Disagreement is which 2014 plane is the honest single extrusion, not a date conflict."
+  },
+  {
+    "id": "coast-apts-canopy-adjacent",
+    "entity": "Coast Apartments / Discovery Way & Redwood Drive GIS pads (sample 9321, 9369, 9383)",
+    "where": {"x": -550.0, "z": 850.0},
+    "claim": "Hostless GIS masses ship unchallenged gisH=6.1 L2 (massH=null) across the Coast Apartments grid.",
+    "observed": "Fresh full-depth EPT: 9321 Discovery Way 775 pts roofOf=5.8 p50=5.6 p75=5.7 bodyTight — clean, Δ≤0.5 vs 6.1. 9369 Discovery Way 883 pts roofOf=17.0 p50=5.6 p75=17.0 guard bodyTight=false massOk=false — dense body ~5.6 under eucalyptus. 9383 Discovery Way 2025 pts roofOf=17.9 same canopy failure. Shipping the L2 storey default (6.1) matches the dense body within ~0.5 m and correctly avoids admitting roofOf canopy. Class risk: any future massHeights auto-admit via roofOf would paste 17 m onto one-storey pads.",
+    "evidence": {
+      "lidar": "gis:9321 775 pts roofOf=5.8 clean; gis:9369 883 pts roofOf=17.0 guard bodyTight=false; gis:9383 2025 pts roofOf=17.9 guard bodyTight=false; massHeights absent for all sampled Coast/Discovery pads",
+      "gis": "9310/9334/9344/9366/9388 Redwood + 9321/9331/9355/9369/9383/9393 Discovery Way — mostly gisH=6.1 L2, massH=null, area≈260–312",
+      "osm": null,
+      "apple": "Apple snapshot /tmp/gauntlet-r2c0b/apple/coast-apts.jpg z16 — finished two-storey apartment fabric under mature trees; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Hostless GIS storey-default over canopy-adjacent rings — currently safe (6.1 ≈ dense 5.6) but roofOf auto-admission would repeat the 1068/eucalyptus paste. Class hole for massHeights gating, not an immediate height bug.",
+    "epoch_risk": "Low — Coast Apartments are pre-2014 housing Apple still shows. Canopy is trees, not a post-2014 rebuild."
+  },
+  {
+    "id": "unnamed-guess-class-hole",
+    "entity": "119 unnamed OSM rings in-box still shipping area guesses",
+    "where": {"x": -700.0, "z": 700.0},
+    "claim": "After prior r2c0 admissions (403/1036/1048/1053/1073/1141/1145/…) and documented withholds (1033/1068/216), enumerate still flags 119 in-shard unnamed OSM masses shipping area guesses (4.5 or 9).",
+    "observed": "Fresh enumerate: C_unnamedGuessShipping=119. Spot full-depth EPT on the remaining |Δ|≥3 set produced the high/medium candidates above plus clean near-misses (1035 roofOf=9.7≈ship 9; 839 roofOf=5.0≈ship 4.5; 760 roofOf=3.6≈ship 4.5). Batch Apple+EPT verification remains the right shape — do not blanket-admit.",
+    "evidence": {
+      "lidar": "62-target full-depth probe in /tmp/gauntlet-r2c0b/probe.json; open |Δ|≥3 outliers listed as separate candidates; verified indices excluded",
+      "gis": null,
+      "osm": "enumerate.out C=119 unnamed still shipping guesses inside shard box",
+      "apple": "Contact sheet /tmp/gauntlet-r2c0b/apple/ — Shores residential corridor + SIO shore mostly finished fabric",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Standing unnamed-guess class hole (same handoff as prior shards) — per-ring Apple currency + one-plane EPT gate, not a one-row patch.",
+    "epoch_risk": "Per-ring — some pads could be post-2014; that is why OSM_UNNAMED_VERIFIED is index-keyed. A blanket admit would violate the epoch rule."
+  },
+  {
+    "id": "noaa-outline-core-overlap",
+    "entity": "NOAA Southwest Fisheries Science Center / NOAA - Southwest Fisheries Science Center Laboratory",
+    "where": {"x": -908.1, "z": 837.9},
+    "claim": "Both still render: GIS core src=gis h=13.8 (2 rings: 57+9 courtyard hole) AND OSM outline src=osm h=13.5 (1 ring, 9 verts). Heights pinned by MEASURE_MINUS_CONTAINED_HOSTS + epoch § test.",
+    "observed": "Fresh EPT: osm:NOAA 26180 pts roofOf=14.7 whole-outline / wings-minus-core ships 13.5; gis:NOAA 13997 pts roofOf=13.8 bodyTight. OSM ring contains the GIS centroid (dist 13.8 m; osmContainsGisC=true) but OSM geometry has no hole for the core — so the 13.5 outline prism still solid-fills the core footprint that the 13.8 GIS prism also occupies. Height assignment is correct per prior judge; geometric overlap may still z-fight (~0.3 m). Apple z17 shows one finished fisheries complex standing.",
+    "evidence": {
+      "lidar": "osm:NOAA 26180 pts roofOf=14.7 (whole); gis:NOAA 13997 pts roofOf=13.8; lidar.heights wings=13.5; massHeights m:-908,838=13.8",
+      "gis": "NOAA Southwest Fisheries Science Center gisH=21.3 L5 challenged to massH=13.8; assembled rings=2 verts=[57,9]",
+      "osm": "NOAA - Southwest Fisheries Science Center Laboratory index 420; MEASURE_MINUS_CONTAINED_HOSTS entry; assembleMasses still emits src=osm alongside GIS",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c0b/apple/noaa.jpg z17 — one finished multi-wing fisheries complex; light roofs / courtyards; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "MEASURE_MINUS_CONTAINED fixed the height paste but not the solid overlap — outline still fills the core volume (Atkinson-mirror geometry hole missing on the OSM side).",
+    "epoch_risk": "None for existence/date — both prisms describe the same 2014/today fisheries complex. This is a geometry/dedup question, not an epoch miss. Prior judge intentionally kept dual heights; re-check only whether a core hole belongs on the OSM outline."
+  }
+]

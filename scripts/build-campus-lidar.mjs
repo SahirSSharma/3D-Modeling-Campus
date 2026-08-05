@@ -629,6 +629,28 @@ const OSM_UNNAMED_VERIFIED = new Set([
      Perlman near-shelf (82.8%), Foodworx Dining Room (93% at grade —
      excluded from massing, not a height). */
   776, 766,
+  /* r2c0 re-sweep 2026-08-05 — Shores / Discovery Way unnamed pads beside
+     the already-admitted 403 / 1036 / 1048 / 1053 / 1073 / 1141 / 1145 set.
+     Independent full-depth EPT (point counts matched the screener); Apple
+     currency confirmed standing finished low fabric, no crane:
+       1039: 3,113 returns, guarded roofOf 2.8 (p50 2.5 / p75 2.8, canopy
+             tail to 17) — was 9 m area guess (~2 storeys over).
+       1079: 2,192 returns, guarded roofOf 3.3 (p50 3.0 / p75 3.3) — was 9.
+       1143: 2,873 returns, clean p98 5.1 (sibling of 1141 at 5.3) — was 9.
+       1055: 1,169 returns, guarded roofOf 4.8 (p50 4.2 / p75 4.8) — was 9.
+       1059: 1,155 returns, thin-shelf host rule → p75 3.8 (dense 90.6% in
+             a 3–4 m band, gap 4.3 under the 5 m canopy guard; unguarded
+             roofOf would have pasted the 8.1 shelf) — was 9.
+     Deliberately NOT admitted this pass:
+       1075: bodyTight=false canopy smear (p50 3.2 / p75 10.4 / p98 14.3);
+             keep the 9 m guess (1068 eucalyptus family).
+       825:  tiny U-loop ring under crowns (599 pts, bodyTight=false);
+             keep the 4.5 m guess.
+       IGPP 2000: dense 84.9% under the 85% thin-shelf cut — near-miss
+             (Perlman / McGill family); massHeights 11.3 stands.
+       Coast / Discovery hostless GIS pads: L2=6.1 already matches the
+             dense ~5.6 body; canopy neighbours are massOk=false. */
+  1039, 1079, 1143, 1055, 1059,
 ]);
 
 /* Hand-audited stats where the automatic roofOf() percentile choice is

@@ -389,3 +389,67 @@ per sample, and OM3/OM4 area-coverage re-derived from the shipped rings
 - **Nuevo East complete**: Piedra + Tierra were the only OSM-named Nuevo
   East towers missing from `POST_2014_SITES` (Cala / Artesa already listed
   under Mesa Nueva).
+
+---
+
+# FINDINGS — run `2026-08-05_033905` · shard r2c0 (re-sweep)
+
+Pass 1 re-sweep of the Scripps / La Jolla Shores shard (pier to Discovery Way /
+Shores residential). Screen: 11 candidates (3 high / 8 medium). Judged by
+`cursor-grok-4.5-high`.
+
+Every candidate in `pass1-r2c0.screen.json` was re-derived before judgement with
+an independent full-depth targeted EPT re-sample (10 targets in
+`.cache/gauntlet-r2c0b/judge/reprobe.json`; point counts matched the screener's
+`/tmp/gauntlet-r2c0b/probe.json` exactly — 3,113 / 2,192 / 2,873 / 1,169 /
+1,155 / 3,521 / 599 / 1,191 / 775 / 883), Apple snapshots from the screener's
+`/tmp/gauntlet-r2c0b/apple/`, and thin-shelf arithmetic re-computed per sample
+from each mass's histogram (builder `denseBandFraction`).
+
+### Fixed — heights (class admission, not a one-row patch)
+
+| Entity | Was shipping | Now ships | Source | Test |
+|---|---|---|---|---|
+| osm:1039 (`osm-1039-overheight`) | 9 m area guess | **2.8** | `OSM_UNNAMED_VERIFIED`: 3,113 pts, guarded p75 2.8, bodyTight; Apple finished low pads | epoch §24 |
+| osm:1079 (`osm-1079-overheight`) | 9 m area guess | **3.3** | `OSM_UNNAMED_VERIFIED`: 2,192 pts, guarded p75 3.3, bodyTight | epoch §24 |
+| osm:1143 (`osm-1143-overheight`) | 9 m area guess | **5.1** | `OSM_UNNAMED_VERIFIED`: 2,873 pts, clean p98 5.1 (sibling of 1141 @ 5.3) | epoch §24 |
+| osm:1055 (`osm-1055-overheight`) | 9 m area guess | **4.8** | `OSM_UNNAMED_VERIFIED`: 1,169 pts, guarded p75 4.8, bodyTight | epoch §24 |
+| osm:1059 (`osm-1059-dense-body-vs-roofof`) | 9 m area guess | **3.8** | Thin-shelf host rule: dense 90.6% @3–4, gap 4.3 → p75. Unguarded roofOf would paste 8.1. | epoch §24 |
+
+### Withheld (better absent than wrong)
+
+- **osm:1075 (`osm-1075-canopy-smear`)**: bodyTight=false (p50 3.2 / p75 10.4 /
+  p98 14.3). Same eucalyptus paste class as documented 1068. Keep the 9 m guess.
+- **osm:825 (`osm-825-canopy-or-structure`)**: 599 pts under Geodesic Dome
+  corridor crowns, bodyTight=false. Keep the 4.5 m guess.
+
+### Rejected candidates (each re-measured before rejection; do not re-find these)
+
+- **`igpp2000-upper-shelf`** — REJECTED. Dense 84.9% under the 85% thin-shelf
+  cut (Perlman / McGill near-miss). Apple shows mechanical plant / solar on the
+  finished IGPP 2000 roof; pasting the dense 7.4 deck flattens a real upper
+  volume. massHeights 11.3 stands. Pinned in §24.
+- **`coast-apts-canopy-adjacent`** — REJECTED as an immediate height bug.
+  Hostless L2=6.1 already matches the dense ~5.6 body (9321 clean roofOf 5.8);
+  canopy neighbours (9369 / 9383, roofOf 17) stay massOk=false so massHeights
+  never emits. Class hole noted: a future roofOf auto-admit on hostless GIS
+  would paste eucalyptus — the massOk=false gate is the guard. Pinned.
+- **`unnamed-guess-class-hole`** — REJECTED as scoped. The mechanism exists and
+  this pass used it for five admissions and two explicit withholds; remaining
+  in-shard unnamed guesses need per-ring Apple + EPT, not a blanket admit.
+- **`noaa-outline-core-overlap`** — REJECTED as a height bug. Prior r2c0 judge
+  already fixed the paste via `MEASURE_MINUS_CONTAINED_HOSTS` (wings 13.5 +
+  core 13.8). Dual render is intentional: OSM has the lab wings GIS does not.
+  The ~0.3 m z-fight where the solid outline fills the core is a geometry
+  handoff (OSM hole), not a height error. Both prisms re-pinned in §24.
+
+### Handoffs / observations for later shards / passes
+
+- **NOAA OSM outline hole**: adding a courtyard/core hole matching the GIS
+  centre block would remove the residual overlap without losing the wings.
+  Mapping pass, not a height pass.
+- **Remaining unnamed guesses in-box**: still ~110+ after this pass's five
+  admissions. Batch Apple+EPT verification remains the right shape; do not
+  blanket-admit.
+- **IGPP 2000 near-miss**: dense 84.9% — 0.1 pp under the cut. Do not lower
+  the floor; a parts split for the plant shelf would let both planes ship.

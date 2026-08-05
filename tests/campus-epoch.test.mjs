@@ -117,6 +117,11 @@
  *      Hamilton sheds its thin shelf, two unnamed modular pads ship
  *      their planes, Foodworx Dining Room stays absent, and the dual-
  *      plane / near-shelf / unfitted-court residuals stay as judged.
+ *  24. The r2c0 re-sweep's measurements hold: five Shores / Discovery Way
+ *      unnamed pads ship their measured planes (including one thin-
+ *      shelf host), the canopy-smear withholds keep their guesses, and
+ *      IGPP 2000's near-miss upper shelf / NOAA dual geometry / Coast
+ *      Apartments residuals stay as judged.
  */
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
@@ -2206,5 +2211,71 @@ describe("campus epoch — r1c2 re-sweep (2026-08-05)", () => {
     assert.equal(rendersNear(1039.2, 43.5).find((m) => m.src === "gis")?.h, 14.7);
     assert.equal(rendersNear(1037.7, 63.9).find((m) => m.src === "gis")?.h, 14.2);
     assert.equal(rendersNear(1536.7, -18.9).find((m) => m.src === "gis")?.h, 13.3);
+  });
+});
+
+describe("campus epoch — r2c0 re-sweep (2026-08-05)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("five Shores / Discovery Way unnamed pads ship their measured planes", () => {
+    /* Independent full-depth EPT re-sample matched the screener's point
+       counts exactly. Each stands finished on today's Apple (no crane).
+       1039 / 1079 / 1055: canopy guard → p75. 1143: clean single plane
+       (sibling of 1141). 1059: thin-shelf host rule (dense 90.6%, gap
+       4.3) → p75 3.8 — unguarded roofOf would have pasted the 8.1 shelf. */
+    for (const [i, h, x, z] of [
+      [1039, 2.8, -798.9, 593.1], [1079, 3.3, -501.1, 626.1],
+      [1143, 5.1, -417.4, 1356.1], [1055, 4.8, -683.6, 614.1],
+      [1059, 3.8, -626.4, 670.0],
+    ]) {
+      assert.equal(LIDAR.osmHeights?.[i], h, `osm:${i}'s plane`);
+      assert.equal(rendersNear(x, z, 4).find((m) => m.src === "osm")?.h, h,
+        `osm:${i} renders at its plane`);
+    }
+  });
+
+  test("canopy-smear Shores rings keep their declared guesses", () => {
+    /* 1075: 3,521 returns, bodyTight=false (p50 3.2 / p75 10.4 / p98 14.3)
+       — same eucalyptus paste class as documented 1068; keep the 9 m guess.
+       825: 599 returns under the Geodesic Dome corridor crowns,
+       bodyTight=false; keep the 4.5 m guess. Better absent than a crown. */
+    assert.equal(LIDAR.osmHeights?.[1075], undefined, "a 2014 smear shipped for osm:1075");
+    assert.equal(LIDAR.osmHeights?.[825], undefined, "a 2014 smear shipped for osm:825");
+    assert.equal(rendersNear(-535.9, 580.3, 4).find((m) => m.src === "osm")?.h, 9,
+      "the canopy-smeared Shores pad keeps its declared guess");
+    assert.equal(rendersNear(-788.5, 1109.5, 4).find((m) => m.src === "osm")?.h, 4.5,
+      "the tiny U-loop ring keeps its declared guess");
+  });
+
+  test("IGPP 2000 keeps its upper shelf; NOAA dual and Coast L2 stand", () => {
+    /* IGPP 2000: dense 84.9% under the 85% thin-shelf cut (Perlman /
+       McGill near-miss). Pasting the dense 7.4 deck would flatten a real
+       ~11 m plant/solar shelf Apple still shows. massHeights 11.3 stands.
+       NOAA: MEASURE_MINUS_CONTAINED already fixed the height paste
+       (wings 13.5 + core 13.8); dual geometry is intentional (OSM has the
+       wings GIS does not). Coast / Discovery hostless pads: L2=6.1 matches
+       the dense ~5.6 body; canopy neighbours stay massOk=false. */
+    assert.equal(LIDAR.massHeights["m:-1053,1124"], 11.3, "IGPP 2000 keeps roofOf");
+    assert.equal(rendersNear(-1052.7, 1124.4).find((m) => m.src === "gis")?.h, 11.3);
+    assert.equal(LIDAR.heights["NOAA - Southwest Fisheries Science Center Laboratory"], 13.5);
+    assert.equal(LIDAR.massHeights["m:-908,838"], 13.8);
+    const noaa = rendersNear(-908.1, 837.9, 25).filter((m) => /NOAA/i.test(m.name || ""));
+    assert.ok(noaa.some((m) => m.src === "osm" && m.h === 13.5), "NOAA wings vanished");
+    assert.ok(noaa.some((m) => m.src === "gis" && m.h === 13.8), "NOAA core vanished");
+    assert.equal(LIDAR.massHeights["m:-601,904"], undefined, "9321 must not invent a massHeights");
+    assert.equal(LIDAR.massHeights["m:-571,796"], undefined, "9369 canopy must not auto-admit roofOf");
+    assert.equal(rendersNear(-600.7, 904.5).find((m) => m.src === "gis")?.h, 6.1,
+      "9321 Discovery Way keeps its L2 body");
+    assert.equal(rendersNear(-570.9, 796.2).find((m) => m.src === "gis")?.h, 6.1,
+      "9369 Discovery Way keeps L2 against eucalyptus");
   });
 });

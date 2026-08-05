@@ -619,6 +619,27 @@ dual-plane residential (Sanford class), roofOf stands. Perlman — dense 82.8%, 
 85% cut; shelf stays. Pepper Canyon / Foodworx tennis + pickleball courts — painted on
 Apple, unfitted until registration passes the 0.6 m gate (Muir pickleball class).
 
+**The Scripps / Shores re-sweep (2026-08-05, r2c0).** Fresh screen of 11 candidates
+(3 high / 8 medium). Every height re-derived from an independent full-depth EPT
+(point counts matched the screener's 3,113 / 2,192 / 2,873 / … exactly); Apple
+currency re-checked per site.
+
+| Entity | Was shipping | Now ships | Why |
+|---|---|---|---|
+| Shores-edge pad (unnamed, osm:1039) | 9 m area guess | **2.8 m** | Guarded dense body (3,113 returns, p50 2.5 / p75 2.8) under a canopy tail to 17 — ~2 storeys over. |
+| Shores residential pad (unnamed, osm:1079) | 9 m area guess | **3.3 m** | Guarded one-storey plane (2,192 returns); Apple shows finished roofs / pools today. |
+| Shore-colony house (unnamed, osm:1143) | 9 m area guess | **5.1 m** | Clean single plane (2,873 returns); sibling of already-admitted 1141 at 5.3. |
+| Discovery Way west pad (unnamed, osm:1055) | 9 m area guess | **4.8 m** | Guarded body under a canopy tail (1,169 returns). |
+| Shores pad, thin shelf (unnamed, osm:1059) | 9 m area guess | **3.8 m** | Thin-shelf host rule: dense 90.6% in 3–4 m, gap 4.3 → p75. Unguarded roofOf would have pasted the 8.1 shelf. |
+
+Rejected / withheld, each re-measured: osm:1075 / 825 — bodyTight=false canopy smears
+(1068 eucalyptus family); guesses stand. IGPP Revelle 2000 — dense 84.9% under the 85%
+thin-shelf cut (Perlman / McGill near-miss); massHeights 11.3 stands. NOAA dual geometry
+— heights already correct via `MEASURE_MINUS_CONTAINED` (wings 13.5 + core 13.8); the
+~0.3 m overlap is intentional dual coverage, not a height bug. Coast / Discovery
+hostless GIS pads — L2=6.1 already matches the dense ~5.6 body; canopy neighbours stay
+`massOk=false` so roofOf 17 never auto-admits.
+
 ### The colours, measured off footage
 
 Satellite imagery sees roofs and ground; it cannot see a wall, a tree trunk, or the sky. For
