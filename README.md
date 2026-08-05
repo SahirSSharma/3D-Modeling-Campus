@@ -659,6 +659,29 @@ so roofOf 8 / 6.8 stands. James' Place inside the Forum ring — heights already
 (5.1 / 10.5); residual is an OSM outline handoff, not a height bug. Class-hole rejected
 as scoped.
 
+**The east-of-I-5 / Sheraton-strip re-sweep (2026-08-05, r2c2).** Fresh screen of 16
+candidates (6 high / 9 medium / 1 low). Every height re-derived from an independent
+full-depth EPT (point counts matched the screener's 4,425 / 5,485 / 7,470 / … exactly);
+Apple currency re-checked per site.
+
+| Entity | Was shipping | Now ships | Why |
+|---|---|---|---|
+| Sheraton-strip pad (unnamed, osm:1366) | 9 m area guess | **5.2 m** | Thin-shelf host rule: dense 91.9% in 5–6 m, gap 4.6 → p75. Unguarded roofOf would paste the 9.8 shelf. |
+| Sheraton wing (unnamed, osm:1365) | 9 m area guess | **5.1 m** | Guarded one-storey plane (5,485 returns, p50 = p75 = 5.1 under a canopy/HVAC tail to 12.5). |
+| Temple-corridor courtyard (unnamed, osm:285) | 12 m area guess | **8.4 m** | Thin-shelf host rule: dense 87.3%, gap 2.1 → p75. |
+| Whole Foods / CVS pad (unnamed, osm:81) | 4.8 m OSM under-tag | **7.7 m** | Clean single plane (6,304 returns); sibling of Village Square under-tags. |
+| Courtyard block (unnamed, osm:287) | 12 m area guess | **8.4 m** | Guarded mid-rise plane (5,801 returns) under a canopy tail to 14.2. |
+| Courtyard block (unnamed, osm:286) | 12 m area guess | **10.1 m** | Clean p98 (dense 87.1%, gap 1.6 under the thin-shelf cut — plant noise, not a shelf). |
+| Large courtyard mid-rise (unnamed, osm:1356) | 16 m area guess | **13.2 m** | Clean single plane (24,983 returns, p50 12.1 / p75 12.2). |
+| Large courtyard mid-rise (unnamed, osm:1355) | 16 m area guess | **13.8 m** | Clean single plane (21,686 returns); sibling of 1356. |
+
+Rejected / withheld, each re-measured: osm:1364 — dense 78.7% under the 85% thin-shelf cut
+(Sheraton near-miss); guess stands. osm:704 / 705 — stepped mid-rises (dense 2 m band
+47% / 44%); no single plane. osm:257 / 258 — dense body ≈ the 12 m guess; roofOf rides an
+upper wing. Medical — dense 85.8%, gap 1.9 under the 2 m cut; roofOf 10.7 stands. Hyatt /
+helipad osm:83 — prior composite withholds (HAND_AUDITED null / bodyTight=false); no
+parts source. Class-hole rejected as scoped.
+
 ### The colours, measured off footage
 
 Satellite imagery sees roofs and ground; it cannot see a wall, a tree trunk, or the sky. For

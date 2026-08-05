@@ -122,6 +122,15 @@
  *      shelf host), the canopy-smear withholds keep their guesses, and
  *      IGPP 2000's near-miss upper shelf / NOAA dual geometry / Coast
  *      Apartments residuals stay as judged.
+ *  25. The r2c1 re-sweep's measurements hold: three Village Square /
+ *      Villa La Jolla unnamed pads ship their measured planes, the
+ *      multimodal / near-guess withholds keep their guesses, and Union
+ *      Bank / UC Cyclery / James' Place residuals stay as judged.
+ *  26. The r2c2 re-sweep's measurements hold: eight Sheraton-strip /
+ *      Temple-corridor / Whole Foods unnamed pads ship their measured
+ *      planes (two via thin-shelf host rule), the near-miss / stepped /
+ *      composite withholds keep their guesses, and Medical / Hyatt /
+ *      helipad residuals stay as judged.
  */
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
@@ -2349,5 +2358,73 @@ describe("campus epoch — r2c1 re-sweep (2026-08-05)", () => {
     const forum = rendersNear(6.0, 657.6, 8).find((m) => m.name === "Mandell Weiss Forum");
     assert.ok(forum, "Mandell Weiss Forum vanished");
     assert.equal(forum.h, 10.5);
+  });
+});
+
+describe("campus epoch — r2c2 re-sweep (2026-08-05)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("eight east-of-I-5 / Sheraton-strip unnamed pads ship their measured planes", () => {
+    /* Independent full-depth EPT re-sample matched the screener's point
+       counts exactly. Each stands finished on today's Apple (no crane).
+       1366 / 285: thin-shelf host rule (dense ≥85%, gap >2 → p75).
+       1365 / 287: canopy guard → p75. 81: Village Square under-tag
+       sibling. 286 / 1356 / 1355: clean single planes. */
+    for (const [i, h, x, z] of [
+      [1366, 5.2, 972.1, 872.9], [1365, 5.1, 945.5, 819.9],
+      [285, 8.4, 1384.9, 1182.6], [81, 7.7, 939.4, 937.8],
+      [287, 8.4, 1475.9, 1102.9], [286, 10.1, 1478.1, 1170.3],
+      [1356, 13.2, 1378.9, 988.5], [1355, 13.8, 1376.1, 1133.2],
+    ]) {
+      assert.equal(LIDAR.osmHeights?.[i], h, `osm:${i}'s plane`);
+      assert.equal(rendersNear(x, z, 4).find((m) => m.src === "osm")?.h, h,
+        `osm:${i} renders at its plane`);
+    }
+  });
+
+  test("near-miss thin-shelf and stepped rings keep their declared guesses", () => {
+    /* 1364: dense 78.7% under the 85% thin-shelf cut (gap 3.9) —
+       Sheraton-strip near-miss sibling of 1366; admitting roofOf would
+       paste the 9.3 shelf. 704 / 705: stepped mid-rises (dense 2 m band
+       47% / 44%); no single plane. 257 / 258: dense body ≈ the 12 m
+       guess; roofOf 16 / 17 rides an upper wing (osm:707 family). */
+    for (const [i, h, x, z] of [
+      [1364, 9, 891.6, 881.4], [704, 9, 1821.8, 987.6],
+      [705, 9, 1798.5, 975.5], [257, 12, 1640.9, 1125.9],
+      [258, 12, 1696.8, 1115.3],
+    ]) {
+      assert.equal(LIDAR.osmHeights?.[i], undefined,
+        `a contested plane shipped for osm:${i}`);
+      assert.equal(rendersNear(x, z, 4).find((m) => m.src === "osm")?.h, h,
+        `osm:${i} keeps its declared guess`);
+    }
+  });
+
+  test("Medical keeps its roofOf shelf; Hyatt and helipad composites stay withheld", () => {
+    /* Medical: dense 85.8%, gap 1.9 under the 2 m thin-shelf cut — HVAC
+       on a finished Aventine strip roof (Union Bank / UC Cyclery family).
+       Hyatt: HAND_AUDITED null (bimodal podium+tower, 49% @4 m vs tower
+       41–52); ships the stated 16 m OSM tag. osm:83: helipad tower + wing
+       in one ring (bodyTight=false); ships 16. Do not paste a single
+       roofOf across either composite. */
+    assert.equal(LIDAR.heights["La Jolla Medical & Surgical Center"], 10.7);
+    assert.equal(rendersNear(1364.9, 887.9).find(
+      (m) => m.name === "La Jolla Medical & Surgical Center")?.h, 10.7);
+    assert.equal(LIDAR.heights["Hyatt Regency La Jolla at Aventine"], undefined,
+      "Hyatt must not carry a single-plane lidar.heights");
+    assert.equal(rendersNear(1467.0, 799.9, 6).find(
+      (m) => m.name === "Hyatt Regency La Jolla at Aventine")?.h, 16);
+    assert.equal(LIDAR.osmHeights?.[83], undefined, "helipad composite shipped a plane");
+    assert.equal(rendersNear(1305.1, 786.8, 4).find((m) => m.src === "osm")?.h, 16,
+      "helipad ring keeps its declared guess");
   });
 });

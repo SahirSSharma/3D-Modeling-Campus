@@ -518,3 +518,77 @@ and thin-shelf arithmetic re-computed per sample from each mass's histogram
   blanket-admit.
 - **Union Bank near-miss**: dense 79.9% — 5.1 pp under the cut. Do not lower
   the floor; a parts split for the HVAC shelf would let both planes ship.
+
+---
+
+# FINDINGS — run `2026-08-05_033905` · shard r2c2 (re-sweep)
+
+Pass 1 re-sweep of the east-of-I-5 / Sheraton-strip / Temple-corridor /
+Aventine-south shard. Screen: 16 candidates (6 high / 9 medium / 1 low).
+Judged by `cursor-grok-4.5-high`.
+
+Every candidate in `pass1-r2c2.screen.json` was re-derived before judgement with
+an independent full-depth targeted EPT re-sample (18 targets in
+`.cache/gauntlet-r2c2b/judge/reprobe.json`; point counts matched the screener's
+`/tmp/gauntlet-r2c2b/probe.json` exactly — 4,425 / 5,485 / 7,470 / 6,304 /
+5,801 / 5,120 / 24,983 / 21,686 / …), Apple snapshots from the screener's
+`/tmp/gauntlet-r2c2b/apple/`, and thin-shelf arithmetic re-computed per sample
+from each mass's histogram (builder `denseBandFraction` + gap vs p75).
+
+### Fixed — heights (class admission, not a one-row patch)
+
+| Entity | Was shipping | Now ships | Source | Test |
+|---|---|---|---|---|
+| osm:1366 (`osm-1366-thin-shelf`) | 9 m area guess | **5.2** | Thin-shelf host rule: dense 91.9% @5–6, gap 4.6 → p75. Unguarded roofOf would paste 9.8. | epoch §26 |
+| osm:1365 (`osm-1365-overheight`) | 9 m area guess | **5.1** | `OSM_UNNAMED_VERIFIED`: 5,485 pts, guarded p75 5.1, bodyTight | epoch §26 |
+| osm:285 (`osm-285-dense-body-overheight`) | 12 m area guess | **8.4** | Thin-shelf host rule: dense 87.3%, gap 2.1 → p75 | epoch §26 |
+| osm:81 (`osm-81-underheight`) | 4.8 m OSM under-tag | **7.7** | `OSM_UNNAMED_VERIFIED`: 6,304 pts, clean p98 7.7; Village Square sibling | epoch §26 |
+| osm:287 (`osm-287-overheight`) | 12 m area guess | **8.4** | `OSM_UNNAMED_VERIFIED`: 5,801 pts, guarded p75 8.4 | epoch §26 |
+| osm:286 (`osm-286-near-shelf-overheight`) | 12 m area guess | **10.1** | `OSM_UNNAMED_VERIFIED`: 5,120 pts, clean p98 10.1 (gap 1.6 under thin-shelf cut — plant noise) | epoch §26 |
+| osm:1356 (`osm-1356-overheight`) | 16 m area guess | **13.2** | `OSM_UNNAMED_VERIFIED`: 24,983 pts, clean p98 13.2 | epoch §26 |
+| osm:1355 (`osm-1355-overheight`) | 16 m area guess | **13.8** | `OSM_UNNAMED_VERIFIED`: 21,686 pts, clean p98 13.8 | epoch §26 |
+
+### Withheld (better absent than wrong)
+
+- **osm:704 / 705 (`osm-704-underheight` / `osm-705-underheight`)**: stepped
+  mid-rises (dense 2 m band 46.9% / 44.1%, hist spread across 11–15 m). Apple
+  shows finished multi-storey fabric, but the 2014 sample has no single plane
+  to admit. Keep the 9 m guesses. Pinned as EXCLUDED from osmHeights.
+
+### Rejected candidates (each re-measured before rejection; do not re-find these)
+
+- **`osm-1364-thin-shelf-near-miss`** — REJECTED. Dense 78.7% under the 85%
+  thin-shelf cut (gap 3.9). Sheraton-strip near-miss sibling of 1366; admitting
+  roofOf would paste the 9.3 shelf. Guess 9 stands. Do not lower the cut.
+  Pinned in §26.
+- **`osm-257-258-underheight-pair`** — REJECTED. Dense body ≈ the 12 m guess
+  (bins peak at 12 / 13); roofOf 16.1 / 17.5 rides an upper wing (osm:707
+  family). Not underheight misses. Guesses stand; pinned in §26.
+- **`medical-thin-shelf-near-miss`** — REJECTED. Dense 85.8%, gap 1.9 under the
+  2 m thin-shelf cut (Union Bank / UC Cyclery family). Apple shows HVAC on the
+  finished Aventine strip roof; pasting the dense 8.8 body would flatten a real
+  plant shelf. heights['La Jolla Medical & Surgical Center']=10.7 stands.
+  Pinned in §26.
+- **`osm-83-helipad-tower-still-open`** — REJECTED / already withheld.
+  bodyTight=false, massOk=false (dense 31 m wing vs tower 52–63). No parts
+  source. Keep the 16 m guess. Re-pinned in §26.
+- **`hyatt-podium-tower-still-open`** — REJECTED / already withheld.
+  HAND_AUDITED null stands (bimodal 49% @4 m vs tower 41–52). Ships stated
+  OSM tag 16. Re-pinned in §26.
+- **`unnamed-guess-class-hole-remaining`** — REJECTED as scoped, same verdict
+  as every other shard: the mechanism exists and this pass used it for eight
+  admissions and two explicit withholds; remaining in-shard unnamed guesses
+  need per-ring Apple + EPT, not a blanket admit.
+
+### Handoffs / observations for later shards / passes
+
+- **Hyatt / osm:83 parts**: both still need an OSM (or GIS) parts-level source
+  before either plane can ship honestly — mapping pass, not a height pass.
+  Prior r2c2 FINDINGS already said this.
+- **osm:1364 near-miss**: dense 78.7% — 6.3 pp under the cut. Do not lower
+  the floor; a parts split for the HVAC shelf would let the dense body ship.
+- **Remaining unnamed guesses in-box**: ~100+ after this pass's eight
+  admissions. Batch Apple+EPT verification remains the right shape; do not
+  blanket-admit.
+- **osm:497 / 289**: prior stepped / canopy withholds re-confirmed
+  (bodyTight=false); not re-opened this pass.

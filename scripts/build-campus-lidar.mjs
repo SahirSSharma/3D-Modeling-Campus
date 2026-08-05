@@ -671,6 +671,39 @@ const OSM_UNNAMED_VERIFIED = new Set([
             dense 79.9% / gap 2.7 and gap 1.5 under the cut; Apple shows
             HVAC on both finished strip roofs. Keep roofOf 8 / 6.8. */
   103, 334, 129,
+  /* r2c2 re-sweep 2026-08-05 — Sheraton strip / Whole Foods pad / Temple
+     corridor / Aventine-south courtyard blocks. Independent full-depth
+     EPT (point counts matched the screener exactly); Apple currency
+     confirmed finished commercial / residential roofs, no crane:
+       1366: 4,425 returns, thin-shelf host rule → p75 5.2 (dense 91.9%
+             in a 5–6 m band, gap 4.6; unguarded roofOf would paste 9.8)
+             — was 9 area guess.
+       1365: 5,485 returns, guarded roofOf 5.1 (p50 = p75 = 5.1 under a
+             canopy/HVAC tail to 12.5) — was 9.
+       285:  7,470 returns, thin-shelf host rule → p75 8.4 (dense 87.3%,
+             gap 2.1; unguarded roofOf would paste 10.5) — was 12.
+       81:   6,304 returns, clean p98 7.7 (p50 7.4 / p75 7.5; sibling of
+             Village Square under-tags) — was 4.8 under-tag.
+       287:  5,801 returns, guarded roofOf 8.4 (p50 8.3 / p75 8.4 under
+             a canopy tail to 14.2) — was 12.
+       286:  5,120 returns, clean p98 10.1 (dense 87.1% in 8–9 m, gap
+             1.6 under the thin-shelf cut — plant noise on the same
+             plane, not a shelf) — was 12.
+       1356: 24,983 returns, clean p98 13.2 (p50 12.1 / p75 12.2) — was 16.
+       1355: 21,686 returns, clean p98 13.8 (p50 12.9 / p75 13.0) — was 16.
+     Deliberately NOT admitted this pass:
+       1364: dense 78.7% under the 85% thin-shelf cut (gap 3.9) —
+             Sheraton-strip near-miss sibling of 1366; admitting roofOf
+             would paste the 9.3 shelf. Keep the 9 m guess.
+       704 / 705: stepped mid-rises (dense 2 m band 47% / 44%); no
+             single plane — keep the 9 m guesses.
+       257 / 258: dense body ≈ the 12 m guess; roofOf 16 / 17 rides an
+             upper wing (osm:707 family). Keep the guesses.
+       Medical (named): dense 85.8%, gap 1.9 under the 2 m cut; HVAC
+             shelf on a finished roof — keep roofOf 10.7.
+       Hyatt / osm:83 / 497 / 289: prior composite / canopy withholds
+             (HAND_AUDITED null / bodyTight=false). */
+  1366, 1365, 285, 81, 287, 286, 1356, 1355,
 ]);
 
 /* Hand-audited stats where the automatic roofOf() percentile choice is
