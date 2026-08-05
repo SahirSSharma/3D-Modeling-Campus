@@ -189,6 +189,50 @@ Salk's unnamed service complex and a La Jolla Farms greenhouse, which keep their
 guesses because a name-keyed survey cannot measure a nameless building — better documented than
 invented).
 
+**The north-central shard sweep (2026-08-04, r0c1).** RIMAC to Canyon Vista, the ERC halls to
+The Village East, same protocol — every entity against a targeted re-sample of the same EPT,
+every site against a fresh Apple snapshot:
+
+| Building | Shipped | Measured | Why it was wrong |
+|---|---|---|---|
+| Atkinson Hall, west pavilion | 27.2 m (host bleed) | **14.5 m** | the facility ring spans the whole hall WITH its 29.8 m tower nested inside; measured whole it reads canopy-stepped and the guard withheld it, so the host-wide value — dominated by the tower — pasted onto the low wing. Measured MINUS the contained tower ring (16,642 returns) the pavilion has its own clean plane. `MEASURE_MINUS_CONTAINED` pins the mechanism. |
+| SDSC East Expansion | 17.1 m (GIS record) | **23.2 m** | no OSM host, no OSM name twin — the record could not be challenged until `PRE_2014_GIS_VERIFIED` let its documented 2009 build date answer the epoch question. |
+| Social Sciences Building | 17.1 m (GIS record) | **21.0 m** | same class (1995). Robinson 1 & 3, ERC Admin North, Outback Adventures, SCE #5/#6 measured with them (10.4 / 7.5 / 4.8 / 2.5 / 12.2 / 10.7). |
+| Douglas Hall | 18.3 m (GIS, unchallenged) | **16.1 m** | the inventory calls the mass "Douglas Apartments", OSM calls the building "Douglas Hall" — no name match, no host (its centroid falls in a light-well), so the label orphaned AND the record stood. `MASS_RENAMES` maps inventory name to OSM name; the ring re-samples at 16.1. |
+| Earth Hall chain (ERC) | one 11.7 m slab | **11.6 / 4.7 / 11.6 m** | the facility ring is the UNION of Earth North, the Middle Earth Lounge and Earth South; the single slab flattened the 4.7 m lounge and wore the lounge's name. The union ring is dropped; each OSM footprint renders its own plane. |
+| Canyon Vista | one 12 m union | **12.0 + 8.6 m** | same class: one ring across the admin lodge and the restaurant, centroid in the shared courtyard, suppressing both named buildings. |
+| Village East 4 + 5 | one 15.2 m union | **12.1 + 12.4 m** | "Seventh College East #4" traces VE4+VE5 as one ring at a 15.2 m guess; VE4 double-rendered through it, VE5 lost its name to it. |
+| VE community building | 9 m (OSM guess) | **12.3 m** | unnamed ring — nothing to key `lidar.heights` — so the OSM tag rendered unchallenged. `lidar.osmHeights` now carries hand-verified unnamed rings by index, the coupling `partHeights` already uses. |
+
+The union-outline class is the Marshall Lower Apartments bug mirrored: there the SanGIS
+*footprint* traced the union of six real masses; here the facilities *extrusion* traces the
+union of two or three real buildings, flattening measured differences and stealing names.
+`UNION_OUTLINES` in `build-campus-arcgis.mjs` drops each union where the OSM division is finer
+and every piece carries its own LiDAR plane. The same scan found the rest of the class outside
+this shard — Mandell Weiss Forum over the Shank Theatre, 64 Degrees over Revelle Commons, Birch
+Aquarium over the Hillgarth Center, Biomedical Sciences over WongAvery, Mandeville over the
+Print Labs — each left for its own shard's sweep.
+
+One epoch entry: the **RIMAC Annex** is gone. Apple (2026-08-04) shows a tower crane over open
+concrete decks where the laser measured a 10.6 m building in 2014; the rebuild has not topped
+out and no source resolves the rising frame to gate. The site renders nothing — footprint kept,
+place label kept for wayfinding, `POST_2014_SITES` keeps the dead measurement out — better
+absent than wrong. Alianza and Umoja also stopped extruding their OSM outer OUTLINES (courtyards
+included) through their own quads; the university's per-wing masses, which the outlines merely
+circumscribe, are what render.
+
+The sweep also quantified a render-side class it did not change: the extruder anchors a roof at
+*centroid* ground + measured height, while the measurement defines height against the footprint
+*rim median* — under a hole-filled interior on a grade the two diverge, and four masses in this
+shard render their roofs >2 m off the surveyed elevation (Hopkins Parking worst at +3.2 m on its
+15.7 m grade span). Every base is per-vertex safe (`lowest − 1.5 m`); this is roof elevation
+only. Re-anchoring at the rim median matches the measurement's own definition but moves every
+building on campus, so it is logged for a dedicated cross-shard pass rather than smuggled into
+this one. In-shard markings (Triton Track & Field, the RIMAC pitches, Northview tennis) verified
+within their declared gates; Marshall Upper Apartments' townhomes keep the university's 6.1 m —
+their p98s read eucalyptus tails (up to 10.3 m) that stay under the canopy guard's 5 m firing
+threshold, and the GIS figure matches the measured plane's body.
+
 ### The colours, measured off footage
 
 Satellite imagery sees roofs and ground; it cannot see a wall, a tree trunk, or the sky. For

@@ -285,13 +285,23 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
   });
 
   /* -------- 2. OSM buildings the inventory does not cover -------- */
-  const skipOsm = new Set(["Geisel Library"]);
+  /* Geisel renders from its own per-floor GIS layer. Alianza and Umoja are
+     OSM outer OUTLINES around whole residential quads — courtyards, stairs
+     and gaps included — while the facilities masses trace the individual
+     wings; extruding the outline through its own courtyards would be a
+     solid block no one measured, so the wings render and the outline does
+     not. The RIMAC Annex ring outlines the 2014 building demolished for a
+     rebuild Apple shows as bare decks and a tower crane (2026-08-04) — no
+     source resolves the rising frame, so the site stays unbuilt. */
+  const skipOsm = new Set(["Geisel Library", "Alianza", "Umoja", "RIMAC Annex"]);
   const gisCentroids = covered.map((r) => centroidOf(r));
   campus.buildings.forEach((b, i) => {
     if (b.n && skipOsm.has(b.n)) return;
     const nameCarried = !b.n || gisCentroids.some(([x, z]) => inRing(x, z, b.p));
     const fac = arcgis?.buildings?.[b.n];
-    const lidarH = b.n ? lidar.heights[b.n] : null;
+    /* Unnamed rings have no name to key lidar.heights; lidar.osmHeights
+       carries the hand-verified ones by index (partHeights' own coupling). */
+    const lidarH = b.n ? lidar.heights[b.n] : lidar.osmHeights?.[i] ?? null;
     /* Parts keep their ORIGINAL index: lidar.partHeights is keyed by it, and
        filtering first shifted every part after a dropped one onto the wrong
        measured height (Tapestry's second part resolved undefined). */

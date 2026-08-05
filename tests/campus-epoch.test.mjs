@@ -26,6 +26,12 @@
  *      measured, TPCS and the Sanford pavilion drop to their 2014 planes,
  *      the GIS-name-fallback masses each measure their own ring, and the
  *      Marshall union outline stays suppressed without orphaning a name.
+ *  10. The r0c1 sweep's measurements hold: the Earth Hall / Canyon Vista /
+ *      Village East union outlines stay split into their measured pieces,
+ *      Douglas Hall's mass carries its OSM name and 2014 plane, Atkinson's
+ *      low pavilion measures without its tower, the hand-verified GIS-only
+ *      and unnamed-OSM planes ship, and the demolished RIMAC Annex site
+ *      renders nothing while its rebuild is a bare frame.
  */
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
@@ -76,6 +82,9 @@ const POST_2014 = [
   "Epstein Family Amphitheater", // 2022 — 17 m was the eucalyptus grove
   "Altman Clinical and Translational Research Institute", // opened 2016
   "Campus Point Parking Structure", // Jacobs Medical Center buildout
+  // r0c1 sweep: the 2014 annex west of RIMAC is demolished; Apple (2026-08-04)
+  // shows a tower crane over open decks. The 10.6 m plane was a dead building.
+  "RIMAC Annex",
 ];
 
 describe("1. LiDAR never claims a measurement of a post-2014 building", () => {
@@ -381,20 +390,156 @@ describe("9. the north-west shard sweep (r0c0, 2026-08-04)", () => {
   test("suppression never orphans a building's name", () => {
     /* The area test yields when no covering mass would inherit the ring's
        name (Cala, Village East Building 4, One Miramar 3/4 all sample
-       ≥0.85 under masses named something else). The pre-existing orphans
-       below are centroid/majority-test suppressions from before this sweep
-       — the list may shrink, never grow. */
+       ≥0.85 under masses named something else). The suppression orphans
+       below are from before the sweeps and may only shrink (r0c1 resolved
+       Earth Hall, Douglas Hall, both Canyon Vistas and Village East 5).
+       The two non-suppression entries render nothing BY RULE: Geisel draws
+       from its own per-floor GIS layer, and the RIMAC Annex site is a
+       demolished building whose rebuild no source resolves. */
     const KNOWN = new Set([
-      "Earth Hall", "Spiess Hall", "Douglas Hall",
-      "Canyon Vista Administration building", "Black Hall", "Geisel Library",
-      "Village East Building 5", "64 Degrees", "64 North",
-      "Canyon Vista Restaurant", "Greenhouse 3", "Greenhouse 2",
+      "Spiess Hall", "Black Hall", "Geisel Library",
+      "64 Degrees", "64 North", "Greenhouse 3", "Greenhouse 2",
       "Greenhouse 1", "Artesa", "Marea", "Arena", "B", "Brisa",
       "Print Labs", "Nigella Hillgarth Education Center",
+      "RIMAC Annex",
     ]);
     const carried = new Set(MASSES.filter((m) => m.name).map((m) => m.name));
     const orphans = [...new Set(CAMPUS.buildings.map((b) => b.n).filter(Boolean))]
       .filter((n) => !carried.has(n) && !KNOWN.has(n));
     assert.deepEqual(orphans, [], `newly orphaned names: ${orphans}`);
+  });
+});
+
+describe("10. the north-central shard sweep (r0c1, 2026-08-04)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("the Earth Hall union outline stays split into its three measured pieces", () => {
+    /* The facilities record traced ERC's Earth Hall chain — Earth North,
+       the Middle Earth Lounge, Earth South — as ONE 2,639 m² ring at 11.7 m,
+       which flattened the 4.7 m lounge and pasted the lounge's name over
+       the whole chain (its centroid lands there). UNION_OUTLINES in
+       build-campus-arcgis.mjs drops the ring; each OSM footprint renders
+       its own 2014 plane. */
+    assert.equal(LIDAR.massHeights["m:-156,-806"], undefined, "the union plane is back");
+    const halls = MASSES.filter((m) => m.name === "Earth Hall");
+    assert.equal(halls.length, 2, `expected both Earth Halls, got ${halls.length}`);
+    for (const m of halls) assert.equal(m.h, 11.6, `hall ships ${m.h} m`);
+    const lounge = MASSES.find((m) => m.name === "Middle Earth Lounge");
+    assert.ok(lounge, "the lounge vanished");
+    assert.equal(lounge.h, 4.7, `lounge ships ${lounge.h} m — 2014 plane is 4.7`);
+  });
+
+  test("Canyon Vista renders as its two measured buildings, not one 12 m union", () => {
+    /* One GIS ring spanned the admin lodge AND the restaurant across their
+       shared courtyard; its centroid fell in the courtyard so it carried no
+       name and suppressed both. LiDAR planes: lodge 12.0, restaurant 8.6. */
+    const lodge = MASSES.find((m) => m.name === "Canyon Vista Administration building");
+    const rest = MASSES.find((m) => m.name === "Canyon Vista Restaurant");
+    assert.ok(lodge && rest, "a Canyon Vista building is missing");
+    assert.equal(lodge.h, 12);
+    assert.equal(rest.h, 8.6);
+    assert.equal(MASSES.find((m) => m.name === "Canyon Vista"), undefined, "the union ring is back");
+  });
+
+  test("Village East 4 and 5 stand apart; the #4 union ring stays gone", () => {
+    /* "Seventh College East #4" (GIS 15.2 m) traced VE4+VE5 as one ring:
+       VE4 double-rendered through it and VE5 was suppressed by it. Their
+       own 2014 planes: 12.1 and 12.4; the remaining SCE masses measure
+       12.2 and 10.7 on their own rings. */
+    const ve4 = MASSES.find((m) => m.name === "Village East Building 4");
+    const ve5 = MASSES.find((m) => m.name === "Village East Building 5");
+    assert.ok(ve4 && ve5, "a Village East building is missing");
+    assert.equal(ve4.h, 12.1);
+    assert.equal(ve5.h, 12.4);
+    assert.equal(MASSES.find((m) => m.name === "Seventh College East #4"), undefined);
+    assert.equal(LIDAR.massHeights["m:-49,-1057"], 12.2, "SCE#5's own plane");
+    assert.equal(LIDAR.massHeights["m:-78,-1060"], 10.7, "SCE#6's own plane");
+  });
+
+  test("Douglas Hall's mass carries its OSM name and its 16.1 m plane", () => {
+    /* The facilities inventory calls the ring "Douglas Apartments"; with no
+       OSM twin under that name the mass had no host, its 18.3 m record
+       stood unchallenged, and the OSM ring it covered was a name orphan.
+       MASS_RENAMES maps it to Douglas Hall; its own ring re-samples 16.1 m
+       (5,426 returns). */
+    assert.equal(LIDAR.massHeights["m:769,-589"], 16.1);
+    const douglas = MASSES.filter((m) => m.name === "Douglas Hall");
+    assert.ok(douglas.length >= 1, "Douglas Hall lost its name again");
+    assert.ok(douglas.some((m) => m.src === "gis" && m.h === 16.1), `ships ${douglas.map((m) => m.h)}`);
+    assert.equal(MASSES.find((m) => m.name === "Douglas Apartments"), undefined);
+  });
+
+  test("Atkinson's low pavilion measures 14.5 m without its tower's returns", () => {
+    /* The whole-footprint ring mixes the 29.8 m tower into the west
+       pavilion; measured MINUS the contained tower ring (16,642 returns,
+       p98) the pavilion's own plane is 14.5 m. MEASURE_MINUS_CONTAINED in
+       build-campus-lidar.mjs pins the mechanism. */
+    assert.equal(LIDAR.massHeights["m:601,-505"], 14.5);
+    const atkinson = MASSES.filter((m) => m.name === "Atkinson Hall (Calit2)").map((m) => m.h).sort((a, b) => a - b);
+    assert.deepEqual(atkinson, [14.5, 29.8], `Atkinson ships ${atkinson}`);
+  });
+
+  test("the hand-verified pre-2014 GIS-only masses each measure their own plane", () => {
+    /* No named-OSM host and no OSM name twin — PRE_2014_GIS_VERIFIED lets
+       the 2014 survey challenge these records because their build dates
+       are documented pre-flight. Two were far off: SDSC East (GIS 17.1,
+       plane 23.2) and Social Sciences (GIS 17.1, plane 21.0). */
+    const PLANES = {
+      "m:78,-656": [21, "Social Sciences Building (1995) — GIS said 17.1"],
+      "m:171,-705": [23.2, "SDSC East Expansion (2009) — GIS said 17.1"],
+      "m:-91,-908": [4.8, "ERC Administration North (2004)"],
+      "m:16,-730": [10.4, "Robinson Building 1 (1990)"],
+      "m:7,-669": [7.5, "Robinson Building 3 (1990) — stepped, p75"],
+      "m:74,-1256": [2.5, "Outback Adventures surf shack"],
+    };
+    for (const [key, [h, why]] of Object.entries(PLANES)) {
+      assert.equal(LIDAR.massHeights[key], h, `${why} — massHeights[${key}]`);
+    }
+  });
+
+  test("hand-verified unnamed OSM rings ship their measured planes", () => {
+    /* Unnamed rings have no name to key lidar.heights, so verified-
+       unchanged ones ride lidar.osmHeights by building index (the coupling
+       partHeights already uses). 786: Village East community building,
+       OSM guessed 9 m, plane 12.3. 893: the RIMAC service-court kiosk. */
+    assert.equal(LIDAR.osmHeights?.["786"], 12.3);
+    assert.equal(LIDAR.osmHeights?.["893"], 4.3);
+    const ve = rendersNear(54, -1080).find((m) => m.src === "osm");
+    assert.ok(ve, "the community building vanished");
+    assert.equal(ve.h, 12.3, `renders ${ve.h} m`);
+  });
+
+  test("the demolished RIMAC Annex renders nothing while its rebuild is a frame", () => {
+    /* Apple satellite (2026-08-04): tower crane, open concrete decks. The
+       2014 building is gone; no source resolves the rising frame to gate.
+       Better absent than wrong — the OSM footprint stays in the data for
+       the day one can, but nothing extrudes on the site. */
+    assert.equal(LIDAR.heights["RIMAC Annex"], undefined, "a demolished building has a LiDAR height");
+    assert.equal(LIDAR.massHeights["m:65,-867"], undefined);
+    const annexRing = CAMPUS.buildings.find((b) => b.n === "RIMAC Annex");
+    assert.ok(annexRing, "the footprint left the dataset entirely");
+    const [ax, az] = centroidOf(annexRing.p);
+    assert.equal(rendersNear(ax, az, 10).length, 0, "something extrudes on the construction site");
+  });
+
+  test("the Alianza and Umoja outer outlines yield to their measured wings", () => {
+    /* The OSM rings are neighbourhood OUTLINES — courtyards included —
+       while the university's masses trace the wings. Extruding an outline
+       through its own courtyards is a solid block nobody measured. */
+    const outlines = MASSES.filter((m) => m.src === "osm" && (m.name === "Alianza" || m.name === "Umoja"));
+    assert.deepEqual(outlines, [], "an outer outline extrudes again");
+    const alianza = MASSES.filter((m) => m.name === "Alianza");
+    const umoja = MASSES.filter((m) => m.name === "Umoja");
+    assert.ok(alianza.length >= 2, `Alianza wings: ${alianza.length}`);
+    assert.ok(umoja.length >= 3, `Umoja wings: ${umoja.length}`);
   });
 });

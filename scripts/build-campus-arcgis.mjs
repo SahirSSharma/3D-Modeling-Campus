@@ -140,6 +140,55 @@ const ALIASES = {
 const norm = (s) =>
   s.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, " ").trim();
 
+/* ------------------------------------------------- massing corrections */
+
+/* UNION OUTLINES (r0c1 sweep, 2026-08-04). A few facilities records trace
+   the union of several REAL buildings as one extrusion ring — the same lie
+   the SanGIS Marshall outline told from the OSM side, mirrored. ERC's
+   "Earth Hall" record is one 2,639 m² ring spanning Earth Hall North, the
+   Middle Earth Lounge and Earth Hall South: LiDAR measures the halls at
+   11.6 m and the lounge at 4.7 m, so the single 11.7 m slab is wrong over
+   the lounge and its host rename pasted the LOUNGE's name over the whole
+   chain. "Canyon Vista" spans the 12.0 m admin lodge and the 8.6 m
+   restaurant; "Seventh College East #4" spans Village East Buildings 4 AND
+   5 (12.1/12.4 m measured) at a 15.2 m GIS guess — VE4 double-rendered
+   through it and VE5's suppressed ring was the only thing knowing its name.
+   In each case the OSM division is finer and every piece carries its own
+   LiDAR plane, so the union ring is dropped and the OSM footprints render.
+   Keyed by name + centroid so a service-side fix simply stops matching.
+   Same class, out of this shard's scope, left for their own sweeps:
+   Mandell Weiss Forum (covers Shank Theatre), 64 Degrees (covers Revelle
+   Commons/64 North), Birch Aquarium (covers Hillgarth Center), Biomedical
+   Sciences (covers WongAvery), Mandeville Center (covers Print Labs). */
+const UNION_OUTLINES = [
+  { n: "Earth Hall", near: [-156, -806] },
+  { n: "Canyon Vista", near: [743, -669] },
+  { n: "Seventh College East #4", near: [-42, -1099] },
+];
+
+/* Sites whose 2014 building has been demolished for a rebuild that has not
+   topped out (Apple satellite, 2026-08-04: tower crane and open concrete
+   decks over the RIMAC Annex footprint). The stale massing must not render
+   the old building, and no source resolves the rising frame's height to
+   gate — the site stays unbuilt until one can. Better absent than wrong. */
+const UNDER_RECONSTRUCTION = [
+  { n: "RIMAC Annex", near: [65, -867] },
+];
+
+/* What the facilities inventory calls a mass -> the OSM building it IS.
+   "Douglas Apartments" is Warren's Douglas Hall (the ring spans the hall
+   and its east annex — one complex, one height class); without the OSM
+   name the mass had no host, so its 18.3 m GIS record stood unchallenged
+   (its own 2014 roof plane: 16.1 m) and the "Douglas Hall" label was
+   orphaned. Renaming lets the LiDAR build key the epoch guard and the
+   measurement off the OSM name, and the label ride the mass. */
+const MASS_RENAMES = [
+  { n: "Douglas Apartments", near: [769, -589], to: "Douglas Hall" },
+];
+
+const massCorrection = (list, name, cx, cz) =>
+  list.find((u) => u.n === name && Math.hypot(u.near[0] - cx, u.near[1] - cz) < 40);
+
 function matchName(campusName, byNorm) {
   const candidates = [campusName, ALIASES[campusName]].filter(Boolean).map(norm);
   /* EVERY exact candidate before ANY fuzzy one. Interleaved, "Biology"'s
@@ -238,8 +287,11 @@ async function build() {
       const cx = outer.reduce((s, q) => s + q[0], 0) / outer.length;
       const cz = outer.reduce((s, q) => s + q[1], 0) / outer.length;
       if (cx < box.x0 || cx > box.x1 || cz < box.z0 || cz > box.z1) continue;
+      if (massCorrection(UNION_OUTLINES, p.building, cx, cz)) continue;
+      if (massCorrection(UNDER_RECONSTRUCTION, p.building, cx, cz)) continue;
+      const rename = massCorrection(MASS_RENAMES, p.building, cx, cz);
       massing.push({
-        n: p.building,
+        n: rename ? rename.to : p.building,
         h,
         levels: p.levels,
         r: rings.map((ring) => dm(ring.map(toLocal))).filter((ring) => ring.length >= 3),

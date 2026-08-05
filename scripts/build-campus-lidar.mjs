@@ -117,7 +117,61 @@ const POST_2014_SITES = new Set([
   // the Jacobs Medical Center project.
   "Altman Clinical and Translational Research Institute",
   "Campus Point Parking Structure",
+  // Found by the r0c1 sweep (2026-08-04): the 2014 annex west of RIMAC has
+  // been demolished for a rebuild Apple shows as a tower crane over open
+  // concrete decks. The 10.6 m the laser measured is a building that no
+  // longer stands, and no source resolves the rising frame's height — the
+  // site renders unbuilt (massing excluded in build-campus-arcgis.mjs, the
+  // OSM ring skipped in campus-massing.js) until one can.
+  "RIMAC Annex",
 ]);
+
+/* GIS masses verified PRE-2014 by hand (r0c1 sweep, 2026-08-04) whose ring
+   has neither a named-OSM host nor an exact OSM name twin — the two paths
+   the epoch guard normally answers through. For each name below the build
+   date is documented in the university's own record and Apple confirms the
+   standing building matches the 2014 footprint, so the 2014 returns are a
+   measurement of THIS building and its GIS record can be challenged like
+   any other. Without this the records stood unchallenged and two were far
+   off their measured planes (SDSC East Expansion: GIS 17.1 m, 2014 roof
+   plane 23.2 m; Social Sciences Building: GIS 17.1 m, plane 21.0 m).
+   Names must stay EXACT — a rename on the service side must fall back to
+   unchallenged rather than smuggle the wrong site in. */
+const PRE_2014_GIS_VERIFIED = new Set([
+  "Social Sciences Building",              // 1995
+  "San Diego Supercomputer East Expansion", // 2009
+  "Seventh College East #5",               // The Village East, 2008-11
+  "Seventh College East #6",               // The Village East, 2008-11
+  "ERC Administration North",              // 2004
+  "Robinson Building 1 - Administration",  // 1990 (GPS school complex)
+  "Robinson Building 3 - Library",         // 1990 (GPS school complex)
+  "Outback Adventures",                    // 1990s surf shack, standing today
+]);
+
+/* A facilities record that models a building as a whole-footprint ring PLUS
+   a contained tower ring measures wrong either way: the whole ring's returns
+   mix the tower plane into the low wings (Atkinson Hall: p50 13.9 under a
+   p75 of 28.2), so the stepped-slab guard rightly withholds it — and the
+   host fallback then pastes the 27.2 m OSM-ring measurement over the 14 m
+   west pavilion. Measuring the ring MINUS its contained mass gives the low
+   portion its own clean plane (p98 14.5, 16,642 returns) while the tower
+   ring keeps measuring itself. Keyed by exact GIS mass names. */
+const MEASURE_MINUS_CONTAINED = {
+  "Atkinson Hall": ["Atkinson Hall Tower"],
+};
+
+/* UNNAMED OSM rings that render (no facilities mass covers them, no name to
+   key lidar.heights) and are hand-verified UNCHANGED since the 2014 flight
+   (Apple satellite, 2026-08-04) — so their 2014 roof plane may replace the
+   OSM height guess. Keyed by index into campus-3d.json's buildings array,
+   the same coupling partHeights already rides. Index-keyed rather than
+   emitted wholesale because an unnamed ring has no name to look up in
+   POST_2014_SITES: without a per-ring verification the laser could hand a
+   post-2014 rebuild its predecessor's roof. Each entry cites what it is.
+   786: The Village East community building (2008-11 buildout; OSM guessed
+        9 m, the plane is 12.3). 893: the kiosk east of RIMAC's service
+        court, standing on current Apple (OSM 4.5, plane 4.3). */
+const OSM_UNNAMED_VERIFIED = new Set([786, 893]);
 
 /* Hand-audited stats where the automatic roofOf() percentile choice is
    demonstrably wrong for a PRE-2014 building (verified against a targeted
@@ -385,11 +439,23 @@ async function build() {
       const twin = namedByName.get(m.n);
       if (twin && Math.hypot(twin.c[0] - cx, twin.c[1] - cz) < 150) hostName = m.n;
     }
+    /* epoch answered by the hand-verified build date instead of a host */
+    if (!hostName && PRE_2014_GIS_VERIFIED.has(m.n)) hostName = m.n;
     if (!hostName) continue; // no named host: today's GIS value stands unchallenged
     if (POST_2014_SITES.has(hostName)) continue; // the flight predates the building
     if (hostName in HAND_AUDITED) continue; // the audited value already answers
     const t = addTarget(ring, `m:${Math.round(cx)},${Math.round(cz)}`, null);
-    if (t) { t.isMass = true; t.bi = (host ?? namedByName.get(hostName)).bi; massTargets.push(t); }
+    if (t) {
+      t.isMass = true;
+      t.bi = (host ?? namedByName.get(hostName))?.bi ?? -1;
+      const minus = MEASURE_MINUS_CONTAINED[m.n];
+      if (minus) {
+        t.exclude = (arcgisData.massing || [])
+          .filter((o) => o !== m && minus.includes(o.n))
+          .map((o) => o.r[0].map(([x, z]) => localToMerc(x / 10, z / 10)));
+      }
+      massTargets.push(t);
+    }
   }
   const HCELL = 60; // mercator metres per hash cell
   const hcell = new Map();
@@ -425,7 +491,9 @@ async function build() {
         if (bucket) {
           for (const t of bucket) {
             if (p[0] < t.bb.minx || p[0] > t.bb.maxx || p[1] < t.bb.miny || p[1] > t.bb.maxy) continue;
-            if (pointInRing(p[0], p[1], t.ring)) t.roofs.push(p[2]);
+            if (!pointInRing(p[0], p[1], t.ring)) continue;
+            if (t.exclude && t.exclude.some((r) => pointInRing(p[0], p[1], r))) continue;
+            t.roofs.push(p[2]);
           }
         }
         const [lx, lz] = mercToLocal(p[0], p[1]);
@@ -497,6 +565,7 @@ async function build() {
 
   const heights = {};
   const partHeights = {};
+  const osmHeights = {};
   const measured = [];
   const baseByBuilding = new Map();
   for (const t of targets) {
@@ -513,7 +582,11 @@ async function build() {
        and the old cap silently dropped the tallest building on campus. */
     if (h < 2 || h > 90) continue;
     measured.push({ n: t.name, h, pts: t.roofs.length });
-    if (!t.name) continue;
+    if (!t.name) {
+      const bi = Number(t.key.slice(1));
+      if (OSM_UNNAMED_VERIFIED.has(bi)) osmHeights[bi] = h;
+      continue;
+    }
     if (POST_2014_SITES.has(t.name)) continue; // building postdates the flight
     if (t.name in HAND_AUDITED) {
       if (HAND_AUDITED[t.name] !== null) heights[t.name] = HAND_AUDITED[t.name];
@@ -614,6 +687,7 @@ async function build() {
     heights,
     partHeights,
     massHeights,
+    osmHeights,
     trees: trees.map((t) => [
       Math.round(t.x * 10) / 10,
       Math.round(t.z * 10) / 10,
