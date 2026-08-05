@@ -823,6 +823,52 @@ const OSM_UNNAMED_VERIFIED = new Set([
   518, 519, 522, 524, 526, 530, 531, 532, 534,
   548, 549, 550,
   657, 1373,
+  /* r2c2 pass-2 (2026-08-05) — La Jolla Village Drive / One Miramar terrace
+     strip + Lebon / Nobel / Mahaila unnamed pads after pass-1's
+     1366/1365/285/81/287/286/1356/1355 admissions. Independent full-depth
+     EPT (point counts matched the screener exactly); Apple currency
+     confirmed finished terracotta / white residential roofs, no crane.
+     Heights cited below are the build's own rimBase tiling; the
+     centroid-probe roofOf sat in the same band (± a few tenths, or more
+     where the ring straddles the terrain box):
+       LJVD / One Miramar terrace under-tags (was 4.5 shed default under a
+       shared ~9–10 m 2014 plane — Village Square / Boardwalk class):
+         469: 9.4 (702 pts)   471: 9.3 (912)   472: 10.2 (837)
+         474: 9.7 (873)       475: 9.3 (882)   476: 10.7 (864)
+         478: 10.6 (843)
+         691: 9.7 (169)       692: 9.3 canopy-guarded (201, crown tail)
+         693: 11.0 (203)      694: 9.8 (203)   696: 9.9 (222)
+       East-fringe singles:
+         310: 8.4 (806 pts; Nominatim 3525 Lebon Drive)
+         336: 11.4 (391 pts; Nominatim 3950 Mahaila / Axiom)
+         277: 9.9 (778 pts; Nobel / Miramar east)
+       Lebon Colony residential strip (was 9 m area guess; dense body
+       clearly above — distinct from rejected 257/258 dense≈guess):
+         251: 13.0 (1856)  252: 11.5 (1814)  253: 13.0 (1565)
+         254: 13.2 (1811)  255: 14.3 (1849)  256: 13.6 (1642)
+       Mid-rise courtyard / Nobel rings (body clearly above the guess;
+       distinct from withheld 704/705 where the dense body already sat
+       near the 9 m guess):
+         700: 12.3 (2406 pts; 14/36 verts past terrain box — in-box class)
+         1358: 16.1 (6175 pts; Nominatim 3535 Lebon; targeted roofOf 17.1)
+     Deliberately NOT admitted this pass:
+       695: gap 2.9 / dense2 80.7% under the 85% thin-shelf cut — roofOf
+            would paste the 11.7 shelf over an ~8.5 body (1364 / 520
+            near-miss family). Keep the 4.5 guess.
+       294: dense body ≈ the 4.5 guess (mode 4 @41.8%, ±1 81.1%); roofOf
+            9.6 rides a thin shelf (gap 4.1 under cut). Keep the guess.
+       42:  Truluck's / Aventine commercial — multimodal (dense 40.9%
+            @4 / ±1 43.6%, p50 4.8 vs p98 9.6); no single plane. Keep
+            the 12 m guess (Hyatt / helipad parts handoff).
+       233 / 245 / 246 / 248: centroids past terrain z_max → 0 EPT pts
+            (Vaughan / Ritter / 656 apron class); Apple shows finished
+            Regents Road apartments today, but no 2014 plane resolves.
+            Keep the 12 m guesses. Survey-box handoff. */
+  469, 471, 472, 474, 475, 476, 478,
+  691, 692, 693, 694, 696,
+  310, 336, 277,
+  251, 252, 253, 254, 255, 256,
+  700, 1358,
 ]);
 
 /* Hand-audited stats where the automatic roofOf() percentile choice is

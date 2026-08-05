@@ -3072,3 +3072,87 @@ describe("campus epoch — r2c1 pass-2 re-sweep (2026-08-05)", () => {
     assert.equal(rendersNear(464.8, 501.6, 6).find((r) => /Central Research/i.test(r.name || ""))?.h, 17.5);
   });
 });
+
+describe("campus epoch — r2c2 pass-2 re-sweep (2026-08-05)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("LJVD / One Miramar terrace connectors ship their ~9–10 m planes", () => {
+    /* Independent full-depth EPT matched the screener's point counts
+       exactly. Shared ~9–10 m 2014 plane under the 4.5 shed default —
+       Village Square / Boardwalk under-tag class, residential terrace
+       (building=terrace on Overpass). Apple: finished terracotta roofs
+       + courts/pool fabric today. Heights below are the build's own
+       rimBase tiling (centroid-probe roofOf sat 9.3–11.1; rim vs
+       centroid shifts absolute metres on grade). 692 takes the canopy
+       guard under a crown tail; the rest are clean p98. */
+    for (const [i, h] of [
+      [469, 9.4], [471, 9.3], [472, 10.2], [474, 9.7], [475, 9.3],
+      [476, 10.7], [478, 10.6], [691, 9.7], [692, 9.3], [693, 11.0],
+      [694, 9.8], [696, 9.9],
+    ]) {
+      assert.equal(LIDAR.osmHeights?.[i], h, `osm:${i}'s plane`);
+      const [cx, cz] = centroidOf(CAMPUS.buildings[i].p);
+      assert.equal(rendersNear(cx, cz, 4).find((r) => r.src === "osm")?.h, h,
+        `osm:${i} renders at its plane`);
+    }
+  });
+
+  test("Lebon / Mahaila / Nobel east-fringe pads ship their measured planes", () => {
+    /* 310 / 336 / 277: clean single planes under the 4.5 shed (Nominatim
+       3525 Lebon / 3950 Mahaila Axiom / Nobel-Miramar). 251–256: Lebon
+       Colony strip — dense body clearly above the 9 m guess (distinct
+       from rejected 257/258 dense≈guess). Heights are build rimBase
+       tiling. Apple: finished residential roofs today. */
+    for (const [i, h] of [
+      [310, 8.4], [336, 11.4], [277, 9.9],
+      [251, 13.0], [252, 11.5], [253, 13.0], [254, 13.2],
+      [255, 14.3], [256, 13.6],
+    ]) {
+      assert.equal(LIDAR.osmHeights?.[i], h, `osm:${i}'s plane`);
+      const [cx, cz] = centroidOf(CAMPUS.buildings[i].p);
+      assert.equal(rendersNear(cx, cz, 4).find((r) => r.src === "osm")?.h, h,
+        `osm:${i} renders at its plane`);
+    }
+  });
+
+  test("Nobel mid-rise and Lebon courtyard ship planes above their under-guesses", () => {
+    /* 700: centroid-probe p50 13.4 vs guess 9 (body clearly above —
+       distinct from withheld 704/705 where the dense body already sat
+       near 9); build rimBase tiling ships 12.3 (ring has 14/36 verts
+       past the terrain box — same in-box class as 1145/198). 1358:
+       6,175 pts, build tiling 16.1 (targeted roofOf 17.1). Both
+       finished on today's Apple. */
+    for (const [i, h] of [[700, 12.3], [1358, 16.1]]) {
+      assert.equal(LIDAR.osmHeights?.[i], h, `osm:${i}'s plane`);
+      const [cx, cz] = centroidOf(CAMPUS.buildings[i].p);
+      assert.equal(rendersNear(cx, cz, 4).find((r) => r.src === "osm")?.h, h,
+        `osm:${i} renders at its plane`);
+    }
+  });
+
+  test("thin-shelf near-miss, multimodal, and Regents OOB keep their guesses", () => {
+    /* 695: gap 2.9 / dense2 80.7% under the 85% thin-shelf cut — roofOf
+       would paste the 11.7 shelf (1364 / 520 family). 294: dense body ≈
+       the 4.5 guess; roofOf 9.6 is a thin shelf (gap 4.1). 42: Truluck's
+       multimodal (dense 40.9% @4); no single plane. 233/245/246/248:
+       centroids past terrain z_max → 0 EPT pts (Vaughan / Ritter apron).
+       Keep the declared guesses rather than invent. */
+    for (const i of [695, 294, 42, 233, 245, 246, 248]) {
+      assert.equal(LIDAR.osmHeights?.[i], undefined, `a plane shipped for osm:${i}`);
+    }
+    assert.equal(rendersNear(1720.4, 733.5, 4).find((r) => r.src === "osm")?.h, 4.5);
+    assert.equal(rendersNear(1298.7, 1180.4, 4).find((r) => r.src === "osm")?.h, 4.5);
+    assert.equal(rendersNear(1572.9, 829.3, 4).find((r) => r.src === "osm")?.h, 12);
+    assert.equal(rendersNear(1842.1, 1390.3, 4).find((r) => r.src === "osm")?.h, 12);
+    assert.equal(rendersNear(1687.0, 1387.9, 4).find((r) => r.src === "osm")?.h, 12);
+  });
+});

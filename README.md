@@ -787,6 +787,28 @@ upper wing. Medical — dense 85.8%, gap 1.9 under the 2 m cut; roofOf 10.7 stan
 helipad osm:83 — prior composite withholds (HAND_AUDITED null / bodyTight=false); no
 parts source. Class-hole rejected as scoped.
 
+**The east-of-I-5 / One Miramar pass-2 (2026-08-05, r2c2).** Fresh screen of 11 candidates
+(7 high / 3 medium / 1 low). Every height re-derived from an independent full-depth EPT
+(point counts matched the screener's 702 / 912 / 837 / 806 / 2,406 / 6,175 / … exactly);
+Apple currency re-checked per site — finished LJVD terracotta terraces, Lebon Colony
+roofs, Nobel mid-rises, no crane.
+
+| Entity | Was shipping | Now ships | Why |
+|---|---|---|---|
+| LJVD / One Miramar terraces (unnamed, osm:469–478 seven pads) | 4.5 m shed default | **9.3–10.7 m** | Shared ~9–10 m 2014 plane under the Village Square / Boardwalk under-tag class (`building=terrace` on Overpass). Build rimBase tiling; centroid-probe sat the same band. |
+| LJVD terrace connectors (unnamed, osm:691–696 five pads) | 4.5 m shed default | **9.3–11.0 m** | Same plane; 692 takes the canopy guard under a crown tail; the rest are clean p98. |
+| 3525 Lebon / 3950 Mahaila / Nobel pad (unnamed, osm:310 / 336 / 277) | 4.5 m shed default | **8.4 / 11.4 / 9.9 m** | Clean single planes; Apple finished residential / Axiom fabric today. |
+| Lebon Colony strip (unnamed, osm:251–256 six pads) | 9 m area guess | **11.5–14.3 m** | Dense body clearly above the guess (distinct from rejected 257/258 dense≈guess). |
+| Nobel mid-rise (unnamed, osm:700) | 9 m area guess | **12.3 m** | Centroid-probe p50 13.4 vs guess 9 — body clearly above (distinct from withheld 704/705); build rimBase 12.3 (14/36 verts past the terrain box — in-box class as 1145/198). |
+| 3535 Lebon courtyard (unnamed, osm:1358) | 12 m area guess | **16.1 m** | Build tiling 16.1 (targeted roofOf 17.1); sibling of already-admitted 1355/1356. |
+
+Rejected / withheld, each re-measured: osm:695 — gap 2.9 / dense2 80.7% under the 85%
+thin-shelf cut; roofOf would paste the 11.7 shelf (1364 / 520 family). osm:294 — dense
+body ≈ the 4.5 guess; roofOf 9.6 is a thin shelf. osm:42 (Truluck's) — multimodal (dense
+40.9% @4); no single plane (Hyatt / helipad parts handoff). osm:233 / 245 / 246 / 248 —
+centroids past terrain z_max → 0 EPT pts (Vaughan / Ritter apron); Apple shows finished
+Regents Road apartments, but no 2014 plane resolves. Class-hole rejected as scoped.
+
 **The NW-campus pass-2 re-sweep (2026-08-05, r0c0).** Same Estancia / Sanford / Marshall /
 La Jolla Farms shard after pass 1 closed the first six unnamed admissions. Residual error
 mass was still the unnamed area-guess set (73 rings). Every candidate re-derived from an

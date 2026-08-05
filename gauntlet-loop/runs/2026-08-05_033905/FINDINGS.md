@@ -1153,3 +1153,80 @@ thin-shelf exemplar; 530 is the canopy-guard exemplar; the rest are clean p98.
 - **Remaining unnamed guesses in-box**: still hundreds after this pass's
   fourteen admissions. Batch Apple+EPT verification remains the right shape;
   do not blanket-admit.
+
+---
+
+# FINDINGS — run `2026-08-05_033905` · shard r2c2 (pass 2)
+
+Pass 2 of the east-of-I-5 / One Miramar / LJVD / Lebon / Regents-apron shard.
+Screen: 11 candidates (7 high / 3 medium / 1 low). Judged by `cursor-grok-4.5-high`.
+
+Every candidate in `pass2-r2c2.screen.json` was re-derived before judgement with an
+independent full-depth targeted EPT re-sample (30 targets in
+`.cache/gauntlet-r2c2-p2/judge/reprobe.json`; point counts matched the screener's
+`/tmp/gauntlet-r2c2-p2/probe.json` exactly — 702 / 912 / 837 / 873 / 882 / 864 /
+843 / 169 / 201 / 203 / 203 / 192 / 222 / 806 / 391 / 778 / 2406 / 6175 / 0×4 /
+1856 / 1814 / 1565 / 1811 / 1849 / 1642 / 804 / 7022), Apple snapshots from the
+screener's `/tmp/gauntlet-r2c2-p2/apple/` (copied to
+`.cache/gauntlet-r2c2-p2/evidence/`), and thin-shelf / canopy-guard arithmetic
+re-computed per sample. Shipped heights are the build's own rimBase tiling
+(centroid-probe sat the same band; rim vs centroid shifts absolute metres on
+grade, and more where a ring straddles the terrain box).
+
+### Fixed — heights (class admission, not a one-row patch)
+
+| Entity | Was shipping | Now ships | Source | Test |
+|---|---|---|---|---|
+| osm:469–478 (`ljvd-4.5-underheight-class`) | 4.5 shed | **9.3–10.7** | Shared ~9–10 m 2014 terrace plane; Village Square / Boardwalk under-tag class | epoch §35 |
+| osm:691 / 692 / 693 / 694 / 696 (from LJVD class) | 4.5 | **9.7 / 9.3 / 11.0 / 9.8 / 9.9** | Same plane; 692 canopy-guarded | epoch §35 |
+| osm:310 (`osm-310-underheight`) | 4.5 | **8.4** | Clean plane (806 pts); Nominatim 3525 Lebon | epoch §35 |
+| osm:336 (`osm-336-underheight`) | 4.5 | **11.4** | Clean plane (391 pts); Nominatim 3950 Mahaila / Axiom | epoch §35 |
+| osm:277 (`osm-277-underheight`) | 4.5 | **9.9** | Clean plane (778 pts, gap 0.1) | epoch §35 |
+| osm:251–256 (`lebon-9-underheight-class`) | 9 | **11.5–14.3** | Dense body clearly above guess (≠ 257/258 dense≈guess) | epoch §35 |
+| osm:700 (`osm-700-underheight`) | 9 | **12.3** | Body clearly above guess (≠ 704/705); build rimBase (14/36 verts OOB) | epoch §35 |
+| osm:1358 (`osm-1358-underheight`) | 12 | **16.1** | Build tiling 16.1 (targeted 17.1); sibling of 1355/1356 | epoch §35 |
+
+Class change: twelve LJVD / One Miramar terrace connectors join
+`OSM_UNNAMED_VERIFIED` under the same Village Square / Boardwalk under-tag rule
+(103 / 334 / 81 / 518) — a shared ~9–10 m 2014 plane the 4.5 shed default never
+saw. Six Lebon Colony pads and three east-fringe singles join the same
+mechanism. Two mid-rises (700 / 1358) join because their dense bodies sit
+clearly above the area guess, unlike withheld 704/705.
+
+### Withheld (better absent than wrong)
+
+- **osm:695** (from LJVD class): gap 2.9 / dense2 80.7% under the 85% thin-shelf
+  cut. roofOf would paste the 11.7 shelf over an ~8.5 body (1364 / 520 family).
+  Keep the 4.5 guess. Pinned as EXCLUDED from osmHeights.
+- **osm:42 (`osm-42-trulucks-multimodal`)**: multimodal (dense 40.9% @4 / ±1
+  43.6%, p50 4.8 vs p98 9.6). No single plane. Keep the 12 m guess (Hyatt /
+  helipad parts handoff).
+- **osm:233 / 245 / 246 / 248 (`regents-oob-zero-lidar`)**: centroids past
+  terrain z_max → 0 EPT pts / groundAt-null (Vaughan / Ritter / 656 apron).
+  Apple shows finished Regents Road apartments today, but no 2014 plane
+  resolves. Keep the 12 m guesses. Survey-box handoff — do not invent a roofOf.
+
+### Rejected candidates (each re-measured before rejection; do not re-find these)
+
+- **`osm-294-thin-shelf-near-miss`** — REJECTED. Dense body ≈ the 4.5 guess
+  (mode 4 @41.8%, ±1 81.1%); roofOf 9.6 rides a thin shelf (gap 4.1 under cut).
+  Guess stands. Pinned in §35.
+- **`unnamed-guess-residual`** — REJECTED as scoped, same verdict as every other
+  shard: the mechanism exists and this pass used it for twenty-three admissions
+  and five explicit withholds; remaining in-shard unnamed guesses need per-ring
+  Apple + EPT, not a blanket admit. Named landmarks in-box (Chick-fil-A /
+  CVS / Whole Foods / Sheraton / Belmont) already track measured planes.
+
+### Handoffs / observations
+
+- **Regents / south-apron terrain OOB**: 233 / 245 / 246 / 248 join Vaughan /
+  Ritter / shore-colony 1144 / 1146 / 1160 / Villas Mallorca 656 / 658 / 661 at
+  or past z_max. Expanding `AREA` / the terrain grid is a rebuild call.
+- **Truluck's / osm:42 parts**: multimodal commercial ring needs an OSM (or GIS)
+  parts-level source before either plane can ship — mapping pass, not a height
+  pass. Same class as Hyatt / helipad osm:83.
+- **Thin-shelf cut**: osm:695 at dense2 80.7% stays a near-miss under 85% — do
+  not lower the floor. A parts split for the shelf would let the ~8.5 body ship.
+- **Remaining unnamed guesses in-box**: still dozens after this pass's
+  twenty-three admissions. Batch Apple+EPT verification remains the right shape;
+  do not blanket-admit.
