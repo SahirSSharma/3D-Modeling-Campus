@@ -156,14 +156,26 @@ const norm = (s) =>
    In each case the OSM division is finer and every piece carries its own
    LiDAR plane, so the union ring is dropped and the OSM footprints render.
    Keyed by name + centroid so a service-side fix simply stops matching.
+   "Mandell Weiss Forum" (r2c1 judge sweep, 2026-08-05) is the theatre
+   version of the same lie, twice: the 1,987 m² record ring spans the
+   Forum AND most of the Shank Theatre, so the Shank's own OSM ring
+   suppressed under it and the whole complex extruded at one height —
+   while a second 56 m² "Forum" sliver whose centroid lands inside the
+   Shank ring took the Shank's NAME through the host rename, hanging the
+   theatre's label on a 3.2 m shed. LiDAR measures the two buildings
+   apart (Forum 10.5, Shank 10.1 — the ring trace of the union reads
+   10.4, the Forum's own plane), so both record rings drop and the OSM
+   division renders. One entry catches both: the rings' centroids sit
+   39.7 m apart, inside the 40 m match radius.
    Same class, out of this shard's scope, left for their own sweeps:
-   Mandell Weiss Forum (covers Shank Theatre), 64 Degrees (covers Revelle
-   Commons/64 North), Birch Aquarium (covers Hillgarth Center), Biomedical
-   Sciences (covers WongAvery), Mandeville Center (covers Print Labs). */
+   64 Degrees (covers Revelle Commons/64 North), Birch Aquarium (covers
+   Hillgarth Center), Biomedical Sciences (covers WongAvery), Mandeville
+   Center (covers Print Labs). */
 const UNION_OUTLINES = [
   { n: "Earth Hall", near: [-156, -806] },
   { n: "Canyon Vista", near: [743, -669] },
   { n: "Seventh College East #4", near: [-42, -1099] },
+  { n: "Mandell Weiss Forum", near: [29, 647] },
 ];
 
 /* Sites whose 2014 building has been demolished for a rebuild that has not

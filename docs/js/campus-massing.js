@@ -234,8 +234,18 @@ const centroidOf = (ring) => {
  *  (ring and mass, z-fighting), and Matthews D and E rendered once per
  *  source at two different heights, because the exact-name test could not
  *  see through the prefix. The ≥0.85 area test still has to pass, so a
- *  stray suffix match cannot suppress a building its masses don't cover. */
-const ringCoveredBy = (ring, coveredRings, nameCarried = true) => {
+ *  stray suffix match cannot suppress a building its masses don't cover.
+ *
+ *  An UNNAMED ring gets a lower area floor, 0.5 (r2c1 judge sweep,
+ *  2026-08-05). The 0.85 bar is high because suppression can delete the
+ *  only ring that knows a building's name — but an unnamed ring has no
+ *  identity to lose, only geometry the massing already renders. osm:718
+ *  sampled 0.78 under the Satellite Utility Plant's record ring and
+ *  extruded through it wearing a 9 m area guess; osm:359 is an unnamed
+ *  re-trace of Mesa Apartments Central 9236 sampling 0.52 over the
+ *  university's own 6.1 m mass, z-fighting it at 8.4. Half-covered
+ *  matches the vertex-majority bar the named path already uses. */
+const ringCoveredBy = (ring, coveredRings, nameCarried = true, unnamed = false) => {
   const inAny = (x, z) => coveredRings.some((r) => inRing(x, z, r));
   const [cx, cz] = centroidOf(ring);
   if (inAny(cx, cz)) return true;
@@ -260,7 +270,7 @@ const ringCoveredBy = (ring, coveredRings, nameCarried = true) => {
       if (inAny(x, z)) covered++;
     }
   }
-  return interior >= 20 && covered / interior >= 0.85;
+  return interior >= 20 && covered / interior >= (unnamed ? 0.5 : 0.85);
 };
 
 /* LiDAR ≈ GIS -> the measurement wins; either far taller -> see header. */
@@ -331,6 +341,10 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
      Their rings survive in OSM and wore 12 and 9 m area guesses; a ring
      whose building was demolished renders nothing, whatever OSM says. */
   const skipOsmAnchors = [[1416, -1299], [545.3, 48.3], [374.4, -88.3]];
+  /* Building indices whose ring (or any part) stands in the world — the
+     host rename below must know, because a name may only move onto the
+     massing when its own ring does NOT render (r2c1 judge sweep). */
+  const renderedOsm = new Set();
   const gisCentroids = covered.map((r) => centroidOf(r));
   const gisNameCentroids = new Map();
   gis.forEach((m, i) => {
@@ -391,7 +405,8 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
          Kaleidoscope — post-2014, nothing tagged) does the outline remain
          the sole geometry there is, and the fallback below keeps it. */
       for (const { part, pi } of parts) {
-        if (ringCoveredBy(part.p, covered, nameCarried)) continue;
+        if (ringCoveredBy(part.p, covered, nameCarried, !b.n)) continue;
+        renderedOsm.add(i);
         masses.push({
           rings: [part.p],
           name: b.n || null,
@@ -404,7 +419,8 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
       }
       return;
     }
-    if (ringCoveredBy(b.p, covered, nameCarried)) return;
+    if (ringCoveredBy(b.p, covered, nameCarried, !b.n)) return;
+    renderedOsm.add(i);
     masses.push({
       rings: [b.p],
       name: b.n || null,
@@ -452,7 +468,17 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
      by the opposite ring, OSM being the name authority. An identity rename
      (the real Spanos Athletic Performance Center standing in its own ring)
      never cancels, and is exactly what blocks the neighbouring training
-     facility from taking the same name. */
+     facility from taking the same name.
+
+     And the rename only fires INTO a suppressed ring (r2c1 judge sweep,
+     2026-08-05). Its whole purpose is that suppression must lose nothing:
+     a covered ring's name moves onto the massing that renders in its
+     place. When the host ring RENDERS — the OSM Forum ring stands as its
+     own mass now that the record's union rings are dropped — handing its
+     name to a record mass inside it says the building exists twice. The
+     university's "James' Place" sits centroid-inside that Forum ring and
+     must keep saying so; the height reconcile through the host is
+     untouched, names only. */
   for (const m of masses) {
     if (m.lidarDone) continue;
     const [cx, cz] = centroidOf(m.rings[0]);
@@ -503,7 +529,7 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
        to OSM's bare parcel letter "A". */
     const letter = host && m.name && host.n.length <= 2 &&
       (m.name.endsWith(` ${host.n}`) || m.name.endsWith(` - ${host.n}`));
-    if (host && !letter) m.name = host.n;
+    if (host && !letter && !renderedOsm.has(host.i)) m.name = host.n;
     delete m._c;
     delete m._host;
     delete m._hostNameOnly;

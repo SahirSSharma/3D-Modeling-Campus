@@ -384,6 +384,63 @@ the Mesa 9242/9240 pair under Mesa Nueva tower bleed, and one small VA structure
 are three-quarters neighbour. Eye-level verification photographed all 26 touched or judged
 sites; every rendered roof probe matches its shipped height exactly.
 
+**The theatre-district / west-corridor judge pass (2026-08-05, r2c1).** The Mandell Weiss
+complex to La Jolla Village Square. Eleven screened candidates; eight were real, and the worst
+two were the same failure the Stage Room and Solis Hall already named — a building that lives
+under trees wearing the trees as its height:
+
+| Building | Shipped | Measured | Why it was wrong |
+|---|---|---|---|
+| Che Café Collective (1980) | 20.9 m (host canopy paste) | **3.8 m** | the venue sits INSIDE the eucalyptus grove — Street View shows trunks through its deck. 48 % of returns sit in a dense 2–4 m band, the rest climb the crowns to 29; the tree-guard's p75 was still canopy, and the host reconcile smeared it over the 4.3 m eave record. Hand-audited at the dense band's p50; the OSM mapper's own tag says 4.8. |
+| Laurel | 9.9 m (same paste) | **4.2 m** | 70 % of returns in the 4 m bin alone, tail to 16.5 through the crowns over its east edge. Its unshaded siblings Laurel Extension and Magnolia measure 4.4 and 4.3 clean — one-storey pads, all of them. |
+| Theodore and Adele Shank Theatre | suppressed; its name on a 3.2 m shed | **10.1 m, its own ring** | the record traces Forum + Shank as one 1,987 m² union ring, so the Shank's footprint suppressed under it — while a 56 m² record sliver standing centroid-inside the Shank ring took the theatre's name through the host rename. Both record rings are union outlines now (the Earth Hall fix); the OSM division renders. |
+| Mandell Weiss Forum | one union slab over two buildings | **10.5 m, its own ring** | the union's own trace reads 10.4 — the Forum's plane, wrong over neither theatre but a lie about there being one building. LiDAR measures them apart: 10.5 and 10.1. |
+| Grid-roof residential complex (unnamed, osm:93) | 16 m (area guess) | **11.8 m** | 7,543 returns, p25 10.5 → p98 11.8, body tight; standing unchanged on today's Apple. |
+| Commercial L-block, Villa La Jolla Dr (unnamed, osm:77) | 12 m (OSM tag) | **7.5 m** | one plane at p25 = p75 = 7.5; the p98 tail to 28.1 is the ficus rows hugging its east edge, which the tree-guard discards. |
+| La Jolla Village Square, east strip (unnamed, osm:333) | 4.8 m (OSM tag) | **8.2 m** | the mapper under-tagged a tall single-storey retail shell; 6,216 returns, p98 8.2, max 8.5. |
+| La Jolla Village Square, center pavilions (unnamed, osm:335) | 4.8 m (OSM tag) | **7.7 m** | same under-tag, same mall; 3,173 returns. |
+
+Two double-renders fell to one class fix: an unnamed OSM ring that samples half-covered by the
+university's massing is a duplicate tracing of a building the massing already renders, and it
+has no name suppression could lose — the area floor for unnamed rings drops from 0.85 to 0.5,
+the same bar the vertex-majority test already uses. That suppresses osm:718 (a 9 m guess
+z-fighting through the Satellite Utility Plant's record) and osm:359 (an 8.4 m re-trace of Mesa
+Apartments Central 9236 over the university's own 6.1 m mass). Campus-wide, those two are the
+only flips.
+
+Splitting the Forum union exposed a rename hole the r1c2 guard could not see: with the record's
+"Mandell Weiss Forum" rings gone, the university's **James' Place** — standing centroid-inside
+the now-rendering OSM Forum ring — took the ring's name, and the Forum rendered twice. The
+rename exists so suppression loses nothing; it now fires only INTO a suppressed ring. When the
+host ring stands in the world itself, the mass keeps its record name and James' Place keeps
+saying James' Place.
+
+The epoch work: the **Satellite Utility Plant** (opened ~2018-19) joins `POST_2014_SITES` — the
+screener read the flight's tight 4.0–4.2 m plane under it as the plant's height, but that plane
+is the demolished predecessor; Street View 2020-03 and today's Apple show the tall finished
+block, and the 12.8 m record ships unchallenged. osm:718's carport plane is barred per-ring the
+same way. And **osm:1354**, south of La Jolla Village Drive: 48 returns, max 1.7 m — a bare lot
+the 2014 flight saw, still bare in Street View 2018-05, a finished pitched-roof building with
+solar carports on today's Apple. Built after mid-2018, keeps its declared guess, and the
+registered Google chunk over that block is censored — Apple is the only current nadir view of
+it, the VA-garage situation again.
+
+One build-order bug in the tree pipeline: the prune ran on full-precision trunk positions, and
+the file then rounded them to 0.1 m — which carried 13 wall-hugging trunks across footprint
+edges the prune had cleared, every one within 5 cm of its wall. The prune now runs on the
+coordinates the file ships.
+
+The rejections: the Potiker/Jacobs naming stands — the record calls both theatre-complex masses
+"Joan and Irwin Jacobs Center for La Jolla Playhouse", OSM outlines the Potiker Theatre across
+them, and both are right (the Center is the facility, the Potiker the venue inside it; OSM is
+the name authority, and each mass still measures its own roof — 13.5 the fly tower, 9.4 the
+house). The Mesa housing pads' 9 m area guesses were probed and agree with their planes to
+within ~1 m (8.7–10.0 across the sampled row) — verifying all 37 rings one by one is real work
+that stays on the list, but there is no lie to fix. And the far-taller-LiDAR reconcile branch
+that pasted the grove onto the Che Café survives exactly one place campus-wide after these
+fixes: Jacobs Hall, whose 33.2 m host plane over a 17.1 m four-level record is the cruciform
+core being genuinely taller than the record — the r1c1 verdict, unchanged.
+
 ### The colours, measured off footage
 
 Satellite imagery sees roofs and ground; it cannot see a wall, a tree trunk, or the sky. For

@@ -124,6 +124,15 @@ const POST_2014_SITES = new Set([
   // site renders unbuilt (massing excluded in build-campus-arcgis.mjs, the
   // OSM ring skipped in campus-massing.js) until one can.
   "RIMAC Annex",
+  // Found by the r2c1 judge sweep (2026-08-05): the plant east of Rita
+  // Atkinson opened ~2018-19 with the Voigt Dr utility buildout. The 2014
+  // flight reads a tight 4.0-4.2 m plane over its site (416 returns, p98
+  // 4.2) — the LOW predecessor structure demolished for it, not the plant.
+  // Street View 2020-03 and today's Apple both show the tall finished
+  // block, so the university's 12.8 m / 3-level record ships unchallenged
+  // and no 2014 number may ever touch it. (A screener proposed "measuring"
+  // it at 4.2 — the exact epoch mistake this list exists to forbid.)
+  "Satellite Utility Plant",
 ]);
 
 /* Post-2014 sites keyed by OSM ring INDEX — for what a name cannot say.
@@ -142,8 +151,20 @@ const POST_2014_SITES = new Set([
    833: the unnamed multi-deck garage south of the VA hospital, opened 2023
         with the SCI project. The flight read p50 0 — a surface lot — so the
         ring keeps its stated area guess of 16, in family with the r1c1
-        verdict on the VA's other garage (osm:438). */
-const POST_2014_OSM_RINGS = new Set([954, 833]);
+        verdict on the VA's other garage (osm:438).
+   r2c1 judge sweep (2026-08-05), two more rings a name cannot answer for:
+   718: the unnamed ring over the Satellite Utility Plant's west half. Its
+        tight 3.9-4.1 m plane (450 returns) is the demolished predecessor
+        the plant's own POST_2014_SITES entry documents — same site, same
+        epoch answer, per-ring form.
+   1354: the unnamed block south of La Jolla Village Drive at Gilman. The
+        flight saw 48 returns, max 1.7 m — a bare lot — and Street View
+        2018-05 still shows empty ground; today's Apple shows the finished
+        pitched-roof building with its solar carports. Built after mid-2018,
+        so the ring keeps its stated area guess of 12. (The registered
+        Google chunk over this block is censored — Apple is the only
+        current nadir view of it, the VA-garage situation again.) */
+const POST_2014_OSM_RINGS = new Set([954, 833, 718, 1354]);
 
 /* GIS masses verified PRE-2014 by hand (r0c1 sweep, 2026-08-04) whose ring
    has neither a named-OSM host nor an exact OSM name twin — the two paths
@@ -356,9 +377,25 @@ const MEASURE_MINUS_CONTAINED = {
    with the 4.5 guess it already wears), and 365 (the ring beside the
    Mesa Nueva towers, the same bleed shape — p50 17.9 over what the
    record and Apple both read as low structures; the 8.4 guess stands
-   because the laser cannot see past the towers). */
+   because the laser cannot see past the towers).
+   r2c1 judge sweep (2026-08-05) — four unnamed rings on the west
+   commercial corridor, each standing unchanged on today's Apple:
+     93: the grid-roof residential complex east of Villa La Jolla Dr
+        (7,543 returns, p25 10.5 to p98 11.8, body tight): plane 11.8
+        against a 16 m area guess.
+     77: the white L-shaped commercial block on Villa La Jolla Dr
+        (7,400 returns): the roof is one plane at 7.5 (p25 = p75); the
+        p98 tail to 28.1 is the ficus rows hugging its east edge, which
+        the tree-guard already discards. Tagged 12.
+     333: the east retail strip of La Jolla Village Square (6,216
+        returns, p98 8.2, max 8.5): plane 8.2 against an OSM tag of
+        4.8 — the mapper under-tagged a tall single-storey shell.
+     335: the center pavilion cluster of the same mall (3,173 returns,
+        p98 7.8 on the targeted re-sample; the build's own tiling reads
+        7.7): plane 7.7, same under-tagged 4.8. */
 const OSM_UNNAMED_VERIFIED = new Set([
   786, 893,
+  93, 77, 333, 335,
   0, 55, 63, 113, 119, 132, 186, 204, 453, 501, 502, 504, 505, 506, 507,
   509, 510, 781, 931, 932, 933, 934, 935, 936, 937, 938, 939, 940, 941,
   942, 943,
@@ -413,6 +450,22 @@ const OSM_UNNAMED_VERIFIED = new Set([
      failure exactly, and it smeared onto the GIS mass through the
      host-level reconcile. The roof is the dense band's p50, 6.4 m, and
      the university GIS roughly agrees (4.3 m eave, one level).
+   - Che Café Collective (r2c1 judge sweep, 2026-08-05): the 1980 wooden
+     venue sits INSIDE the eucalyptus grove — Street View shows trunks
+     rising through its deck, and today's Apple finds the roof only in
+     fragments through the crowns. 48% of its returns sit in a dense
+     2-4 m band and the rest climb the trees to 29, so the tree-guard's
+     p75 (20.4 on the university's trace) is pure canopy — and it
+     smeared onto the 4.3 m eave record through the host-level
+     reconcile, extruding a one-storey venue at 20.9. The roof is the
+     dense band's p50, 3.8 m; the OSM mapper's own tag says 4.8.
+   - Laurel (r2c1 judge sweep, 2026-08-05): the one-storey pad west of
+     Villa La Jolla Dr, its east edge under overhanging crowns (Apple,
+     2026-08-05). 70% of its returns land in the 4 m bin alone; the
+     tail climbs to 16.5, so p75 (9.2) is in the trees — the same
+     failure at half the height. The roof is the dense band's p50,
+     4.2 m: its unshaded siblings Laurel Extension and Magnolia measure
+     4.4 and 4.3 clean, and the record's eave is 4.3.
    A null here means "measured, but not trustworthy: emit nothing". */
 const HAND_AUDITED = {
   "Tenaya Hall": 27.6,
@@ -423,6 +476,8 @@ const HAND_AUDITED = {
   "Spanos Athletic Performance Center": 4.4,
   "Qualcomm AA": 24.3,
   "Solis Hall": 6.4,
+  "Che Café Collective": 3.8,
+  "Laurel": 4.2,
 };
 
 const R = 6378137;
@@ -941,7 +996,21 @@ async function build() {
     arcgis: loadData("campus-arcgis.json"),
     markings: loadData("campus-markings.json"),
   });
-  const pruned = pruneTrees(clusterCanopy(canopy).map((t) => [t.x, t.z, t.h, t.r]), zones);
+  /* Prune the coordinates we SHIP. The file rounds trunks to 0.1 m, and
+     rounding after the prune used to carry a wall-hugging trunk across a
+     footprint edge the full-precision prune had cleared — 13 trees stood
+     "inside" buildings in the 2026-08-05 rebuild, every one within 5 cm
+     of its wall. Round first; then what the prune clears is exactly what
+     the file says. */
+  const pruned = pruneTrees(
+    clusterCanopy(canopy).map((t) => [
+      Math.round(t.x * 10) / 10,
+      Math.round(t.z * 10) / 10,
+      t.h,
+      t.r,
+    ]),
+    zones,
+  );
   console.log(`  tree prune: ${pruned.dropped.length} dropped against today's zones`);
   const trees = pruned.kept.map(([x, z, h, r]) => ({ x, z, h, r }));
 

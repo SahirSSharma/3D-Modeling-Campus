@@ -1,0 +1,189 @@
+[
+  {
+    "id": "che-cafe-canopy-bleed",
+    "entity": "Che Café Collective",
+    "where": {"x": 174.9, "z": 572.3},
+    "claim": "GIS mass 'Che Cafe' (gisH=4.3, L1) is renamed to OSM host 'Che Café Collective' and ships h=20.9 via host reconcile against lidar.heights['Che Café Collective']=20.9. No massHeights entry (massOk=false).",
+    "observed": "Fresh EPT of the GIS ring: 4,280 non-ground returns, p50=3.8, p75=20.4, p98=25.8, roofOf=20.4, guard=true, bodyTight=false, massOk=false. The 1-storey roof plane sits at p50≈3.8 m; roofOf/p75 ride the eucalyptus canopy. The build correctly withholds massHeights, then reconcile() pastes the host's canopy-contaminated 20.9 m onto the L1 mass — Δ ≈ +17 m vs the body plane / GIS record.",
+    "evidence": {
+      "lidar": "gis:CheCafe 4280 pts roofOf=20.4 p50=3.8 p75=20.4 p98=25.8 guard bodyTight=false massOk=false; osm:CheCafe 4006 pts roofOf=20.9 p50=11.5 p75=20.9 same canopy signature; lidar.heights['Che Café Collective']=20.9; massHeights[m:175,572]=undefined",
+      "gis": "Che Cafe gisH=4.3 levels=1 area≈341 m² at (174.9,572.3)",
+      "osm": "Che Café Collective way index 1353, osmH=4.8, lidar.heights=20.9; OSM ring suppressed under the renamed GIS mass",
+      "apple": "Apple snapshot che-tight.jpg z20 at 32.872824,-117.239329 — site under dense mature eucalyptus canopy beside a small parking strip and curved road; building roof barely visible through trees (currency: grove + lot present, no crane)",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Host-bleed of a canopy-guarded (massOk=false) plane onto a 1-storey GIS mass — same class as Solis / Stage Room: p50 is the roof, roofOf is the trees.",
+    "epoch_risk": "Low for existence — Apple shows the wooded Che Café site still there. The 20.9 vs 3.8 split is canopy contamination on a pre-2014 building, not a rebuild."
+  },
+  {
+    "id": "laurel-canopy-bleed",
+    "entity": "Laurel",
+    "where": {"x": 584.2, "z": 507.5},
+    "claim": "GIS mass 'Laurel' (gisH=4.3, L1) ships h=9.9 via host reconcile against lidar.heights['Laurel']=9.9. No massHeights. Neighbour 'Laurel Extension' correctly ships 4.3.",
+    "observed": "EPT of GIS Laurel: 2,232 pts, p50=4.2, p75=9.2, p98=15.3, roofOf=9.2, guard=true, bodyTight=false, massOk=false. Body plane matches GIS 4.3; roofOf is overhanging canopy. Laurel Extension on the same pad measures cleanly roofOf=4.4 (953 pts, massOk=true) and already ships 4.3. Laurel alone takes the host 9.9 paste.",
+    "evidence": {
+      "lidar": "gis:Laurel 2232 pts roofOf=9.2 p50=4.2 p75=9.2 p98=15.3 guard bodyTight=false massOk=false; gis:LaurelExt 953 pts roofOf=4.4 p50=4.3 p75=4.4 p98=4.4 massOk=true; lidar.heights['Laurel']=9.9",
+      "gis": "Laurel gisH=4.3 L1 area≈358 m²; Laurel Extension gisH=4.3 L1 area≈196 m²",
+      "osm": "Laurel way index 813 osmH=4.5 lidar.heights=9.9; Magnolia neighbour measures clean 4.3",
+      "apple": "Apple snapshot laurel-tight.jpg z20 at 32.873410,-117.234951 — cluster of 1-storey white-roof institutional pads beside a surface lot; mature trees overhang the eastern roofs; finished, no crane",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Same canopy host-bleed class as Che Café: massOk=false withholds massHeights, then host lidar.heights pastes the tree plane onto an L1 GIS mass.",
+    "epoch_risk": "Low — Apple shows the Laurel/Magnolia pad standing on the 2014 footprint. Not a date conflict."
+  },
+  {
+    "id": "shank-forum-sliver-rename",
+    "entity": "Theodore and Adele Shank Theatre",
+    "where": {"x": 48.6, "z": 645.9},
+    "claim": "The only mass that ships under the name 'Theodore and Adele Shank Theatre' is a 56 m² Mandell Weiss Forum GIS sliver at (48.6,645.9) with h=3.2 (own massHeights). The real Shank OSM ring (index 803, area≈867 m², lidar.heights=10.1) is suppressed.",
+    "observed": "Forum sliver centroid (48.65,645.89) falls INSIDE the Shank OSM ring (verified point-in-ring) and OUTSIDE the Forum OSM ring → host rename hands the sliver the Shank name. EPT: sliver 125 pts roofOf=3.2 massOk; Shank OSM ring 2,123 pts roofOf=10.1 p50=4.6 p75=7.6 p98=10.1 massOk=true. Main Forum GIS mass at (8.9,648.9) correctly ships 10.4. Net: Shank Theatre's student-facing name sits on a 3.2 m stub; the measured ~10 m Shank footprint does not extrude.",
+    "evidence": {
+      "lidar": "gis:ForumSliver 125 pts roofOf=3.2 p50=2.8 p75=2.8 p98=3.2 massOk=true (massHeights m:49,646=3.2); osm:Shank 2123 pts roofOf=10.1; gis:ForumMain 4969 pts roofOf=10.4",
+      "gis": "Mandell Weiss Forum mass #35 gisH=8.5 area≈56 m² at (48.6,645.9); Mandell Weiss Forum mass #34 gisH=8.5 area≈1987 m² at (8.9,648.9)",
+      "osm": "Theodore and Adele Shank Theatre way 803 osmH=14 lidarH=10.1 centroid (30.2,629.5); Mandell Weiss Forum way 802 lidarH=10.5 — Forum OSM suppressed under main GIS mass",
+      "apple": "Apple snapshot shank-tight.jpg z19 at 32.872307,-117.240877 — finished Mandell Weiss / Shank theatre complex with curved solar-panelled roof, mechanical plant, and rectangular north wings; no demolition",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Tiny GIS sliver centroid lands inside a neighbouring OSM ring → rename steals the name and the area-suppression path then drops the real OSM geometry (nameCarried=true within 150 m).",
+    "epoch_risk": "None for existence — Apple shows the theatre complex standing. This is a rename/geometry bug across two pre-2014 masses, not a date conflict."
+  },
+  {
+    "id": "satellite-util-unchallenged",
+    "entity": "Satellite Utility Plant",
+    "where": {"x": 418.9, "z": 522.5},
+    "claim": "GIS mass ships unchallenged h=12.8 (gisH=12.8, L3). No massHeights key. An overlapping unnamed OSM ring (index 718, area≈749 m²) still assembles at h=9 beside it.",
+    "observed": "EPT of the GIS ring: 416 pts, roofOf=4.2, p50=4.0, p75=4.1, p98=4.2, guard=false, bodyTight=true, massOk=true — clean 1-storey plane, Δ = −8.6 m vs shipped GIS. massHeights['m:419,523'] is undefined despite massOk on re-sample. Unnamed osm:718 still renders (src=osm h=9) with ~0.88 interior overlap of the same pad → coincident extrusion risk on top of the height miss.",
+    "evidence": {
+      "lidar": "gis:SatelliteUtil 416 pts roofOf=4.2 p50=4.0 p75=4.1 p98=4.2 massOk=true; massHeights[m:419,523]=undefined; no massHeights keys within ±30 m",
+      "gis": "Satellite Utility Plant gisH=12.8 levels=3 area≈763 m²",
+      "osm": "unnamed way 718 h=9 area≈749 @ (414.4,518) still in assembleMasses; not in OSM_UNNAMED_VERIFIED",
+      "apple": "Apple snapshot satellite-tight.jpg z19 at 32.873275,-117.236719 — low L-shaped white-roof service building beside a taller rectangular plant with rooftop mechanicals (Central Research Services to the NE measures roofOf=17.5 separately); finished service yard with vans, no crane",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Hostless GIS mass left unchallenged (PRE_2014_GIS_VERIFIED hole) plus unnamed OSM twin that fails area-suppression — height ships the 3-level record over a measured 4.2 m plane.",
+    "epoch_risk": "Possible but secondary — Apple's low L-shaped pad matches the 4.2 m 2014 plane more than the L3 record. If the plant was vertically expanded after 2014 the GIS 12.8 could be current; the 2014 flight and today's nadir both read low. Judge should not ship 4.2 as 'done' without an epoch check, and should not keep 12.8 without a source that resolves the vertical."
+  },
+  {
+    "id": "unnamed-1354-sparse-lot",
+    "entity": "unnamed OSM building index 1354",
+    "where": {"x": -11.1, "z": 904.7},
+    "claim": "Ships as OSM area-guess h=12 m (still rendering; area≈1237 m²). Not in lidar.osmHeights / OSM_UNNAMED_VERIFIED.",
+    "observed": "EPT: only 48 non-ground returns, roofOf=1.7, p50=1.0, p75=1.1, p98=1.7, massOk=true on the letter of the rule but far below a real roof sample. Δ = −10.3 m vs the 12 m guess. Neighbours are a dense field of unnamed residential pads (osm:1227–1237). Apple shows finished buildings with solar arrays in this block south of the theatre district / La Jolla Village Drive.",
+    "evidence": {
+      "lidar": "osm:1354 48 pts roofOf=1.7 p50=1.0 p75=1.1 p98=1.7 massOk=true (sparse)",
+      "gis": "no GIS mass centroid within ~100 m of this ring",
+      "osm": "unnamed building way index 1354, h=12, area≈1237 m², 9 verts",
+      "apple": "Apple snapshot osm1354.jpg z18 at 32.869818,-117.241319 — finished multi-building block with pitched/solar roofs south of the arterial; no crane, mature landscaping",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Unnamed OSM area-guess over a footprint the 2014 flight barely returned — either a post-2014 building (lot in 2014) or a mis-drawn ring; same family as the r1c1 demolished-pad exclusions.",
+    "epoch_risk": "HIGH — Apple shows standing buildings where LiDAR returns a near-empty 1.7 m surface. Do not ship the 1.7 m plane as the building height; do not keep the 12 m guess without a source. Candidate POST_2014_OSM_RINGS / skipOsmAnchors entry."
+  },
+  {
+    "id": "unnamed-93-overheight",
+    "entity": "unnamed OSM building index 93",
+    "where": {"x": 482.3, "z": 783.2},
+    "claim": "Ships as OSM area-guess h=16 m (still rendering; area≈3296 m²).",
+    "observed": "EPT: 7,543 pts, roofOf=11.8, p50=10.8, p75=11.1, p98=11.8, guard=false, bodyTight=true, massOk=true. Δ = −4.2 m (~1+ storey) vs the area guess. Apple shows the modular Rita-Atkinson-adjacent residential block on this footprint.",
+    "evidence": {
+      "lidar": "osm:93 7543 pts roofOf=11.8 p50=10.8 p75=11.1 p98=11.8 massOk=true",
+      "gis": "no covering GIS mass; Rita Atkinson Residences mass is ~180 m north at (562,603) shipping 26.8",
+      "osm": "unnamed building way index 93, h=16, area≈3296 m²",
+      "apple": "Apple snapshot osm93.jpg z18 at 32.870919,-117.236044 — finished modular residential roofs (quilted/grid pattern) south of La Jolla Village Drive; standing today",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Large unnamed OSM area-guess above a clean 2014 roof plane — OSM_UNNAMED_VERIFIED admission candidate.",
+    "epoch_risk": "Low — Apple and LiDAR agree a multi-storey residential block stands on this footprint; the miss is the 16 vs 11.8 guess, not a date."
+  },
+  {
+    "id": "unnamed-77-overheight",
+    "entity": "unnamed OSM building index 77",
+    "where": {"x": 808.1, "z": 791.6},
+    "claim": "Ships as OSM area-guess h=12 m (still rendering; area≈2529 m²).",
+    "observed": "EPT: 7,400 pts, roofOf=7.5, p50=7.5, p75=7.5, p90=20.1, p98=28.1, guard=true, bodyTight=true, massOk=true. Guarded plane 7.5 m is 4.5 m below the guess; the p98 tail is canopy over the pad.",
+    "evidence": {
+      "lidar": "osm:77 7400 pts roofOf=7.5 p50=7.5 p75=7.5 p98=28.1 guard bodyTight=true massOk=true",
+      "gis": "no covering GIS mass within ~50 m",
+      "osm": "unnamed building way index 77, h=12, area≈2529 m²",
+      "apple": "Apple snapshot osm77-tight.jpg z18 at 32.870841,-117.232556 — white L-shaped commercial/institutional roof south of Villa La Jolla Drive beside surface parking and a wooded hotel/residential cluster; finished",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Unnamed OSM area-guess above a tight guarded 2014 plane (canopy in the p98 tail only).",
+    "epoch_risk": "Low — Apple confirms a finished low commercial pad; LiDAR plane is tight at p50=p75=7.5."
+  },
+  {
+    "id": "unnamed-333-underheight",
+    "entity": "unnamed OSM building index 333",
+    "where": {"x": 874.1, "z": 941.9},
+    "claim": "Ships as OSM area-guess h=4.8 m (still rendering; area≈1042 m²) on the La Jolla Village commercial strip east of Nordstrom Rack.",
+    "observed": "EPT: 6,216 pts, roofOf=8.2, p50=7.4, p75=7.5, p98=8.2, massOk=true. Δ = +3.4 m vs the guess.",
+    "evidence": {
+      "lidar": "osm:333 6216 pts roofOf=8.2 p50=7.4 p75=7.5 p98=8.2 massOk=true",
+      "gis": "null within shard commercial strip",
+      "osm": "unnamed building way index 333, h=4.8, area≈1042 m²",
+      "apple": "Apple snapshot osm333.jpg z18 at 32.869482,-117.231850 — finished commercial big-box / strip roofs east of Nordstrom Rack; standing today",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Unnamed OSM area-guess below a clean 2014 commercial roof plane (pair with osm:335).",
+    "epoch_risk": "Low — Apple and LiDAR agree a commercial building stands here."
+  },
+  {
+    "id": "unnamed-335-underheight",
+    "entity": "unnamed OSM building index 335",
+    "where": {"x": 815.2, "z": 948.7},
+    "claim": "Ships as OSM area-guess h=4.8 m (still rendering; area≈1297 m²), neighbour of Nordstrom Rack.",
+    "observed": "EPT: 3,173 pts, roofOf=7.8, p50=7.4, p75=7.5, p98=7.8, massOk=true. Δ = +3.0 m vs the guess. Nordstrom Rack itself ships lidar 9.8 correctly on its own ring.",
+    "evidence": {
+      "lidar": "osm:335 3173 pts roofOf=7.8 p50=7.4 p75=7.5 p98=7.8 massOk=true; osm:Nordstrom 1631 pts roofOf=9.8 (ships 9.8 — OK)",
+      "gis": "null",
+      "osm": "unnamed building way index 335, h=4.8, area≈1297 m²; Nordstrom Rack way 706 lidarH=9.8",
+      "apple": "Apple nordstrom.jpg / osm333.jpg — finished UTC/La Jolla Village Drive commercial roofs; Nordstrom Rack and neighbours standing",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Same under-guessed commercial unnamed class as osm:333.",
+    "epoch_risk": "Low — commercial strip present in both epochs."
+  },
+  {
+    "id": "potiker-jacobs-rename",
+    "entity": "Sheila and Hughes Potiker Theatre / Joan and Irwin Jacobs Center for La Jolla Playhouse",
+    "where": {"x": 47.3, "z": 732.6},
+    "claim": "Both GIS masses named 'Joan and Irwin Jacobs Center for La Jolla Playhouse' are renamed to 'Sheila and Hughes Potiker Theatre' because their centroids sit inside the large Potiker OSM outline. Shipped heights 13.5 and 9.4 match massHeights.",
+    "observed": "Point-in-ring: both Jacobs Center centroids (47.3,732.6) and (57.7,773.3) are inside Potiker OSM way 413 (area≈3837 m²). EPT: mass#0 roofOf=13.5, mass#1 roofOf=9.4 — heights themselves are coherent. The university facilities name is lost; the whole Playhouse complex wears the Potiker Theatre label.",
+    "evidence": {
+      "lidar": "gis:JacobsPlayhouse#0 5345 pts roofOf=13.5; #1 3012 pts roofOf=9.4; osm:Potiker 8789 pts roofOf=13.3",
+      "gis": "Joan and Irwin Jacobs Center for La Jolla Playhouse ×2, gisH=12.8 L3, areas≈2044 and 1198 m²",
+      "osm": "Sheila and Hughes Potiker Theatre way 413 osmH=16 lidarH=13.3 — outline suppressed; name carried onto the GIS masses",
+      "apple": "Apple snapshot potiker-playhouse.jpg z17 at ~32.8712,-117.2407 — finished La Jolla Playhouse / theatre cluster standing",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "OSM venue name on a union outline renames every facilities mass inside it — identity/label split; heights OK. Ask Sahir which name students use before 'fixing'.",
+    "epoch_risk": "None — both volumes are pre-2014 theatre plant present on Apple. Identity question, not a date."
+  },
+  {
+    "id": "unnamed-guess-class-hole",
+    "entity": "unnamed OSM buildings in shard r2c1 (377 still shipping area-guesses)",
+    "where": {"x": 500, "z": 900},
+    "claim": "assembleMasses still extrudes 377 unnamed OSM rings in this shard from campus-3d.json area-guesses (not in lidar.osmHeights / OSM_UNNAMED_VERIFIED). Mesa apartment pads (osm:516–540 etc.) happen to sit within ~1 m of their 2014 planes; the commercial/large outliers above do not.",
+    "observed": "Enumeration: 400 OSM buildings in-box, 22 named, 377 unnamed guesses still in the rendered mass list. Spot EPT of Mesa-style pads (516,517,521,523,527,533,535,547,551,552): roofOf ≈ 8.4–10.0 vs shipH=9 — agreement. The class hole is the missing per-index verification, not a campus-wide height bias; the visible misses are the flagged outliers (93, 77, 333, 335, 1354, 718).",
+    "evidence": {
+      "lidar": "sample Mesa pads: osm:516 roofOf=9.0; 517=9.2; 523=9.1; 527=9.0; 547=10.0; 551=9.9; 552=9.9 (all massOk) vs shipH=9",
+      "gis": "24 GIS masses in-box; most unnamed commercial/residential pads have no GIS twin",
+      "osm": "377 unnamed rings with shipH from area guess; OSM_UNNAMED_VERIFIED size campus-wide=132, none of the shard outliers above are in it",
+      "apple": "mesa-nuevos.jpg / residence-inn.jpg — finished residential fabric south of campus; currency OK",
+      "probe": null
+    },
+    "severity": "low",
+    "suspected_class": "Shard-wide OSM_UNNAMED_VERIFIED coverage gap — most pads agree by luck; outliers are the real defects (see sibling findings).",
+    "epoch_risk": "Mixed per pad — Mesa Nueva / Nuevo West post-2014 names are already in POST_2014_SITES when named; these unnamed rings are the older Mesa / commercial fabric and mostly pre-2014. Treat each outlier's epoch separately."
+  }
+]

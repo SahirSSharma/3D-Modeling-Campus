@@ -64,6 +64,15 @@
  *      the health-campus records challenged by their own rings measure,
  *      the epoch withholds stay withheld, and Viterbi / the Bed Tower /
  *      VAF-B3 stay as judged.
+ *  15. The r2c1 judge pass's measurements hold: Che Café and Laurel wear
+ *      their audited roofs instead of the eucalyptus the flight saw over
+ *      them, the Weiss Forum union splits so the Shank Theatre is its own
+ *      measured building (and no sliver steals its name), the Satellite
+ *      Utility Plant renders once at its post-2014 record with the
+ *      predecessor's 2014 plane silenced, the verified west-corridor
+ *      rings ship their planes, the post-2014 rings keep their declared
+ *      guesses, and no unnamed ring renders while half-covered by the
+ *      massing that already is the building.
  */
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
@@ -117,6 +126,11 @@ const POST_2014 = [
   // r0c1 sweep: the 2014 annex west of RIMAC is demolished; Apple (2026-08-04)
   // shows a tower crane over open decks. The 10.6 m plane was a dead building.
   "RIMAC Annex",
+  // r2c1 judge sweep: opened ~2018-19; the flight's tight 4.0-4.2 m plane is
+  // the demolished predecessor on its site. (No OSM ring wears this name, so
+  // the name-keyed checks are dormant — the per-ring guard on osm:718 and the
+  // massHeights check below are the live ones.)
+  "Satellite Utility Plant",
 ];
 
 describe("1. LiDAR never claims a measurement of a post-2014 building", () => {
@@ -1260,5 +1274,169 @@ describe("14. the r1c2 judge pass (2026-08-04)", () => {
       (b.n === "Visual Arts Facility - Building 3" ? [i] : []));
     const vafPlanes = vafIdx.map((i) => LIDAR.osmHeights[String(i)]).sort();
     assert.deepEqual(vafPlanes, [11.5, 11.7], `VAF-B3 per-ring planes: ${vafPlanes}`);
+  });
+});
+
+describe("15. the r2c1 judge pass (2026-08-05)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("Che Café and Laurel wear their roofs, not the grove above them", () => {
+    /* The Che Café sits INSIDE the eucalyptus grove — Street View shows
+       trunks through its deck — and 48% of its returns land in a dense
+       2-4 m band while the rest climb the crowns to 29. The tree-guard's
+       p75 (20.4) was pure canopy, and the host-level reconcile pasted it
+       onto the university's 4.3 m eave record: a one-storey wooden venue
+       extruded at 20.9. Laurel is the same failure at half the height
+       (70% of returns in the 4 m bin, p75 9.2 in the overhanging crowns,
+       shipped 9.9). The audited roofs are the dense bands' p50s — 3.8
+       and 4.2 — and the records (4.3 eave, one level each) agree. */
+    const che = rendersNear(174.9, 572.3, 6).find((m) => m.src === "gis");
+    assert.equal(che?.name, "Che Café Collective", `the Che Café wears "${che?.name}"`);
+    assert.equal(che?.h, 3.8, `the Che Café ships ${che?.h} — the grove again?`);
+    assert.equal(LIDAR.heights["Che Café Collective"], 3.8, "the audited roof");
+    const laurel = rendersNear(584.2, 507.5, 6).find((m) => m.src === "gis");
+    assert.equal(laurel?.name, "Laurel", `Laurel wears "${laurel?.name}"`);
+    assert.equal(laurel?.h, 4.2, `Laurel ships ${laurel?.h} — the crowns again?`);
+    assert.equal(LIDAR.heights["Laurel"], 4.2, "the audited roof");
+    /* Its unshaded siblings measured clean and stay untouched. */
+    assert.equal(rendersNear(580.8, 519.8, 4)[0]?.h, 4.3, "Laurel Extension's own plane");
+    assert.equal(rendersNear(603.6, 507.7, 4)[0]?.h, 4.3, "Magnolia's own plane");
+  });
+
+  test("the Weiss Forum union splits — the Shank Theatre is its own building", () => {
+    /* The facilities record traced the Forum AND most of the Shank
+       Theatre as one 1,987 m² ring, so the Shank's OSM footprint
+       suppressed under it — while a second 56 m² "Forum" sliver standing
+       centroid-inside the Shank ring took the theatre's NAME through the
+       host rename, hanging it on a 3.2 m shed. Both record rings are
+       union outlines now: the OSM division renders, each theatre at its
+       own 2014 plane (Forum 10.5, Shank 10.1 — the union ring's own
+       trace read 10.4, the Forum's plane, wrong over the Shank). */
+    assert.equal(MASSES.filter((m) => m.src === "gis" && m.name === "Mandell Weiss Forum").length,
+      0, "a Forum record ring is back");
+    const shank = MASSES.filter((m) => m.name === "Theodore and Adele Shank Theatre");
+    assert.equal(shank.length, 1, `the Shank Theatre renders ${shank.length} times`);
+    assert.equal(shank[0].src, "osm", "the Shank renders from its own OSM footprint");
+    assert.equal(shank[0].h, 10.1, `the Shank ships ${shank[0].h}, its plane is 10.1`);
+    const forum = MASSES.filter((m) => m.name === "Mandell Weiss Forum");
+    assert.equal(forum.length, 1, `the Forum renders ${forum.length} times`);
+    assert.equal(forum[0].h, 10.5, `the Forum ships ${forum[0].h}, its plane is 10.5`);
+    assert.ok(shank[0].h > 5, "the name-steal sliver is back at 3.2 m");
+  });
+
+  test("the Satellite Utility Plant renders once, at its post-2014 record", () => {
+    /* The plant opened ~2018-19; the flight's tight 4.0-4.2 m plane
+       (416 returns) is the LOW predecessor demolished for it. A screener
+       proposed "measuring" the plant at 4.2 — a date read as an error.
+       Street View 2020-03 and today's Apple show the tall finished
+       block: the 12.8 m / 3-level record ships unchallenged, and the
+       unnamed OSM ring over its west half (osm:718, 0.78 area-covered)
+       suppresses instead of z-fighting it at a 9 m guess. */
+    const sup = MASSES.filter((m) => m.name === "Satellite Utility Plant");
+    assert.equal(sup.length, 1, `the plant renders ${sup.length} times`);
+    assert.equal(sup[0].src, "gis");
+    assert.equal(sup[0].h, 12.8, `the plant ships ${sup[0].h} — the predecessor's plane?`);
+    assert.equal(LIDAR.massHeights["m:419,523"], undefined, "the 2014 predecessor plane shipped");
+    assert.equal(LIDAR.osmHeights?.[718], undefined, "osm:718 carries a 2014 number");
+    assert.equal(rendersNear(414.4, 518.0, 3).filter((m) => m.src === "osm").length,
+      0, "osm:718 renders through the plant's record again");
+  });
+
+  test("the post-2014 rings keep their declared guesses and the flight stays silent", () => {
+    /* osm:1354, south of La Jolla Village Drive: 48 returns, max 1.7 m —
+       a bare lot in 2014 and STILL bare in Street View 2018-05, while
+       today's Apple shows the finished pitched-roof building. Built
+       after mid-2018: no 2014 number may ship, and the ring keeps its
+       stated area guess. */
+    assert.equal(LIDAR.osmHeights?.[1354], undefined, "a 2014 number shipped for osm:1354");
+    const m1354 = rendersNear(-11.1, 904.7, 4).find((m) => m.src === "osm");
+    assert.equal(m1354?.h, 12, `osm:1354 ships ${m1354?.h} — its declared guess is 12`);
+  });
+
+  test("the verified west-corridor rings ship their planes", () => {
+    /* Four unnamed rings standing unchanged on today's Apple, each with
+       a clean 2014 plane: the grid-roof complex (93: 7,543 returns,
+       plane 11.8 against a 16 guess), the L-shaped commercial block
+       (77: one plane at 7.5, the 28 m tail is ficus the guard already
+       discards; tagged 12), and the two La Jolla Village Square strips
+       (333/335: planes 8.2 and 7.7 against a mapper's 4.8 under-tag). */
+    for (const [i, h, x, z] of [
+      [93, 11.8, 482.3, 783.2], [77, 7.5, 808.1, 791.6],
+      [333, 8.2, 874.1, 941.9], [335, 7.7, 815.2, 948.7],
+    ]) {
+      assert.equal(LIDAR.osmHeights?.[i], h, `osm:${i}'s plane`);
+      assert.equal(rendersNear(x, z, 4).find((m) => m.src === "osm")?.h, h,
+        `osm:${i} renders at its plane`);
+    }
+  });
+
+  test("no unnamed ring renders while half-covered by massing that is the building", () => {
+    /* The class invariant behind the osm:718 fix, checked the way
+       ringCoveredBy checks it (same grid, same floor): an unnamed ring
+       has no identity to lose, so once the university's massing covers
+       half its interior, rendering it only z-fights the real building.
+       osm:359 — an unnamed re-trace of Mesa Apartments Central 9236 at
+       0.52 coverage, 8.4 guess over the 6.1 record — fell to the same
+       floor. */
+    const gisRings = ARCGIS.massing.map((m) => m.r[0].map(([x, z]) => [x / 10, z / 10]));
+    const boxes = gisRings.map((r) => {
+      let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+      for (const [x, z] of r) {
+        if (x < x0) x0 = x; if (x > x1) x1 = x;
+        if (z < z0) z0 = z; if (z > z1) z1 = z;
+      }
+      return [x0, x1, z0, z1];
+    });
+    const offenders = [];
+    for (const m of MASSES) {
+      if (m.src !== "osm" || m.name) continue;
+      const ring = m.rings[0];
+      let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+      for (const [x, z] of ring) {
+        if (x < x0) x0 = x; if (x > x1) x1 = x;
+        if (z < z0) z0 = z; if (z > z1) z1 = z;
+      }
+      const near = gisRings.filter((_, i) =>
+        boxes[i][0] <= x1 && boxes[i][1] >= x0 && boxes[i][2] <= z1 && boxes[i][3] >= z0);
+      if (!near.length) continue;
+      const step = Math.max(2, Math.min((x1 - x0) / 24, (z1 - z0) / 24));
+      let interior = 0, covered = 0;
+      for (let x = x0 + step / 2; x < x1; x += step) {
+        for (let z = z0 + step / 2; z < z1; z += step) {
+          if (!inRing([x, z], ring)) continue;
+          interior++;
+          if (near.some((r) => inRing([x, z], r))) covered++;
+        }
+      }
+      if (interior >= 20 && covered / interior >= 0.5) {
+        const [cx, cz] = centroidOf(ring);
+        offenders.push(`(${cx.toFixed(0)},${cz.toFixed(0)}) ${(covered / interior).toFixed(2)}`);
+      }
+    }
+    assert.deepEqual(offenders, [], `unnamed rings rendering through massing: ${offenders}`);
+  });
+
+  test("the rejected candidates stay rejected — the Potiker naming stands", () => {
+    /* The GIS record calls both theatre-complex masses "Joan and Irwin
+       Jacobs Center for La Jolla Playhouse"; OSM outlines the Potiker
+       Theatre across them, so the host rename hands both the OSM name.
+       Both are right — the Jacobs Center is the facility, the Potiker
+       the venue inside it — and OSM is this project's name authority.
+       Each mass still measures its OWN roof (13.5 the fly tower's
+       plane, 9.4 the house's), which is the part that must never
+       regress into one pasted number. */
+    const potiker = MASSES.filter((m) => m.name === "Sheila and Hughes Potiker Theatre");
+    assert.equal(potiker.length, 2, `the Potiker complex renders ${potiker.length} masses`);
+    assert.deepEqual(potiker.map((m) => m.h).sort((a, b) => a - b), [9.4, 13.5],
+      "each mass wears its own measured plane");
   });
 });
