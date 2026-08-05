@@ -3156,3 +3156,52 @@ describe("campus epoch — r2c2 pass-2 re-sweep (2026-08-05)", () => {
     assert.equal(rendersNear(1687.0, 1387.9, 4).find((r) => r.src === "osm")?.h, 12);
   });
 });
+
+describe("campus epoch — r0c0 pass-3 re-sweep (2026-08-05)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("the verified LJF / Black Gold residual rings ship their planes", () => {
+    /* Independent full-depth EPT (point counts matched the screener
+       exactly: 2,053 / 2,092 / 4,442); each standing finished on today's
+       Apple. Numbers are builderRoofOf (canopy guard + thin-shelf host
+       rule). 496 was underheight; 874 / 962 were overheight. */
+    for (const [i, h, x, z] of [
+      [496, 9.0, -833.3, -692.0],
+      [874, 4.6, -480.3, -736.2],
+      [962, 6.3, -419.0, -831.8],
+    ]) {
+      assert.equal(LIDAR.osmHeights?.[i], h, `osm:${i}'s plane`);
+      assert.equal(rendersNear(x, z, 4).find((m) => m.src === "osm")?.h, h,
+        `osm:${i} renders at its plane`);
+    }
+  });
+
+  test("the Idlehour amenity fringe keeps its declared guess", () => {
+    /* osm:975: multimodal + canopy-guarded (p50 5.2 / p75 6.8 / p98 12.7,
+       dense 42%, gap 5.9). Nominatim → Idlehour Lane leisure/pitch (no
+       building address); Apple center is Estancia amenity (tennis /
+       putting green / canopy), not a clear tall roof. Do not invent a
+       6.8 m plane — the 9 m area guess stands. Sibling of pass-1/2's
+       osm:513 / osm:828 withholds. */
+    assert.equal(LIDAR.osmHeights?.[975], undefined, "a 2014 number shipped for osm:975");
+    assert.equal(rendersNear(-484.1, -554.3, 4).find((m) => m.src === "osm")?.h, 9,
+      "the amenity fringe keeps its declared guess");
+  });
+
+  test("pass-1's coastal-scrub withhold still stands", () => {
+    /* osm:513: bodyTight=false mix of near-ground / deck; already pinned
+       in §18 / §27. Re-pin so this pass cannot silently admit roofOf 4.6. */
+    assert.equal(LIDAR.osmHeights?.[513], undefined, "a 2014 number shipped for osm:513");
+    assert.equal(rendersNear(-768.4, -877.3, 4).find((m) => m.src === "osm")?.h, 9,
+      "the contaminated pad keeps its declared guess");
+  });
+});

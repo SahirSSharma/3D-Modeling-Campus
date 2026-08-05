@@ -1230,3 +1230,61 @@ clearly above the area guess, unlike withheld 704/705.
 - **Remaining unnamed guesses in-box**: still dozens after this pass's
   twenty-three admissions. Batch Apple+EPT verification remains the right shape;
   do not blanket-admit.
+
+---
+
+# FINDINGS — run `2026-08-05_033905` · shard r0c0 (pass 3)
+
+Pass 3 of the NW campus shard (Estancia / Sanford / Marshall Residence /
+La Jolla Farms / coastal fringe). Screen: 5 candidates (2 high / 3 medium).
+Judged by `cursor-grok-4.5-high`.
+
+Every candidate in `pass3-r0c0.screen.json` was re-derived before judgement
+with an independent full-depth targeted EPT re-sample (5 targets in
+`.cache/gauntlet-r0c0-p3/judge/reprobe.*`; point counts matched the
+screener's `/tmp/gauntlet-r0c0-pass3/probe.json` exactly — 2,053 / 2,092 /
+4,442 / 2,599 / 4,022), Apple snapshots from the screener's
+`/tmp/gauntlet-r0c0-pass3/apple/` (copied to `.cache/gauntlet-r0c0-p3/evidence/`),
+Nominatim reverse from the screener's `nominatim.out`, and the shipped data.
+
+### Fixed — heights (every value from this pass's full-depth re-sample)
+
+| Entity | Was shipping | Now ships | Source | Test |
+|---|---|---|---|---|
+| La Jolla Farms Rd house (`osm-496-underheight`, osm:496) | 4.5 m area guess | **9.0 m** | `OSM_UNNAMED_VERIFIED`: 2,053 pts, clean p98 9.0 (dense 70% in 7–8 m, gap 1.1); Nominatim house at 9832 La Jolla Farms Road; Apple finished residential | epoch r0c0 pass-3 |
+| Black Gold Rd house (`osm-874-overheight`, osm:874) | 9 m area guess | **4.6 m** | `OSM_UNNAMED_VERIFIED`: 2,092 pts, clean p98 4.6 (dense 77% in 3–4 m, gap 0.7); Nominatim building at 9760 Black Gold Road | epoch r0c0 pass-3 |
+| Black Gold Rd / Estancia pad (`osm-962-overheight`, osm:962) | 9 m area guess | **6.3 m** | `OSM_UNNAMED_VERIFIED`: 4,442 pts, clean p98 6.3 (bodyTight; dense 60% under the 85% thin-shelf cut — do not paste the denser ~4 m body); Nominatim building at 9805 Black Gold Road | epoch r0c0 pass-3 |
+
+### Withheld (better absent than wrong)
+
+- **`osm-975-overheight-ambiguous` (osm:975)**: multimodal + canopy-guarded
+  (p50 5.2 / p75 6.8 / p98 12.7, dense 42%, gap 5.9). Nominatim reverse →
+  Idlehour Lane leisure/pitch (no building address). Apple center is Estancia
+  amenity (tennis / putting green / canopy), not a clear tall roof. Epoch /
+  identity ambiguous — do not invent a 6.8 m plane; the 9 m area guess stands.
+  Pinned as EXCLUDED from osmHeights.
+- **`osm:513`**: pass-1 coastal-scrub withhold re-confirmed (bodyTight=false;
+  p50 0.2). Still undefined in osmHeights.
+
+### Rejected candidates (each re-measured before rejection; do not re-find these)
+
+- **`unnamed-guess-residual`** — REJECTED as scoped, same verdict as prior
+  shards: the mechanism exists and this pass used it for three admissions and
+  one explicit refuse; admitting all ~56 remaining in-shard unnamed guesses
+  needs a per-ring Apple currency check each. Named landmarks in-box (ERC
+  halls, Village West #4–6, Salk wings, Estancia, Middle Earth, Marshall
+  Lower Q/R/S, Marshall Res V, Torrey Pines South) already track measured
+  planes after assembleMasses. Spot checks osm:227 (Cliff Hanger Cafe, ship
+  3 ≈ dense p75 3.6) and osm:892 (stepped multimodal) are not height bugs at
+  the bar this pass used.
+
+### Handoffs / observations for later shards / passes
+
+- **Remaining unnamed guesses in-box**: ~56 still ship area guesses after this
+  pass's three admissions. Batch Apple+EPT verification remains the right
+  shape; do not blanket-admit.
+- **osm:962 dense under cut**: dense 60% in 3–4 m with gap 2.3 — under the
+  85% thin-shelf floor. A parts split could let the denser body ship; do not
+  lower the cut. p98 6.3 stands.
+- **Extended Studies H/J/K/M/N**: prior handoff unchanged — Δ≤0.9 vs GIS
+  records, under the Δ≥3 bar.

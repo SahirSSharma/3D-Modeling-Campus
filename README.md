@@ -833,6 +833,24 @@ scrub. Do not invent a 1.7 m building; the 4.5 m guess stands. osm:513's coastal
 withhold from pass 1 still stands. Class-hole rejected as scoped — remaining unnamed
 guesses need per-ring Apple + EPT, not a blanket admit.
 
+**The NW-campus pass-3 re-sweep (2026-08-05, r0c0).** Same Estancia / Sanford / Marshall /
+La Jolla Farms shard after pass 2 closed nine more unnamed admissions. Residual error
+mass was still the unnamed area-guess set (~60 rings). Every candidate re-derived from an
+independent full-depth EPT (point counts matched the screener's 2,053 / 2,092 / 4,442 /
+2,599 exactly); Apple currency and Nominatim reverse re-checked per site.
+
+| Entity | Was shipping | Now ships | Why |
+|---|---|---|---|
+| La Jolla Farms Rd house (unnamed, osm:496) | 4.5 m area guess | **9.0 m** | Clean two-storey plane (2,053 returns, dense 70% in 7–8 m); Nominatim house at 9832 La Jolla Farms Road — the underheight inverse of the usual overguess class. |
+| Black Gold Rd house (unnamed, osm:874) | 9 m area guess | **4.6 m** | Clean one-storey plane (2,092 returns, dense 77% in 3–4 m); Nominatim building at 9760 Black Gold Road. |
+| Black Gold Rd / Estancia pad (unnamed, osm:962) | 9 m area guess | **6.3 m** | Body-tight p98 (4,442 returns; dense 60% under the 85% thin-shelf cut — do not paste the denser ~4 m body); Nominatim building at 9805 Black Gold Road. |
+
+Withheld: osm:975 — multimodal + canopy-guarded (dense 42%, gap 5.9); Nominatim reverse is
+Idlehour Lane leisure/pitch (no building address); Apple center is Estancia amenity (tennis /
+putting green / canopy), not a clear tall roof. Do not invent a 6.8 m plane; the 9 m guess
+stands. osm:513's coastal-scrub withhold still stands. Class-hole rejected as scoped —
+remaining unnamed guesses need per-ring Apple + EPT, not a blanket admit.
+
 ### The colours, measured off footage
 
 Satellite imagery sees roofs and ground; it cannot see a wall, a tree trunk, or the sky. For

@@ -869,6 +869,30 @@ const OSM_UNNAMED_VERIFIED = new Set([
   310, 336, 277,
   251, 252, 253, 254, 255, 256,
   700, 1358,
+  /* r0c0 pass-3 re-sweep 2026-08-05 — residual LJF / Estancia / Black Gold
+     unnamed pads after pass-2's 976/328/330/830/871/972/977/493/969
+     admissions. Independent full-depth EPT (point counts matched the
+     screener exactly: 2,053 / 2,092 / 4,442 / 2,599); Apple currency
+     confirmed finished roofs (or amenity for the withhold), no crane:
+       496: 2,053 returns, clean p98 9.0 (dense 70% in 7–8 m, gap 1.1)
+            — was 4.5 under-guess at 9832 La Jolla Farms Road
+            (Nominatim house). Secondary 3 m hist bin is courtyard /
+            garage within the ring, not a one-storey body.
+       874: 2,092 returns, clean p98 4.6 (dense 77% in 3–4 m, gap 0.7)
+            — was 9 over-guess at 9760 Black Gold Road.
+       962: 4,442 returns, clean p98 6.3 (bodyTight; dense 60% in 3–4 m
+            under the 85% thin-shelf cut, gap 2.3 — do not paste the
+            denser ~4 m body over the upper shelf) — was 9 at 9805
+            Black Gold Road (Estancia-adjacent).
+     Deliberately NOT admitted this pass:
+       975: multimodal + canopy-guarded (p50 5.2 / p75 6.8 / p98 12.7,
+            dense 42%, gap 5.9). Nominatim reverse → Idlehour Lane
+            leisure/pitch (no building address); Apple center is
+            Estancia amenity (tennis / putting green / canopy), not a
+            clear tall roof. Epoch / identity ambiguous — do not invent
+            a 6.8 m plane; keep the 9 m guess.
+       513: already withheld pass 1 (bodyTight=false coastal-scrub mix). */
+  496, 874, 962,
 ]);
 
 /* Hand-audited stats where the automatic roofOf() percentile choice is
