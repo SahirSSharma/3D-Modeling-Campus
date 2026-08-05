@@ -1,0 +1,172 @@
+[
+  {
+    "id": "tenaya-hand-audited-vs-dense-wing",
+    "entity": "Tenaya Hall",
+    "where": {"x": -169.8, "z": -156.4},
+    "claim": "HAND_AUDITED ships h=27.6 for Tenaya Hall (name-level). assembleMasses renders the GIS mass at 27.6. Comment in build-campus-lidar.mjs: roofOf's tree-guard took p75=22.4 as the 'low wing'; p98 27.6 is the 'tower roof'. GIS record is L7 / 21.3.",
+    "observed": "Fresh EPT of both the OSM and GIS rings: osm 8,157 pts roofOf=22.4 p50=22.3 p75=22.4 p98=27.5 guard=true bodyTight=true; gis 6,457 pts same roofOf/p50/p75/p98. Histogram (OSM): 22 m bin 4,027/8,157 (49%), 27 m bin 702 (9%); GIS ring 22–23 m = 66%, 26–28 m = 14%. Shipped 27.6 is +5.2 m (~1.5 storeys) above the dense body and +6.3 m above the L7 record. Pipeline's own roofOf would ship 22.4.",
+    "evidence": {
+      "lidar": "osm:Tenaya 8157 pts roofOf=22.4 p50=22.3 p75=22.4 p98=27.5 guard bodyTight massOk; hist 22m:4027 (49%) 27m:702 (9%); gis:Tenaya 6457 pts identical percentiles; dense22-23=55%/66%",
+      "gis": "Tenaya Hall gisH=21.3 levels=7 area≈930; massHeights[m:-170,-156]=undefined (HAND_AUDITED name-level wins)",
+      "osm": "Tenaya Hall way, campus-3d tag h=28; lidar.heights['Tenaya Hall']=27.6",
+      "apple": "Apple snapshot tenaya-z20.jpg z20 at 32.879414,-117.243016 — finished multi-wing white flat roof with rooftop mechanical plant; standing today, no crane",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "HAND_AUDITED tower paste over a dense lower wing — dual-plane ring extruded at the minority upper shelf; GIS L7 agrees with the 22 m body. Same family as Hyatt podium/tower and Sanford mechanical, opposite direction from Asante thin-shelf.",
+    "epoch_risk": "Low for existence — Apple and the 2014 flight both see a finished Muir tower on this pad. The disagreement is assignment (wing vs crown/mechanical), not a post-2014 rebuild. Prior 2026-08-03 audit intentionally overrode roofOf; later thin-shelf/stepped lessons may reframe it."
+  },
+  {
+    "id": "osm-903-thin-shelf-withhold",
+    "entity": "unnamed OSM building index 903",
+    "where": {"x": -300.4, "z": 170.4},
+    "claim": "assembleMasses ships src=osm area-guess h=9. Epoch §12 pins osmHeights[903] undefined (canopy-blind withhold from the first r1c0 decide rule: planeTight required p98−p75≤2).",
+    "observed": "Fresh EPT: 925 pts, roofOf=6.8, p50=2.7, p75=2.8, p98=6.8, guard=false, bodyTight=true, massOk=true. Dense 2 m band 2–3 m holds 878/925 (95%). Gap p98−p75=4.0. The r0c1/r0c2 thin-shelf rule (bodyTight + gap>2 + dense≥85% → p75) would ship 2.8. Δ guess−p75 = +6.2 m (~2 storeys).",
+    "evidence": {
+      "lidar": "osm:903 925 pts roofOf=6.8 p50=2.7 p75=2.8 p98=6.8 bodyTight massOk; hist 2m:704 (76%) 3m:174 (19%); dense2m=95%; osmHeights[903]=undefined",
+      "gis": "null — no GIS mass at this centroid",
+      "osm": "unnamed way index 903, campus-3d h=9, area≈426, centroid (−300.4,170.4)",
+      "apple": "Apple snapshot osm903-z19.jpg z19 at 32.876459,-117.244413 — finished La Jolla Farms residential pad present today among trees west of North Torrey Pines Rd; no crane",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Prior r1c0 decide withhold that the newer thin-shelf rule would admit — dense one-storey body under a crown tail, still wearing a 9 m area guess.",
+    "epoch_risk": "Low — Apple shows a finished low house on this footprint today. The 6.8 p98 is a tall tail (trees), not evidence the body grew two storeys after 2014."
+  },
+  {
+    "id": "osm-1028-thin-shelf-withhold",
+    "entity": "unnamed OSM building index 1028",
+    "where": {"x": -419.4, "z": 452.8},
+    "claim": "assembleMasses ships src=osm area-guess h=9. Epoch §12 pins osmHeights[1028] undefined (same first-pass decide withhold).",
+    "observed": "Fresh EPT: 3,002 pts, roofOf=7.0, p50=3.2, p75=3.2, p98=7.0, guard=false, bodyTight=true, massOk=true. Dense 2 m band 3–4 m holds 2,575/3,002 (86%). Gap=3.8. Thin-shelf rule would ship p75=3.2. Δ guess−p75 = +5.8 m.",
+    "evidence": {
+      "lidar": "osm:1028 3002 pts roofOf=7 p50=3.2 p75=3.2 p98=7 bodyTight massOk; hist 3m:2291 (76%) 4m:284 (9%); dense2m=86%; osmHeights[1028]=undefined",
+      "gis": "null",
+      "osm": "unnamed way index 1028, campus-3d h=9, area≈448, centroid (−419.4,452.8)",
+      "apple": "Apple snapshot osm1028-z19.jpg z19 at 32.873905,-117.245686 — finished residential structure present today in the southern La Jolla Farms fringe; no crane",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Same thin-shelf-vs-prior-withhold class as osm:903 — dense ~3 m body, 9 m guess.",
+    "epoch_risk": "Low — Apple confirms a standing low building; the 7 m p98 is the crown tail the first decide rule refused to see past."
+  },
+  {
+    "id": "osm-996-near-thin-shelf",
+    "entity": "unnamed OSM building index 996",
+    "where": {"x": -711.4, "z": -348.8},
+    "claim": "assembleMasses ships src=osm area-guess h=9 (area≈971). Epoch §12 pins osmHeights[996] undefined.",
+    "observed": "Fresh EPT: 2,766 pts, roofOf=8.0, p50=3.5, p75=4.1, p98=8.0, guard=false, bodyTight=true, massOk=true. Dense 2 m band 3–4 m holds 2,336/2,766 (84%) — 1 point under the 85% thin-shelf cut. Gap=3.9. Δ guess−p75 = +4.9 m.",
+    "evidence": {
+      "lidar": "osm:996 2766 pts roofOf=8 p50=3.5 p75=4.1 p98=8 bodyTight massOk; hist 3m:1748 (63%) 4m:588 (21%); dense2m=84%; osmHeights[996]=undefined",
+      "gis": "null",
+      "osm": "unnamed way index 996, campus-3d h=9, area≈971, centroid (−711.4,−348.8)",
+      "apple": "Apple snapshot osm996-z19.jpg z19 at 32.881154,-117.248809 — finished coastal/estate structure present today; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Near-miss thin-shelf on a prior withhold — same family as osm:903/1028, just under the 85% dense cut.",
+    "epoch_risk": "Low — Apple shows a finished building. Not a date conflict; residual is whether 84% is enough to prefer p75 over the documented guess."
+  },
+  {
+    "id": "tuol-s-north-shelf",
+    "entity": "Tuolumne Apartments - S House North",
+    "where": {"x": -192.4, "z": -71.3},
+    "claim": "assembleMasses ships h=15.6 via massHeights[m:-192,-71] over gisH=12.2 / L4. Not in PRE_2014_GIS_VERIFIED (only T House North is).",
+    "observed": "Fresh EPT of the GIS ring: 745 pts, roofOf=15.6, p50=11.7, p75=11.8, p98=15.6, guard=false, bodyTight=true, massOk=true. Histogram: 11 m:502 (67%) + 12 m:99 (13%) = 81% in the 11–12 m band; upper shelf fills to 15–16 m. Gap=3.8. Dense cut 81% misses the 85% thin-shelf rule by 4 points. Shipped roofOf is +3.8 m above the dense body.",
+    "evidence": {
+      "lidar": "gis:Tuol@-192,-71 745 pts roofOf=15.6 p50=11.7 p75=11.8 p98=15.6 bodyTight massOk; hist 11m:502 12m:99; dense2m=81%; massHeights[m:-192,-71]=15.6",
+      "gis": "Tuolumne Apartments - S House North gisH=12.2 levels=4 area≈243; not in PRE_2014_GIS_VERIFIED",
+      "osm": "Tuolumne complex outline suppressed (skipOsm); nine GIS houses render",
+      "apple": "Apple snapshot tuol-s-n-z20.jpg / tuolumne.jpg z17–20 at 32.878645,-117.243258 — finished Tuolumne house standing today with white flat roof and rooftop mechanical; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Thin upper shelf on a Tuolumne house massHeights admission — AsanteMeet / CSC-H family, just under the 85% dense cut.",
+    "epoch_risk": "Low — Apple matches the 2014 footprint. Dual plane is intra-building (deck vs plant/step), not a post-2014 change."
+  },
+  {
+    "id": "tuol-s-east-shelf",
+    "entity": "Tuolumne Apartments - S House East",
+    "where": {"x": -197.6, "z": -51.2},
+    "claim": "assembleMasses ships h=16.2 via massHeights[m:-198,-51] over gisH=12.2 / L4.",
+    "observed": "Fresh EPT: 652 pts, roofOf=15.5, p50=12.7, p75=12.8, p98=15.5, guard=false, bodyTight=true, massOk=true. Histogram: 12 m:482 (74%) + 13 m:48 (7%) = 81% in 12–13 m. Gap=2.7. Shipped 16.2 is +0.7 m above this pass's roofOf and +3.4 m above the dense body.",
+    "evidence": {
+      "lidar": "gis:Tuol@-198,-51 652 pts roofOf=15.5 p50=12.7 p75=12.8 p98=15.5 bodyTight massOk; hist 12m:482 (74%); dense2m=81%; massHeights[m:-198,-51]=16.2",
+      "gis": "Tuolumne Apartments - S House East gisH=12.2 levels=4 area≈230",
+      "osm": "outline suppressed; house renders from GIS",
+      "apple": "Apple snapshot tuol-s-east.jpg z19 at 32.878463,-117.243314 — finished Tuolumne house standing today; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Sibling of tuol-s-north-shelf — dense mid-deck under a thin upper shelf on an already-admitted massHeights value.",
+    "epoch_risk": "Low — same as S House North. Slight ship-vs-reprobe roofOf delta (16.2 vs 15.5) is tiling noise, not an epoch."
+  },
+  {
+    "id": "osm-481-pavilion-vs-withhold",
+    "entity": "unnamed OSM building index 481",
+    "where": {"x": -843.0, "z": -198.9},
+    "claim": "Epoch §12 withholds osmHeights[481] and leaves the 4.5 m guess: prior FINDINGS said Apple saw no structure under canyon-rim chaparral and sparse 2014 returns could be brush.",
+    "observed": "Fresh EPT: 542 pts, roofOf=6.2, p50=5.3, p75=5.7, p98=6.2, guard=false, bodyTight=true, massOk=true, gap=0.5 — the plane IS tight (prior decide rule's ok=true). Area only ≈83 m². Apple z20 centered on the ring shows a square pavilion with a dark four-sided pyramid roof beside a pond on the Geisel House grounds — a structure is present today.",
+    "evidence": {
+      "lidar": "osm:481 542 pts roofOf=6.2 p50=5.3 p75=5.7 p98=6.2 bodyTight massOk planeTight; hist 5m:266 (49%) 0m:129 (24%); osmHeights[481]=undefined",
+      "gis": "null",
+      "osm": "unnamed way index 481, campus-3d h=4.5, area≈83, centroid (−843,−198.9)",
+      "apple": "Apple snapshot osm481-z20.jpg z20 at 32.879799,-117.250217 — square pyramid-roof pavilion on manicured lawn next to an irregular pond; Geisel grounds, finished today",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Prior no-structure withhold contradicted by a tight 2014 plane AND today's Apple pavilion — small garden structure, not chaparral.",
+    "epoch_risk": "Possible secondary on identity: the 1.25 m Apple offset could pull an adjacent pavilion into the frame. But the LiDAR plane is independently tight at ~5.5 m on this 83 m² ring, so 'brush only' is the claim that needs re-checking, not a date."
+  },
+  {
+    "id": "osm-480-multiplane-guess",
+    "entity": "unnamed OSM building index 480",
+    "where": {"x": -808.1, "z": -131.8},
+    "claim": "assembleMasses ships src=osm area-guess h=12 (largest residual guess in-shard, area≈1868). Epoch §12 pins osmHeights[480] undefined.",
+    "observed": "Fresh EPT: 10,770 pts, roofOf=13.2, p50=7.6, p75=8.5, p98=13.2, guard=false, bodyTight=true, massOk=true. Histogram multimodal: 8 m:3237 (30%), 7 m:2490 (23%), 4 m:1809 (17%) — no single thin-shelf (≥85%). Grade span across footprint vertices = 7.3 m (worst in-shard). Guess 12 sits between the dense ~8 m band and the 13 m shelf.",
+    "evidence": {
+      "lidar": "osm:480 10770 pts roofOf=13.2 p50=7.6 p75=8.5 p98=13.2 bodyTight massOk; hist 8m:3237 7m:2490 4m:1809; dense2m=53%; osmHeights[480]=undefined; roof-anchor delta within 2 m; grade span 7.3 m",
+      "gis": "null — nearest named is Audrey Geisel University House ~110 m east",
+      "osm": "unnamed way index 480, campus-3d h=12, area≈1868, centroid (−808.1,−131.8)",
+      "apple": "Apple snapshot osm480-z19.jpg z19 at 32.879192,-117.249844 — finished multi-wing coastal/estate complex present today west of Geisel House; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Stepped multi-volume estate mapped as one OSM ring — no honest single plane (Scripps Memorial / Hyatt class); guess stands until parts exist.",
+    "epoch_risk": "Low for existence — Apple shows a finished complex. Disagreement is intra-footprint height variation across wings/grades, not a missing rebuild date."
+  },
+  {
+    "id": "ljf-withhold-thin-shelf-class",
+    "entity": "26 La Jolla Farms unnamed OSM guesses still shipping (epoch §12 withhold list)",
+    "where": {"x": -450.0, "z": 0.0},
+    "claim": "Epoch §12 asserts osmHeights undefined for all 26 prior withholds; they still render at area-guess heights. First-pass decide required planeTight (p98−p75≤2) or guarded bodyTight.",
+    "observed": "Re-probe of all 26: exactly three now pass the r0c1/r0c2 thin-shelf rule (dense≥85%, gap>2, bodyTight) — osm:903 (95%→p75 2.8), osm:1028 (86%→p75 3.2), osm:1094 (87%→p75 3.4, but Δ vs guess 4.5 is only 1.1 m). One near-miss at 84% (osm:996). Remaining 22 stay genuinely mixed/crowned. Named Muir landmarks (Tioga 35.7, Keeling N 34.4 / W 18.2, HDH 19.8, Geisel House 6.4) track their shipped planes within ≤0.2 m except Tenaya (separate candidate). Roof-anchor audit: 0 masses past the 2 m gate (worst +1.80 m).",
+    "evidence": {
+      "lidar": "26 withhold rings re-sampled in /tmp/gauntlet-r1c0b/probe.json; thin-shelf hits 903/1028/1094; named H1 spot-check Tioga/Keeling/HDH/Geisel ≤0.2 m vs ship",
+      "gis": "UNEX A/B/C/D/L still massHeights=undefined (eucalyptus withholds stand); UNEX E/F/G/X/Z still at PRE_2014 planes 3.2–3.9",
+      "osm": "26 residual unnamed guesses in-box after 95 prior OSM_UNNAMED_VERIFIED admissions; 0 double-renders; Tuolumne outline still suppressed",
+      "apple": "Contact sheet /tmp/gauntlet-r1c0b/apple/ — Kaleidoscope/Tapestry finished towers (POST_2014 correct); LJF estates standing; Muir west pad blue courts present with muir-tennis-west still absent",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Prior decide rule vs later thin-shelf rule — class hole that leaves ~3 clear one-storey bodies on 9 m guesses; not a call to blanket-admit the other 22.",
+    "epoch_risk": "Per-ring. Most withholds are real crown/step mixes (date-stable). Kaleidoscope/Tapestry correctly stay ESTIMATED_POST_2014 (2014 returns are bare pad / staging). Do not admit any of the 26 from roofOf without the thin-shelf (or tighter) cut plus Apple currency."
+  },
+  {
+    "id": "muir-pickleball-still-absent",
+    "entity": "Muir west recreation pad (former muir-tennis-west)",
+    "where": {"x": -220.0, "z": -80.0},
+    "claim": "campus-markings.json has no muir-tennis-west (removed first r1c0 pass). East pad muir-tennis-east still ships (fitError_m=0.23, fitCoverage=0.54). No pickleball facility ships.",
+    "observed": "Apple snapshot muir-west-pad-z18.jpg z18 at 32.878723,-117.243553 shows the blue west recreation pad still painted and in use today. Markings inventory: west=undefined, east present. Documented gap — new pickleball lines await an Apple registration fit (0.6 m gate); better absent than stale Google tennis paint.",
+    "evidence": {
+      "lidar": "null — paint is imagery-only",
+      "gis": "null",
+      "osm": "null — markings come from build-campus-markings.mjs, not OSM",
+      "apple": "muir-west-pad-z18.jpg — blue west pad courts present today beside the east tennis block; pickleball repaint currency unchanged from 2026-08-04",
+      "probe": null
+    },
+    "severity": "low",
+    "suspected_class": "Documented Apple-registration handoff — painted facility present on Apple, unmodelled until a fitted offset passes gate (same class as Preuss pitch).",
+    "epoch_risk": "Primary for paint generation — Google chunks still carry the old tennis lines; Apple is the currency authority. Do not restore tennis paint from Google."
+  }
+]

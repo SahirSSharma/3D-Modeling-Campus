@@ -580,13 +580,24 @@ const OSM_UNNAMED_VERIFIED = new Set([
   403, 1036, 1048, 1053, 1073, 1141, 1145,
   95, 198, 337, 288, 305, 51, 62,
   331, 149, 974, 1372, 878, 483,
+  /* r1c0 re-sweep 2026-08-05: three La Jolla Farms one-storey bodies the
+     first decide pass withheld for planeTight (p98−p75≤2), now admitted
+     under the thin-shelf host rule (dense ≥85%, gap >2, bodyTight → p75).
+     481: Geisel House grounds pavilion — prior "no structure / brush"
+     withhold contradicted by today's Apple (square pyramid roof beside
+     the pond) and a tight 2014 plane (542 pts, gap 0.5, roofOf 6.2). */
+  903, 1028, 1094, 481,
 ]);
 
 /* Hand-audited stats where the automatic roofOf() percentile choice is
    demonstrably wrong for a PRE-2014 building (verified against a targeted
    re-sample of the same EPT, 2026-08-03):
-   - Tenaya Hall: tower roof plane p98 27.6 (max 28.0); roofOf's tree-guard
-     took p75 = the low wing and shipped 22.4.
+   - Tenaya Hall: REMOVED r1c0 re-sweep 2026-08-05. The 2026-08-03 audit
+     mistook the rooftop mechanical shelf (p98 27.5, 9% of returns) for a
+     tower roof and overrode the tree-guard's p75 = 22.4. Apple shows a
+     flat H-plan roof with HVAC plant, not a taller wing; GIS L7 = 21.3
+     agrees with the dense 22 m body (49–66% of returns). Pipeline roofOf
+     already answers — do not re-add.
    - Mandeville Center: auditorium fly volume p98 20.9; p75 = the gallery
      roofs shipped 10.7.
    - Faculty Club: gable ridge ~6.5 at p90; p98 12.4 is overhanging
@@ -687,7 +698,6 @@ const OSM_UNNAMED_VERIFIED = new Set([
      exists.
    A null here means "measured, but not trustworthy: emit nothing". */
 const HAND_AUDITED = {
-  "Tenaya Hall": 27.6,
   "Mandeville Center": 20.9,
   "Ida and Cecil Green Faculty Club": 6.5,
   "Stewart Commons Annex": null,
@@ -1094,11 +1104,45 @@ async function build() {
      a sparse tail up the crown, and the 98th lands in the tree (the
      one-storey wooden Student Center "measured" 23.5 m this way). When the
      75th and 98th disagree by more than a storey and a half, the roof plane
-     is the honest answer. */
-  const roofOf = (roofs) => {
-    const p98 = percentile(roofs, 0.98);
+     is the honest answer.
+
+     A third shape the 5 m guard misses (r0c1 / r0c2 / r1c0 re-sweeps): a
+     tight dense body under a THIN upper shelf whose gap sits under the
+     canopy threshold. Prefer p75 when the body is tight, the shelf is more
+     than half a storey (~2 m) above it, AND a dense 2 m band holds ≥85% of
+     returns. Shared by host heights (OSM unnamed thin-shelf admissions)
+     and massHeights. */
+  const denseBandFraction = (roofs, base) => {
+    const hist = new Map();
+    for (const z of roofs) {
+      const bin = Math.floor(z - base);
+      hist.set(bin, (hist.get(bin) || 0) + 1);
+    }
+    const keys = [...hist.keys()].sort((a, b) => a - b);
+    let best = 0;
+    for (let i = 0; i < keys.length; i++) {
+      let n = 0;
+      for (let j = i; j < keys.length && keys[j] - keys[i] <= 1; j++) {
+        n += hist.get(keys[j]);
+        if (n > best) best = n;
+      }
+    }
+    return best / roofs.length;
+  };
+  const roofOf = (roofs, base = null) => {
+    const p50 = percentile(roofs, 0.5);
     const p75 = percentile(roofs, 0.75);
-    return p98 - p75 > 5 ? p75 : p98;
+    const p98 = percentile(roofs, 0.98);
+    if (p98 - p75 > 5) return p75;
+    if (
+      base !== null &&
+      p75 - p50 <= 2 &&
+      p98 - p75 > 2 &&
+      denseBandFraction(roofs, base) >= 0.85
+    ) {
+      return p75; // thin shelf over a dense body
+    }
+    return p98;
   };
 
   const heights = {};
@@ -1128,7 +1172,7 @@ async function build() {
     const base = rimBase(t.ring);
     if (base === null) continue;
     baseByBuilding.set(t.bi, base);
-    const h = Math.round((roofOf(t.roofs) - base) * 10) / 10;
+    const h = Math.round((roofOf(t.roofs, base) - base) * 10) / 10;
     /* Cap raised from 70: Sankofa, the Eighth College tower, really is ~80 m
        and the old cap silently dropped the tallest building on campus. */
     if (h < 2 || h > 90) continue;
@@ -1166,7 +1210,7 @@ async function build() {
     if (!hostName && !OSM_UNNAMED_VERIFIED.has(t.bi)) continue;
     const base = baseByBuilding.get(t.bi) ?? rimBase(t.ring);
     if (base === null) continue;
-    const h = Math.round((roofOf(t.roofs) - base) * 10) / 10;
+    const h = Math.round((roofOf(t.roofs, base) - base) * 10) / 10;
     if (h < 2 || h > 90) continue;
     partHeights[t.key] = h;
   }
@@ -1190,37 +1234,10 @@ async function build() {
      p75−p50 ≤ 2 m the fallback sits on a real plane; if the body is smeared
      wider, emit nothing and let the host-level reconcile answer instead.
 
-     A third shape the 5 m guard misses (r0c1 / r0c2 re-sweeps, 2026-08-05):
-     a tight dense body under a THIN upper shelf whose gap sits under the
-     canopy threshold. Asante House Meeting Rooms — 1,854 returns, 88% in a
-     3–4 m band matching the L1 record, p98 7.1 with only 43 points in the
-     7 m bin (gap 3.1) — shipped the shelf. Campus Services Complex Building
-     H — 743 returns, 92% in a 4–5 m band (GIS L1 = 4.3), p98 7.0 (34 points
-     in the 7 m bin, gap 2.2) — same shape, missed when the gap cut sat at
-     2.5. Prefer p75 when the body is tight, the shelf is more than half a
-     storey (~2 m) above it, AND a dense 2 m band holds ≥85% of returns.
-     That last cut keeps Otterson's mechanical plant (74% on the deck, ~21%
-     on the plant) and Copley's stepped conference volume (79%) on roofOf —
-     both real upper volumes, not thin tails. Transit Operations Trailer
-     (gap 0.9 over a 98%-dense 4 m body) stays on roofOf — noise, not a
-     shelf. */
-  const denseBandFraction = (roofs, base) => {
-    const hist = new Map();
-    for (const z of roofs) {
-      const bin = Math.floor(z - base);
-      hist.set(bin, (hist.get(bin) || 0) + 1);
-    }
-    const keys = [...hist.keys()].sort((a, b) => a - b);
-    let best = 0;
-    for (let i = 0; i < keys.length; i++) {
-      let n = 0;
-      for (let j = i; j < keys.length && keys[j] - keys[i] <= 1; j++) {
-        n += hist.get(keys[j]);
-        if (n > best) best = n;
-      }
-    }
-    return best / roofs.length;
-  };
+     Thin-shelf under the 5 m guard: same denseBandFraction / gap > 2 /
+     bodyTight cut as host roofOf (Asante Meeting Rooms, CSC Building H).
+     Otterson (74%) and Copley (79%) stay on p98 — real upper volumes.
+     Transit Operations Trailer (gap 0.9) stays on p98 — noise, not a shelf. */
   const massHeights = {};
   for (const t of massTargets) {
     if (t.roofs.length < 25) continue;

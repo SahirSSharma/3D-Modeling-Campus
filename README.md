@@ -565,6 +565,22 @@ a shelf. Qualcomm AA terrain apron — height 24.3 is correct; most vertices cla
 `z0=−1383`, a survey-box coverage handoff. Roof-anchor at osm:502 (−2.7) — same cross-shard
 renderer class. Preuss pitch — painted on Apple, unfitted; better absent than wrong.
 
+**The Muir / La Jolla Farms re-sweep (2026-08-05, r1c0).** West campus — Tenaya, Tuolumne,
+Keeling, HDH, Geisel House, LJF estates. Every candidate re-derived from the screener's
+full-depth EPT (point counts taken as the re-measurement); thin-shelf arithmetic and Apple
+currency re-checked per sample.
+
+| Entity | Was shipping | Now ships | Why |
+|---|---|---|---|
+| Tenaya Hall | 27.6 m (`HAND_AUDITED`) | **22.4 m** | Dense L7 body (49–66% in the 22 m bin) matching the GIS record (21.3); p98 27.5 is rooftop HVAC (9–14%). Canopy guard already preferred p75 — the 2026-08-03 audit overrode it. Apple: flat H-plan roof with mechanical plant, not a taller wing. |
+| osm:903 / 1028 / 1094 (LJF) | 9 / 9 / 4.5 m area guesses | **2.8 / 3.2 / 3.4 m** | Thin-shelf host rule (same cut as massHeights): dense ≥85%, gap >2, bodyTight → p75. First decide pass required planeTight and withheld them; plain roofOf would still ship the crown. |
+| osm:481 (Geisel pavilion) | 4.5 m guess (prior "no structure") | **6.2 m** | Apple z20 shows the square pyramid-roof pavilion beside the pond; 542 returns, gap 0.5, one plane. |
+
+Rejected / withheld: Tuolumne S House North/East — dense 81%, under the 85% cut; roofOf
+upper shelf stands (Otterson family). osm:996 — dense 84%, near-miss. osm:480 — multimodal
+estate on 7.3 m of grade, no single plane. Muir west pickleball — painted on Apple, unfitted
+until registration passes the 0.6 m gate; do not restore Google tennis paint.
+
 ### The colours, measured off footage
 
 Satellite imagery sees roofs and ground; it cannot see a wall, a tree trunk, or the sky. For

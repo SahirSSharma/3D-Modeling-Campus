@@ -172,10 +172,10 @@ const KNOWN_HEIGHTS = {
   "Pacific Hall": 18,
   "Mayer Hall": 20,
   "Applied Physics and Mathematics": 24,
-  /* NOT Tioga's twin after all: a targeted 2014-LiDAR re-sample (2026-08-03)
-     puts Tenaya's tower roof plane at 27.6 m, max 28.0 — it is the ~8-storey
-     tower to Tioga's ten. The earlier 34 here was an eyeball match to Tioga. */
-  "Tenaya Hall": 28,
+  /* Dense L7 roof plane (r1c0 re-sweep 2026-08-05): 22.4 m — the earlier
+     28 / HAND_AUDITED 27.6 mistook rooftop mechanical for a taller tower.
+     Fallback only; lidar.heights carries the live number. */
+  "Tenaya Hall": 22.4,
   "Solis Hall": 10,
   "Theodore and Adele Shank Theatre": 14,
   /* Gabled single-storey club; targeted LiDAR puts the dining-hall ridge at

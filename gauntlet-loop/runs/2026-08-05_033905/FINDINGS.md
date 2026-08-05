@@ -200,3 +200,66 @@ invention of this pass.
   re-deriving it.
 - **Scripps main / Anderson / Prebys north**: still need per-wing OSM rings or
   Street-View floor counts before any height can replace the guesses.
+
+---
+
+# FINDINGS — run `2026-08-05_033905` · shard r1c0 (re-sweep)
+
+Pass 1 re-sweep of the Muir / La Jolla Farms / Geisel House west shard.
+Screen: 10 candidates (3 high / 6 medium / 1 low). Judged by `cursor-grok-4.5-high`.
+
+Every candidate in `pass1-r1c0.screen.json` was re-derived before judgement
+against the screener's full-depth EPT (`/tmp/gauntlet-r1c0b/probe.json` — 66
+targets; point counts taken as the re-measurement for this pass), Apple
+snapshots in `/tmp/gauntlet-r1c0b/apple/`, and thin-shelf arithmetic
+re-computed per sample from each ring's histogram (dense 2 m band + gap).
+
+### Fixed — heights (class rule, not a one-row patch)
+
+| Entity | Was shipping | Now ships | Source | Test |
+|---|---|---|---|---|
+| Tenaya Hall (`tenaya-hand-audited-vs-dense-wing`) | 27.6 m HAND_AUDITED | **22.4 m** | Removed from HAND_AUDITED — canopy guard already preferred p75 over the 9% HVAC shelf; GIS L7=21.3 agrees. Apple: flat H-plan + mechanical, not a taller wing. | epoch §21 |
+| osm:903 (`osm-903-thin-shelf-withhold`) | 9 m area guess | **2.8 m** | Thin-shelf host rule (same cut as massHeights): 925 pts, dense 95% @2–3, gap 4.0 → p75. | epoch §21 |
+| osm:1028 (`osm-1028-thin-shelf-withhold`) | 9 m area guess | **3.2 m** | Same rule: 3,002 pts, dense 86% @3–4, gap 3.8 → p75. | epoch §21 |
+| osm:1094 (from `ljf-withhold-thin-shelf-class`) | 4.5 m area guess | **3.4 m** | Same rule: 470 pts, dense 87% @2–3, gap 4.2 → p75. | epoch §21 |
+| osm:481 (`osm-481-pavilion-vs-withhold`) | 4.5 m guess (prior "no structure") | **6.2 m** | Apple shows the Geisel grounds pyramid pavilion; 542 pts, gap 0.5, roofOf 6.2. | epoch §21 |
+
+Class change: `roofOf(roofs, base)` now applies the thin-shelf cut on the **host**
+path too (not only massHeights). Admitting 903/1028/1094 under plain roofOf
+would still have shipped crown p98 (6.8 / 7.0 / 7.6) — that was the hole.
+
+### Rejected candidates (each re-measured before rejection; do not re-find these)
+
+- **`osm-996-near-thin-shelf`** — REJECTED. Dense band 84% — 1 point under the
+  85% cut. Same family as 903/1028, not admitted. Guess 9 m stands. Pinned in §21.
+- **`tuol-s-north-shelf` / `tuol-s-east-shelf`** — REJECTED. Dense mid-deck under
+  plant shelf, but dense band only 81% — Otterson / Copley family. Ships roofOf
+  15.6 / 16.2. Do not paste the dense body the other way. Pinned in §21.
+- **`osm-480-multiplane-guess`** — REJECTED / withheld. Multimodal hist on 7.3 m
+  of grade; no single plane (Scripps / Hyatt class). Documented 12 m guess stays
+  until parts exist.
+- **`ljf-withhold-thin-shelf-class`** — REJECTED as a blanket admit. Exactly three
+  of the 26 prior withholds clear the thin-shelf cut (903 / 1028 / 1094 — fixed
+  above). The other 22 stay genuinely mixed/crowned; named Muir landmarks
+  (Tioga / Keeling / HDH / Geisel) already track measured planes ≤0.2 m.
+- **`muir-pickleball-still-absent`** — REJECTED as in-scope fix; RE-LOGGED as
+  handoff. Apple shows the blue west pad today; no registered fit. Better absent
+  than stale Google tennis paint — same posture as Preuss pitch / prior r1c0.
+
+### Withheld (better absent than wrong)
+
+- **osm:480**: no honest single plane across the multi-wing estate.
+- **osm:996**: near-miss thin-shelf; cut stands at 85%.
+- **Muir west pickleball**: painted on Apple, unfitted until Apple registration
+  residual passes the 0.6 m gate.
+
+### Handoffs / observations
+
+- **Muir west pickleball**: needs a template + per-sample fit on registered
+  imagery (Apple pixels barred without per-site registration). Do not restore
+  `muir-tennis-west` from Google chunks.
+- **Thin-shelf on hosts**: next full `build:lidar` applies the shared
+  `roofOf(roofs, base)` cut to every verified unnamed host. This pass spliced
+  the three in-shard hits after re-deriving them.
+- **Remaining LJF withholds** (~22): still need per-ring Apple + EPT; do not
+  blanket-admit from roofOf.

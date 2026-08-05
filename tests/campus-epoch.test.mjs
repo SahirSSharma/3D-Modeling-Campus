@@ -103,6 +103,10 @@
  *      2.5 to 2 — half a storey), Transit Trailer keeps its 5.2 (gap
  *      0.9, noise), and the post-2014 / stepped hospital residuals stay
  *      on their documented guesses.
+ *  21. The r1c0 re-sweep's measurements hold: Tenaya sheds the mechanical
+ *      HAND_AUDITED paste for its dense L7 body, three LJF thin-shelf
+ *      rings + the Geisel pavilion ship their planes, and the near-miss
+ *      / multiplane / Tuolumne / pickleball residuals stay as judged.
  */
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
@@ -853,14 +857,15 @@ describe("12. the west shard sweep (r1c0, 2026-08-04)", () => {
   });
 
   test("the canopy-blind and hidden La Jolla Farms rings keep their guesses", () => {
-    /* 481's ring sits under unbroken chaparral on the canyon rim — Apple
-       cannot see a structure there and the sparse 2014 returns could be
-       brush; no source resolves it. The rest measured, but their spreads
-       put p98 in a tree with bodies too loose to trust p75 (986: p50 3.7
-       under a p98 of 8.9). The OSM guesses stand, stated as guesses. */
-    for (const bi of [481, 322, 480, 485, 832, 903, 904, 907, 909, 910,
+    /* Prior "no structure" withhold on 481 and the first-pass planeTight
+       withholds on 903/1028/1094 moved to §21 — Apple + thin-shelf rule
+       now admit them. The rest measured, but their spreads put p98 in a
+       tree with bodies too loose to trust p75 (986: p50 3.7 under a p98
+       of 8.9), or sit under the 85% dense cut (996 at 84%). The OSM
+       guesses stand, stated as guesses. */
+    for (const bi of [322, 480, 485, 832, 904, 907, 909, 910,
       982, 986, 996, 997, 999, 1002, 1007, 1008, 1013, 1017, 1022, 1023,
-      1024, 1028, 1089, 1094]) {
+      1024, 1089]) {
       assert.equal(LIDAR.osmHeights?.[bi], undefined, `osmHeights[${bi}] shipped a plane no one trusts`);
     }
   });
@@ -1925,5 +1930,77 @@ describe("campus epoch — r0c2 re-sweep (2026-08-05)", () => {
     assert.ok(qaa, "Qualcomm AA left the dataset");
     const m = rendersNear(1712.0, -1408.4).find((x) => x.src === "osm");
     assert.equal(m?.h, 24.3, `QAA ships ${m?.h}`);
+  });
+});
+
+describe("campus epoch — r1c0 re-sweep (2026-08-05)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("Tenaya Hall sheds the mechanical HAND_AUDITED paste for its L7 body", () => {
+    /* 8,157 OSM / 6,457 GIS returns: dense 22 m body (49–66%), p98 27.5
+       rides the rooftop HVAC shelf (9–14% of returns). Canopy guard already
+       prefers p75 = 22.4; the 2026-08-03 HAND_AUDITED 27.6 overrode it.
+       Apple: flat H-plan roof with mechanical plant, not a taller wing.
+       GIS L7 = 21.3 agrees with the dense body. */
+    assert.equal(LIDAR.heights["Tenaya Hall"], 22.4);
+    const m = rendersNear(-169.8, -156.4).find((x) => x.src === "gis");
+    assert.ok(m, "Tenaya Hall GIS mass vanished");
+    assert.equal(m.h, 22.4, `Tenaya ships ${m.h}`);
+  });
+
+  test("three LJF thin-shelf rings ship their dense bodies, not crown p98", () => {
+    /* First decide pass required planeTight (p98−p75≤2) and withheld these;
+       the later thin-shelf host rule (bodyTight + gap >2 + dense ≥85% → p75)
+       admits them. Admitting under plain roofOf would still ship the crown
+       (6.8 / 7.0 / 7.6) — the class hole this pass closes. */
+    for (const [i, h, x, z] of [
+      [903, 2.8, -300.4, 170.4],
+      [1028, 3.2, -419.4, 452.8],
+      [1094, 3.4, -333.4, 475.5],
+    ]) {
+      assert.equal(LIDAR.osmHeights?.[i], h, `osm:${i}'s thin-shelf plane`);
+      assert.equal(rendersNear(x, z, 4).find((m) => m.src === "osm")?.h, h,
+        `osm:${i} renders at its plane`);
+    }
+  });
+
+  test("Geisel House pavilion ships its tight 6.2 m plane", () => {
+    /* Prior §12 withhold said Apple saw no structure under chaparral.
+       Apple z20 shows a square pyramid-roof pavilion beside the pond on
+       the Geisel grounds; 542 returns, gap 0.5, roofOf 6.2. */
+    assert.equal(LIDAR.osmHeights?.[481], 6.2);
+    assert.equal(rendersNear(-843.0, -198.9, 4).find((m) => m.src === "osm")?.h, 6.2,
+      "pavilion renders at its plane");
+  });
+
+  test("near-miss thin-shelf and multiplane LJF rings keep their guesses", () => {
+    /* 996: dense 84% — 1 point under the 85% cut; same family, not admitted.
+       480: multimodal estate on 7.3 m of grade — no single plane (Scripps /
+       Hyatt class). Guess stands until parts exist. */
+    assert.equal(LIDAR.osmHeights?.[996], undefined, "996 near-miss must not ship");
+    assert.equal(LIDAR.osmHeights?.[480], undefined, "480 multiplane must not ship");
+    assert.equal(rendersNear(-711.4, -348.8, 4).find((m) => m.src === "osm")?.h, 9);
+    assert.equal(rendersNear(-808.1, -131.8, 4).find((m) => m.src === "osm")?.h, 12);
+  });
+
+  test("Tuolumne S House North/East keep their roofOf upper shelves", () => {
+    /* Dense mid-deck under a thin plant shelf, but dense band only 81% —
+       under the 85% cut (Otterson / Copley family). Ships roofOf 15.6 /
+       16.2; do not paste the dense body the other way. */
+    assert.equal(LIDAR.massHeights["m:-192,-71"], 15.6);
+    assert.equal(LIDAR.massHeights["m:-198,-51"], 16.2);
+    const n = rendersNear(-192.4, -71.3).find((m) => m.src === "gis");
+    const e = rendersNear(-197.6, -51.2).find((m) => m.src === "gis");
+    assert.equal(n?.h, 15.6, `S House North ships ${n?.h}`);
+    assert.equal(e?.h, 16.2, `S House East ships ${e?.h}`);
   });
 });
