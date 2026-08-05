@@ -1,8 +1,8 @@
 # Gauntlet progress
 
-_Generated 8/5/2026, 12:46:49 — refreshes every 30 min while the driver is up._
+_Generated 8/5/2026, 16:00:01 — refreshes every 30 min while the driver is up._
 
-**Driver:** ⚫️ not running   ·   **Run:** `2026-08-05_033905`   ·   **HEAD:** `c650d53` (53 commits ahead of `origin/main`, unpushed)   ·   **Push guard:** 🔒 armed
+**Driver:** ⚫️ not running   ·   **Run:** `2026-08-05_033905`   ·   **HEAD:** `50a0b28` (54 commits ahead of `origin/main`, unpushed)   ·   **Push guard:** 🔒 armed
 
 ## Pass 1 — every shard swept once
 
@@ -45,16 +45,17 @@ The driver runs the pass-1 tail, then `--until-clean --max-passes 3`. A clean sw
 
 | outcome | what happens | remaining | done by |
 |---|---|---|---|
-| **best** | pass-1 tail, then one sweep changes nothing | 4h08m | Wed 16:54 |
-| **likely** | pass-1 tail, one fixing sweep, one clean sweep | 8h16m | Wed 21:02 |
-| **worst** | pass-1 tail, then all 3 passes, never converges | 12h24m | Thu 01:10 |
+| **best** | pass-1 tail, then one sweep changes nothing | 4h08m | Wed 20:08 |
+| **likely** | pass-1 tail, one fixing sweep, one clean sweep | 8h16m | Thu 00:16 |
+| **worst** | pass-1 tail, then all 3 passes, never converges | 12h24m | Thu 04:24 |
 
 One full 9-shard sweep is **4h08m** at the fitted rate.
 
 ## What landed
 
-53 commits ahead of `origin/main`, none pushed:
+54 commits ahead of `origin/main`, none pushed:
 
+- `50a0b28` 12:48 — Make campus-lidar.json reproduce from its builder, and gate it so it stays that way
 - `c650d53` 11:39 — Gauntlet r2c2 pass-3: Nobel/Lebon residual, Lebon-south, Sheraton-strip, UCL courtyard
 - `1e2339d` 11:20 — Gauntlet r2c1 pass-3: Villa La Jolla east / Residence Inn residual / Scenic over-guesses
 - `400d2b1` 11:00 — Gauntlet r2c0 pass-3: Poole Street osm:1105 sheds its 4.5 under-guess

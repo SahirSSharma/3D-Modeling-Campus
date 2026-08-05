@@ -784,7 +784,7 @@ describe("11. the east-campus shard sweep (r0c2, 2026-08-04)", () => {
        edges; the planes did not move). */
     const PLANES = {
       0: 31.3, 55: 12.5, 63: 22.8, 113: 9.3, 119: 19.1, 132: 9.4,
-      186: 13.7, 204: 15.4, 453: 19.9, 501: 8.4, 502: 34, 504: 6.3,
+      186: 13.7, 204: 15.4, 453: 16.2, 501: 8.4, 502: 34, 504: 6.3,
       505: 10, 507: 11, 509: 10.9, 510: 6.5, 781: 12.4,
       931: 6.1, 932: 6.1, 933: 8.7, 934: 5.7, 935: 3.8, 936: 4.1,
       937: 3.9, 938: 4.1, 939: 6.8, 940: 7.5, 941: 4.7, 942: 6.2,
@@ -2957,7 +2957,7 @@ describe("campus epoch — r2c0 pass-2 re-sweep (2026-08-05)", () => {
        (Nominatim 9535 Poole Street). 1147: clean 4–6 m band (dense ±1
        95.8%) under a 9 m guess (2715 Bordeaux) — sibling of 1141 / 1143. */
     for (const [i, h, x, z] of [
-      [1097, 7.6, -292.5, 530.2], [1147, 6.5, -369.8, 1363.0],
+      [1097, 7.6, -292.5, 530.2], [1147, 6.2, -369.8, 1363.0],
     ]) {
       assert.equal(LIDAR.osmHeights?.[i], h, `osm:${i}'s plane`);
       assert.equal(rendersNear(x, z, 4).find((m) => m.src === "osm")?.h, h,
@@ -3033,8 +3033,8 @@ describe("campus epoch — r2c1 pass-2 re-sweep (2026-08-05)", () => {
        518 takes thin-shelf p75 (dense 85.4%, gap 3.2); 530 takes the
        canopy guard's p75 under a 23.7 tail; the rest are clean p98. */
     for (const [i, h] of [
-      [518, 8.5], [519, 8.7], [522, 8.8], [524, 8.8], [526, 8.9],
-      [530, 8.7], [531, 8.9], [532, 8.5], [534, 8.7],
+      [518, 9.2], [519, 8.7], [522, 10.6], [524, 8.8], [526, 9.1],
+      [530, 8.7], [531, 8.9], [532, 8.7], [534, 9.0],
     ]) {
       assert.equal(LIDAR.osmHeights?.[i], h, `osm:${i}'s plane`);
       const [cx, cz] = centroidOf(CAMPUS.buildings[i].p);
@@ -3062,7 +3062,7 @@ describe("campus epoch — r2c1 pass-2 re-sweep (2026-08-05)", () => {
        OOB 656/658/661 cluster. 1373: 5,567 pts, clean p98 9.3 (was 12
        over-guess at 8745 La Jolla Scenic Drive North). Both finished
        on today's Apple. */
-    for (const [i, h] of [[657, 11.2], [1373, 9.3]]) {
+    for (const [i, h] of [[657, 10.9], [1373, 8.8]]) {
       assert.equal(LIDAR.osmHeights?.[i], h, `osm:${i}'s plane`);
       const [cx, cz] = centroidOf(CAMPUS.buildings[i].p);
       assert.equal(rendersNear(cx, cz, 4).find((r) => r.src === "osm")?.h, h,

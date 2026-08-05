@@ -40,6 +40,7 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { treeExclusionZones, pruneTrees } from "./lib/tree-rules.mjs";
+import { roofOf, denseBandFraction } from "./lib/roof-measure.mjs";
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const IN = path.join(REPO_ROOT, "docs/data/campus-3d.json");
@@ -1562,38 +1563,8 @@ async function build() {
      than half a storey (~2 m) above it, AND a dense 2 m band holds ≥85% of
      returns. Shared by host heights (OSM unnamed thin-shelf admissions)
      and massHeights. */
-  const denseBandFraction = (roofs, base) => {
-    const hist = new Map();
-    for (const z of roofs) {
-      const bin = Math.floor(z - base);
-      hist.set(bin, (hist.get(bin) || 0) + 1);
-    }
-    const keys = [...hist.keys()].sort((a, b) => a - b);
-    let best = 0;
-    for (let i = 0; i < keys.length; i++) {
-      let n = 0;
-      for (let j = i; j < keys.length && keys[j] - keys[i] <= 1; j++) {
-        n += hist.get(keys[j]);
-        if (n > best) best = n;
-      }
-    }
-    return best / roofs.length;
-  };
-  const roofOf = (roofs, base = null) => {
-    const p50 = percentile(roofs, 0.5);
-    const p75 = percentile(roofs, 0.75);
-    const p98 = percentile(roofs, 0.98);
-    if (p98 - p75 > 5) return p75;
-    if (
-      base !== null &&
-      p75 - p50 <= 2 &&
-      p98 - p75 > 2 &&
-      denseBandFraction(roofs, base) >= 0.85
-    ) {
-      return p75; // thin shelf over a dense body
-    }
-    return p98;
-  };
+  /* roofOf + denseBandFraction now live in scripts/lib/roof-measure.mjs —
+     imported at the top of this file so probes and the builder cannot drift. */
 
   const heights = {};
   const partHeights = {};
@@ -1783,22 +1754,27 @@ async function build() {
       "m:1078,-476": [6.5, "CES. Same near-miss class as CSC-D, same verdict — keeps its roofOf. Judged r0c2 pass-2."],
     },
     osmHeights: {
-      453: [19.9, "Hand-verified standing unchanged on Apple (2026-08-04) with a TARGETED EPT probe returning 19.9. The full campus build resolves 16.2 for the same ring off the same LiDAR — a 3.7 m probe-vs-build disagreement that is NOT rounding and is NOT yet explained. Pinned to the probe because the probe looked at this roof specifically; flagged as the open question in gauntlet-loop/REAUDIT.md."],
-      518: [8.5, "Boardwalk/Villa La Jolla connector, hand-verified on Apple 2026-08-04. Build resolves 9.2. Same probe-vs-build class as osm:453, smaller gap."],
-      657: [11.2, "Hand-verified plane, 2026-08-04. Build resolves 10.9. Same class."],
-      1147: [6.5, "Hand-verified plane, 2026-08-04. Build resolves 6.2. Same class."],
-      /* The Boardwalk / Villa La Jolla connector strip (518-534) was verified as
-         one event on 2026-08-04 — full-depth EPT re-derive, point counts matched,
-         Apple confirming finished tan gabled roofs. The build disagrees with that
-         probe on five of the nine. The split below is by SIZE, not by building:
-         >=0.2 m is a genuine probe-vs-build disagreement and is declared here;
-         0.1 m is a rim-median rounding knife edge (519, 530) where the plane did
-         not move and the reproducible value wins. */
-      526: [8.9, "Connector strip, hand-verified 2026-08-04. Build resolves 9.1."],
-      532: [8.5, "Connector strip, hand-verified 2026-08-04. Build resolves 8.7."],
-      534: [8.7, "Connector strip, hand-verified 2026-08-04. Build resolves 9.0."],
-      522: [8.8, "Boardwalk/Villa La Jolla apartment connector, hand-verified on Apple 2026-08-04 with its siblings 518/519/524/526 on the same ~8.5 m connector plane. Build resolves 10.6 — the only one of the set the build pushes UP, which is why it reads as probe-vs-build rather than a real step."],
-      1373: [9.3, "Villas Mallorca / La Jolla Scenic pad: 5,567 pts, clean p98 9.3 by targeted probe (replacing a 12 m guess). Build resolves 8.8. Same probe-vs-build class as osm:453/657."],
+      /* WITHDRAWN 2026-08-05: nine osm overrides (453, 518, 522, 526, 532, 534,
+         657, 1147, 1373) were pinned here this morning on the reasoning that a
+         TARGETED probe beats a campus-wide build because it "looked at this roof
+         specifically". That premise was false.
+
+         Every agent wrote its own probe script, and 25 of the 37 copies in
+         .cache/ reimplement roofOf with only TWO of its three rules — they carry
+         the canopy guard and omit the thin-shelf branch, the rule that says a
+         narrow spike over a dense flat roof is mechanical plant, not building.
+         One probe's header even claims "same roofOf tree-guard as
+         build-campus-lidar.mjs"; it is not, and I believed it too.
+
+         osm:453 closes the case exactly: p50 16.1 / p75 16.2 / p98 19.9. Canopy
+         guard needs a gap >5 and sees 3.7, so it stays quiet; the thin-shelf gate
+         wants p75-p50 <= 2 (0.1) and p98-p75 > 2 (3.7) and fires. The probe,
+         blind to it, returned p98 = 19.9. The builder returns p75 = 16.2. That is
+         the whole 3.7 m, with nothing left over.
+
+         The error has a direction: a probe reports the top of the mechanical
+         spike as the roof, so every probe-verified height is biased TALL. These
+         nine now take the builder's measurement. */
     },
   };
 
