@@ -681,18 +681,25 @@ function buildPaths(group, campus, heightAt, skip) {
       const dz = bz - az;
       const len = Math.hypot(dx, dz);
       if (len < 0.01) continue;
-      if (!skip) { emit(ax, az, bx, bz); continue; }
-      /* The imagery decision is made every ~6 m rather than once per segment.
-         A single midpoint test dropped whole 40 m segments that merely
-         STARTED on the imagery (a bare strip with neither imagery nor
-         overlay), and kept whole segments that merely ENDED off it (a beige
-         quad over real paving). Subdividing bounds the error at the imagery
-         edge to a few metres either way. */
+      /* Every segment subdivides to ~6 m, skip or no skip. Two reasons share
+         the interval:
+         - the imagery decision is made every ~6 m rather than once per
+           segment. A single midpoint test dropped whole 40 m segments that
+           merely STARTED on the imagery (a bare strip with neither imagery
+           nor overlay), and kept whole segments that merely ENDED off it (a
+           beige quad over real paving).
+         - the DRAPE samples the ground only where a quad has a vertex, so a
+           long segment bridged whatever the terrain did in between. OSM maps
+           Salk Institute Road's western run as one 159 m segment; the ground
+           under it dips 6 m mid-segment, and the road hung across the swale
+           as a straight plank. Terrain cells are 3 m; sampling every 6
+           bounds the miss to the cell scale everywhere, which is what the
+           Voigt Dr / Ridge Walk grade check expects of every draped path. */
       const n = Math.max(1, Math.ceil(len / 6));
       for (let k = 0; k < n; k++) {
         const t0 = k / n;
         const t1 = (k + 1) / n;
-        if (skip(ax + dx * (t0 + t1) / 2, az + dz * (t0 + t1) / 2)) continue;
+        if (skip && skip(ax + dx * (t0 + t1) / 2, az + dz * (t0 + t1) / 2)) continue;
         emit(ax + dx * t0, az + dz * t0, ax + dx * t1, az + dz * t1);
       }
     }

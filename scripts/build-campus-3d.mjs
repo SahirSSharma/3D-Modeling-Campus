@@ -275,6 +275,25 @@ const RENAMES = {
   "Engineering II": "Engineering Building Unit 2 (EBU2)",
 };
 
+/* Names carried by an OSM SITE rather than by the building ways themselves.
+   Louis Kahn's Salk Institute — the most recognised architecture on this
+   stretch of Torrey Pines Road — is mapped in OSM as two UNNAMED concrete
+   ways (31839360 south, 31844744 north, both wikidata Q128635401) standing
+   inside the named amenity=research_institute area (way 60735906, "Salk
+   Institute for Biological Studies", wikidata Q1351061). The importer only
+   reads names off building elements, so the twin laboratory wings shipped
+   anonymous — and an unnamed footprint can never be keyed to its LiDAR
+   measurement, so both wore their OSM levels guess (22.8 m) instead of the
+   2014 roof plane both wings share (19.6 m). The name is OSM's own, applied
+   by way id; the site's two low EAST buildings (31842306, 31844209, same
+   wikidata) stay unnamed — their OSM height=10 tags agree with the LiDAR
+   (10.3 / 9.7 m) and two more rings under one name would smear one roof
+   plane across four different buildings. */
+const WAY_NAMES = {
+  31839360: "Salk Institute for Biological Studies",
+  31844744: "Salk Institute for Biological Studies",
+};
+
 /* The Pepper Canyon apartment blocks are OSM-named as bare numbers ("400",
    "1800"). A student says "Pepper Canyon 400", and the university GIS name is
    a superstring of the number — so the prefix goes on at build time. Scoped
@@ -447,7 +466,7 @@ function build(elements) {
       const area = areaOf(ring);
       if (area < MIN_FOOTPRINT_M2) continue;
       const b = { h: heightOf(tags, area), p: ring };
-      const name = fixName(tags.name, ring);
+      const name = fixName(tags.name, ring) || WAY_NAMES[el.id];
       if (name) b.n = name;
       buildings.push(b);
     } else if (tags.amenity === "fountain" || tags.natural === "water") {

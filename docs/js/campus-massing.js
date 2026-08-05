@@ -200,14 +200,55 @@ const centroidOf = (ring) => {
  *  did), so its OSM copy rendered INSIDE the real massing. A ring counts as
  *  covered when its centroid sits in any massing ring OR a majority of its
  *  vertices do — the union test catches the courtyard cases without ever
- *  un-suppressing a building the centroid test already caught. */
-const ringCoveredBy = (ring, coveredRings) => {
+ *  un-suppressing a building the centroid test already caught.
+ *
+ *  Both of those tests read POINTS, and a union outline defeats points: the
+ *  SanGIS footprint for the Marshall Lower Apartments traces the shared
+ *  edges of six massing rings, so its centroid lands in a breezeway and 82
+ *  of its 166 vertices — 0.49, a coin flip on the exact boundary — resolve
+ *  inside. It rendered as one 18 m monolith THROUGH the six residence halls
+ *  it duplicates. So the third test reads AREA: sample the ring's interior
+ *  on a grid, and if ≥85% of it is already massing, the massing already IS
+ *  this building. The threshold is deliberately far above the courtyard
+ *  cases (Student Center samples 0.69, Umoja 0.63 — both keep rendering);
+ *  it exists to catch outlines that are nothing but other rings' union.
+ *
+ *  The area test also asks who keeps the NAME. Marshall's six massing rings
+ *  stand centroid-inside the outline, so the host rename at the bottom of
+ *  assembleMasses hands them its OSM name and suppression loses nothing.
+ *  But seven named OSM buildings (Cala, Village East Building 4, One
+ *  Miramar 3/4, ...) sample ≥0.85 under masses whose centroids fall
+ *  OUTSIDE the ring — no mass inherits the name, and suppressing deletes
+ *  the only ring that knows what the building is called. Identity comes
+ *  from OSM and is not disposable, so the area test yields unless some
+ *  covering mass will carry the name; the centroid and vertex-majority
+ *  tests keep their existing behaviour. */
+const ringCoveredBy = (ring, coveredRings, nameCarried = true) => {
   const inAny = (x, z) => coveredRings.some((r) => inRing(x, z, r));
   const [cx, cz] = centroidOf(ring);
   if (inAny(cx, cz)) return true;
   let inside = 0;
   for (const [x, z] of ring) if (inAny(x, z)) inside++;
-  return inside / ring.length > 0.5;
+  if (inside / ring.length > 0.5) return true;
+  if (!nameCarried) return false;
+  let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+  for (const [x, z] of ring) {
+    if (x < x0) x0 = x;
+    if (x > x1) x1 = x;
+    if (z < z0) z0 = z;
+    if (z > z1) z1 = z;
+  }
+  const step = Math.max(2, Math.min((x1 - x0) / 24, (z1 - z0) / 24));
+  let interior = 0;
+  let covered = 0;
+  for (let x = x0 + step / 2; x < x1; x += step) {
+    for (let z = z0 + step / 2; z < z1; z += step) {
+      if (!inRing(x, z, ring)) continue;
+      interior++;
+      if (inAny(x, z)) covered++;
+    }
+  }
+  return interior >= 20 && covered / interior >= 0.85;
 };
 
 /* LiDAR ≈ GIS -> the measurement wins; either far taller -> see header. */
@@ -245,8 +286,10 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
 
   /* -------- 2. OSM buildings the inventory does not cover -------- */
   const skipOsm = new Set(["Geisel Library"]);
+  const gisCentroids = covered.map((r) => centroidOf(r));
   campus.buildings.forEach((b, i) => {
     if (b.n && skipOsm.has(b.n)) return;
+    const nameCarried = !b.n || gisCentroids.some(([x, z]) => inRing(x, z, b.p));
     const fac = arcgis?.buildings?.[b.n];
     const lidarH = b.n ? lidar.heights[b.n] : null;
     /* Parts keep their ORIGINAL index: lidar.partHeights is keyed by it, and
@@ -264,7 +307,7 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
          VA Medical Center tower's 33.7 m onto all five of its low pavilions
          (measured 6.6-27.4 m). Steps have to step. */
       for (const { part, pi } of parts) {
-        if (ringCoveredBy(part.p, covered)) continue;
+        if (ringCoveredBy(part.p, covered, nameCarried)) continue;
         masses.push({
           rings: [part.p],
           name: b.n || null,
@@ -277,7 +320,7 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
       }
       return;
     }
-    if (ringCoveredBy(b.p, covered)) return;
+    if (ringCoveredBy(b.p, covered, nameCarried)) return;
     masses.push({
       rings: [b.p],
       name: b.n || null,

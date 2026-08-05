@@ -148,6 +148,29 @@ test("the renderer modules import clean with the ladder wired in", async () => {
   assert.equal(typeof markings.createMarkings, "function");
 });
 
+test("a long path segment follows the ground through a swale, not across it", async () => {
+  /* The drape samples the ground only where a quad has a vertex, and OSM
+     maps Salk Institute Road's western run as ONE 159 m segment — the
+     ground dips 6 m mid-segment and the road hung across the swale as a
+     straight plank (r0c0 sweep, 2026-08-04). buildPaths now subdivides
+     every segment to ~6 m, skip or no skip, so the drape samples at least
+     as often as the 3 m terrain grid can answer. */
+  const { createPaths } = await import("../docs/js/campus-world.js");
+  const heightAt = (x) => Math.abs(x) * 0.2; // a V-shaped swale, 16 m deep at the rim
+  const campus = { paths: [{ p: [[-80, 0], [80, 0]] }] };
+  const scene = { add() {} };
+  const group = createPaths(scene, campus, heightAt);
+  let minY = Infinity;
+  let verts = 0;
+  for (const child of group.children) {
+    const pos = child.geometry.getAttribute("position");
+    verts += pos.count;
+    for (let i = 0; i < pos.count; i++) minY = Math.min(minY, pos.getY(i));
+  }
+  assert.ok(verts >= 27 * 6, `one 160 m segment emitted only ${verts} vertices — not subdivided`);
+  assert.ok(minY < 2, `path bottoms out at y=${minY.toFixed(1)} — it bridges the swale instead of following it`);
+});
+
 /* sceneTone: the one tone-mapping fix for the unlit-fill-sinks-next-to-
    lifted-ground class (the Muir turf carpet, before this; the trident,
    before that). Every module that needs it imports THIS function — no

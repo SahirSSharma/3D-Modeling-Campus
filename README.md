@@ -149,6 +149,46 @@ canopy as a 17 m slab, and the bowl stays unbuilt — better absent than wrong. 
 College" label, hand-seeded a kilometre south into a canyon interchange, now stands at Ridge
 Walk North where OSM puts its four member buildings.
 
+**The north-west shard sweep (2026-08-04, r0c0).** The corner from the Salk to the ERC halls,
+checked building by building against a targeted re-sample of the same EPT:
+
+| Building | Shipped | Measured | Why it was wrong |
+|---|---|---|---|
+| Salk Institute lab wings (both) | 22.8 m (area guess) | **19.6 m** | OSM maps the Salk as a named *area* containing unnamed building ways; nameless, the wings could not key into the LiDAR table. `WAY_NAMES` in the importer now names them from the containing site. |
+| Torrey Pines Center South | 17.1 m (GIS record) | **12.2 m** | relation-mapped after the last full LiDAR rebuild — the heights file simply predated the footprint. 23,073 in-survey returns, one plane. |
+| Sanford Consortium east pavilion | 17.1 m (facility record) | **6.2 m** | the record's one height applied to both rings; the east ring is the low auditorium pavilion, not the lab bar. |
+| ERC Laundry South | 3.0 m (GIS) | **4.2 m** | same class, opposite sign. |
+
+The Sanford case exposed a hole the whole campus shared: a massing ring whose centroid misses
+every named OSM footprint had no host, so its GIS value stood **unchallenged** — the epoch guard
+could not even ask the question. `build-campus-lidar.mjs` now falls back to the mass's own GIS
+name when it exactly matches an OSM building within 150 m; nine masses campus-wide are in that
+class (Wells Fargo Hall 26.1, Mandler Hall 14.8, CMRR 12.9, Student Services Center 22.7, Visual
+Arts Building 2 11.9, Bonner Hall's annex 3.0, plus the three above). The tenth — Pepper Canyon
+Assistant Dean's Residence — reads canopy-stepped under its eucalyptus and emits nothing.
+
+Two rendering fixes rode along. The SanGIS footprint for the Marshall Lower Apartments traces
+the union of six massing rings — centroid in a breezeway, half its vertices on the exact shared
+edges — and extruded as one 18 m monolith THROUGH the six halls; `ringCoveredBy` now samples a
+ring's interior AREA (≥85% already massing ⇒ the massing already is the building) and yields
+whenever no covering mass would inherit the ring's name. And the path drape sampled the ground
+only at segment ends, so OSM's one 159 m segment of Salk Institute Road bridged a 5.9 m rise as
+a straight plank; every segment now subdivides to ~6 m, which is what the 3 m terrain grid can
+actually answer (`tests/campus-overlay.test.mjs` pins the swale case, §9 of
+`tests/campus-epoch.test.mjs` pins every height above).
+
+The same sweep measured Apple's georegistration at a second site — the ground-level crosswalk
+paint at North Torrey Pines Rd / Salk Institute Rd: best correlation **0.783** at an offset of
+**1.77 m** (0.25 m west, 1.75 m south). The first site (Muir's courts) had measured 1.25 m in a
+*different direction* (1.00 m east, 0.75 m north). Apple's misregistration is therefore not a
+constant bias to subtract — it varies site to site, so only fitted per-site corrections can ever
+pass the 0.6 m gate, and colour sampling stays on the registered Google chunks everywhere a fit
+has not been run. Apple remains what it is: the authority on what exists today (it confirmed
+every r0c0 site current, including the two structures the height pipeline cannot reach — the
+Salk's unnamed service complex and a La Jolla Farms greenhouse, which keep their declared area
+guesses because a name-keyed survey cannot measure a nameless building — better documented than
+invented).
+
 ### The colours, measured off footage
 
 Satellite imagery sees roofs and ground; it cannot see a wall, a tree trunk, or the sky. For

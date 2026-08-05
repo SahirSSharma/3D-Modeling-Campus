@@ -356,6 +356,23 @@ async function build() {
     }
     return ins;
   };
+  /* A mass whose centroid falls OUTSIDE every named OSM ring still needs the
+     epoch check answered before it can be measured — and for nine masses the
+     GIS's own name answers it: it matches a shipped OSM building name
+     exactly, so the same POST_2014/HAND_AUDITED guards key on it. Without
+     this, the Sanford Consortium's low east pavilion wore the facility
+     record's 17.1 m (its own 2014 roof plane: 6.2 m) purely because the GIS
+     ring's centroid misses the OSM outline. The name must match EXACTLY and
+     the OSM twin must stand within 150 m — a reused name across campus must
+     never smuggle the wrong epoch verdict in. Masses with neither a host nor
+     a matching name stay unchallenged, as before: with no name there is no
+     way to know the site's build date, and a 2014 return off a newer
+     building's predecessor is the exact lie the epoch rule exists to stop. */
+  const namedByName = new Map(namedLocalRings.map((b) => {
+    let x = 0, z = 0;
+    for (const p of b.p) { x += p[0]; z += p[1]; }
+    return [b.n, { ...b, c: [x / b.p.length, z / b.p.length] }];
+  }));
   const massTargets = [];
   for (const m of arcgisData?.massing || []) {
     const ring = m.r[0].map(([x, z]) => [x / 10, z / 10]);
@@ -363,11 +380,16 @@ async function build() {
     for (const p of ring) { cx += p[0]; cz += p[1]; }
     cx /= ring.length; cz /= ring.length;
     const host = namedLocalRings.find((b) => inLocalRing(cx, cz, b.p));
-    if (!host) continue; // no named host: today's GIS value stands unchallenged
-    if (POST_2014_SITES.has(host.n)) continue; // the flight predates the building
-    if (host.n in HAND_AUDITED) continue; // the audited value already answers
+    let hostName = host?.n ?? null;
+    if (!hostName) {
+      const twin = namedByName.get(m.n);
+      if (twin && Math.hypot(twin.c[0] - cx, twin.c[1] - cz) < 150) hostName = m.n;
+    }
+    if (!hostName) continue; // no named host: today's GIS value stands unchallenged
+    if (POST_2014_SITES.has(hostName)) continue; // the flight predates the building
+    if (hostName in HAND_AUDITED) continue; // the audited value already answers
     const t = addTarget(ring, `m:${Math.round(cx)},${Math.round(cz)}`, null);
-    if (t) { t.isMass = true; t.bi = host.bi; massTargets.push(t); }
+    if (t) { t.isMass = true; t.bi = (host ?? namedByName.get(hostName)).bi; massTargets.push(t); }
   }
   const HCELL = 60; // mercator metres per hash cell
   const hcell = new Map();

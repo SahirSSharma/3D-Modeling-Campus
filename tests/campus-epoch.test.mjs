@@ -22,6 +22,10 @@
  *      Natatorium and Urey Hall's tower onto its low office addition.
  *   8. The Epstein bowl (OSM building=no) stays unbuilt, and the Eighth
  *      College label stands at Ridge Walk North where OSM puts it.
+ *   9. The r0c0 sweep's measurements hold: the Salk wings are named and
+ *      measured, TPCS and the Sanford pavilion drop to their 2014 planes,
+ *      the GIS-name-fallback masses each measure their own ring, and the
+ *      Marshall union outline stays suppressed without orphaning a name.
  */
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
@@ -291,5 +295,106 @@ describe("8. the amphitheater is open air and the Eighth College label is home",
     assert.ok(p, "Eighth College place missing");
     assert.ok(Math.abs(p.x - 122.5) < 2 && Math.abs(p.z - (-515.1)) < 2,
       `label at ${p.x},${p.z} — expected Ridge Walk North (122.5, -515.1)`);
+  });
+});
+
+describe("9. the north-west shard sweep (r0c0, 2026-08-04)", () => {
+  const SALK = "Salk Institute for Biological Studies";
+
+  test("the Salk lab wings are named and measure 19.6 m, not the 22.8 m guess", () => {
+    /* OSM maps the Salk as a research_institute AREA containing unnamed
+       building ways, so the wings imported nameless and took the area-based
+       height guess. WAY_NAMES in build-campus-3d.mjs now names ways
+       31839360/31844744 from the containing site; both wings' 2014 roof
+       plane re-samples at 19.6 m (p98, 26k+ returns each). */
+    const wings = CAMPUS.buildings.filter((b) => b.n === SALK);
+    assert.equal(wings.length, 2, `expected the twin wings, got ${wings.length}`);
+    assert.equal(LIDAR.heights[SALK], 19.6);
+    const rendered = MASSES.filter((m) => m.name === SALK);
+    assert.equal(rendered.length, 2);
+    for (const m of rendered) assert.equal(m.h, 19.6, `wing ships ${m.h} m`);
+    const p = CAMPUS.places[SALK];
+    assert.ok(p, "Salk place anchor missing");
+    assert.ok(Math.abs(p.x - (-470.6)) < 2 && Math.abs(p.z - (-1033.9)) < 2,
+      `anchor drifted to ${p.x},${p.z}`);
+  });
+
+  test("Torrey Pines Center South measures 12.2 m, not the 17.1 m GIS record", () => {
+    /* Relation-mapped (r18938148) after the last full LiDAR rebuild, so the
+       shipped heights file simply predated it. Re-sampled 2026-08-04 with
+       the build's own survey clip: 23,073 returns, one plane, p98 12.2 m.
+       The GIS mass ring re-samples at 11.5 m (its ring excludes the small
+       stair crown the OSM footprint includes). */
+    assert.equal(LIDAR.heights["Torrey Pines Center South"], 12.2);
+    assert.equal(LIDAR.massHeights["m:-188,-1361"], 11.5);
+    const m = MASSES.find((m) => m.name === "Torrey Pines Center South" && m.src === "gis");
+    assert.ok(m, "TPCS massing ring missing");
+    assert.equal(m.h, 11.5, `TPCS ships ${m.h} m`);
+  });
+
+  test("the Sanford Consortium pavilion is 6.2 m, the lab bar keeps 24.5 m", () => {
+    /* The facility record's 17.1 m applied to BOTH rings; the east ring is
+       the low auditorium pavilion (462 in-ring returns, p98 6.2 m). Its
+       centroid misses the OSM footprint, so the GIS-name fallback in
+       build-campus-lidar.mjs is what lets the 2014 plane challenge it. */
+    assert.equal(LIDAR.massHeights["m:-232,-1258"], 6.2);
+    const sanford = MASSES.filter((m) => m.name === "Sanford Consortium for Regenerative Medicine" && m.src === "gis")
+      .map((m) => m.h).sort((a, b) => a - b);
+    assert.deepEqual(sanford, [6.2, 24.5], `Sanford ships ${sanford}`);
+  });
+
+  test("the GIS-name-fallback masses each measure their own 2014 plane", () => {
+    /* Masses whose centroid sits OUTSIDE their OSM footprint had no host,
+       so their GIS facility value stood unchallenged campus-wide. The
+       fallback keys the epoch guard off the identical OSM name instead.
+       Values from the 2026-08-04 targeted EPT re-sample. */
+    const PLANES = {
+      "m:-28,-982": [26.1, "Wells Fargo Hall — GIS said 22.6"],
+      "m:665,-123": [11.9, "Visual Arts Facility Building 2 — GIS said 10.4"],
+      "m:-89,-131": [14.8, "Mandler Hall — GIS said 13.4"],
+      "m:99,201": [3, "Bonner Hall annex — GIS said 3.0, now measured"],
+      "m:538,-290": [12.9, "Center for Memory and Recording Research"],
+      "m:-172,-727": [4.2, "ERC Laundry South — GIS said 3.0"],
+      "m:517,-85": [22.7, "Student Services Center — GIS said 21.9"],
+    };
+    for (const [key, [h, why]] of Object.entries(PLANES)) {
+      assert.equal(LIDAR.massHeights[key], h, `${why} — massHeights[${key}]`);
+    }
+    /* The one fallback candidate whose returns are canopy-stepped emits
+       nothing: Pepper Canyon Assistant Dean's Residence (p75−p50 > 2 under
+       eucalyptus). Better absent than wrong. */
+    assert.equal(LIDAR.massHeights["m:946,-2"], undefined);
+  });
+
+  test("the Marshall Lower Apartments union outline no longer extrudes", () => {
+    /* The SanGIS footprint traces the shared edges of six massing rings;
+       centroid in a breezeway, 49% of vertices on the exact boundary — it
+       rendered as one 18 m monolith through all six halls. The area test in
+       ringCoveredBy suppresses it; the halls' own masses inherit the name
+       via host rename, so the label survives. */
+    const outline = MASSES.find((m) => m.src === "osm" && m.name === "Marshall Lower Apartments");
+    assert.equal(outline, undefined, "the union outline is extruding again");
+    const carriers = MASSES.filter((m) => m.src === "gis" && m.name === "Marshall Lower Apartments");
+    assert.ok(carriers.length >= 6, `only ${carriers.length} masses carry the name`);
+  });
+
+  test("suppression never orphans a building's name", () => {
+    /* The area test yields when no covering mass would inherit the ring's
+       name (Cala, Village East Building 4, One Miramar 3/4 all sample
+       ≥0.85 under masses named something else). The pre-existing orphans
+       below are centroid/majority-test suppressions from before this sweep
+       — the list may shrink, never grow. */
+    const KNOWN = new Set([
+      "Earth Hall", "Spiess Hall", "Douglas Hall",
+      "Canyon Vista Administration building", "Black Hall", "Geisel Library",
+      "Village East Building 5", "64 Degrees", "64 North",
+      "Canyon Vista Restaurant", "Greenhouse 3", "Greenhouse 2",
+      "Greenhouse 1", "Artesa", "Marea", "Arena", "B", "Brisa",
+      "Print Labs", "Nigella Hillgarth Education Center",
+    ]);
+    const carried = new Set(MASSES.filter((m) => m.name).map((m) => m.name));
+    const orphans = [...new Set(CAMPUS.buildings.map((b) => b.n).filter(Boolean))]
+      .filter((n) => !carried.has(n) && !KNOWN.has(n));
+    assert.deepEqual(orphans, [], `newly orphaned names: ${orphans}`);
   });
 });

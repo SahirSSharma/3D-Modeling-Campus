@@ -1,0 +1,293 @@
+[
+  {
+    "id": "r0c0",
+    "bbox": {
+      "north": 32.89131596939606,
+      "south": 32.88239132767799,
+      "west": -117.25411693095603,
+      "east": -117.24293423739014
+    },
+    "localBox": {
+      "x0": -1207.6,
+      "x1": -162.1,
+      "z0": -1472.4,
+      "z1": -485.6
+    },
+    "buildings": 103,
+    "namedBuildings": 14,
+    "landmarks": [
+      "Africa Hall",
+      "ERC Laundry South",
+      "Village West Building 4",
+      "Village West Building 6",
+      "Estancia La Jolla Hotel & Spa",
+      "Sanford Consortium for Regenerative Medicine",
+      "Village West Building 5",
+      "Asia Hall",
+      "Europe Hall",
+      "Latin America Hall",
+      "North America Hall",
+      "Saigon Trail",
+      "Salk Institute Road",
+      "La Jolla Trail"
+    ]
+  },
+  {
+    "id": "r0c1",
+    "bbox": {
+      "north": 32.89131596939606,
+      "south": 32.88239132767799,
+      "west": -117.24293423739014,
+      "east": -117.23175154382426
+    },
+    "localBox": {
+      "x0": -162.1,
+      "x1": 883.3,
+      "z0": -1472.4,
+      "z1": -485.6
+    },
+    "buildings": 84,
+    "namedBuildings": 54,
+    "landmarks": [
+      "Earth Hall",
+      "Warren Student Activity Center",
+      "Robinson Auditorium",
+      "Oceanview Terrace Lounge",
+      "Brennan Hall",
+      "RIMAC Arena",
+      "Stewart Hall",
+      "Gildred Latin American Studies",
+      "Brown Hall",
+      "Bates Hall",
+      "Institute of the Americas",
+      "Douglas Hall",
+      "Canyon Vista Administration building",
+      "Frankfurter Hall"
+    ]
+  },
+  {
+    "id": "r0c2",
+    "bbox": {
+      "north": 32.89131596939606,
+      "south": 32.88239132767799,
+      "west": -117.23175154382426,
+      "east": -117.22056885025837
+    },
+    "localBox": {
+      "x0": 883.3,
+      "x1": 1928.8,
+      "z0": -1472.4,
+      "z1": -485.6
+    },
+    "buildings": 62,
+    "namedBuildings": 18,
+    "landmarks": [
+      "CSC Fleet Services",
+      "Qualcomm AA",
+      "Transit Operations Trailer",
+      "Environmental Management Facility",
+      "Qualcomm BB",
+      "Scripps Parking Garage B",
+      "XIMED Building",
+      "Greenhouse 3",
+      "Greenhouse 4",
+      "Greenhouse 2",
+      "Greenhouse 1",
+      "Scripps Parking Garage C",
+      "BFS Laboratory and Growing Rooms",
+      "BFS Main Building"
+    ]
+  },
+  {
+    "id": "r1c0",
+    "bbox": {
+      "north": 32.88239132767799,
+      "south": 32.87346668595993,
+      "west": -117.25411693095603,
+      "east": -117.24293423739014
+    },
+    "localBox": {
+      "x0": -1207.6,
+      "x1": -162.1,
+      "z0": -485.6,
+      "z1": 501.3
+    },
+    "buildings": 140,
+    "namedBuildings": 9,
+    "landmarks": [
+      "Tioga Hall",
+      "Tuolumne Apartments",
+      "Tenaya Hall",
+      "Keeling Apartments North Tower",
+      "Keeling Apartments West Bar",
+      "Housing Dining and Hospitality Administration Building",
+      "Audrey Geisel University House",
+      "Kaleidoscope",
+      "Tapestry",
+      "Blacks Beach Way",
+      "Scripps Coastal Reserve Biodiversity Trail",
+      "North Torrey Pines Road"
+    ]
+  },
+  {
+    "id": "r1c1",
+    "bbox": {
+      "north": 32.88239132767799,
+      "south": 32.87346668595993,
+      "west": -117.24293423739014,
+      "east": -117.23175154382426
+    },
+    "localBox": {
+      "x0": -162.1,
+      "x1": 883.3,
+      "z0": -485.6,
+      "z1": 501.3
+    },
+    "buildings": 162,
+    "namedBuildings": 110,
+    "landmarks": [
+      "Student Health Services",
+      "Peterson Hall",
+      "Visual Arts Facility - Building 3",
+      "Charles Lee Powell Structural Systems Laboratory",
+      "York Hall",
+      "Humanities & Social Sciences",
+      "Mandeville Center",
+      "409 University Center",
+      "Powell-Focht Bioengineering Hall",
+      "School of Medicine Building 2",
+      "Center Hall",
+      "Medical Genetics",
+      "Solis Hall",
+      "Visual Arts Facility - Building 1"
+    ]
+  },
+  {
+    "id": "r1c2",
+    "bbox": {
+      "north": 32.88239132767799,
+      "south": 32.87346668595993,
+      "west": -117.23175154382426,
+      "east": -117.22056885025837
+    },
+    "localBox": {
+      "x0": 883.3,
+      "x1": 1928.8,
+      "z0": -485.6,
+      "z1": 501.3
+    },
+    "buildings": 97,
+    "namedBuildings": 64,
+    "landmarks": [
+      "Shiley Eye Institute",
+      "Hamilton Glaucoma and Jacobs Retina Center",
+      "Pepper Canyon Assistant Dean's Residence",
+      "Foodworx",
+      "Pepper Canyon Market",
+      "Perlman Ambulatory Care Center",
+      "Electric Shop",
+      "A",
+      "Spinal Cord Injury Building",
+      "One Miramar Parking Structure",
+      "One Miramar Street, building 1",
+      "One Miramar Street, building 3",
+      "One Miramar Street, building 4",
+      "Residential Services Building"
+    ]
+  },
+  {
+    "id": "r2c0",
+    "bbox": {
+      "north": 32.87346668595993,
+      "south": 32.864542044241865,
+      "west": -117.25411693095603,
+      "east": -117.24293423739014
+    },
+    "localBox": {
+      "x0": -1207.6,
+      "x1": -162.1,
+      "z0": 501.3,
+      "z1": 1488.1
+    },
+    "buildings": 182,
+    "namedBuildings": 43,
+    "landmarks": [
+      "Vaughan Hall",
+      "Hubbs Hall",
+      "Isaacs Hall",
+      "Eckart Building",
+      "Center for Coastal Studies",
+      "IGPP, Revelle Lab Building 2000",
+      "IGPP, Munk Laboratory",
+      "IGPP, Revelle Lab Building 4000",
+      "Deep Sea Drilling East",
+      "Ritter Hall",
+      "Spiess Hall",
+      "Keck OAR Building 3",
+      "Scholander Hall",
+      "Marine Conservation Facility"
+    ]
+  },
+  {
+    "id": "r2c1",
+    "bbox": {
+      "north": 32.87346668595993,
+      "south": 32.864542044241865,
+      "west": -117.24293423739014,
+      "east": -117.23175154382426
+    },
+    "localBox": {
+      "x0": -162.1,
+      "x1": 883.3,
+      "z0": 501.3,
+      "z1": 1488.1
+    },
+    "buildings": 400,
+    "namedBuildings": 22,
+    "landmarks": [
+      "UC San Diego Health – Villa La Jolla Drive",
+      "Urban Plates",
+      "Molli and Arthur Wagner Dance Building",
+      "Mandell Weiss Theatre",
+      "Union Bank",
+      "UC Cyclery",
+      "Rita Atkinson Residences",
+      "Sheila and Hughes Potiker Theatre",
+      "Central Research Services Facility",
+      "Residence Inn",
+      "Nordstrom Rack",
+      "Mandell Weiss Forum",
+      "Theodore and Adele Shank Theatre",
+      "Mobil Mart"
+    ]
+  },
+  {
+    "id": "r2c2",
+    "bbox": {
+      "north": 32.87346668595993,
+      "south": 32.864542044241865,
+      "west": -117.23175154382426,
+      "east": -117.22056885025837
+    },
+    "localBox": {
+      "x0": 883.3,
+      "x1": 1928.8,
+      "z0": 501.3,
+      "z1": 1488.1
+    },
+    "buildings": 165,
+    "namedBuildings": 9,
+    "landmarks": [
+      "Chick-fil-A",
+      "Hyatt Regency La Jolla at Aventine",
+      "La Jolla Medical & Surgical Center",
+      "CVS Pharmacy",
+      "San Diego California Temple",
+      "One Miramar Street, building 2",
+      "Whole Foods Market",
+      "Belmont Village Senior Living",
+      "Aventine Courtyard",
+      "Sheraton La Jolla Hotel"
+    ]
+  }
+]
