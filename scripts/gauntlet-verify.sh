@@ -22,6 +22,14 @@ cd "$REPO" || exit 1
 SKIP_SHOTS=0
 [[ "${1:-}" == "--skip-shots" ]] && SKIP_SHOTS=1
 
+# A reduced panel is a WEAKER GATE than the four-family default, and it exists
+# only because every panel model bills the scarce Other Models pool and that
+# pool is nearly spent. Sahir chose it knowingly on 2026-08-05 rather than wait
+# for the Aug 24 reset. It is opt-in, it is never the default, and every
+# artifact it produces says so — a reduced panel read later as a full pass is
+# exactly the failure this whole apparatus exists to prevent.
+PANEL_SPEC="${GAUNTLET_PANEL:-fable,opus,sol,codex}"
+
 STAMP="$(date +%Y-%m-%d_%H%M%S)"
 OUT="gauntlet-loop/verify/$STAMP"
 SHOTS="$OUT/shots"
@@ -29,7 +37,13 @@ mkdir -p "$SHOTS"
 ln -sfn "$STAMP" gauntlet-loop/verify/latest
 
 # The panel: id -> model. Different families on purpose.
-PANEL_IDS=(fable opus sol codex)
+IFS=',' read -r -a PANEL_IDS <<< "$PANEL_SPEC"
+FULL_PANEL=4
+REDUCED=0
+(( ${#PANEL_IDS[@]} < FULL_PANEL )) && REDUCED=1
+for id in "${PANEL_IDS[@]}"; do
+  case "$id" in fable|opus|sol|codex) ;; *) echo "[verify] unknown panel member: $id" >&2; exit 1 ;; esac
+done
 panel_model() {
   case "$1" in
     fable) echo "claude-fable-5-thinking-max" ;;
@@ -123,6 +137,18 @@ done
 {
   echo "# Verification panel — $STAMP"
   echo ""
+  if (( REDUCED )); then
+    echo "## ⚠️ REDUCED PANEL — ${#PANEL_IDS[@]} of $FULL_PANEL members"
+    echo ""
+    echo "This is **not** the four-family gate. It ran with \`$PANEL_SPEC\` because every"
+    echo "panel model bills the Other Models pool and that pool was nearly spent; Sahir"
+    echo "chose a reduced panel over waiting for the Aug 24 reset."
+    echo ""
+    echo "A PASS here is weaker evidence than a full-panel PASS, and the missing members"
+    echo "are the point of a panel: a blind spot shared by the members present is exactly"
+    echo "what the absent families were there to catch. **Do not cite this as a full pass.**"
+    echo ""
+  fi
   echo "Frames: $FRAMES  ·  Shots: \`$SHOTS\`"
   echo ""
   echo "| panel member | model | verdict file | headline |"
