@@ -227,7 +227,14 @@ const centroidOf = (ring) => {
  *  build's twin rule): the Student Services Center's facilities ring is
  *  drawn offset enough that its centroid misses the OSM ring, but it IS
  *  the building and says so — without this, SSC and CMRR each rendered
- *  twice. */
+ *  twice. And a mass carries the name when it wears it as a word SUFFIX
+ *  (r1c2 judge sweep, 2026-08-04): "Mesa Nueva - Cala" IS Cala and
+ *  "Matthews Apartments E" IS E — the compound is the facilities record's
+ *  spelling of the same identity. Cala rendered twice at the same 24.4 m
+ *  (ring and mass, z-fighting), and Matthews D and E rendered once per
+ *  source at two different heights, because the exact-name test could not
+ *  see through the prefix. The ≥0.85 area test still has to pass, so a
+ *  stray suffix match cannot suppress a building its masses don't cover. */
 const ringCoveredBy = (ring, coveredRings, nameCarried = true) => {
   const inAny = (x, z) => coveredRings.some((r) => inRing(x, z, r));
   const [cx, cz] = centroidOf(ring);
@@ -348,11 +355,17 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
     const [bcx, bcz] = centroidOf(b.p);
     const nameCarried = !b.n ||
       gisCentroids.some(([x, z]) => inRing(x, z, b.p)) ||
-      (gisNameCentroids.get(b.n) || []).some(([x, z]) => Math.hypot(x - bcx, z - bcz) < 150);
+      (gisNameCentroids.get(b.n) || []).some(([x, z]) => Math.hypot(x - bcx, z - bcz) < 150) ||
+      gis.some((m, gi) => m.n && m.n !== b.n &&
+        (m.n.endsWith(` - ${b.n}`) || m.n.endsWith(` ${b.n}`)) &&
+        Math.hypot(gisCentroids[gi][0] - bcx, gisCentroids[gi][1] - bcz) < 150);
     const fac = arcgis?.buildings?.[b.n];
-    /* Unnamed rings have no name to key lidar.heights; lidar.osmHeights
-       carries the hand-verified ones by index (partHeights' own coupling). */
-    const lidarH = b.n ? lidar.heights[b.n] : lidar.osmHeights?.[i] ?? null;
+    /* The per-index measurement outranks the name key: a duplicate OSM name
+       (two "Spinal Cord Injury Building" rings, both Earth Halls, both Salk
+       wings) shares one lidar.heights slot, so the build emits collided
+       names per ring index — each footprint wears its own roof plane.
+       Unnamed rings were always index-keyed (partHeights' own coupling). */
+    const lidarH = lidar.osmHeights?.[i] ?? (b.n ? lidar.heights[b.n] : null);
     /* Parts keep their ORIGINAL index: lidar.partHeights is keyed by it, and
        filtering first shifted every part after a dropped one onto the wrong
        measured height (Tapestry's second part resolved undefined). */
@@ -415,14 +428,85 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
      12.2 m office addition and the Main Gym's 14.9 onto the 8.4 m Natatorium.
      Where it does not (sliver masses, unnamed hosts, post-2014 sites), the
      host-level reconcile stands as before. */
-  const namedRings = campus.buildings.filter((b) => b.n).map((b) => ({ n: b.n, p: b.p }));
+  const namedRings = campus.buildings
+    .map((b, i) => ({ n: b.n, p: b.p, i }))
+    .filter((b) => b.n);
+  /* The rename is guarded (r1c2 judge sweep, 2026-08-04). Handing a mass its
+     host ring's OSM name is right almost everywhere — including when one
+     union outline hands its name to six wings at once (Marshall Lower
+     Apartments), which must keep working. But the OSM ring over the Pepper
+     Canyon Apartments 1300 block is drawn wearing the Assistant Dean's
+     Residence's name, while the REAL residence, a small house 38 m west, is
+     its own GIS mass already wearing that name in the university's record.
+     The rename put the Dean's label on two buildings at once and orphaned
+     the apartments' name — which then landed on the LAUNDRY through a
+     second mis-drawn ring, taking the facades keyed by it along. So: a
+     rename is refused when the university's record says the target name is
+     a DIFFERENT nearby building — another mass within 150 m whose own GIS
+     name is exactly the wanted name and which is not itself renamed away.
+     "Renamed away" iterates to a fixpoint (the apartments must keep their
+     name before the laundry's claim on it can be judged), and the carrier
+     set only grows, so the fixpoint is order-independent. A symmetric swap
+     like Meteor/Galathea — each GIS mass standing in the other's OSM ring,
+     no third party — still swaps: each name's GIS carrier is renamed away
+     by the opposite ring, OSM being the name authority. An identity rename
+     (the real Spanos Athletic Performance Center standing in its own ring)
+     never cancels, and is exactly what blocks the neighbouring training
+     facility from taking the same name. */
   for (const m of masses) {
     if (m.lidarDone) continue;
     const [cx, cz] = centroidOf(m.rings[0]);
-    const own = m.src === "gis" ? lidar.massHeights?.[`m:${Math.round(cx)},${Math.round(cz)}`] : undefined;
-    const host = namedRings.find((b) => inRing(cx, cz, b.p));
-    m.h = own ?? reconcile(m.gisH, host ? lidar.heights[host.n] : null);
-    if (host) m.name = host.n;
+    m._c = [cx, cz];
+    m._host = namedRings.find((b) => inRing(cx, cz, b.p)) ?? null;
+    /* A mass wearing a ring's name as its word suffix hosts that ring's
+       IDENTITY even when the ring's centroid misses: the suffix rule above
+       suppresses OSM's "Cala" under "Mesa Nueva - Cala", and the mass must
+       then say "Cala" — the name a student uses, and the key the researched
+       facades ride — or the suppression orphans both. Name ONLY: the ring
+       may trace just part of the mass's footprint (Spiess Hall's ring under
+       the Fred N. Spiess Hall mass), so its plane must not smear onto the
+       whole mass through the host reconcile. Bare letters stay letters-out:
+       "Matthews Apartments E" does not become "E". Proximity is the same
+       150 m twin rule the exact-name tests ride — containment cannot work
+       here, because a courtyard ring's centroid falls in its own courtyard
+       (Cala's does, the same trick Rya and Vela play on the centroid test
+       above). */
+    if (!m._host && m.name) {
+      const nameHost = namedRings.find((b) => {
+        if (b.n.length < 3 || b.n === m.name) return false;
+        if (!m.name.endsWith(` - ${b.n}`) && !m.name.endsWith(` ${b.n}`)) return false;
+        const [rcx, rcz] = centroidOf(b.p);
+        return Math.hypot(rcx - m._c[0], rcz - m._c[1]) < 150;
+      });
+      if (nameHost) { m._host = nameHost; m._hostNameOnly = true; }
+    }
+  }
+  for (let settled = false; !settled;) {
+    settled = true;
+    for (const m of masses) {
+      if (m.lidarDone || !m._host || m._host.n === m.name) continue;
+      const wanted = m._host.n;
+      const dup = masses.some((o) => o !== m && !o.lidarDone &&
+        o.name === wanted && (!o._host || o._host.n === wanted) &&
+        Math.hypot(o._c[0] - m._c[0], o._c[1] - m._c[1]) < 150);
+      if (dup) { m._host = null; settled = false; }
+    }
+  }
+  for (const m of masses) {
+    if (m.lidarDone) continue;
+    const host = m._host;
+    const heightHost = host && !m._hostNameOnly ? host : null;
+    const own = m.src === "gis" ? lidar.massHeights?.[`m:${Math.round(m._c[0])},${Math.round(m._c[1])}`] : undefined;
+    m.h = own ?? reconcile(m.gisH, heightHost ? lidar.heights[heightHost.n] ?? lidar.osmHeights?.[heightHost.i] ?? null : null);
+    /* A one- or two-character host name whose fuller form the mass already
+       wears stays with the mass: "Matthews Apartments A" must not flatten
+       to OSM's bare parcel letter "A". */
+    const letter = host && m.name && host.n.length <= 2 &&
+      (m.name.endsWith(` ${host.n}`) || m.name.endsWith(` - ${host.n}`));
+    if (host && !letter) m.name = host.n;
+    delete m._c;
+    delete m._host;
+    delete m._hostNameOnly;
   }
   for (const m of masses) if (m.h === undefined) m.h = m.gisH;
   return masses;

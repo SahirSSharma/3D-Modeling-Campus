@@ -1,0 +1,291 @@
+[
+  {
+    "id": "sci-223-name-collision",
+    "entity": "Spinal Cord Injury Building (OSM index 223)",
+    "where": {"x": 940.7, "z": 238.6},
+    "claim": "Both SCI footprints share lidar.heights['Spinal Cord Injury Building']=6.4 and both assemble as src=osm h=6.4. OSM tags each at 15.6 m.",
+    "observed": "EPT of osm:223 (17,154 non-ground returns): p50=17.2, p75=17.2, p90=17.2, p98=36.0, roofOf=17.2, guard=true, bodyTight=true → massOk=true. Sibling osm:954 at (948.7,320.8) measures roofOf=6.3 (p50=1.2, p75=6.3, p98=14.7, massOk=false). The single shared heights key pastes the 6.3 plane onto the 17.2 building — Δ ≈ −10.8 m / ~3 storeys on index 223.",
+    "evidence": {
+      "lidar": "osm:SCI223 17154 pts roofOf=17.2 p50=17.2 p75=17.2 p98=36 massOk=true; osm:SCI954 17814 pts roofOf=6.3 p50=1.2 p75=6.3 p98=14.7 massOk=false; lidar.heights['Spinal Cord Injury Building']=6.4",
+      "gis": "no covering GIS mass for either SCI ring",
+      "osm": "two buildings both named 'Spinal Cord Injury Building' — index 223 area≈3245 m² h=15.6; index 954 area≈4196 m² h=15.6",
+      "apple": "Apple snapshot sci-pair.jpg z17 at ~32.8755,-117.2311 — two large finished volumes on the west-edge VA / Gilman corridor; no crane",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Duplicate OSM name → one lidar.heights key collapses two roofs; the shorter plane wins and the taller footprint ships three storeys low.",
+    "epoch_risk": "Low for existence — Apple shows both volumes standing. The Δ is a key-collision measurement bug, not a date conflict. Confirm neither footprint is a post-2014 rebuild before admitting 17.2."
+  },
+  {
+    "id": "unnamed-833-parking-garage",
+    "entity": "unnamed OSM building index 833",
+    "where": {"x": 917.3, "z": 442.9},
+    "claim": "Ships as OSM area-guess h=16 m (still rendering; area≈5629 m²; not in osmHeights / OSM_UNNAMED_VERIFIED).",
+    "observed": "EPT: 19,188 returns, roofOf=4.8, p50=0.0, p75=4.8, p90=12.3, p98=14.7, guard=true, bodyTight=false → massOk=false. Same signature as r1c1's osm:438 VA deck (lot plane under a tall guess). Apple nadir shows a multi-level parking garage with cars on the top deck on this footprint. Centroid sits ~76 m east of osm:438 (840.9,452.2).",
+    "evidence": {
+      "lidar": "osm:833 19188 pts roofOf=4.8 p50=0 p75=4.8 p90=12.3 p98=14.7 guard bodyTight=false massOk=false",
+      "gis": "no GIS mass centroid within ~80 m",
+      "osm": "unnamed index 833 h=16 area≈5629 verts=4",
+      "apple": "Apple snapshot osm833.jpg z18 at 32.873995,-117.231388 — multi-deck garage, cars on roof, long northward shadow; finished, no crane",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Unnamed OSM guess over a post-2014 parking structure — 2014 flight saw the predecessor lot (p50≈0); do not ship roofOf=4.8 as the garage.",
+    "epoch_risk": "HIGH — Apple's multi-deck garage vs LiDAR's near-grade plane is the same DATE signature as osm:438 (judge withheld that one). Neither the 16 m guess nor the 4.8 m plane is a safe ship without a non-LiDAR height source."
+  },
+  {
+    "id": "dean-osm-swallows-pc1300",
+    "entity": "Pepper Canyon Assistant Dean's Residence / Pepper Canyon Apartments 1300",
+    "where": {"x": 983.1, "z": -8.2},
+    "claim": "assembleMasses renames GIS 'Pepper Canyon Apartments 1300' (gisH=9.1, massHeights=11.5) to 'Pepper Canyon Assistant Dean's Residence' because that OSM ring contains the apt centroid. A separate hostless GIS mass actually named Assistant Dean's Residence at (946.2,-2) ships unchallenged gisH=6.1.",
+    "observed": "OSM Dean ring centroid (983.9,-8.5) contains only the PC1300 GIS mass. Host rename (`if (host) m.name = host.n`) strips the apartments label. Real Dean GIS mass (area≈105 m², 2 levels) stands ~38 m west, hostless, so PRE_2014 challenge never runs. EPT of hostless Dean ring: 705 pts, roofOf=11.6, p50=6.1, p75=11.6, p98=24.2, guard bodyTight=false → massOk=false (canopy). EPT of PC700-class neighbour PC1300 own massHeights already 11.5.",
+    "evidence": {
+      "lidar": "gis:Pepper Canyon Assistant Dean's Residence (946,-2) 705 pts roofOf=11.6 p50=6.1 massOk=false; massHeights m:983,-8 = 11.5 (under PC1300 ring before rename); lidar.heights['Pepper Canyon Assistant Dean's Residence']=11.4",
+      "gis": "Pepper Canyon Apartments 1300 gisH=9.1 L3 @ (983.1,-8.2); Pepper Canyon Assistant Dean's Residence gisH=6.1 L2 @ (946.2,-2) area≈105",
+      "osm": "Pepper Canyon Assistant Dean's Residence 8-vertex ring covers PC1300 centroid; no separate OSM ring for PC1300 at this site",
+      "apple": "Apple snapshot pc700.jpg / matthews.jpg z17–18 — Pepper Canyon residential warren standing; small residence-scale volume west of the 1300 block",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "OSM name ring drawn around the wrong GIS mass — host rename steals an apartment building's identity; the real Dean mass stays hostless and unchallenged.",
+    "epoch_risk": "Low for existence — both volumes are pre-2014 Pepper Canyon stock on Apple. This is an identity/host-geometry bug, not a rebuild."
+  },
+  {
+    "id": "cala-mesa-nueva-outline",
+    "entity": "Cala (OSM outline) / Mesa Nueva - Cala (GIS)",
+    "where": {"x": 1751.1, "z": 273.2},
+    "claim": "Both render: OSM Cala src=osm h=24.4 at (1751.1,273.2) and GIS 'Mesa Nueva - Cala' src=gis h=24.4 at (1763.2,273.7).",
+    "observed": "Cala is in POST_2014_SITES (Mesa Nueva, opened 2017). Interior grid coverage of OSM by any GIS ≈0.892, but nameCarried=false because GIS name is 'Mesa Nueva - Cala' ≠ 'Cala' and the GIS centroid is outside the OSM ring — so the ≥0.85 area test never runs (same failure mode SSC/CMRR had before the exact-name twin rule; the twin rule does not fire across the 'Mesa Nueva - ' prefix). EPT of OSM Cala ring: 7,116 pts, roofOf=10.5, massOk=false — the 2014 predecessor Mesa block, correctly withheld from heights.",
+    "evidence": {
+      "lidar": "osm:Cala 7116 pts roofOf=10.5 p50=1.4 p75=10.5 p98=16.7 massOk=false; no massHeights on Mesa Nueva - Cala (POST_2014 via host name Cala when containment works; this GIS centroid misses the OSM ring)",
+      "gis": "Mesa Nueva - Cala gisH=24.4 levels=8 area≈2474 @ (1763.2,273.7)",
+      "osm": "Cala index 460 h=30 (ships 24.4 via fac/reconcile) area≈2693; still assembled src=osm",
+      "apple": "Apple snapshot cala.jpg z17 at 32.87553,-117.22247 — finished Mesa Nueva tower/block standing",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "POST_2014 courtyard/outline double-render when GIS wears a facilities prefix ('Mesa Nueva - Cala') that breaks the exact-name twin rule — Alianza/Vela/Tuolumne class.",
+    "epoch_risk": "Existence is fine (Apple shows finished Cala). Height 24.4 is GIS floor-count, not LiDAR. Risk is geometric (outline through the complex), not a wrong epoch height on the tower itself."
+  },
+  {
+    "id": "jacobs-bed-tower-stepped",
+    "entity": "Jacobs Medical Center - Bed Tower",
+    "where": {"x": 1379.3, "z": 39.5},
+    "claim": "GIS mass 'Jacobs Medical Center - Bed Tower' ships h=61.2 via massHeights (gisH=12.8 / 3 levels). Nested 'Jacobs Medical Center Tower' ships 65.9 (gisH=46.9 / 11 levels). Host lidar.heights['Jacobs Medical Center']=63.9.",
+    "observed": "EPT Bed Tower ring: 25,200 pts, roofOf=61.2, p50=45.9, p75=56.8, p98=61.2, bodyTight=false, massOk=true. Tower alone: 12,643 pts, roofOf=65.8, p50=60.2, p75=61.5, massOk=true bodyTight. BedMinusTower (Atkinson mechanism): 13,967 pts, p50=16.8, p75=51.4, p98=60.1, guard bodyTight=false → massOk=false. Tower centroid lies inside the Bed ring; GIS's own 12.8 m / 3-level record on the Bed mass is incompatible with a 61 m ship. Stepped hospital — no clean low plane once the tower is cut out.",
+    "evidence": {
+      "lidar": "gis:JacobsBedTower 25200 pts roofOf=61.2 massOk (bodyTight=false); gis:JacobsTower 12643 pts roofOf=65.8 massOk; gis:JacobsBedMinusTower 13967 pts roofOf=51.4 p50=16.8 massOk=false; host OSM roofOf=64.0",
+      "gis": "Bed Tower gisH=12.8 L3 area≈6110; Tower gisH=46.9 L11 area≈3533",
+      "osm": "Jacobs Medical Center ring hosts both centroids; lidar.heights=63.9",
+      "apple": "Apple snapshot jacobs-bed.jpg z17 at 32.87764,-117.22645 — finished Jacobs tower with helipad, long shadow; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Atkinson / MEASURE_MINUS_CONTAINED class — whole-footprint ring mixes tower into wings; minus-tower has no plane, so massHeights ships the tower-contaminated 61.2 over a GIS record that says 3 levels.",
+    "epoch_risk": "Low for existence — Jacobs Medical Center opened 2016 in phases, but Apple shows the finished tower and the 2014 flight already sees a topped-out frame (p50 45–60). Judge must decide whether 61.2 is the right ship for the Bed mass or whether the site needs the Atkinson minus-contained treatment / a withheld low wing. Do not read the 12.8 GIS record as the 2014 truth."
+  },
+  {
+    "id": "unnamed-774-modular",
+    "entity": "unnamed OSM building index 774 / GIS 9435 Modular Offices",
+    "where": {"x": 1306.2, "z": -6.4},
+    "claim": "Unnamed osm:774 ships area-guess h=12 (area≈2036). Hostless GIS '9435 Modular Offices' at (1315.2,-7.6) ships unchallenged gisH=8.5 / 2 levels.",
+    "observed": "EPT osm:774: 10,696 pts, roofOf=4.0, p50=3.8, p75=3.9, p98=4.0, massOk=true — Δ = −8.0 m vs guess. EPT GIS modular: 10,481 pts, roofOf=3.8, p50=3.6, p75=3.7, p98=3.8, massOk=true — Δ = −4.7 m vs GIS. Rings nearly coincide (centroids 9 m apart). Apple shows low rectangular modular/office pads south of Jacobs, not a 2–3 storey block.",
+    "evidence": {
+      "lidar": "osm:774 10696 pts roofOf=4.0 clean; gis:9435 Modular Offices 10481 pts roofOf=3.8 clean",
+      "gis": "9435 Modular Offices gisH=8.5 L2 area≈2010 hostless (not in PRE_2014_GIS_VERIFIED)",
+      "osm": "unnamed index 774 h=12 area≈2036; also osm:775/776 adjacent sheds measure roofOf 3.9/4.0 vs guess 4.5",
+      "apple": "Apple snapshot osm774-modular.jpg z18 at 32.87805,-117.22723 — one-storey modular row with white roofs east of I-5; finished",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Unnamed OSM guess + hostless GIS default storeys both high vs a clean 2014 one-storey plane — OSM_UNNAMED_VERIFIED / PRE_2014_GIS_VERIFIED candidates if Apple currency holds.",
+    "epoch_risk": "Low — Apple matches the 2014 low pads. Not a post-2014 rebuild."
+  },
+  {
+    "id": "cpp-west-unchallenged",
+    "entity": "Campus Point Parking Structure West",
+    "where": {"x": 1416.5, "z": -151.7},
+    "claim": "Hostless GIS mass ships unchallenged gisH=21.3 / 5 levels. Sibling 'Campus Point Parking Structure' (East, @ 1505.4,-226.3) is in POST_2014_SITES and ships GIS 12.8. West is NOT in POST_2014_SITES (name does not match).",
+    "observed": "EPT West: 12,626 pts, roofOf=14.4, p50=12.9, p75=13.1, p98=14.4, bodyTight=true, massOk=true. Δ = −6.9 m vs GIS. Apple shows a finished multi-deck garage with cars on the top deck. East is already epoch-listed as opening with the Jacobs project; West looks the same generation but escapes the guard because the GIS name has the 'West' suffix.",
+    "evidence": {
+      "lidar": "gis:Campus Point Parking Structure West 12626 pts roofOf=14.4 p50=12.9 p75=13.1 p98=14.4 massOk=true",
+      "gis": "Campus Point Parking Structure West gisH=21.3 L5 area≈5285; East gisH=12.8 L3 area≈7735 (POST_2014)",
+      "osm": "Campus Point Parking Structure OSM name exists; West has no exact OSM twin",
+      "apple": "Apple snapshot cpp-west.jpg z17 at 32.87938,-117.22604 — multi-deck garage, cars on roof, between ballpark and medical campus",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "POST_2014 sibling escaped the epoch list by facilities suffix ('… West'); hostless so GIS storeys stand. If pre-2014, the 14.4 plane is a PRE_2014_GIS_VERIFIED candidate (Δ 6.9 m).",
+    "epoch_risk": "HIGH branching — either West is the same post-2014 Jacobs-era garage (LiDAR 14.4 may be mid-build; do not challenge as finished height) or it is older and the GIS 21.3 is high. Apple confirms a finished garage today; it does not date the pour. Judge must pick the epoch before any number moves."
+  },
+  {
+    "id": "viterbi-osm-only-guess",
+    "entity": "Viterbi Family Vision Research Center",
+    "where": {"x": 1615.6, "z": -136.0},
+    "claim": "POST_2014_SITES member; only OSM ring renders (src=osm h=18). Zero GIS mass coverage (interior sample 0/213). No lidar.heights / massHeights.",
+    "observed": "EPT of OSM ring: 5,664 pts, roofOf=1.2, p50=0.1, p75=1.2, p98=6.3, massOk=true under guard — the 2014 empty lot, correctly unused for height. Nearest GIS are Anne Ratner Children's Eye Center (±50 m). Ships an 18 m OSM tag/guess with no university massing and no measured height.",
+    "evidence": {
+      "lidar": "osm:Viterbi 5664 pts roofOf=1.2 p50=0.1 p75=1.2 p98=6.3 (lot/scatter); POST_2014 so heights key withheld",
+      "gis": "no Viterbi-named mass; Anne Ratner @ (1671,-133) gisH=4.3 and Expansion @ (1664,-149)",
+      "osm": "Viterbi Family Vision Research Center index 1130 h=18 verts=10; still assembled",
+      "apple": "Apple snapshot viterbi.jpg z18 at 32.87923,-117.22392 — finished research volume present near Shiley/Anne Ratner; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "POST_2014 building with OSM-only geometry and an unverified height guess — better absent than a plausible 18 m if no floor-count source resolves it.",
+    "epoch_risk": "Existence is Apple-confirmed (opened ~2024). Height has no LiDAR and no GIS massing — the 18 m is exactly the class of invented vertical the mandate forbids shipping without a cited source."
+  },
+  {
+    "id": "stuart-storage-hostless",
+    "entity": "Stuart Collection Storage",
+    "where": {"x": 1041.6, "z": -430.2},
+    "claim": "Hostless GIS mass ships unchallenged gisH=8.5 / 2 levels.",
+    "observed": "EPT: 236 pts, roofOf=4.3, p50=4.1, p75=4.2, p98=4.3, massOk=true. Δ = −4.2 m (GIS default two storeys on a one-storey shed).",
+    "evidence": {
+      "lidar": "gis:Stuart Collection Storage 236 pts roofOf=4.3 clean plane",
+      "gis": "Stuart Collection Storage gisH=8.5 L2 area≈106",
+      "osm": "no named OSM host",
+      "apple": null,
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Hostless GIS default two-storeys vs clean 2014 one-storey plane — PRE_2014_GIS_VERIFIED candidate (same class as East Campus Substation / CSC shops).",
+    "epoch_risk": "Moderate until Apple currency is checked — if the shed was rebuilt post-2014 the 4.3 plane is the predecessor. Numbers alone do not date it."
+  },
+  {
+    "id": "matthews-hostless-low",
+    "entity": "Matthews Apartments B / D / E",
+    "where": {"x": 968.4, "z": -91.8},
+    "claim": "Three hostless GIS masses ship unchallenged gisH=6.1 / 2 levels each.",
+    "observed": "EPT: B 3,517 pts roofOf=8.5 massOk; D 3,584 pts roofOf=8.7 massOk; E 3,627 pts roofOf=7.8 (guard, bodyTight, massOk). Δ ≈ +2.4 / +2.6 / +1.7 m vs GIS. Apple shows the Matthews low-rise warren standing on these footprints.",
+    "evidence": {
+      "lidar": "Matthews B roofOf=8.5; D roofOf=8.7; E roofOf=7.8 p50=6.7 p75=7.8 p98=13.4 massOk",
+      "gis": "Matthews Apartments B/D/E each gisH=6.1 L2 area≈674–684; also hostless Carpentry Shop gisH=4.3 → plane 4.2",
+      "osm": "no named OSM hosts for these rings",
+      "apple": "Apple snapshot matthews.jpg z17 at 32.87850,-117.23099 — finished low-rise apartments",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Hostless pre-2014 residential row whose GIS record sits ~2 m under a clean 2014 plane — PRE_2014_GIS_VERIFIED class (Village East / Tuolumne North pattern).",
+    "epoch_risk": "Low — Matthews is long-standing housing; Apple matches the 2014 footprints."
+  },
+  {
+    "id": "east-campus-utilities-hostless",
+    "entity": "East Campus Utilities Plant (+ Expansion)",
+    "where": {"x": 1814.7, "z": -258.1},
+    "claim": "Two hostless GIS masses ship unchallenged gisH=4.3 / 1 level.",
+    "observed": "EPT Plant: 1,749 pts, roofOf=8.2, p50=6.1, p75=6.7, p98=8.2, massOk=true. Expansion: 769 pts, roofOf=7.5, p50=6.1, p75=6.2, p98=7.5, massOk=true. Δ ≈ +3.9 / +3.2 m. Apple shows a long plant building with dense rooftop chillers next to Athena Parking and a dirt staging pad.",
+    "evidence": {
+      "lidar": "Utilities Plant 1749 pts roofOf=8.2; Expansion 769 pts roofOf=7.5 — both massOk",
+      "gis": "East Campus Utilities Plant gisH=4.3 L1 area≈715; Expansion gisH=4.3 L1 area≈329",
+      "osm": "place 'East Campus Utility Plant' exists; GIS names differ slightly from OSM",
+      "apple": "Apple snapshot utilities-plant.jpg z18 at 32.88044,-117.22180 — finished plant with HVAC rows; Athena garage to the south; dirt staging to the west",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Hostless GIS one-storey default under a measured 6–8 m plant — PRE_2014_GIS_VERIFIED candidate.",
+    "epoch_risk": "Low for the plant volumes themselves. Adjacent dirt staging on Apple is a separate parcel — do not conflate it with the plant roof plane."
+  },
+  {
+    "id": "mesa-9242-canopy",
+    "entity": "Mesa Apartments Central - 9242",
+    "where": {"x": 1832.7, "z": 434.6},
+    "claim": "Hostless GIS mass ships unchallenged gisH=6.1 / 2 levels. Neighbour 9240 also hostless at gisH=6.1.",
+    "observed": "EPT 9242: 1,455 pts, roofOf=29.4, p50=20.3, p75=25.7, p98=29.4, bodyTight=false, massOk=true under the guard rule (no guard trip). 9240: 1,641 pts, roofOf=18.5, p50=6.3, p75=18.5, guard bodyTight=false → massOk=false. A 29 m 'plane' on a GIS 2-storey record next to Mesa Nueva (POST_2014) is canopy / neighbour-tower contamination, not a safe challenge target. Unnamed osm:365 at (1858,445) similarly massOk=false (roofOf=25.1).",
+    "evidence": {
+      "lidar": "9242 1455 pts roofOf=29.4 p50=20.3 bodyTight=false; 9240 1641 pts roofOf=18.5 massOk=false; osm:365 1591 pts roofOf=25.1 massOk=false",
+      "gis": "Mesa Apartments Central - 9242 gisH=6.1 L2; 9240 gisH=6.1 L2; laundry 9238 gisH=3",
+      "osm": "unnamed 365 nearby h=8.4 area≈491",
+      "apple": "Apple snapshot mesa-apts-central.jpg / osm365.jpg z17–18 — low Mesa Central apartments standing; Mesa Nueva towers adjacent",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Hostless GIS mass whose returns are dominated by adjacent post-2014 Mesa Nueva canopy/tower — do not PRE_2014-challenge off roofOf; the GIS 6.1 may be the honest record.",
+    "epoch_risk": "HIGH — Mesa Nueva replaced much of old Mesa housing after 2014. A 29 m return next to Cala/Artesa is exactly the change-detector / canopy-bleed failure mode. Treat as contaminated, not as a height fix."
+  },
+  {
+    "id": "unnamed-764-guess",
+    "entity": "unnamed OSM building index 764",
+    "where": {"x": 1023.5, "z": 276.6},
+    "claim": "Ships as OSM area-guess h=12 m (area≈1800; not in OSM_UNNAMED_VERIFIED).",
+    "observed": "EPT: 8,426 pts, roofOf=9.7, p50=6.9, p75=7.8, p90=7.9, p98=9.7, bodyTight=true, massOk=true. Δ = −2.3 m. Apple shows a finished mid-size roof on the Gilman / trolley corridor.",
+    "evidence": {
+      "lidar": "osm:764 8426 pts roofOf=9.7 p50=6.9 p75=7.8 p98=9.7 massOk=true",
+      "gis": "no close GIS host (nearest Pepper Canyon 1700 ~188 m)",
+      "osm": "unnamed index 764 h=12 area≈1800",
+      "apple": "Apple snapshot osm764.jpg z18 at 32.87550,-117.23025 — finished building present",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Unnamed OSM area-guess slightly high vs a clean 2014 plane — OSM_UNNAMED_VERIFIED candidate.",
+    "epoch_risk": "Low if Apple footprint matches; still confirm it is not a post-2014 shell before admitting 9.7."
+  },
+  {
+    "id": "anne-ratner-hostless",
+    "entity": "Anne Ratner Children's Eye Center (+ Expansion)",
+    "where": {"x": 1670.8, "z": -132.6},
+    "claim": "Two hostless GIS masses ship unchallenged gisH=4.3 / 1 level.",
+    "observed": "EPT main: 1,639 pts, roofOf=10.2, p50=4.6, p75=8.2, p98=10.2, bodyTight=false, massOk=true. Expansion: 664 pts, roofOf=3.6, clean massOk. Main ring is stepped (p50 4.6 under p75 8.2) — not a safe single-plane challenge; Expansion Δ = −0.7 m (noise).",
+    "evidence": {
+      "lidar": "Anne Ratner 1639 pts roofOf=10.2 p50=4.6 bodyTight=false massOk; Expansion 664 pts roofOf=3.6 clean",
+      "gis": "Anne Ratner gisH=4.3 L1; Expansion gisH=4.3 L1",
+      "osm": "no named OSM host",
+      "apple": "Apple snapshot anne-ratner.jpg z18 at 32.87927,-117.22337 — finished eye-center volumes near Shiley/Viterbi",
+      "probe": null
+    },
+    "severity": "low",
+    "suspected_class": "Hostless stepped clinic roof — p50 agrees with GIS 4.3; roofOf rides mechanical plant. Leave GIS unless a hand audit isolates the body plane.",
+    "epoch_risk": "Low for existence. Expansion name suggests a possible post-2014 add-on — the clean 3.6 plane is consistent with a one-storey pad either way."
+  },
+  {
+    "id": "unnamed-762-bleed",
+    "entity": "unnamed OSM building index 762",
+    "where": {"x": 1444.0, "z": -86.7},
+    "claim": "Ships as OSM area-guess h=4.5 (area≈197).",
+    "observed": "EPT: 589 pts, roofOf=24.1, p50=4.8, p75=22.3, p98=24.1, bodyTight=false, massOk=true only because guard did not trip (p98−p75=1.8). p50≈4.8 matches the guess; roofOf is neighbour bleed from Sulpizio/Jacobs (~48 m). Do not treat 24.1 as this shed's height.",
+    "evidence": {
+      "lidar": "osm:762 589 pts roofOf=24.1 p50=4.8 p75=22.3 bodyTight=false",
+      "gis": "nearest Sulpizio Family Cardiovascular Center @ (1398,-73) own=30.2",
+      "osm": "unnamed index 762 h=4.5 area≈197",
+      "apple": "Apple snapshot osm762.jpg z18 at 32.87878,-117.22575 — small pad in the Jacobs/Sulpizio drop-off circle",
+      "probe": null
+    },
+    "severity": "low",
+    "suspected_class": "Tiny unnamed ring contaminated by adjacent hospital returns — guess 4.5 ≈ p50; roofOf is not a measurement of this entity.",
+    "epoch_risk": "None for the shed. Misreading roofOf as a 24 m building would invent a tower that is really Sulpizio."
+  },
+  {
+    "id": "trolley-stations-zero-plane",
+    "entity": "La Jolla Health Trolley Station (3 GIS masses)",
+    "where": {"x": 1590.5, "z": -452.8},
+    "claim": "Three hostless GIS masses each ship gisH=4.6 / 1 level (areas 18–24 m²).",
+    "observed": "EPT all three: roofOf ≈ 0.0–0.1 m (45–56 pts each, massOk). These are platform canopy footprints, not 4.6 m buildings.",
+    "evidence": {
+      "lidar": "Trolley Station #0/#1/#2 roofOf 0.0 / 0.0 / 0.1 on 56/52/45 pts",
+      "gis": "La Jolla Health Trolley Station ×3 gisH=4.6 L1",
+      "osm": null,
+      "apple": null,
+      "probe": null
+    },
+    "severity": "low",
+    "suspected_class": "Facilities inventory modelling transit canopies as one-storey buildings — cosmetic extrusion of near-zero LiDAR planes.",
+    "epoch_risk": "The trolley itself is post-2014 infrastructure; the 2014 flight seeing grade is expected. Not a building-height error so much as an entity-class mismatch."
+  },
+  {
+    "id": "warren-field-house-empty",
+    "entity": "Warren FIeld House",
+    "where": {"x": 1119.1, "z": -294.6},
+    "claim": "Hostless GIS mass ships unchallenged gisH=4.6 / 1 level (note GIS spelling 'FIeld').",
+    "observed": "EPT: 0 non-ground returns inside the ring despite terrain coverage at the centroid (cell in-bounds, z=2.4 m rel). Either the structure is open/canopy classified as ground, or the ring is empty air. No massHeights.",
+    "evidence": {
+      "lidar": "gis:Warren FIeld House 0 pts; terrain cell present",
+      "gis": "Warren FIeld House gisH=4.6 L1 area≈309",
+      "osm": "no named host",
+      "apple": "Apple snapshot triton-stadium.jpg z17 — athletics fields / stadium area; confirm whether a field house volume stands on this ring",
+      "probe": null
+    },
+    "severity": "low",
+    "suspected_class": "Empty-ring / canopy facility mass with no measurable 2014 roof — better absent than a 4.6 m box if Apple shows no building.",
+    "epoch_risk": "Possible: a post-2014 field house on a 2014 empty pad, or a never-built inventory row. Apple currency check is the gate."
+  }
+]

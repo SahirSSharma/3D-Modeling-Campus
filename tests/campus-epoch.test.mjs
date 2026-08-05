@@ -54,6 +54,16 @@
  *      TES tank and VA plant ship their planes while the post-2014 VA
  *      garage keeps its declared guess, and the stepped Jacobs complex
  *      keeps the verified state a screener proposed to "fix".
+ *  14. The r1c2 judge pass's measurements hold: duplicate OSM names never
+ *      share one heights key (the SCI pair races no more — one plane per
+ *      epoch, per ring), the host rename refuses to duplicate a name the
+ *      record already gives a nearby building (the Dean's Residence keeps
+ *      its house, PC1300 and the laundry keep their names) while pure
+ *      swaps survive, Cala renders once as the mass wearing its OSM name,
+ *      the Matthews houses ship their own planes under their full names,
+ *      the health-campus records challenged by their own rings measure,
+ *      the epoch withholds stay withheld, and Viterbi / the Bed Tower /
+ *      VAF-B3 stay as judged.
  */
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
@@ -356,7 +366,12 @@ describe("9. the north-west shard sweep (r0c0, 2026-08-04)", () => {
        plane re-samples at 19.6 m (p98, 26k+ returns each). */
     const wings = CAMPUS.buildings.filter((b) => b.n === SALK);
     assert.equal(wings.length, 2, `expected the twin wings, got ${wings.length}`);
-    assert.equal(LIDAR.heights[SALK], 19.6);
+    /* The wings share one OSM name, so the r1c2 collision fix keys their
+       measurements per ring index — one shared heights entry was a
+       last-writer-wins race (see §14). Same 19.6 plane, honest keys. */
+    const wingIdx = CAMPUS.buildings.flatMap((b, i) => (b.n === SALK ? [i] : []));
+    for (const i of wingIdx) assert.equal(LIDAR.osmHeights[String(i)], 19.6, `wing osm:${i}`);
+    assert.equal(LIDAR.heights[SALK], undefined, "the collided name key is back");
     const rendered = MASSES.filter((m) => m.name === SALK);
     assert.equal(rendered.length, 2);
     for (const m of rendered) assert.equal(m.h, 19.6, `wing ships ${m.h} m`);
@@ -430,23 +445,31 @@ describe("9. the north-west shard sweep (r0c0, 2026-08-04)", () => {
 
   test("suppression never orphans a building's name", () => {
     /* The area test yields when no covering mass would inherit the ring's
-       name (Cala, Village East Building 4, One Miramar 3/4 all sample
-       ≥0.85 under masses named something else). The suppression orphans
-       below are from before the sweeps and may only shrink (r0c1 resolved
-       Earth Hall, Douglas Hall, both Canyon Vistas and Village East 5).
+       name (Village East Building 4, One Miramar 3/4 all sample ≥0.85
+       under masses named something else). The suppression orphans below
+       are from before the sweeps and may only shrink (r0c1 resolved Earth
+       Hall, Douglas Hall, both Canyon Vistas and Village East 5; r1c2's
+       word-suffix rule resolved Spiess Hall, the greenhouses, and the
+       Mesa Nueva / Nuevo West short names by renaming their masses, and
+       carries the Matthews parcel letters on the full "Matthews
+       Apartments X" labels).
+       A name counts as carried when a mass wears it exactly OR as a word
+       suffix — "Matthews Apartments E" carries "E", "Mesa Nueva - Cala"
+       would carry "Cala" — the same identity rule the builder now uses.
        The two non-suppression entries render nothing BY RULE: Geisel draws
        from its own per-floor GIS layer, and the RIMAC Annex site is a
        demolished building whose rebuild no source resolves. */
     const KNOWN = new Set([
-      "Spiess Hall", "Black Hall", "Geisel Library",
-      "64 Degrees", "64 North", "Greenhouse 3", "Greenhouse 2",
-      "Greenhouse 1", "Artesa", "Marea", "Arena", "B", "Brisa",
+      "Black Hall", "Geisel Library",
+      "64 Degrees", "64 North",
       "Print Labs", "Nigella Hillgarth Education Center",
       "RIMAC Annex",
     ]);
     const carried = new Set(MASSES.filter((m) => m.name).map((m) => m.name));
+    const carriedAsSuffix = (n) =>
+      [...carried].some((c) => c !== n && (c.endsWith(` - ${n}`) || c.endsWith(` ${n}`)));
     const orphans = [...new Set(CAMPUS.buildings.map((b) => b.n).filter(Boolean))]
-      .filter((n) => !carried.has(n) && !KNOWN.has(n));
+      .filter((n) => !carried.has(n) && !carriedAsSuffix(n) && !KNOWN.has(n));
     assert.deepEqual(orphans, [], `newly orphaned names: ${orphans}`);
   });
 });
@@ -934,15 +957,19 @@ describe("13. the r1c1 judge pass (2026-08-04)", () => {
   });
 
   test("the twin rule never deletes an identity it cannot carry", () => {
-    /* Cala's covering masses stand centroid-outside its ring with no
-       exact-name twin taking over; VAF Building 3's exact-name twin is
-       within 150 m but covers NONE of the OSM ring (a position
-       disagreement logged in FINDINGS, not fixed blind). Both must keep
-       rendering — suppression without a name carrier deletes the only
-       ring that knows what the building is called. */
-    for (const n of ["Cala", "Visual Arts Facility - Building 3"]) {
-      assert.ok(MASSES.some((m) => m.src === "osm" && m.name === n), `${n} vanished`);
-    }
+    /* VAF Building 3's exact-name twin is within 150 m but covers NONE of
+       the OSM ring (a position disagreement logged in FINDINGS, not fixed
+       blind), so the ring must keep rendering — suppression without a name
+       carrier deletes the only ring that knows what the building is called.
+       Cala used to be this test's other case; the r1c2 word-suffix rule
+       (§14) taught the carrier test that "Mesa Nueva - Cala" IS Cala, so
+       the identity is carried now and the double render is gone — the mass
+       renders once, wearing the OSM name. */
+    assert.ok(MASSES.some((m) => m.src === "osm" && m.name === "Visual Arts Facility - Building 3"),
+      "Visual Arts Facility - Building 3 vanished");
+    assert.equal(MASSES.filter((m) => m.name === "Cala").length, 1, "Cala must render exactly once");
+    const cala = MASSES.find((m) => m.name === "Cala");
+    assert.equal(cala.src, "gis", "Cala's carrier is the university mass");
   });
 
   test("Vela renders as its university masses, never as a 19 m outline slab", () => {
@@ -1040,5 +1067,198 @@ describe("13. the r1c1 judge pass (2026-08-04)", () => {
     assert.equal(LIDAR.massHeights["m:-48,-34"], 36.7, "the HSS tower's own plane");
     const hssLow = rendersNear(-43, -56).find((m) => m.src === "gis" && m.h === 8.5);
     assert.ok(hssLow, "the HSS low wing left its record");
+  });
+});
+
+describe("14. the r1c2 judge pass (2026-08-04)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("a duplicate OSM name never shares one heights key", () => {
+    /* lidar.heights is keyed by name, and OSM names are not unique: nine
+       names on this campus belong to two rings each, and a shared key is a
+       last-writer-wins race — both Spinal Cord Injury Buildings shipped
+       6.4 m because the ring the build visited second was a mostly-empty
+       post-2014 site. Collided names emit per ring index now. The one
+       deliberate exception is HAND_AUDITED's name-level answer (Spanos),
+       written knowing both rings. */
+    const count = new Map();
+    for (const b of CAMPUS.buildings) if (b.n) count.set(b.n, (count.get(b.n) || 0) + 1);
+    const collided = [...count].filter(([, c]) => c > 1).map(([n]) => n);
+    assert.ok(collided.length >= 5, `the duplicate-name class vanished? ${collided}`);
+    const leaked = collided.filter((n) => !(n in { "Spanos Athletic Performance Center": 1 }) &&
+      LIDAR.heights[n] !== undefined);
+    assert.deepEqual(leaked, [], `collided names back on the shared key: ${leaked}`);
+  });
+
+  test("the two Spinal Cord Injury Buildings are two buildings, one per epoch", () => {
+    /* osm:223 is the 1990s center: 17,154 returns, p50 = p90 = 17.2, a
+       plane the flight measured on a building Apple still shows standing
+       (its 15.6 OSM tag was a floor-count guess). osm:954 is the VA's
+       replacement hospital, built 2021-2026 — the 2014 returns under it
+       (p50 1.2) are the lot it replaced, so no LiDAR number may ship and
+       the OSM tag stands, stated as what it is. Both wore 6.4 m — the
+       collision above pasted the southern site's plane onto both. */
+    const old = rendersNear(940.7, 238.6, 10).find((m) => m.src === "osm");
+    const nw = rendersNear(948.7, 320.8, 10).find((m) => m.src === "osm");
+    assert.equal(old?.h, 17.2, `the 1990s SCI center ships ${old?.h}`);
+    assert.equal(nw?.h, 15.6, `the 2021-2026 hospital ships ${nw?.h}`);
+    const idx223 = CAMPUS.buildings.findIndex((b, i) => b.n === "Spinal Cord Injury Building" &&
+      Math.hypot(...centroidOf(b.p).map((v, k) => v - [940.7, 238.6][k])) < 10);
+    assert.equal(LIDAR.osmHeights[String(idx223)], 17.2, "the old center's per-ring plane");
+  });
+
+  test("the Pepper Canyon rename thefts are undone — one name, one building", () => {
+    /* The OSM ring over the PC Apartments 1300 block is drawn wearing the
+       Assistant Dean's Residence's name; the real residence is the small
+       house 38 m west, its own GIS mass with the same name. The host
+       rename hung the Dean's label on both and handed the apartments' name
+       to the LAUNDRY through a second mis-drawn ring — which is also where
+       the facades keyed "Pepper Canyon Apartments 1300" were landing. The
+       guarded rename refuses a name the university's record already gives
+       a different nearby building. */
+    const deans = MASSES.filter((m) => m.name === "Pepper Canyon Assistant Dean's Residence");
+    assert.equal(deans.length, 1, `the Dean's Residence renders ${deans.length} times`);
+    assert.equal(deans[0].h, 6.1, "the residence keeps its record");
+    const pc1300 = rendersNear(983.1, -8.2, 5).find((m) => m.src === "gis");
+    assert.equal(pc1300?.name, "Pepper Canyon Apartments 1300", `the apartments wear "${pc1300?.name}"`);
+    assert.equal(pc1300?.h, 11.5, "the apartments' own 2014 plane");
+    const laundry = rendersNear(1003, 32.6, 5).find((m) => m.src === "gis");
+    assert.equal(laundry?.name, "Pepper Canyon South Laundry", `the laundry wears "${laundry?.name}"`);
+  });
+
+  test("the guarded rename keeps the swaps and loses the thefts", () => {
+    /* Meteor and Galathea Halls are a pure swap — each GIS mass stands in
+       the other's OSM ring, no third party — and OSM is the name
+       authority, so the swap must survive the guard. The Spanos pair is a
+       theft: the OSM "Performance Center" ring reaches over the 1988
+       TRAINING facility's mass and was pasting the shared name on both
+       neighbours; each keeps its own university name now. James' Place
+       had vanished under a second "Mandell Weiss Forum" the same way. */
+    assert.ok(rendersNear(-41.7, 454.7, 6).some((m) => m.name === "Meteor Hall"), "the Meteor swap reverted");
+    assert.ok(rendersNear(-69, 462.1, 6).some((m) => m.name === "Galathea Hall"), "the Galathea swap reverted");
+    const atf = rendersNear(64.6, -1308.4, 6).find((m) => m.src === "gis");
+    assert.equal(atf?.name, "Spanos Athletic Training Facility", `the 1988 building wears "${atf?.name}"`);
+    const apc = rendersNear(60.7, -1355.2, 6).find((m) => m.src === "gis");
+    assert.equal(apc?.name, "Spanos Athletic Performance Center", `the 2015 building wears "${apc?.name}"`);
+    assert.equal(MASSES.filter((m) => m.name === "Mandell Weiss Forum").length, 1, "the Forum duplicated again");
+    assert.ok(MASSES.some((m) => m.name === "James' Place"), "James' Place vanished again");
+  });
+
+  test("Cala renders once, as the university mass wearing the student name", () => {
+    /* The OSM ring and the "Mesa Nueva - Cala" mass rendered twice at the
+       same 24.4 m — the exact-name carrier test could not see through the
+       facilities prefix, and the ring's own centroid falls in its
+       courtyard. The word-suffix rule suppresses the ring, the mass takes
+       the OSM name (name only — its ring may be partial, so no height
+       flows through this path), and the researched facades keyed "Cala"
+       land on the building again. Mesa Nueva is 2017: the height is the
+       university's 8-level record, and no 2014 return may touch it. */
+    const calas = MASSES.filter((m) => m.name === "Cala");
+    assert.equal(calas.length, 1, `Cala renders ${calas.length} times`);
+    assert.equal(calas[0].src, "gis");
+    assert.equal(calas[0].h, 24.4, `Cala ships ${calas[0].h} — the post-2014 record is 24.4`);
+  });
+
+  test("Matthews Apartments render as five named, measured houses", () => {
+    /* 1972 housing, still occupied — pre-2014 documented, unchanged on
+       Apple. OSM tags the five parcels "A".."E"; the university records
+       said 6.1 m (the two-storey default) while the 2014 planes read
+       8.5-8.7. E's roof edge sits under canopy (p98 13.4), so its guarded
+       plane lands at 7.8 — its own measurement, not a borrowed sibling's.
+       The letter rings suppress under the full names, and no mass ships a
+       bare parcel letter. */
+    const want = { A: [916.4, -107.4, 8.6], B: [968.4, -91.8, 8.5], C: [1047, -57.8, 8.6],
+      D: [970.3, -33.8, 8.7], E: [935.7, -47.3, 7.8] };
+    for (const [letter, [x, z, h]] of Object.entries(want)) {
+      const m = rendersNear(x, z, 6).find((o) => o.src === "gis");
+      assert.equal(m?.name, `Matthews Apartments ${letter}`, `house ${letter} wears "${m?.name}"`);
+      assert.equal(m?.h, h, `Matthews ${letter} ships ${m?.h}, its plane is ${h}`);
+    }
+    assert.equal(MASSES.find((m) => /^[A-E]$/.test(m.name || "")), undefined,
+      "a bare parcel letter still renders");
+  });
+
+  test("the health-campus records challenged by their own 2014 planes", () => {
+    /* Campus Point Parking Structure West stood complete in the flight —
+       12,626 returns, p50 12.9 to p98 14.4, decks at a garage's ~2.9 m
+       pitch — while its record carried five levels at the 4.27 m default
+       (21.3). Its East sibling went up WITH Jacobs Medical Center and
+       stays a post-2014 record (12.8), per r0c2. The utilities plant
+       (~2000) measures 8.3 against a 4.3 one-level record; the 9435
+       trailer banks measure 3.8... rounded through their rim to 3.7
+       against an 8.5 two-storey default; the Stuart Collection shed
+       (building 91) measures 4.4 against the same default. */
+    assert.equal(rendersNear(1416.5, -151.7, 6)[0]?.h, 14.4, "CPP West's measured decks");
+    assert.equal(rendersNear(1505.4, -226.3, 6)[0]?.h, 12.8, "CPP East's post-2014 record");
+    assert.equal(rendersNear(1814.7, -258.1, 6)[0]?.h, 8.3, "the utilities plant's plane");
+    assert.equal(rendersNear(1315.2, -7.6, 6)[0]?.h, 3.7, "the 9435 modulars' plane");
+    assert.equal(rendersNear(1041.6, -430.2, 6)[0]?.h, 4.4, "the Stuart shed's plane");
+  });
+
+  test("the epoch withholds stay withheld — records stand where the laser cannot answer", () => {
+    /* East Campus Utilities Plant EXPANSION: built 2016; the tight 7.5 m
+       of 2014 returns under its footprint belong to its predecessor, and
+       no admissible source resolves the finished structure — the record
+       stands. Anne Ratner and its expansion: the center's roof steps
+       (p50 4.6 under a 10.2 crown shared with Shiley's vault) and the
+       expansion is building 817, too close to the 2015-16 Shiley
+       expansion generation to admit a 2014 plane unverified — records
+       stand. Mesa 9242/9240: the Mesa Nueva towers bleed through both
+       rings (p50 20.3 over two-storey apartments) — records stand. The
+       trolley platform structures and the Warren Field House are
+       post-2014 (the fieldhouse site has ZERO 2014 returns — the
+       temporary replacement went up ~2020 and stands on Apple and in
+       Street View 2025) — records ship, the zero-plane never does. */
+    assert.equal(rendersNear(1813.5, -287, 6)[0]?.h, 4.3, "the Expansion left its record");
+    assert.equal(rendersNear(1670.8, -132.6, 6)[0]?.h, 4.3, "Anne Ratner left its record");
+    assert.equal(rendersNear(1664.1, -148.7, 6)[0]?.h, 4.3, "the Ratner expansion left its record");
+    assert.equal(rendersNear(1832.7, 434.6, 6)[0]?.h, 6.1, "Mesa 9242 adopted tower bleed");
+    assert.equal(rendersNear(1119.1, -294.6, 6)[0]?.h, 4.6, "the Field House left its record");
+    for (const [x, z] of [[1590.5, -452.8], [1596.4, -450.4], [1584.9, -455.4]]) {
+      assert.equal(rendersNear(x, z, 4)[0]?.h, 4.6, `a trolley structure at (${x},${z}) left its record`);
+    }
+  });
+
+  test("the unnamed VA-corridor rings: two planes ship, one guess stands, one garage is refused", () => {
+    /* 764 is the VA plant building east of the hospital: p50 6.9 under a
+       9.7 roof, against a 12 m area guess. 775 is the small modular by
+       the 9435 banks: 3.8 against 4.5. 833 is the VA's 2023 garage — the
+       flight saw a surface lot (p50 0), so the 16 m guess stands and no
+       2014 number may ever ship (per-ring epoch, POST_2014_OSM_RINGS).
+       762's returns are three-quarters neighbour bleed; its 4.5 guess
+       agrees with the dense band and stands. */
+    assert.equal(LIDAR.osmHeights?.[764], 9.7);
+    assert.equal(LIDAR.osmHeights?.[775], 3.8);
+    assert.equal(LIDAR.osmHeights?.[833], undefined, "the 2023 garage shipped a 2014 number");
+    assert.equal(rendersNear(1023.5, 276.6, 8).find((m) => m.src === "osm")?.h, 9.7);
+    assert.equal(rendersNear(917.3, 442.9, 10).find((m) => m.src === "osm")?.h, 16);
+    assert.equal(rendersNear(1444, -86.7, 8).find((m) => m.src === "osm")?.h, 4.5);
+  });
+
+  test("the rejected candidates stay rejected — Viterbi, the Bed Tower, VAF-B3", () => {
+    /* Viterbi (2024) ships its documented Street-View floor estimate of
+       18 m; the flight saw its site at p50 0.1 and must stay silent. The
+       Jacobs Bed Tower's 61.2 is the 2014 plane of a shell topped out by
+       the flight — a screener proposed an Atkinson-style carve, but the
+       minus-tower re-sample has no plane (p50 16.8 under a p75 of 51.4):
+       the crown measurement stands. VAF Building 3's two rings each ship
+       their OWN plane now (11.7 and 11.5) instead of racing for one key. */
+    assert.equal(LIDAR.heights["Viterbi Family Vision Research Center"], undefined);
+    assert.equal(rendersNear(1615.6, -136, 8).find((m) => m.src === "osm")?.h, 18);
+    assert.equal(LIDAR.massHeights["m:1379,40"], 61.2, "the Bed Tower crown plane");
+    assert.equal(LIDAR.massHeights["m:1387,44"], 65.9, "the JMC tower plane");
+    const vafIdx = CAMPUS.buildings.flatMap((b, i) =>
+      (b.n === "Visual Arts Facility - Building 3" ? [i] : []));
+    const vafPlanes = vafIdx.map((i) => LIDAR.osmHeights[String(i)]).sort();
+    assert.deepEqual(vafPlanes, [11.5, 11.7], `VAF-B3 per-ring planes: ${vafPlanes}`);
   });
 });

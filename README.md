@@ -332,6 +332,58 @@ the OSM ring and the exact-name GIS mass for Visual Arts Facility - Building 3 s
 150 m of each other with zero footprint overlap — somebody is wrong about where Building 3 is,
 and neither source resolves which yet.
 
+**The east-campus judge pass (2026-08-04, r1c2).** Pepper Canyon to the Shiley/Jacobs health
+campus. Three of the screen's sixteen candidates were classes wearing a case's name, and the
+classes were the fix:
+
+- **Names are not unique, and the heights table pretended they were.** `lidar.heights` is keyed
+  by OSM name; nine campus names label two rings each, so the shared key was a last-writer-wins
+  race. Both Spinal Cord Injury Buildings shipped 6.4 m — the second ring the build visited is
+  the VA's 2021–26 replacement hospital site, mostly empty in 2014, and its non-answer
+  overwrote the 1990s center's real plane. Collided names now emit per ring index, and
+  `POST_2014_OSM_RINGS` gives the epoch rule a per-ring form for pairs that straddle the
+  flight: the old center measures **17.2 m** (p50 = p90, 17,154 returns), the new hospital
+  keeps its OSM tag stated as a tag, and the 2023 VA garage beside it keeps its declared guess
+  over the surface lot the laser actually saw.
+- **A host rename could steal a name the record already gave someone else.** The OSM ring
+  wearing "Pepper Canyon Assistant Dean's Residence" is drawn over the Apartments 1300 block,
+  38 m east of the actual house — the rename hung the Dean's label on the apartments and handed
+  the apartments' name to the laundry, and the name-keyed facades followed the stolen labels.
+  The rename is now refused when a different nearby GIS mass already carries the wanted name:
+  the residence renders once at its 6.1 m record, the apartments and laundry get their names
+  back, the Spanos ring stops relabelling the 1988 Training Facility, James' Place comes back
+  from under a second "Mandell Weiss Forum", and Electric Shop / Environmental Management
+  Facility stop labelling two and three buildings each. Pure swaps (Meteor/Galathea) survive —
+  OSM is still the name authority where no third building's identity is taken.
+- **"Mesa Nueva - Cala" IS Cala, and the twin rule couldn't see it.** The exact-name test let
+  the OSM ring and the facilities mass extrude twice in the same courtyard at the same 24.4 m.
+  A mass carrying the OSM name as a word suffix now carries the identity — name only, never
+  height, because a partial OSM trace must not drag a measured record down (Spiess Hall's would
+  have). Cala, Brisa, Arena, Marea, Artesa and the Matthews parcel letters all resolve; the
+  researched facades keyed to the short names land on their buildings again.
+
+| Building | Shipped | Measured | Why it was wrong |
+|---|---|---|---|
+| Spinal Cord Injury Building (1990s center) | 6.4 m (the collision race) | **17.2 m** | pinned per ring in epoch §14; Apple shows it standing unchanged |
+| Matthews Apartments A–E (1972) | 6.1 m each (GIS record) | **8.5–8.7 m; E 7.8 m** | five two-storey defaults, never challenged because the letter rings hid the masses from the host path; E's own plane is guarded (its p98 13.4 is canopy) and ships its own 7.8, not a sibling's |
+| Campus Point Parking Structure West | 21.3 m (GIS record) | **14.4 m** | five levels × the 4.27 m office default, but a garage's decks pitch ~2.9 m: 12,626 returns, p50 12.9 → p98 14.4. Its East sibling went up with Jacobs Medical Center and keeps the post-2014 record. |
+| East Campus Utilities Plant | 4.3 m (GIS record) | **8.3 m** | an industrial hall on a one-level record; its 2016 Expansion keeps the record — the tight 7.5 m plane under that footprint belongs to the building it replaced |
+| 9435 Modular Offices | 8.5 m (GIS record) | **3.7 m** | trailer banks on a two-storey default; p50 3.6 → p98 3.8 |
+| Stuart Collection Storage | 8.5 m (GIS record) | **4.4 m** | a shed on the same default |
+| VA plant building (unnamed) | 12 m (area guess) | **9.7 m** | p98 9.7 under one 33.6 flier |
+| Modular by the 9435 banks (unnamed) | 4.5 m (area guess) | **3.8 m** | p50 3.8 = p98 3.9 |
+
+The rejections: Viterbi's 18 m is a documented Street-View floor estimate, not a guess — the
+flight saw its site empty and must stay silent. The Jacobs Bed Tower keeps 61.2 m: it topped
+out in 2013, so that IS its 2014 plane, and the proposed Atkinson-style carve dies on the
+re-sample (minus the tower there is no plane at all — the "wings" are the tower's own
+setbacks). The trolley platforms and the Warren Field House are post-2014 records working as
+designed; the fieldhouse site's zero returns are the epoch rule being right, not an empty
+site. Withheld, better absent than wrong: the Utilities Expansion, Anne Ratner's stepped roof,
+the Mesa 9242/9240 pair under Mesa Nueva tower bleed, and one small VA structure whose returns
+are three-quarters neighbour. Eye-level verification photographed all 26 touched or judged
+sites; every rendered roof probe matches its shipped height exactly.
+
 ### The colours, measured off footage
 
 Satellite imagery sees roofs and ground; it cannot see a wall, a tree trunk, or the sky. For
