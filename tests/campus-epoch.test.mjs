@@ -3503,3 +3503,83 @@ describe("campus epoch — r2c0 pass-3 Poole Street residual (2026-08-05)", () =
       "osm:1120 keeps its declared guess");
   });
 });
+
+describe("campus epoch — r2c1 pass-3 Villa La Jolla / Residence Inn residual (2026-08-05)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("Villa La Jolla east apartment connectors ship their ~9–10 m planes", () => {
+    /* Independent full-depth EPT re-derived. Shared ~9–10 m 2014 plane
+       under the 4.5 shed default — Boardwalk 518 / Village Square
+       under-tag class continuing east onto Villa La Jolla / Morning Way.
+       Apple: finished multi-unit brown/charcoal gabled roofs + pool/
+       tennis fabric standing today, no crane. Heights are the build's
+       own rimBase tiling. Soft siblings (gap ≤1.1, bodyTight) join the
+       strict one-plane exemplars 642 / 649 / 651 under the same rule. */
+    for (const [i, h] of [
+      [632, 9.8], [633, 10.0], [635, 10.3], [636, 10.0], [637, 10.2],
+      [638, 10.0], [639, 10.1], [640, 10.2], [642, 10.0], [643, 10.1],
+      [645, 10.4], [646, 10.4], [647, 10.1], [648, 10.4], [649, 10.5],
+      [650, 10.3], [651, 10.2],
+    ]) {
+      assert.equal(LIDAR.osmHeights?.[i], h, `osm:${i}'s plane`);
+      const [cx, cz] = centroidOf(CAMPUS.buildings[i].p);
+      assert.equal(rendersNear(cx, cz, 4).find((r) => r.src === "osm")?.h, h,
+        `osm:${i} renders at its plane`);
+    }
+  });
+
+  test("Evening Way pads ship their measured planes", () => {
+    /* 600: Nominatim 3139 Evening Way; 601 soft sibling on the same
+       strip. Clean p98 (gap ≤0.7, bodyTight) against a 4.5 shed.
+       Apple: finished tan hipped apartment roofs + kidney pool today. */
+    for (const [i, h] of [[600, 8.6], [601, 8.5]]) {
+      assert.equal(LIDAR.osmHeights?.[i], h, `osm:${i}'s plane`);
+      const [cx, cz] = centroidOf(CAMPUS.buildings[i].p);
+      assert.equal(rendersNear(cx, cz, 4).find((r) => r.src === "osm")?.h, h,
+        `osm:${i} renders at its plane`);
+    }
+  });
+
+  test("Residence Inn residual connectors ship beside already-admitted 548–550", () => {
+    /* Same stepped hist as pass-2's 548 / 549 / 550 (dense2 ~0.43–0.46,
+       gap ≤2 under the thin-shelf cut, bodyTight). roofOf returns p98
+       ≈9.4–10.2 — matching the named Residence Inn host at 10.5. Apple:
+       finished dark-hipped complex + courtyard pool today. Was 4.5 shed. */
+    assert.equal(LIDAR.heights["Residence Inn"], 10.5);
+    for (const [i, h] of [
+      [548, 9.9], [549, 10.0], [550, 10.0],
+      [553, 9.8], [554, 9.9], [555, 10.2],
+      [560, 9.9], [561, 9.5], [562, 9.4],
+    ]) {
+      assert.equal(LIDAR.osmHeights?.[i], h, `osm:${i}'s plane`);
+      const [cx, cz] = centroidOf(CAMPUS.buildings[i].p);
+      assert.equal(rendersNear(cx, cz, 4).find((r) => r.src === "osm")?.h, h,
+        `osm:${i} renders at its plane`);
+    }
+  });
+
+  test("La Jolla Scenic and Robinhood pads ship their measured low planes", () => {
+    /* 1239: Nominatim 8946 La Jolla Scenic Drive North. Clean p98 4.2
+       (dense2 ≥90% in 2–3 m, bodyTight, gap 0.4) against a 9 m area
+       guess. Epoch risk noted — Apple shows finished courtyard fabric
+       today — but the 2014 sample is a single dominant low plane, not a
+       courtyard-floor smear. 1305: Nominatim 8835 Robinhood Lane.
+       Clean p98 5.4 (bimodal 3/5 ridge hist inside one epoch, gap 0);
+       Apple finished 1–2 storey houses with solar. Was 9 over-guess. */
+    for (const [i, h] of [[1239, 4.2], [1305, 5.4]]) {
+      assert.equal(LIDAR.osmHeights?.[i], h, `osm:${i}'s plane`);
+      const [cx, cz] = centroidOf(CAMPUS.buildings[i].p);
+      assert.equal(rendersNear(cx, cz, 4).find((r) => r.src === "osm")?.h, h,
+        `osm:${i} renders at its plane`);
+    }
+  });
+});

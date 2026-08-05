@@ -1536,3 +1536,82 @@ and the shipped data. Strict one-plane filter re-applied per sample
   handoffs from pass 2 stand unchanged — not in this screen.
 - **Thin-shelf cut**: Hubbs at 80.2% stays a near-miss under 85% — do not
   lower the floor.
+
+---
+
+# FINDINGS — run `2026-08-05_033905` · shard r2c1 (pass 3)
+
+Pass 3 of the theatre-district / Boardwalk / Villa La Jolla / Residence Inn /
+Evening Way / Robinhood fringe shard. Screen: 9 candidates (7 high / 2 medium).
+Judged by `cursor-grok-4.5-high`.
+
+Every candidate in `pass3-r2c1.screen.json` was re-derived before judgement with
+an independent full-depth targeted EPT re-sample (30 targets in
+`.cache/gauntlet-r2c1-p3/judge/reprobe.*`). Residence Inn / Evening Way /
+1239 / 1305 / 639 / 643 point counts matched the screener's
+`/tmp/gauntlet-r2c1-p3/probe.json` exactly; denser villa-east rings returned
+more leaf points than the screener's sample but the same ~9–10 m bodyTight
+plane (build rimBase tiling ships that plane). Apple snapshots from the
+screener's `/tmp/gauntlet-r2c1-p3/apple/` (copied to
+`.cache/gauntlet-r2c1-p3/evidence/`). Thin-shelf / canopy-guard arithmetic
+re-computed per sample from each mass's histogram.
+
+### Fixed — heights (class admission, not a one-row patch)
+
+| Entity | Was shipping | Now ships | Source | Test |
+|---|---|---|---|---|
+| osm:632–651 seventeen pads (`villa-east-4.5-underheight-class` + exemplars 642/649/651) | 4.5 | **9.8–10.5** | Shared ~9–10 m 2014 plane; Boardwalk / Village Square under-tag class continuing east onto Villa La Jolla / Morning Way. Soft siblings (gap ≤1.1, bodyTight) join the strict one-plane filter — do not require dense≥50 single-bin when gap≤2 already returns clean p98. | epoch r2c1 pass-3 |
+| osm:600 / 601 (`osm-600-underheight` + sibling) | 4.5 | **8.6 / 8.5** | Clean p98 (Nominatim 3139 Evening Way); Apple finished tan hipped roofs + pool | epoch r2c1 pass-3 |
+| osm:553 / 554 / 555 / 560 / 561 / 562 (`residence-inn-connectors-residual`) | 4.5 | **9.4–10.2** | Same stepped hist as already-admitted 548/549/550 (dense2 ~0.43–0.46, gap ≤2); host lidarH 10.5 | epoch r2c1 pass-3 |
+| osm:1239 (`osm-1239-overheight`) | 9 | **4.2** | Clean p98 (dense2 ≥90% in 2–3 m, bodyTight, gap 0.4); Nominatim 8946 La Jolla Scenic Drive North | epoch r2c1 pass-3 |
+| osm:1305 (`osm-1305-overheight`) | 9 | **5.4** | Clean p98 (bimodal 3/5 ridge hist inside one epoch, gap 0); Nominatim 8835 Robinhood Lane | epoch r2c1 pass-3 |
+
+Class change: seventeen Villa La Jolla east apartment connectors + two Evening
+Way pads + six Residence Inn residual connectors join `OSM_UNNAMED_VERIFIED`
+under the same Boardwalk / Village Square under-tag rule (518 / 103 / 334 /
+548). Two west-fringe residential over-guesses join the measured-plane path.
+
+### Withheld (better absent than wrong)
+
+None this pass — every high/medium height candidate that cleared bodyTight +
+gap≤2 admitted under the existing class rule. Prior pass-2 withholds
+(520 / 1218 / 1339 / 656 / 658 / 661) stand unchanged and were not re-opened.
+
+### Rejected candidates (each re-measured before rejection; do not re-find these)
+
+- **`unnamed-guess-residual`** — REJECTED as scoped, same verdict as every
+  prior pass: the mechanism exists and this pass used it for twenty-seven
+  admissions; remaining ~300 in-shard unnamed guesses need per-ring Apple +
+  EPT, not a blanket admit. Named landmarks in-box (Forum / Theatre / Wagner /
+  Potiker / Shank / Rita / Residence Inn / Nordstrom / Union Bank / UC Cyclery /
+  Urban Plates / Health / Extended Studies / Mobil / CRS / James / Che /
+  LaurelExt) re-checked at |ship−roofOf|≤1.0 or already-pinned thin-shelf /
+  stepped / canopy cases — no new named height bug at the storey bar.
+- **`osm-1239-overheight` epoch-risk clause** — ACKNOWLEDGED and ADMITTED,
+  not rejected: Apple shows finished courtyard fabric today, but the 2014
+  sample is a single dominant low plane (dense2 ≥90%, bodyTight), not a
+  courtyard-floor smear. The 9 m area guess is the error; the measured 4.2 m
+  plane ships.
+
+### Handoffs / observations
+
+- **Remaining unnamed guesses in-box**: still ~300 after this pass's
+  twenty-seven admissions. Batch Apple+EPT verification remains the right
+  shape; do not blanket-admit.
+- **South-apron terrain OOB** (656 / 658 / 661) and **roof-anchor / grade-span**
+  (CRS span 4.6 m) handoffs from pass 2 stand unchanged — not in this screen.
+- **Thin-shelf cut**: prior near-misses (520 at dense 69.5%, etc.) stand —
+  do not lower the floor. Soft villa-east siblings cleared via gap≤2 / clean
+  p98, not by retuning the 85% dense cut.
+- **Screener vs judge leaf depth**: denser villa-east rings returned more
+  leaf points under a full hierarchy walk than the screener's sample; relative
+  planes agreed. Heights pinned are the trial full-rebuild's rimBase for
+  these 27 indices only (matched the independent re-probe within 0.1).
+- **Full-rebuild drift (do not re-run casually)**: a trial `npm run build:lidar`
+  after adding the Set entries also moved named heights by metres (Union Bank
+  8→5.3, Copley 10.2→6.4, Stewart Commons 10→7.5, osm:453 19.9→16.2, osm:522
+  8.8→10.6). That is not tenths-of-a-metre pin noise — shipping it would
+  silently undo prior measured planes. HEAD `campus-lidar.json` was restored
+  and only the 27 new `osmHeights` keys were patched in. Next agent who must
+  full-rebuild needs to diagnose the EPT/tile non-determinism (or shared-point
+  assignment) before re-pinning campus-wide.

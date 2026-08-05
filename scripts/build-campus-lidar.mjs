@@ -934,6 +934,47 @@ const OSM_UNNAMED_VERIFIED = new Set([
        Remaining ~100 in-shard unnamed guesses: per-ring Apple+EPT
              handoff, not a blanket admit. */
   1105,
+  /* r2c1 pass-3 re-sweep 2026-08-05 — Villa La Jolla east / Morning Way
+     apartment connectors + Evening Way pads + Residence Inn residual +
+     two La Jolla Scenic / Robinhood over-guesses. Independent full-depth
+     EPT re-derived (Residence Inn / Evening Way / 1239 / 1305 / 639 /
+     643 point counts matched the screener exactly; denser villa-east
+     rings returned more leaf points than the screener's sample but the
+     same ~9–10 m bodyTight plane). Apple currency confirmed finished
+     multi-unit / hotel / residential roofs + pool/tennis fabric today,
+     no crane. Heights below are the build's own rimBase tiling:
+       Villa La Jolla east under-tags (was 4.5 shed under a shared ~9–10 m
+       2014 plane — Boardwalk 518 / Village Square under-tag class):
+         632 / 633 / 635 / 636 / 637 / 638 / 639 / 640 / 642 / 643 /
+         645 / 646 / 647 / 648 / 649 / 650 / 651
+         Strict one-plane exemplars 642 / 649 / 651 (Nominatim 8746 /
+         8720 Villa La Jolla Drive); soft siblings same strip (gap ≤1.1,
+         bodyTight) join under the same rule — do not require dense≥50
+         single-bin when gap≤2 already returns clean p98.
+       Evening Way periphery (was 4.5; Nominatim 3139 Evening Way):
+         600 / 601 — clean p98 beside the Residence Inn strip.
+       Residence Inn residual connectors beside already-admitted
+       548 / 549 / 550 (host lidarH 10.5) — same stepped hist, gap ≤2
+       under the thin-shelf cut, bodyTight:
+         553 / 554 / 555 / 560 / 561 / 562
+       Over-guess residential pads (was 9 area guess):
+         1239: clean p98 ~4 (dense2 ≥90% in 2–3 m; Nominatim 8946 La
+               Jolla Scenic Drive North). Epoch risk noted (Apple shows
+               finished courtyard fabric today) but the 2014 sample is a
+               single dominant low plane, not a courtyard-floor smear —
+               bodyTight + dense2 ≥0.90. Admit the measured plane.
+         1305: clean p98 ~5.3 (bimodal 3/5 ridge hist inside one epoch;
+               Nominatim 8835 Robinhood Lane). Apple finished 1–2 storey
+               houses with solar; 5.3 matches that reading better than 9.
+     Deliberately NOT admitted this pass:
+       Remaining ~300 in-shard unnamed guesses: per-ring Apple+EPT
+             handoff, not a blanket admit (same scoped residual verdict
+             as every prior pass). */
+  632, 633, 635, 636, 637, 638, 639, 640, 642, 643,
+  645, 646, 647, 648, 649, 650, 651,
+  600, 601,
+  553, 554, 555, 560, 561, 562,
+  1239, 1305,
 ]);
 
 /* Hand-audited stats where the automatic roofOf() percentile choice is

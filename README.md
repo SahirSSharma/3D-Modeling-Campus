@@ -793,6 +793,25 @@ pts (Vaughan / Ritter apron class). Mobil Mart strip 805 / 806 — clean planes 
 5.1. CRS — shipped 17.5 within 0.8 of roofOf 18.3; residual is a 4.6 m grade span
 (Voigt / roof-anchor renderer handoff).
 
+**The theatre-district / Villa La Jolla east pass-3 (2026-08-05, r2c1).** Fresh screen
+of 9 candidates (7 high / 2 medium). Every height re-derived from an independent
+full-depth EPT (Residence Inn / Evening Way / 1239 / 1305 / 639 / 643 point counts
+matched the screener exactly; denser villa-east rings returned more leaf points than
+the screener's sample but the same ~9–10 m bodyTight plane); Apple currency
+re-checked per site — finished Villa La Jolla / Morning Way apartment roofs,
+Residence Inn courtyard pool, La Jolla Scenic / Robinhood residential fabric, no crane.
+
+| Entity | Was shipping | Now ships | Why |
+|---|---|---|---|
+| Villa La Jolla east connectors (unnamed, osm:632–651 seventeen pads) | 4.5 m shed default | **9.8–10.5 m** | Shared ~9–10 m 2014 plane continuing the Boardwalk under-tag class east onto Villa La Jolla / Morning Way. Soft siblings (gap ≤1.1, bodyTight) join the strict exemplars 642 / 649 / 651. |
+| Evening Way pads (unnamed, osm:600 / 601) | 4.5 m shed default | **8.6 / 8.5 m** | Clean p98 (Nominatim 3139 Evening Way); Apple finished tan hipped roofs + pool. |
+| Residence Inn residual (unnamed, osm:553–562 six pads) | 4.5 m shed default | **9.4–10.2 m** | Same stepped hist as already-admitted 548 / 549 / 550; roofOf matches the host at 10.5. |
+| 8946 La Jolla Scenic (unnamed, osm:1239) | 9 m area guess | **4.2 m** | Clean p98 (dense2 ≥90% in 2–3 m, bodyTight). Epoch risk noted (Apple courtyard fabric today) but the 2014 sample is a single dominant low plane, not a courtyard-floor smear. |
+| 8835 Robinhood Lane (unnamed, osm:1305) | 9 m area guess | **5.4 m** | Clean p98 (bimodal 3/5 ridge hist inside one epoch); Apple finished 1–2 storey houses with solar. |
+
+Rejected as scoped: remaining ~300 in-shard unnamed guesses — mechanism used for
+twenty-seven admissions this pass; blanket admit still needs per-ring Apple + EPT.
+
 **The theatre-district / Village Square re-sweep (2026-08-05, r2c1).** Fresh screen of 9
 candidates (3 high / 5 medium / 1 low). Every height re-derived from an independent
 full-depth EPT (point counts matched the screener's 1,757 / 1,362 / 2,134 / … exactly);
