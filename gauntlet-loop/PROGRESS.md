@@ -1,8 +1,8 @@
 # Gauntlet progress
 
-_Generated 8/5/2026, 16:30:01 — refreshes every 30 min while the driver is up._
+_Generated 8/5/2026, 16:49:50 — refreshes every 30 min while the driver is up._
 
-**Driver:** ⚫️ not running   ·   **Run:** `2026-08-05_033905`   ·   **HEAD:** `c841df2` (55 commits ahead of `origin/main`, unpushed)   ·   **Push guard:** 🔒 armed
+**Driver:** ⚫️ not running   ·   **Run:** `2026-08-05_033905`   ·   **HEAD:** `e041e86` (56 commits ahead of `origin/main`, unpushed)   ·   **Push guard:** 🔒 armed
 
 ## Pass 1 — every shard swept once
 
@@ -45,16 +45,17 @@ The driver runs the pass-1 tail, then `--until-clean --max-passes 3`. A clean sw
 
 | outcome | what happens | remaining | done by |
 |---|---|---|---|
-| **best** | pass-1 tail, then one sweep changes nothing | 4h08m | Wed 20:38 |
-| **likely** | pass-1 tail, one fixing sweep, one clean sweep | 8h16m | Thu 00:46 |
-| **worst** | pass-1 tail, then all 3 passes, never converges | 12h24m | Thu 04:54 |
+| **best** | pass-1 tail, then one sweep changes nothing | 4h08m | Wed 20:57 |
+| **likely** | pass-1 tail, one fixing sweep, one clean sweep | 8h16m | Thu 01:05 |
+| **worst** | pass-1 tail, then all 3 passes, never converges | 12h24m | Thu 05:13 |
 
 One full 9-shard sweep is **4h08m** at the fitted rate.
 
 ## What landed
 
-55 commits ahead of `origin/main`, none pushed:
+56 commits ahead of `origin/main`, none pushed:
 
+- `e041e86` 16:49 — Retire 331 unnamed buildings from guesses to measurements, by rule
 - `c841df2` 16:27 — One definition of how tall a roof is, and withdraw nine overrides pinned on a false premise
 - `50a0b28` 12:48 — Make campus-lidar.json reproduce from its builder, and gate it so it stays that way
 - `c650d53` 11:39 — Gauntlet r2c2 pass-3: Nobel/Lebon residual, Lebon-south, Sheraton-strip, UCL courtyard
@@ -151,7 +152,7 @@ One full 9-shard sweep is **4h08m** at the fitted rate.
 | | milestone | where it stands |
 |---|---|---|
 | ✅ | Data reproduces from its builders | `npm run check` rebuilds and compares; drift exits 1. Judgements the measurement cannot make live in `MEASURED_OVERRIDES` with their evidence. |
-| ⬜ | Unnamed buildings measured, not guessed | **273 of 1050** measured · **777 still extruded from a flat area guess**. This is the biggest thing a person walking the campus would see, and the loop retires it 6–8 per pass. |
+| ⬜ | Unnamed buildings measured, not guessed | **604 of 1050** measured · **446 still extruded from a flat area guess**. This is the biggest thing a person walking the campus would see, and the loop retires it 6–8 per pass. |
 | ⬜ | A gauntlet pass finds nothing | pass 3 closed with **36 finding(s)** across 9/9 shards. Two mechanisms guarantee a non-empty pass: the curated epoch name-lists and the unnamed backlog above are both retired one building at a time. |
 | 🔸 | Independent panel passes (4 families) | not run |
 | ⬜ | Sahir walks it and signs off | the campus is judged by eye, at eye level — no gate substitutes for this |

@@ -78,3 +78,23 @@ judge needs to allocate its attention, and it costs real money.
 
 Your final message should be a short summary: how many candidates by severity, and
 anything the judge should look at first. The JSON file is the real deliverable.
+
+## Measure with the shared rule
+
+If you probe the point cloud, import from `scripts/lib/roof-measure.mjs` — do not
+retype `roofOf`. 25 of the 37 hand-written copies found in `.cache/` on
+2026-08-05 were missing the thin-shelf branch and reported mechanical plant as
+roof. Pass `base`; without it that rule cannot fire. Use `explainRoof` and report
+which rule fired.
+
+## Do not re-find the retired backlog
+
+Unnamed rings that read as one plane are now admitted automatically by
+`statisticallyAdmissible` — 331 of them landed on 2026-08-05. Screening a ring
+that already ships a measured plane is wasted effort; check `osmHeights` first.
+
+The rings still on guesses that are WORTH flagging are the ones the gate cannot
+resolve: **280 rings whose returns spread more than 1.2 m** between body and top.
+Those are stepped or multi-plane roofs, and imagery answers them in seconds where
+statistics cannot. Flag those. `OSM_WITHHELD` rings were already refused by a
+judge — do not re-file them without new evidence.
