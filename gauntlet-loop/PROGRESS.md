@@ -1,8 +1,8 @@
 # Gauntlet progress
 
-_Generated 8/5/2026, 03:42:03 — refreshes every 30 min while the driver is up._
+_Generated 8/5/2026, 04:25:23 — refreshes every 30 min while the driver is up._
 
-**Driver:** 🟢 running   ·   **Run:** `2026-08-05_033905`   ·   **HEAD:** `744e49d` (24 commits ahead of `origin/main`, unpushed)   ·   **Push guard:** 🔒 armed
+**Driver:** 🟢 running   ·   **Run:** `2026-08-05_033905`   ·   **HEAD:** `3166d5c` (27 commits ahead of `origin/main`, unpushed)   ·   **Push guard:** 🔒 armed
 
 ## Pass 1 — every shard swept once
 
@@ -11,17 +11,17 @@ shards  ████████████████████████
 work    ████████████████████████████  100%   1395/1395 buildings
 ```
 
-**Every shard swept.** The loop is now re-sweeping until a pass changes nothing — currently back on `r0c0`.
+**Every shard swept.** The loop is now re-sweeping until a pass changes nothing — currently back on `r0c2`.
 
 ## Now
 
 ```
-pass 1  shard r0c0 (103 buildings)
-elapsed █···························  4%   3m of ~1h22m est
+pass 1  shard r0c2 (62 buildings)
+elapsed ▊···························  3%   2m of ~52m est
 ```
 
-- phase: **screening (Grok, Cursor Models pool)** — 3m in this phase
-- shard started 03:39:05
+- phase: **screening (Grok, Cursor Models pool)** — 2m in this phase
+- shard started 04:23:49
 
 ## Budget
 
@@ -46,16 +46,19 @@ The driver runs the pass-1 tail, then `--until-clean --max-passes 3`. A clean sw
 
 | outcome | what happens | remaining | done by |
 |---|---|---|---|
-| **best** | pass-1 tail, then one sweep changes nothing | 12h18m | Wed 16:00 |
-| **likely** | pass-1 tail, one fixing sweep, one clean sweep | 24h36m | Thu 04:18 |
-| **worst** | pass-1 tail, then all 3 passes, never converges | 36h55m | Thu 16:36 |
+| **best** | pass-1 tail, then one sweep changes nothing | 9h29m | Wed 13:54 |
+| **likely** | pass-1 tail, one fixing sweep, one clean sweep | 18h57m | Wed 23:22 |
+| **worst** | pass-1 tail, then all 3 passes, never converges | 28h26m | Thu 08:51 |
 
-One full 9-shard sweep is **12h18m** at the fitted rate.
+One full 9-shard sweep is **9h29m** at the fitted rate.
 
 ## What landed
 
-24 commits ahead of `origin/main`, none pushed:
+27 commits ahead of `origin/main`, none pushed:
 
+- `3166d5c` 04:23 — Gauntlet r0c1 re-sweep: Asante's meeting rooms shed a thin shelf the 5 m guard missed
+- `144e487` 04:00 — Gauntlet r0c0 re-sweep: six unnamed NW roofs get measured, and Marshall Res V sheds its L3 default
+- `a604d6a` 03:42 — Report coverage, free sweeps, and quota drift honestly once pass 1 finished
 - `744e49d` 03:38 — Gauntlet r2c2 judged: the Hyatt stops pasting its tower onto the podium, and seven east-of-I-5 roofs get measured
 - `08482f5` 03:13 — Gauntlet r2c0 judged: buildings on the survey's west edge get whole-ring heights and the rebuilt Scripps shore leaves 2014
 - `3bbaba1` 01:18 — Report the budget the router is actually using, not the pool it stopped reading
@@ -81,31 +84,39 @@ One full 9-shard sweep is **12h18m** at the fitted rate.
 - `5fd6586` 14:14 — Run the gauntlet on Cursor: shard the campus, ban the deploy
 - `d3ba85b` 14:08 — Gauntlet loop: Apple decides what is there, LiDAR decides how tall
 
+**2 shards judged without Fable** — these carry less judgement than the rest and should be re-audited first:
+
+- pass 1 `r0c0` — judged by `cursor-grok-4.5-high` (tier 1, 4/5/0)
+- pass 1 `r0c1` — judged by `cursor-grok-4.5-high` (tier 1, 1/4/2)
+
+## ⚠️ Ledger integrity
+
+**1 row not written by the driver.** The duration column does not match the driver's format, which means an agent edited the ledger it was told not to touch. Not parsed, not counted, not fed to the fit:
+
+- `2026-08-05_033905` — `| 1 | r0c0 | 3 | cursor-grok-4.5-high | 4/5/0 | cursor-grok-4.5-high | dd7caa8 | ~25m |`
+
 ## Per-shard
 
 | shard | buildings | pass 1 | tier | screen h/m/l | judge | commit | actual | fitted |
 |---|---:|---|---|---|---|---|---:|---:|
-| `r0c0` | 103 | **screen** (re-sweep) | — | — | `claude-fable-5-thinking-max` | — | 53m | 1h22m |
-| `r0c1` | 84 | done · 161701 run | — | — | `claude-fable-5-thinking-max` | — | 54m | 1h22m |
-| `r0c2` | 62 | done · 161701 run | — | — | `claude-fable-5-thinking-max` | — | 51m | 1h22m |
-| `r1c0` | 140 | done · 161701 run | — | — | `claude-fable-5-thinking-max` | — | 1h52m | 1h22m |
-| `r1c1` | 162 | done · 204721 run | 1 | 3/8/1 | `claude-fable-5-thinking-max` | `1147a4a` | 1h11m | 1h22m |
-| `r1c2` | 97 | done · 204721 run | 1 | 3/10/4 | `claude-fable-5-thinking-max` | `550448f` | 1h53m | 1h22m |
-| `r2c0` | 182 | done · 235219 run | 1 | 5/4/1 | `claude-fable-5-thinking-max` | `08482f5` | 1h59m | 1h22m |
-| `r2c1` | 400 | done · 235219 run | 1 | 5/5/1 | `claude-fable-5-thinking-max` | `7c3872f` | 1h24m | 1h22m |
-| `r2c2` | 165 | done · 235219 run | 3 | 6/8/1 | `cursor-grok-4.5-high` | `744e49d` | 24m | 1h22m |
+| `r0c0` | 103 | done | 1 | 4/5/0 | `cursor-grok-4.5-high` | `144e487` | 22m | 57m |
+| `r0c1` | 84 | done | 1 | 1/4/2 | `cursor-grok-4.5-high` | `3166d5c` | 22m | 55m |
+| `r0c2` | 62 | **screen** (re-sweep) | — | — | `claude-fable-5-thinking-max` | — | 51m | 52m |
+| `r1c0` | 140 | done · 161701 run | — | — | `claude-fable-5-thinking-max` | — | 1h52m | 1h01m |
+| `r1c1` | 162 | done · 204721 run | 1 | 3/8/1 | `claude-fable-5-thinking-max` | `1147a4a` | 1h11m | 1h04m |
+| `r1c2` | 97 | done · 204721 run | 1 | 3/10/4 | `claude-fable-5-thinking-max` | `550448f` | 1h53m | 56m |
+| `r2c0` | 182 | done · 235219 run | 1 | 5/4/1 | `claude-fable-5-thinking-max` | `08482f5` | 1h59m | 1h06m |
+| `r2c1` | 400 | done · 235219 run | 1 | 5/5/1 | `claude-fable-5-thinking-max` | `7c3872f` | 1h24m | 1h32m |
+| `r2c2` | 165 | done · 235219 run | 3 | 6/8/1 | `cursor-grok-4.5-high` | `744e49d` | 24m | 1h04m |
 
 ## How these numbers were made
 
-Fitted over **5 finished shards** from routed (screen+judge) shards:
+Fitted over **7 finished shards** from routed (screen+judge) shards:
 
 ```
-minutes ≈ 82, flat
-typical miss: ±34 min
+minutes ≈ 45.1 + 0.117 × buildings
+typical miss: ±38 min
 ```
 
-**Building count stopped predicting duration.** It did under the single-agent driver — 62 buildings took 51m, 140 took 1h52m. Under routing the regression goes flat or negative: r2c1's **400** buildings finished in **1h24m** while r1c2's **97** took **1h53m**. The screen is bounded by what a screener will look at and the judge by how many candidates it was handed, and neither scales with footprint count. So the estimate is a flat mean, which is the honest shape of the data rather than a slope fitted through noise.
-
-⚠️ 5 samples is a thin fit. Treat the ETAs as an order of magnitude, not a schedule — they tighten with every shard that lands.
 
 Everything above is read from files the driver already writes — `STATUS.md`, `shards.json`, `route-driver.log`, prompt-file mtimes, `.quota`, and `git`. Nothing here is a claim the driver did not make. Where a value could not be derived it shows `—` rather than a guess.

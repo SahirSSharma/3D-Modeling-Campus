@@ -60,6 +60,12 @@ candidate is a result — it stops the next pass from re-finding the same non-is
 
 ## Hard prohibitions
 
+- **Never write `STATUS.md` or `REAUDIT.md`.** Those are the driver's bookkeeping
+  and it appends your row itself, with the real duration and the real commit, the
+  moment you exit. A previous agent wrote its own row: it invented a duration
+  (`~25m`) it had no way to measure, and cited a commit SHA that stopped existing
+  when it amended — so the run's own ledger pointed at nothing. `FINDINGS.md` is
+  yours to append. The ledger is not.
 - **No push. No deploy.** Shipping is Sahir's call, and a pre-push hook is armed
   against you for the duration of this run.
 - No gate loosening, no test deletion, no tolerance widening.

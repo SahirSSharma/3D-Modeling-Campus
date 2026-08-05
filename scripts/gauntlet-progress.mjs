@@ -47,6 +47,7 @@ const clock = (ms) => new Date(ms).toLocaleTimeString("en-US", { hour12: false }
    `| pass | shard | started | exit | duration | log |` and the routed driver
    writes `| pass | shard | tier | screen | h/m/l | judge | commit | duration |`.
    Both are real history and both feed the fit, so parse by column count. */
+const suspect = [];
 function parseStatus(dir) {
   const txt = read(path.join(dir, "STATUS.md"));
   if (!txt) return null;
@@ -59,8 +60,16 @@ function parseStatus(dir) {
     /* Find the duration by shape, not by column index. The old driver put it at
        index 4 with the log filename last; the routed driver puts it last. Keying
        on position silently parsed zero rows out of the old runs. */
+    /* The driver writes durations as `%dm%02ds`. Anything else in that column
+       was written by an agent editing the ledger it was told not to touch —
+       one wrote `~25m`, a figure it had no way to measure. Those rows are
+       recorded as suspect rather than parsed, because a fabricated duration
+       would feed the fit and a fabricated SHA would be reported as landed. */
     const dur = f.map((v) => v.match(/^(\d+)m(\d+)s$/)).find(Boolean);
-    if (!dur) continue;
+    if (!dur) {
+      if (/^\d+$/.test(f[0])) suspect.push({ run: path.basename(dir), row: c });
+      continue;
+    }
     rows.push({
       pass: +f[0], shard: f[1], routed, run: path.basename(dir),
       minutes: +dur[1] + +dur[2] / 60,
@@ -388,6 +397,29 @@ if (reaudit.length) {
   L.push("");
   for (const r of reaudit) L.push(r);
   L.push("");
+}
+
+/* A ledger nobody audits is a ledger that can quietly stop being true. Two
+   failures have actually happened: an agent writing its own row, and that row
+   citing a SHA that vanished when the agent amended. Both are cheap to detect
+   and expensive to discover later. */
+const reachable = new Set(sh("git log --format=%h -400").split("\n").filter(Boolean));
+const dangling = runs.flatMap((r) => r.rows)
+  .filter((r) => r.commit && r.commit !== "none" && !reachable.has(r.commit))
+  .map((r) => `\`${r.commit}\` (${r.shard}, ${r.run})`);
+if (suspect.length || dangling.length) {
+  L.push(`## ⚠️ Ledger integrity`);
+  L.push("");
+  if (suspect.length) {
+    L.push(`**${suspect.length} row${suspect.length === 1 ? "" : "s"} not written by the driver.** The duration column does not match the driver's format, which means an agent edited the ledger it was told not to touch. Not parsed, not counted, not fed to the fit:`);
+    L.push("");
+    for (const s of suspect) L.push(`- \`${s.run}\` — \`${s.row}\``);
+    L.push("");
+  }
+  if (dangling.length) {
+    L.push(`**${dangling.length} commit${dangling.length === 1 ? "" : "s"} cited in the ledger no longer exist**, typically because an agent amended after writing the row: ${dangling.join(", ")}. The work may still be present under a different SHA — check the shard's real row before concluding anything was lost.`);
+    L.push("");
+  }
 }
 
 L.push(`## Per-shard`);
