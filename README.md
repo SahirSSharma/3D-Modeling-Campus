@@ -663,6 +663,25 @@ dual-plane residential (Sanford class), roofOf stands. Perlman — dense 82.8%, 
 85% cut; shelf stays. Pepper Canyon / Foodworx tennis + pickleball courts — painted on
 Apple, unfitted until registration passes the 0.6 m gate (Muir pickleball class).
 
+**The health-campus / Pepper Canyon pass-2 (2026-08-05, r1c2).** Same shard, second decide
+pass. Fresh screen of 10 candidates (1 high / 5 medium / 4 low). Every claim re-derived
+from the screener's full-depth EPT (`/tmp/gauntlet-r1c2-p2/probe.json`; point counts taken
+as the re-measurement); Apple currency re-checked per site.
+
+| Entity | Was shipping | Now ships | Why |
+|---|---|---|---|
+| Foodworx west patio (unnamed, osm:834) | 4.5 m OSM area guess | **removed** | Twin of the GIS Dining Room already dropped by `NO_SOLID_ROOF`: 1,055 returns, 90.7% at grade; Apple shows patio umbrellas, not a dining-room box. `skipOsmAnchors` at the pad. |
+| Triton Stadium / Triton Clubhouse | 4.3 m GIS L1 (unchallenged) | **4.3 m, epoch-listed** | Ballpark renovation broke ground 2014-09-25; permanent grandstand + Marye Anne Fox Clubhouse opened 2015. Stadium ring 80% at grade (224 pts); Clubhouse 27 pts. Join `POST_2014_SITES` — Warren Field House class; do not admit the 5 m shelf. |
+| Thornton Supplemental Storage | 4.3 m GIS L1 | **2.6 m** | Hostless shed; 342 returns, clean p98 2.6. `PRE_2014_GIS_VERIFIED`. |
+| Medical Center Switching Station | 4.3 m GIS L1 | **5.4 m** | Hostless utility roof; 1,629 returns, clean p98 5.4. Same class. |
+
+Rejected / withheld, each re-measured: Campus Emergency Services and CSC Building A — dense
+bodies ~4.5 under massHeights 6.5, but gaps 2.0 / 1.7 sit under the >2 thin-shelf cut
+(CSC-D near-miss family); do not retune. Administration Building — gap 1.4 under the cut;
+roofOf 13.2 stands. osm:465 Mesa Nueva edge — 43 pts at grade against post-2014 fabric;
+guess stands. Pepper Canyon tennis + pickleball still unfitted (Apple registration).
+CPP East roof-anchor Δ +3.4 m remains a renderer handoff.
+
 **The Scripps / Shores re-sweep (2026-08-05, r2c0).** Fresh screen of 11 candidates
 (3 high / 8 medium). Every height re-derived from an independent full-depth EPT
 (point counts matched the screener's 3,113 / 2,192 / 2,873 / … exactly); Apple

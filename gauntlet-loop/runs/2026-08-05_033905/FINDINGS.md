@@ -914,3 +914,79 @@ and Nominatim reverse at the four unnamed amenity centroids.
 - **Nested-plaza rule**: campus-wide only PCWest hit today; next full
   `build:arcgis` applies the filter to every mass. This pass spliced the
   seven in-file pads after re-deriving coverage per sample.
+
+---
+
+# FINDINGS — run `2026-08-05_033905` · shard r1c2 (pass 2)
+
+Pass 2 of the health-campus / Pepper Canyon / One Miramar east shard.
+Screen: 10 candidates (1 high / 5 medium / 4 low). Judged by `cursor-grok-4.5-high`.
+
+Every candidate in `pass2-r1c2.screen.json` was re-derived before judgement against
+the screener's full-depth EPT (`/tmp/gauntlet-r1c2-p2/probe.json` — copied to
+`.cache/gauntlet-r1c2-p2/judge/`; point counts taken as the re-measurement:
+osm:834 1,055 / CES 3,329 / CSC-A 3,502 / TritonStad 224 / TritonClub 27 /
+Admin 6,228 / MedSwitch 1,629 / ThorntonStore 342 / CPP-East 20,177 /
+osm:465 43), Apple snapshots in `/tmp/gauntlet-r1c2-p2/apple/` (copied to
+`.cache/gauntlet-r1c2-p2/evidence/`), and thin-shelf arithmetic re-computed
+per sample from each mass's histogram. Triton Ballpark dating checked against
+UCSD Tritons / Turner (ground broken 2014-09-25; grandstand + clubhouse 2015).
+
+### Fixed — phantoms / epoch / hostless planes (class rule, not a one-row patch)
+
+| Entity | Was shipping | Now ships | Source | Test |
+|---|---|---|---|---|
+| osm:834 Foodworx west patio (`osm-834-foodworx-dining-twin`) | 4.5 m area guess | **removed** | `skipOsmAnchors` twin of GIS `NO_SOLID_ROOF` Dining Room: 90.7% at grade; Apple patio umbrellas. | epoch §32 |
+| Triton Stadium / Clubhouse (`triton-stadium-grade-extrusion`) | 4.3 GIS L1 unchallenged | **4.3, POST_2014** | 2015 ballpark renovation; Stadium 80% at grade (224 pts); Clubhouse 27 pts. Warren Field House class. | epoch §32 |
+| Thornton Supplemental Storage (`thornton-store-overheight`) | 4.3 GIS L1 | **2.6** | `PRE_2014_GIS_VERIFIED`: 342 pts, clean p98 2.6. | epoch §32 |
+| Medical Center Switching Station (`medswitch-underheight`) | 4.3 GIS L1 | **5.4** | `PRE_2014_GIS_VERIFIED`: 1,629 pts, clean p98 5.4. | epoch §32 |
+
+### Rejected candidates (each re-measured before rejection; do not re-find these)
+
+- **`ces-near-shelf`** — REJECTED. Dense 87.1% in 4–5 m, bodyTight, but gap
+  exactly 2.0 — under the >2 thin-shelf cut (CSC-D / Medical / Union Bank
+  near-miss family). Do not retune the cut to ≥2 for one yard. roofOf 6.5
+  stands. Pinned in §32.
+- **`csc-a-dense-body`** — REJECTED. Dense 93.5% in 3–4 m, gap 1.7 — under
+  the cut. roofOf 6.5 stands. Pinned in §32.
+- **`admin-near-shelf`** — REJECTED. Dense 86% in 11–12 m, gap 1.4 — under
+  the cut (Otterson / Perlman plant-shelf family). heights 13.2 stands.
+  Pinned in §32.
+- **`pepper-canyon-courts-still-unmarked`** — REJECTED as in-scope fix;
+  RE-LOGGED as handoff. Apple shows tennis + four blue pickleball courts
+  north of Foodworx; no registered fit. Better absent than wrong — same
+  posture as pass-1 / Muir west pickleball / Preuss pitch. Apple pixels
+  barred without per-site registration residual ≤ 0.6 m.
+- **`cpp-east-roof-anchor`** — REJECTED as in-scope fix; RE-LOGGED as
+  handoff. Only in-box mass past 2 m (centroid ground 100.5 vs rim-median
+  97.1, Δ +3.4). Height 12.8 is the intentional post-2014 record; 2014
+  dense 6–7 m plane is predecessor fabric and stays barred. Renderer
+  change (`roofY = rimMedian + h`) is cross-shard — prior FINDINGS
+  unchanged. Pinned in §32.
+- **`osm-465-mesa-nuevo-pad`** — REJECTED as a height admit. 43 pts, 100%
+  in 0–1 m against Mesa Nueva / Nuevo East fabric; sibling 784
+  massOk=false. Too sparse and epoch-shaped to admit 1.7; the 4.5 m
+  guess stands. Pinned in §32.
+
+### Withheld (better absent than wrong)
+
+- **osm:834 Foodworx patio**: removed from the world, not given a height —
+  same near-grade patio the GIS Dining Room already withheld.
+- **Pepper Canyon / Foodworx courts**: painted on Apple, unfitted until
+  registration passes gate.
+- **osm:465**: near-grade against post-2014 neighbourhood — guess stands
+  rather than inventing a 1.7 m pad from 43 returns.
+
+### Handoffs / observations
+
+- **Pepper Canyon tennis + pickleball**: still needs a template +
+  per-sample fit on registered imagery (Apple pixels barred without
+  per-site registration). Pass-1 handoff unchanged.
+- **Roof-anchor class**: CPP East (+3.4) joins Hopkins Parking / Canyon
+  Vista / Cuzco / VE4 / osm:502 / Tuolumne Laundry / Mandeville / CMME —
+  still a dedicated renderer pass.
+- **Thin-shelf cut**: campus-wide rule stays at dense ≥85% / gap >2. CES
+  (gap = 2.0) and CSC-A (gap 1.7) stay near-misses under the cut — do not
+  widen to ≥2. Next full `build:lidar` applies PRE_2014 / POST_2014 edits
+  campus-wide; this pass spliced the two in-shard massHeights hits after
+  re-deriving them.

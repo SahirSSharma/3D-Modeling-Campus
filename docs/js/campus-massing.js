@@ -359,11 +359,18 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
      is grey pavement (Nominatim class=parking). Not a hall.
      (−106.8, 475.2) — osm:1127, a 63 m² SanGIS building=yes ring on
      Revelle Plaza where Nominatim / Apple place the Revelle Anchor
-     outdoor sculpture. Better absent than a solid box on the plaza. */
+     outdoor sculpture. Better absent than a solid box on the plaza.
+     r1c2 pass-2 (2026-08-05): (1002.8, −112.3) — osm:834, the OSM
+     twin of the GIS "Foodworx Dining Room" already dropped by
+     NO_SOLID_ROOF. Fresh EPT: 1,055 returns, 90.7% in −1..0 m; Apple
+     shows the west patio umbrellas, not a dining-room box. The GIS
+     removal left this 4.5 m area-guess extrusion standing 3.4 m from
+     the withheld pad. Better absent than the same patio twice. */
   const skipOsmAnchors = [
     [1416, -1299], [545.3, 48.3], [374.4, -88.3],
     [404.0, -65.6], [734.5, -100.4], [87.6, 265.4],
     [840.9, 452.2], [-106.8, 475.2],
+    [1002.8, -112.3],
   ];
   /* Building indices whose ring (or any part) stands in the world — the
      host rename below must know, because a name may only move onto the

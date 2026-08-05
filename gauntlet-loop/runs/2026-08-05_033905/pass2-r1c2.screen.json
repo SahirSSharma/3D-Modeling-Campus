@@ -1,0 +1,172 @@
+[
+  {
+    "id": "osm-834-foodworx-dining-twin",
+    "entity": "unnamed OSM building index 834 (Foodworx Dining Room pad)",
+    "where": {"x": 1002.8, "z": -112.3},
+    "claim": "assembleMasses still extrudes src=osm area-guess h=4.5 (area≈156) at the patio west of Foodworx. Pass-1 removed the GIS 'Foodworx Dining Room' mass via NO_SOLID_ROOF; this OSM twin was not touched. Not in osmHeights / OSM_UNNAMED_VERIFIED.",
+    "observed": "Fresh EPT: 1,055 pts, roofOf=4.0, p50=−0.3, p75=−0.1, p98=4.0, gap=4.1, bodyTight=true, dense −1–0 = 90.7% (862+95 of 1,055 at grade). Same near-grade signature as the removed GIS Dining Room (pass-1: 93% at grade). Apple osm834.jpg z19 centerRGB=175,175,171 ent=7.51 — outdoor plaza / blue patio umbrellas west of the gabled Foodworx roof, no solid dining-room box. Centroids 3.4 m from the removed GIS Dining Room @ (1001.5,−109.3).",
+    "evidence": {
+      "lidar": "osm:834 1055 pts roofOf=4.0 p50=-0.3 p75=-0.1 p98=4.0 gap=4.1 bodyTight massOk dense-1-0=90.7%; hist -1m:862 0m:95; lidar.osmHeights[834]=undefined",
+      "gis": "Foodworx Dining Room removed from massing (NO_SOLID_ROOF); sibling Foodworx ships measured 7.8 @ (1007.3,−87.7)",
+      "osm": "unnamed index 834 h=4.5 area≈156 verts=4; not in OSM_UNNAMED_VERIFIED / POST_2014_OSM_RINGS",
+      "apple": "Apple snapshot osm834.jpg z19 at 32.879016,-117.230474 (2603 kB) — centerRGB=175,175,171 ent=7.51; outdoor seating/umbrellas on the Foodworx west plaza today, no crane",
+      "probe": "pass-1 Foodworx Dining Room EPT was 1077 pts dense-1-0=93%; this OSM ring is the leftover extrusion of the same pad"
+    },
+    "severity": "high",
+    "suspected_class": "OSM twin of a NO_SOLID_ROOF GIS removal — near-grade patio still ships a 4.5 m solid after the GIS row was withheld.",
+    "epoch_risk": "Moderate — if the umbrellas/canopy are post-2014 the 2014 grade is expected; either way Apple shows no solid dining-room roof, so a 4.5 m box is the wrong entity class, not a height to admit."
+  },
+  {
+    "id": "ces-near-shelf",
+    "entity": "Campus Emergency Services Building",
+    "where": {"x": 1078.4, "z": -476.4},
+    "claim": "assembleMasses ships h=6.5 via massHeights[m:1078,-476] over gisH=4.3 / L1. Not in PRE_2014_GIS_VERIFIED (CSC C/D are; this hostless neighbour is not listed there by name, but already carries a massHeights key).",
+    "observed": "Fresh EPT: 3,329 pts, roofOf=6.5, p50=4.3, p75=4.5, p98=6.5, gap=2.0, bodyTight=true, dense 4–5 = 87.1%. Dense body matches GIS L1=4.3; shipped 6.5 rides a +2.0 m shelf. Thin-shelf cut is gap > 2 — this lands exactly on the CSC-D near-miss line (gap=2.0 keeps p98). Apple ces.jpg z19 — finished low CSC/fleet-yard pad with solar/light roof standing among the white-van yard today.",
+    "evidence": {
+      "lidar": "gis:CES 3329 pts roofOf=6.5 p50=4.3 p75=4.5 p98=6.5 gap=2.0 dense4-5=87.1% bodyTight massOk; hist 4m:2662 5m:239 6m:210; massHeights[m:1078,-476]=6.5",
+      "gis": "Campus Emergency Services Building gisH=4.3 levels=1 area≈1358",
+      "osm": "OSM 'Electric Shop' compound ring (index 170) contains this centroid; exact-name twin suppresses that OSM outline against GIS Electric Shop 41.6 m south",
+      "apple": "Apple snapshot ces.jpg z19 at 32.882308,-117.229665 (2441 kB) — centerRGB=51,57,61 ent=7.47; finished CSC-yard / emergency-services roof among fleet parking today",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Near-miss thin-shelf (gap exactly 2.0 under a >2 cut) over an 87%-dense one-storey body — CSC-D / CSC-C family; dense body already agrees with GIS L1.",
+    "epoch_risk": "Low — Apple matches a finished pre-2014 CSC-yard pad. The 6.5 vs ~4.5 split is shelf vs body inside one epoch, not a rebuild."
+  },
+  {
+    "id": "csc-a-dense-body",
+    "entity": "Campus Services Complex - Building A",
+    "where": {"x": 1107.3, "z": -430.6},
+    "claim": "assembleMasses ships h=6.5 via massHeights[m:1107,-431] over gisH=4.3 / L1. Sibling C was spliced toward its dense body under the thin-shelf rule in pass-2 r0c2; this key still holds p98.",
+    "observed": "Fresh EPT: 3,502 pts, roofOf=6.5, p50=4.5, p75=4.8, p98=6.5, gap=1.7, bodyTight=true, dense 3–4 = 93.5% (3,103 in the 4 m bin alone). Dense body ~4.5–4.8 matches GIS L1; shipped 6.5 is +1.7 m over p75. Gap under the >2 thin-shelf cut, so auto-rule keeps p98 — same CSC-yard dense-body / thin-shelf family as C/D/CES. Apple csc-a.jpg z19 — finished CSC shop roof with solar arrays / fleet yard standing today.",
+    "evidence": {
+      "lidar": "gis:CSC-A 3502 pts roofOf=6.5 p50=4.5 p75=4.8 p98=6.5 gap=1.7 dense3-4=93.5% bodyTight massOk; hist 4m:3103 3m:170 6m:132; massHeights[m:1107,-431]=6.5",
+      "gis": "Campus Services Complex - Building A gisH=4.3 levels=1 area≈1473",
+      "osm": "centroid lies inside OSM Electric Shop compound (index 170); Building A renders under its GIS name",
+      "apple": "Apple snapshot csc-a.jpg z19 at 32.881894,-117.229356 (2499 kB) — centerRGB=163,160,155 ent=7.45; finished CSC Building A roof / solar / fleet vans today",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "CSC-yard dense-body vs p98 shelf under the gap cut (93.5% @3–4, gap 1.7) — sibling of CES / CSC C/D; not auto-caught by thin-shelf as written.",
+    "epoch_risk": "Low — finished pre-2014 CSC pad on today's Apple. Assignment across roof volumes, not a date conflict."
+  },
+  {
+    "id": "triton-stadium-grade-extrusion",
+    "entity": "Triton Stadium",
+    "where": {"x": 1379.8, "z": -327.1},
+    "claim": "assembleMasses ships unchallenged gisH=4.3 / L1 (area≈397). massHeights absent. Sibling Warren Field House is already documented as a post-2014 record over zero 2014 returns.",
+    "observed": "Fresh EPT: 224 pts, roofOf=5.3, p50=0.4, p75=1.0, p98=5.3, gap=4.3, bodyTight=true, dense 0–1 = 80.4% (176 of 224 at grade). Apple triton-stad.jpg z18 centerRGB=27,37,55 ent=7.52 — finished Triton Ballpark standing today (grass outfield, dirt infield with TRITONS / UC SAN DIEGO paint, grandstand behind home plate, trolley viaduct north). The GIS ring is a small ~397 m² pad on the west/home-plate side, not the whole field — mostly open/grade in 2014, extruded as a 4.3 m box.",
+    "evidence": {
+      "lidar": "gis:TritonStad 224 pts roofOf=5.3 p50=0.4 p75=1.0 p98=5.3 gap=4.3 dense0-1=80.4% bodyTight massOk; hist 0m:176 5m:27; massHeights absent",
+      "gis": "Triton Stadium gisH=4.3 levels=1 area≈397 verts=39; bbox x 1363..1403 z −339..−316",
+      "osm": "null covering named host in-box",
+      "apple": "Apple snapshot triton-stad.jpg z18 at 32.880958,-117.226441 (2961 kB) — centerRGB=27,37,55 ent=7.52; finished Triton Ballpark + elevated trolley today; no crane",
+      "probe": "sibling Triton Clubhouse @ (1467.5,−365) only 27 pts (roofOf=5.5); ships L1=4.3 — sparse, Apple shows the dark-roof first-base-line building"
+    },
+    "severity": "medium",
+    "suspected_class": "Open / grandstand GIS pad extruded as a solid L1 box over mostly-grade 2014 returns — Foodworx-Dining / Warren-Field-House class; candidate NO_SOLID_ROOF or POST_2014 if the ballpark post-dates the flight.",
+    "epoch_risk": "HIGH — Apple's finished Triton Ballpark and the post-2021 trolley vs LiDAR's near-grade pad is a DATE. Do not admit roofOf=5.3 from 27 returns on the 5 m shelf; the open question is whether 4.3 should ship at all."
+  },
+  {
+    "id": "pepper-canyon-courts-still-unmarked",
+    "entity": "Pepper Canyon / Foodworx tennis + pickleball courts",
+    "where": {"x": 1007.0, "z": -60.0},
+    "claim": "campus-markings.json still has no fitted facility for the courts north of Foodworx. Only in-shard marking remains Warren basketball @ (1032.0,−168.4). Pass-1 rejected this as an in-scope fix and re-logged it as a handoff.",
+    "observed": "Apple foodworx-courts.jpg z19 at 32.878543,-117.230429 and osm834.jpg both show a full tennis court (green/red) plus blue pickleball courts with fresh white paint immediately north of Foodworx / Pepper Canyon Market. Enumerate of facilities by bounds: only Warren basketball (fitError_m=0.22, fitCoverage=0.82) in-box. No fitError_m / fitCoverage for the Foodworx court cluster because it is absent.",
+    "evidence": {
+      "lidar": null,
+      "gis": null,
+      "osm": null,
+      "apple": "Apple snapshots foodworx-courts.jpg z19 (2564 kB, centerRGB=157,154,149 ent=7.42) and osm834.jpg — tennis + blue pickleball courts north of Foodworx standing today with mature landscaping",
+      "probe": "markings facilities in-shard by bounds: only Warren basketball; Foodworx court cluster still absent after pass-1 handoff"
+    },
+    "severity": "medium",
+    "suspected_class": "Persistent missing sports-surface coverage — Apple-currency pickleball/tennis present, never fitted (Muir pickleball class). Handoff, not a height bug.",
+    "epoch_risk": "Currency is Apple's job (paint may post-date Google chunks). Absence is unbuilt marking under 'better absent than wrong' until a registered per-sample fit passes gate — Apple pixels still barred without residual ≤ 0.6 m."
+  },
+  {
+    "id": "cpp-east-roof-anchor",
+    "entity": "Campus Point Parking Structure (East)",
+    "where": {"x": 1505.4, "z": -226.3},
+    "claim": "Height ships the post-2014 GIS record h=12.8 (POST_2014_SITES via host rename from Campus Point Parking Structure). Renderer sets roofY from centroid ground; prior shards logged the roof-anchor class as a cross-shard handoff.",
+    "observed": "Grade audit of all in-box rendered masses: only this mass past the 2 m gate — centroid ground 100.5 vs rim-median 97.1, delta=+3.4 m, footprint span 9.1 m, h=12.8. Fresh EPT of the ring (2014 predecessor fabric, correctly barred): 20,177 pts, roofOf=8.6, dense 6–7 = 96.2% — do not admit; the grade delta is a renderer anchor definition, not a height bug. Apple cpp-east.jpg z17 — finished garage standing today.",
+    "evidence": {
+      "lidar": "grade audit: CPP-East delta=+3.4 span=9.1 h=12.8; EPT gis:CPP-East 20177 pts roofOf=8.6 p50=6.5 p75=6.6 p98=8.6 dense6-7=96.2% (2014 predecessor — POST_2014 bars admitting)",
+      "gis": "Campus Point Parking Structure East gisH=12.8 L3 area≈7735; epoch § pins the post-2014 record",
+      "osm": "Campus Point Parking Structure in POST_2014_SITES; host rename carries the East mass",
+      "apple": "Apple snapshot cpp-east.jpg z17 at 32.880047,-117.225098 (3274 kB) — centerRGB=206,204,196 ent=7.68; finished East garage standing today",
+      "probe": "only in-box mass with |centroid−rimMedian| > 2 m this pass"
+    },
+    "severity": "medium",
+    "suspected_class": "Cross-shard roof-anchor render class (centroid ground vs rim-median definition of h) — still open; joins Hopkins / Canyon Vista / Cuzco / osm:502 list.",
+    "epoch_risk": "None for the planted height number (post-2014 record is intentional). The 2014 dense 6–7 m plane is predecessor fabric — admitting it would be the epoch failure mode."
+  },
+  {
+    "id": "admin-near-shelf",
+    "entity": "Administration Building (VA / Gilman corridor)",
+    "where": {"x": 996.6, "z": 410.9},
+    "claim": "assembleMasses ships src=osm h=13.2 from lidar.heights['Administration Building'] (osmH=9).",
+    "observed": "Fresh EPT: 6,228 pts, roofOf=13.1, p50=11.6, p75=11.7, p98=13.1, gap=1.4, bodyTight=true, dense 11–12 = 86.0%. Dense body ~11.6–11.7; shipped 13.2 rides a +1.4 m shelf under the gap>2 thin-shelf cut. Apple admin.jpg z18 — finished light roof standing today on the VA corridor.",
+    "evidence": {
+      "lidar": "osm:Admin 6228 pts roofOf=13.1 p50=11.6 p75=11.7 p98=13.1 gap=1.4 dense11-12=86.0% bodyTight massOk; hist 11m:4907 12m:449 13m:133; lidar.heights['Administration Building']=13.2",
+      "gis": "null covering mass in-box",
+      "osm": "Administration Building index 771 osmH=9 area≈981",
+      "apple": "Apple snapshot admin.jpg z18 at 32.874284,-117.230540 (2649 kB) — centerRGB=222,221,215 ent=7.65; finished light VA-corridor roof today",
+      "probe": null
+    },
+    "severity": "low",
+    "suspected_class": "Near-miss thin-shelf under the gap cut (86% dense @11–12, gap 1.4) — Otterson / Perlman family; pasting 11.7 would flatten a real upper shelf Apple may show as plant.",
+    "epoch_risk": "Low — Apple matches a finished pre-2014 pad. Shelf vs deck inside one epoch."
+  },
+  {
+    "id": "thornton-store-overheight",
+    "entity": "Thornton Supplemental Storage",
+    "where": {"x": 1503.3, "z": 71.1},
+    "claim": "assembleMasses ships unchallenged gisH=4.3 / L1. massHeights absent.",
+    "observed": "Fresh EPT: 342 pts, roofOf=2.6, p50=2.2, p75=2.3, p98=2.6, gap=0.3, bodyTight=true, dense 1–2 = 70.5%. Clean low plane ~2.3–2.6 vs GIS L1 default 4.3 (Δ ≈ −1.7 m). Apple thornton-store.jpg z19 — low service pad / storage roof north of Medical Center Drive standing today.",
+    "evidence": {
+      "lidar": "gis:ThorntonStore 342 pts roofOf=2.6 p50=2.2 p75=2.3 p98=2.6 gap=0.3 dense1-2=70.5% bodyTight massOk; hist 2m:193 0m:91 1m:48",
+      "gis": "Thornton Supplemental Storage gisH=4.3 levels=1 area≈365",
+      "osm": "null",
+      "apple": "Apple snapshot thornton-store.jpg z19 at 32.877357,-117.225120 (2575 kB) — centerRGB=156,153,148 ent=7.56; low finished storage/service pad today",
+      "probe": null
+    },
+    "severity": "low",
+    "suspected_class": "Hostless GIS one-storey default slightly high vs a clean 2014 low pad — PRE_2014_GIS_VERIFIED / OSM_UNNAMED_VERIFIED neighbour class (Stuart Collection Storage sibling).",
+    "epoch_risk": "Low if Apple footprint is this structure — confirm it is not a post-2014 shed before admitting 2.6."
+  },
+  {
+    "id": "osm-465-mesa-nuevo-pad",
+    "entity": "unnamed OSM building index 465",
+    "where": {"x": 1819.3, "z": 268.4},
+    "claim": "assembleMasses ships src=osm area-guess h=4.5 (area≈68). Not in osmHeights.",
+    "observed": "Fresh EPT: 43 pts, roofOf=1.7, p50=1.2, p75=1.4, p98=1.7, gap=0.3, bodyTight=true, dense 0–1 = 100%. Guess overstates a near-grade / low pad by ~2.8 m. Apple osm465.jpg z19 — low pad on the Mesa Nueva / Cala edge today. Sibling osm:784 @ (1829.6,268.3) is the same class (24 pts, roofOf=2.0, massOk=false).",
+    "evidence": {
+      "lidar": "osm:465 43 pts roofOf=1.7 p50=1.2 p75=1.4 p98=1.7 dense0-1=100% bodyTight; osmHeights[465]=undefined; sibling osm:784 24 pts roofOf=2.0 massOk=false",
+      "gis": "null — nearest Mesa Nueva - Cala is POST_2014",
+      "osm": "unnamed index 465 h=4.5 area≈68; sibling 784 h=4.5 area≈66",
+      "apple": "Apple snapshot osm465.jpg z19 at 32.875573,-117.221740 (1992 kB) — centerRGB=188,186,183 ent=7.37; low finished pad at Nuevo East / Mesa Nueva edge today",
+      "probe": null
+    },
+    "severity": "low",
+    "suspected_class": "Tiny unnamed OSM guess over a near-grade pad at a POST_2014 neighbourhood edge — better absent or admit ~1.7 only after Apple confirms a structure (not pavement).",
+    "epoch_risk": "Moderate — site sits against Mesa Nueva / Nuevo East fabric. A post-2014 shed would make the 2014 near-grade expected; do not invent height from neighbour tower bleed (osm:365 next door is massOk=false tower smear)."
+  },
+  {
+    "id": "medswitch-underheight",
+    "entity": "Medical Center Switching Station",
+    "where": {"x": 1595.7, "z": -247.7},
+    "claim": "assembleMasses ships unchallenged gisH=4.3 / L1. massHeights absent.",
+    "observed": "Fresh EPT: 1,629 pts, roofOf=5.4, p50=5.2, p75=5.3, p98=5.4, gap=0.1, bodyTight=true, dense 4–5 = 72.8%. Clean one-storey plane ~5.3 vs GIS 4.3 (Δ ≈ +1.0 m). Apple medswitch.jpg z19 — finished light switch-station roof standing today.",
+    "evidence": {
+      "lidar": "gis:MedSwitch 1629 pts roofOf=5.4 p50=5.2 p75=5.3 p98=5.4 gap=0.1 dense4-5=72.8% bodyTight massOk; hist 5m:1185 3m:415",
+      "gis": "Medical Center Switching Station gisH=4.3 levels=1 area≈342",
+      "osm": "null",
+      "apple": "Apple snapshot medswitch.jpg z19 at 32.880240,-117.224132 (2405 kB) — centerRGB=229,229,227 ent=7.49; finished light utility roof today",
+      "probe": null
+    },
+    "severity": "low",
+    "suspected_class": "Hostless GIS L1 default slightly low vs a clean 2014 plane — PRE_2014_GIS_VERIFIED candidate if Apple footprint is the switch building.",
+    "epoch_risk": "Low — Apple matches; not a post-2014 rebuild."
+  }
+]

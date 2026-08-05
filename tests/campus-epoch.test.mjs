@@ -2828,3 +2828,80 @@ describe("campus epoch — r1c1 pass-2 re-sweep (2026-08-05)", () => {
     assert.equal(rendersNear(373.3, -58.5, 4).find((m) => m.src === "osm")?.h, 4.5);
   });
 });
+
+describe("campus epoch — r1c2 pass-2 re-sweep (2026-08-05)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("Foodworx patio OSM twin stays absent; real Foodworx gable stands", () => {
+    /* osm:834: unnamed twin of the GIS "Foodworx Dining Room" already
+       dropped by NO_SOLID_ROOF. Fresh EPT: 1,055 pts, 90.7% in −1..0 m
+       (same near-grade signature as the removed GIS pad). Apple shows
+       blue patio umbrellas west of the gabled Foodworx roof — not a
+       dining-room box. Better absent than the same patio twice. */
+    assert.equal(rendersNear(1002.8, -112.3, 5).find((m) => m.src === "osm"), undefined,
+      "osm:834 Foodworx patio extrudes again");
+    assert.equal(LIDAR.osmHeights?.[834], undefined, "osm:834 must not ship a plane");
+    assert.equal(rendersNear(1007.3, -87.7).find((m) => m.name === "Foodworx")?.h, 7.8);
+    assert.equal(
+      MASSES.filter((m) => /Foodworx Dining/i.test(m.name || "")).length, 0,
+      "Foodworx Dining Room GIS mass returned");
+  });
+
+  test("Triton Ballpark grandstand + clubhouse keep post-2015 records", () => {
+    /* Ground broken 2014-09-25; permanent grandstand + Marye Anne Fox
+       Clubhouse opened for the 2015 season (UCSD Tritons / Turner).
+       Stadium ring: 224 pts, 80.4% at grade — do not admit roofOf 5.3
+       from the 27-pt 5 m shelf. Clubhouse: 27 pts. Warren Field House
+       class — L1 records ship, the 2014 near-grade never does. */
+    assert.equal(rendersNear(1379.8, -327.1).find((m) => m.name === "Triton Stadium")?.h, 4.3);
+    assert.equal(rendersNear(1467.5, -365).find((m) => m.name === "Triton Clubhouse")?.h, 4.3);
+    assert.equal(LIDAR.heights["Triton Stadium"], undefined, "Stadium shipped a 2014 plane");
+    assert.equal(LIDAR.heights["Triton Clubhouse"], undefined, "Clubhouse shipped a 2014 plane");
+    assert.equal(LIDAR.massHeights["m:1380,-327"], undefined, "Stadium massHeights admitted");
+    assert.equal(LIDAR.massHeights["m:1468,-365"], undefined, "Clubhouse massHeights admitted");
+    assert.equal(rendersNear(1119.1, -294.6, 6)[0]?.h, 4.6, "Field House left its record");
+  });
+
+  test("Thornton Storage and MedSwitch ship their measured planes", () => {
+    /* Hostless GIS L1 defaults challenged via PRE_2014_GIS_VERIFIED.
+       Thornton: 342 pts, clean p98 2.6 (gap 0.3) vs record 4.3.
+       MedSwitch: 1,629 pts, clean p98 5.4 (gap 0.1) vs record 4.3.
+       Apple shows both finished low service roofs today. */
+    assert.equal(LIDAR.massHeights["m:1503,71"], 2.6);
+    assert.equal(LIDAR.massHeights["m:1596,-248"], 5.4);
+    assert.equal(rendersNear(1503.3, 71.1).find((m) => m.src === "gis")?.h, 2.6);
+    assert.equal(rendersNear(1595.7, -247.7).find((m) => m.src === "gis")?.h, 5.4);
+  });
+
+  test("CSC-yard near-shelf residuals and Admin keep roofOf under the cut", () => {
+    /* CES: dense 87.1% @4–5, gap exactly 2.0 — under the >2 thin-shelf
+       cut (CSC-D / Medical / Union Bank near-miss family). CSC-A: dense
+       93.5% @3–4, gap 1.7 — under the cut. Admin: dense 86% @11–12, gap
+       1.4 — plant shelf, not a thin shelf. Do not retune the cut. */
+    assert.equal(LIDAR.massHeights["m:1078,-476"], 6.5, "CES keeps roofOf");
+    assert.equal(LIDAR.massHeights["m:1107,-431"], 6.5, "CSC-A keeps roofOf");
+    assert.equal(rendersNear(1078.4, -476.4).find((m) => m.src === "gis")?.h, 6.5);
+    assert.equal(rendersNear(1107.3, -430.6).find((m) => m.src === "gis")?.h, 6.5);
+    assert.equal(LIDAR.heights["Administration Building"], 13.2);
+    assert.equal(rendersNear(996.6, 410.9).find((m) => m.src === "osm")?.h, 13.2);
+  });
+
+  test("osm:465 Mesa Nueva edge pad keeps its guess; CPP East record stands", () => {
+    /* osm:465: 43 pts at grade against Mesa Nueva / Nuevo East fabric —
+       too sparse and epoch-shaped to admit 1.7; sibling 784 massOk=false.
+       Keep the 4.5 m guess. CPP East: post-2014 record 12.8 is intentional;
+       grade Δ +3.4 is the roof-anchor renderer class, not a height bug. */
+    assert.equal(LIDAR.osmHeights?.[465], undefined, "osm:465 must not ship a plane");
+    assert.equal(rendersNear(1819.3, 268.4, 4).find((m) => m.src === "osm")?.h, 4.5);
+    assert.equal(rendersNear(1505.4, -226.3, 6)[0]?.h, 12.8, "CPP East left its post-2014 record");
+  });
+});

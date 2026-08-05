@@ -173,6 +173,15 @@ const POST_2014_SITES = new Set([
   // already wears fac.newer → 36.6; Tierra falls back to the facilities
   // 15.2 / L5 record once the 2014 smear is barred.
   "Piedra", "Tierra",
+  // r1c2 pass-2 (2026-08-05). Triton Ballpark renovation — ground broken
+  // 2014-09-25, permanent grandstand + Marye Anne Fox Clubhouse opened
+  // for the 2015 season (UCSD Tritons / Turner / Wikipedia). The flight
+  // predates both: Triton Stadium's GIS ring (≈397 m² on the home-plate
+  // side) reads 80% at grade (224 pts, roofOf 5.3 is 27 returns on a 5 m
+  // shelf); Triton Clubhouse has 27 pts. Apple shows the finished
+  // ballpark today. Same posture as Warren Field House — the university
+  // L1 records (4.3) ship unchallenged; no 2014 plane may ever answer.
+  "Triton Stadium", "Triton Clubhouse",
 ]);
 
 /* Post-2014 sites keyed by OSM ring INDEX — for what a name cannot say.
@@ -333,6 +342,18 @@ const PRE_2014_GIS_VERIFIED = new Set([
   "9435 Modular Offices",
   "Stuart Collection Storage",
   "Marshall Residence Hall V",
+  /* r1c2 pass-2 (2026-08-05). Two more hostless health-campus service
+     pads whose L1 storey defaults stand against clean 2014 planes, and
+     Apple (2026-08-05) shows each finished on its 2014 footprint:
+     Thornton Supplemental Storage — low service shed north of Medical
+     Center Drive (342 pts, p50 2.2 / p75 2.3 / p98 2.6, gap 0.3,
+     bodyTight); record 4.3 is ~1.7 m high.
+     Medical Center Switching Station — light utility roof (1,629 pts,
+     p50 5.2 / p75 5.3 / p98 5.4, gap 0.1, bodyTight); record 4.3 is
+     ~1.0 m low. Sibling of Stuart Collection Storage / East Campus
+     Substation in the same PRE_2014 hostless class. */
+  "Thornton Supplemental Storage",
+  "Medical Center Switching Station",
 ]);
 
 /* A facilities record that models a building as a whole-footprint ring PLUS
