@@ -351,10 +351,19 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
      (87.6, 265.4) — osm:917 (+ osm:918 within 12 m), Mayer Hall's
      six-hexagon elevated pedestrian connector. Apple and 2014 both
      see the deck (~15 m), but a solid extrusion fills the air under
-     the hex modules. Better absent than a filled bridge. */
+     the hex modules. Better absent than a filled bridge.
+     r1c1 pass-2 (2026-08-05), two more unnamed false buildings:
+     (840.9, 452.2) — osm:438, a 7,240 m² ring wearing a 20 m area
+     guess over the Villa La Jolla Drive parking amenity. Fresh EPT:
+     14,113 returns, mode at grade, guarded roofOf 4.0; Apple centre
+     is grey pavement (Nominatim class=parking). Not a hall.
+     (−106.8, 475.2) — osm:1127, a 63 m² SanGIS building=yes ring on
+     Revelle Plaza where Nominatim / Apple place the Revelle Anchor
+     outdoor sculpture. Better absent than a solid box on the plaza. */
   const skipOsmAnchors = [
     [1416, -1299], [545.3, 48.3], [374.4, -88.3],
     [404.0, -65.6], [734.5, -100.4], [87.6, 265.4],
+    [840.9, 452.2], [-106.8, 475.2],
   ];
   /* Building indices whose ring (or any part) stands in the world — the
      host rename below must know, because a name may only move onto the

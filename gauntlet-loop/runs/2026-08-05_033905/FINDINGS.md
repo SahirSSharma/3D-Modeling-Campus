@@ -850,3 +850,67 @@ shipped planes; Kaleidoscope / Tapestry correctly remain
   floor count for 9438 La Jolla Farms Road, it becomes an
   `ESTIMATED_POST_2014` / `POST_2014_OSM_RINGS` candidate — not a
   roofOf admit of 4.3.
+
+---
+
+# FINDINGS — run `2026-08-05_033905` · shard r1c1 (pass 2)
+
+Pass 2 of the academic-core shard (Warren Mall / VA fringe / PCWest / Mandeville).
+Screen: 9 candidates (2 high / 6 medium / 1 low). Judged by `cursor-grok-4.5-high`.
+
+Every candidate in `pass2-r1c1.screen.json` was re-derived before judgement against
+the screener's full-depth EPT (`/tmp/gauntlet-r1c1-p2/probe.json` — copied to
+`.cache/gauntlet-r1c1-p2/judge/`; point counts taken as the re-measurement:
+gis:Rya67 1,452 / osm:438 14,113 / gis:Rya18 593 / gis:Mandeville 17,909 /
+osm:441 695 / osm:1127 333 / gis:VAF3 2,060 / osm:VAF3 473 / osm:39 394), Apple
+snapshots in `/tmp/gauntlet-r1c1-p2/apple/` (copied to
+`.cache/gauntlet-r1c1-p2/evidence/`), an independent campus-wide nested-plaza
+coverage scan of every same-name L1-under-taller pair in `campus-arcgis.json`,
+and Nominatim reverse at the four unnamed amenity centroids.
+
+### Fixed — phantoms (class rule, not a one-row patch)
+
+| Entity | Was shipping | Now ships | Source | Test |
+|---|---|---|---|---|
+| PCWest L1=3 plaza pads ×7 (`pcw-rya-l1-tower-duplicate` / `pcw-l1-midrise-stacks`) | 3 m GIS L1 co-extruded with Rya 67.1 / midrise 12–18 m | **removed** | Nested-plaza rule in `build-campus-arcgis.mjs`: levels=1 + coverage ≥0.85 under taller same-name sibling. Campus-wide scan: only PCWest. UC Regents / SDBJ: Rya is the finished 22-storey north tower. | epoch §31 |
+| osm:438 (`osm-438-parking-extrusion`) | 20 m area guess over 7,240 m² | **removed** | `skipOsmAnchors`. EPT: grade mode, guarded roofOf 4.0; Nominatim parking; Apple grey pavement. Overturns the 2026-08-04 "VA garage" identity for this ring — the 2023 multi-deck garage is a different ring (osm:833). | epoch §13+§31 |
+| osm:1127 (`osm-1127-artwork-as-building`) | 4.5 m solid on Revelle Plaza | **removed** | Same anchors. Nominatim tourism=artwork "Revelle Anchor"; SanGIS `building=yes` ring around an outdoor sculpture. | epoch §31 |
+
+### Rejected candidates (each re-measured before rejection; do not re-find these)
+
+- **`mandeville-host-vs-dense`** — REJECTED. Dense 57% in ~10.7 m under host
+  lidar.heights 20.9 — well under the 85% thin-shelf cut (Sanford / Otterson
+  stepped family). Pasting p75 flattens a real fly-loft / plant shelf. Host
+  20.9 stands. Pinned in §31.
+- **`vaf3-position-double`** — REJECTED as in-scope fix; RE-LOGGED as handoff.
+  GIS (660.9,−83.9) and OSM (679.3,−86.1) still both render — coverage 0.
+  Prior §13 / pass-1 r1c1 FINDINGS unchanged: needs a source, not a
+  coverage-threshold tweak. Pinned in §31.
+- **`roof-anchor-mandeville-cmme`** — REJECTED as in-scope fix; RE-LOGGED as
+  handoff. Grade audit: Mandeville Δ −4.3 / CMME +4.2 (plus MedTeach / York /
+  VA / South Parking past 2 m). Bases per-vertex safe. Renderer change
+  (`roofY = rimMedian + h`) is cross-shard — prior FINDINGS unchanged.
+- **`osm-441-bike-parking`** — REJECTED as a height / typology fix this pass.
+  Clean one-storey plane (695 pts, dense 91%, gap 0.5) under a 4.5 m guess;
+  Nominatim bicycle_parking. Δ under a storey; Apple shows a light pad that
+  could be a roofed shelter. Not storey-class wrong. Pinned in §31.
+- **`osm-39-cvs-pad`** — REJECTED. Dense 79% under a 4.5 m guess (Δ +0.9 vs
+  p75 3.6) — under the 85% cut and under a storey. CVS storefront standing
+  today. Guess stands. Pinned in §31.
+
+### Withheld (better absent than wrong)
+
+- **PCWest L1 pads / osm:438 / osm:1127**: removed from the world, not given
+  a height — records duplicate, parking amenity, and plaza artwork each
+  forbid shipping either the 2014 smear or the area guess.
+
+### Handoffs / observations
+
+- **VAF-3 position**: still open — university numbering vs OSM, zero
+  footprint overlap. Needs Sahir / facilities map.
+- **Roof-anchor class**: Mandeville (−4.3) / CMME (+4.2) join Hopkins
+  Parking / Canyon Vista / Tuolumne Laundry / osm:502 — still a dedicated
+  renderer pass.
+- **Nested-plaza rule**: campus-wide only PCWest hit today; next full
+  `build:arcgis` applies the filter to every mass. This pass spliced the
+  seven in-file pads after re-deriving coverage per sample.

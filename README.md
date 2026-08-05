@@ -323,14 +323,13 @@ its p50 (20.8), but the complex is genuinely stepped — 20 m wings under a 34�
 core that extends past the tower's own GIS ring, so even a minus-tower re-sample has no single
 plane (p50 20.7 / p75 25.3 / p98 34.5) and the Urey rule holds (the mass emits nothing, the
 host answers, the tower measures its own 39.8). HSS's "identity split" is reality — a 36.7 m
-tower and an 8.5 m wing, each at its own plane. And the VA parking structure keeps its declared
-20 m guess: Apple shows a finished multi-deck garage with cars on the top deck, but the 2014
-returns read p50 2.4 m — a surface lot. The garage postdates the flight, so there is no 2014
-number to ship, and the Google chunk over the footprint is censored (federal facility), so
-Apple is the only current view of it. One position disagreement is logged rather than fixed:
-the OSM ring and the exact-name GIS mass for Visual Arts Facility - Building 3 stand within
-150 m of each other with zero footprint overlap — somebody is wrong about where Building 3 is,
-and neither source resolves which yet.
+tower and an 8.5 m wing, each at its own plane. (The unnamed ring at (840.9, 452.2) was
+kept here as a "VA garage" 20 m guess; r1c1 pass-2 overturned that identity — Nominatim and
+Apple read a surface parking lot, so the ring is now removed rather than guessed. The 2023
+VA garage beside the hospital is a different ring.) One position disagreement is logged
+rather than fixed: the OSM ring and the exact-name GIS mass for Visual Arts Facility -
+Building 3 stand within 150 m of each other with zero footprint overlap — somebody is wrong
+about where Building 3 is, and neither source resolves which yet.
 
 **The east-campus judge pass (2026-08-04, r1c2).** Pepper Canyon to the Shiley/Jacobs health
 campus. Three of the screen's sixteen candidates were classes wearing a case's name, and the
@@ -628,6 +627,23 @@ Faculty Club — HAND_AUDITED 6.5 is the gable ridge, not a Solis-class eave mis
 POST_2014, GIS 25.6 ships unchallenged. Strauss-edge osm:1352 and trolley osm:827 keep their
 guesses. VAF-3 GIS/OSM position double remains open (coverage 0; no source resolves which
 footprint is Building 3).
+
+**The academic-core pass-2 (2026-08-05, r1c1).** Same shard, second decide pass. Fresh screen
+of 9 candidates (2 high / 6 medium / 1 low). Every claim re-derived from the screener's
+full-depth EPT (`/tmp/gauntlet-r1c1-p2/probe.json`); Apple currency re-checked per site;
+campus-wide nested-plaza scan before the class rule shipped.
+
+| Entity | Was shipping | Now ships | Why |
+|---|---|---|---|
+| PCWest L1=3 plaza pads under Rya / Vela (seven rings) | 3 m GIS L1 co-extruded with the tower / midrise | **removed** | Same footprint as the taller sibling (coverage ≥0.85); host rename handed both the student name. UC Regents / SDBJ: Rya is the finished 22-storey north tower — the L1 is a records duplicate. Nested-plaza rule in `build-campus-arcgis.mjs` drops any levels=1 mass sampling ≥0.85 under a taller same-name sibling; campus-wide, only PCWest hit. |
+| Villa La Jolla parking (unnamed, osm:438) | 20 m area guess over 7,240 m² | **removed** | 14,113 returns mode at grade; Nominatim class=parking; Apple centre is grey pavement. Better absent than a 20 m hall over a lot. |
+| Revelle Anchor (unnamed, osm:1127) | 4.5 m solid on the plaza | **removed** | Nominatim tourism=artwork; a SanGIS `building=yes` ring around an outdoor sculpture. |
+
+Rejected / withheld, each re-measured: Mandeville — dense 57% under host 20.9, under the 85%
+thin-shelf cut (Sanford / Otterson); pasting the dense body flattens a real upper volume.
+VAF-3 position double still open (coverage 0). osm:441 bicycle shelter and osm:39 CVS pad —
+Δ under a storey vs their guesses; not a height class this pass. Roof-anchor class
+(Mandeville Δ −4.3 / CMME +4.2) remains a renderer handoff.
 
 **The health-campus / Pepper Canyon re-sweep (2026-08-05, r1c2).** Fresh screen of 13
 candidates (4 high / 6 medium / 3 low). Every height re-derived from the screener's

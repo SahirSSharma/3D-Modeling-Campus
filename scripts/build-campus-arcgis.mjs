@@ -208,6 +208,70 @@ const NO_SOLID_ROOF = [
   { n: "Foodworx Dining Room", near: [1001.5, -109.3] },
 ];
 
+/* NESTED PLAZA PADS (r1c1 pass-2, 2026-08-05). The facilities extrusion
+   layer sometimes ships a levels=1 plaza / podium ring on the SAME
+   footprint as a taller sibling of the same building name. Pepper Canyon
+   West's seven "PCWest" L1=3 pads sat under the L22 Rya tower (67.1) and
+   the L4–L6 midrise wings — host rename handed both the student name, so
+   the world extruded a 3 m phantom pad co-located with the real mass.
+   UC Regents Jan 2022 + SDBJ confirm Rya is the finished 22-storey north
+   tower; the L1 is a records duplicate, not a second building. Drop when
+   a levels=1 mass samples ≥0.85 under a taller same-name sibling.
+   Campus-wide scan found this class only at PCWest today; the rule is
+   name-agnostic so a future twin is caught without a hand list. */
+const NESTED_PLAZA_COVERAGE = 0.85;
+
+function dmInRing(x, z, ring) {
+  /* ring vertices are decimetre integers; x/z are metres. */
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const xi = ring[i][0] / 10, zi = ring[i][1] / 10;
+    const xj = ring[j][0] / 10, zj = ring[j][1] / 10;
+    if ((zi > z) !== (zj > z) && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) {
+      inside = !inside;
+    }
+  }
+  return inside;
+}
+
+function ringCoverage(a, b, step = 2) {
+  let hit = 0, n = 0;
+  let minx = Infinity, maxx = -Infinity, minz = Infinity, maxz = -Infinity;
+  for (const [x, z] of a) {
+    const X = x / 10, Z = z / 10;
+    if (X < minx) minx = X; if (X > maxx) maxx = X;
+    if (Z < minz) minz = Z; if (Z > maxz) maxz = Z;
+  }
+  for (let x = minx; x <= maxx; x += step) {
+    for (let z = minz; z <= maxz; z += step) {
+      if (!dmInRing(x, z, a)) continue;
+      n++;
+      if (dmInRing(x, z, b)) hit++;
+    }
+  }
+  return n ? hit / n : 0;
+}
+
+function dropNestedPlazaPads(massing) {
+  const drop = new Set();
+  for (let i = 0; i < massing.length; i++) {
+    const low = massing[i];
+    if (low.levels !== 1 || !low.r?.[0]) continue;
+    for (let j = 0; j < massing.length; j++) {
+      if (i === j) continue;
+      const tall = massing[j];
+      if (tall.n !== low.n || !tall.r?.[0]) continue;
+      if (tall.levels <= 1 || tall.h <= low.h + 2) continue;
+      if (ringCoverage(low.r[0], tall.r[0]) >= NESTED_PLAZA_COVERAGE) {
+        drop.add(i);
+        break;
+      }
+    }
+  }
+  if (!drop.size) return massing;
+  return massing.filter((_, i) => !drop.has(i));
+}
+
 /* What the facilities inventory calls a mass -> the OSM building it IS.
    "Douglas Apartments" is Warren's Douglas Hall (the ring spans the hall
    and its east annex — one complex, one height class); without the OSM
@@ -355,7 +419,14 @@ async function build() {
       });
     }
   }
-  console.log(`  ${massing.length} massing parts`);
+  const beforeNested = massing.length;
+  const filtered = dropNestedPlazaPads(massing);
+  massing.length = 0;
+  massing.push(...filtered);
+  console.log(`  ${massing.length} massing parts` +
+    (beforeNested > massing.length
+      ? ` (dropped ${beforeNested - massing.length} nested L1 plaza pads)`
+      : ""));
   /* Geisel keeps its own per-floor layer — and unlike everything else, its
      GEOMETRY ships too. Geisel is not a prism: the drum steps out then back
      in as it rises, and the university's floor polygons are the only public

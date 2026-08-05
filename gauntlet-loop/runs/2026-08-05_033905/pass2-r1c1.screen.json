@@ -1,0 +1,155 @@
+[
+  {
+    "id": "pcw-rya-l1-tower-duplicate",
+    "entity": "Rya (PCWest GIS L1=3 stacked on L22=67.1)",
+    "where": {"x": 807.6, "z": -12.2},
+    "claim": "assembleMasses renames both PCWest masses to Rya and extrudes both: h=3 L1 at (808.8,−9.5) and h=67.1 L22 at (807.6,−12.2). Epoch test pins the 70.1 Vela tower; nothing pins this L1 co-extrusion.",
+    "observed": "Footprint overlap coverage = 1.000 / 1.000, both area≈683 m², centroids 3.0 m apart — the same ring recorded twice at different storey counts. UC Regents Jan 2022 + SDBJ confirm Rya is the finished 22-storey north tower (GIS 67.1 is the right tower height). Fresh EPT of the shared ring: 1,452 pts, roofOf=12.2, p50=6.8, p75=12.2, p98=18, guard=true, bodyTight=false → massOk=false (2014 grove/scatter — POST_2014). Apple rya67.jpg z18 centerRGB=232,230,227 ent=5.01 — finished white tower roof present today. The L1=3 extrusion is a phantom pad co-located with the real tower.",
+    "evidence": {
+      "lidar": "gis:Rya67(=Rya3pad) 1452 pts roofOf=12.2 p50=6.8 p75=12.2 p98=18 gap=5.8 dense2m=0.441 guard bodyTight=false massOk=false; hist 6m:422 5m:218; POST_2014_SITES includes Rya",
+      "gis": "PCWest L1=3 @(808.8,−9.5) area=683 AND PCWest L22=67.1 @(807.6,−12.2) area=683; coverage 1.000/1.000",
+      "osm": "Rya outline h=19 with part h=76 @ (808.9,−12.8); parts yield to GIS per epoch § / README",
+      "apple": "Apple snapshot rya67.jpg z18 at 32.878110,-117.232562 (2801 kB) — centerRGB=232,230,227 ent=5.01; finished white PCW north-tower roof standing today",
+      "probe": "UC Regents f3.pdf + SDBJ: Pepper Canyon West north tower (Rya) is 22 storeys; south (Vela) 23. GIS tower height is the design record, not a LiDAR invent."
+    },
+    "severity": "high",
+    "suspected_class": "Facilities multi-level duplicate — same PCWest footprint extruded once as L1 plaza pad and once as the L22 tower, both host-renamed to Rya.",
+    "epoch_risk": "High for the 2014 returns (grove under a 2023 tower) — do not admit roofOf. Low for the tower height itself (Regents/SDBJ agree 22 storeys). The L1 co-extrusion is a records duplicate, not a date conflict."
+  },
+  {
+    "id": "osm-438-parking-extrusion",
+    "entity": "unnamed OSM building index 438",
+    "where": {"x": 840.9, "z": 452.2},
+    "claim": "assembleMasses ships src=osm area-guess h=20 (area≈7240). Not in osmHeights / OSM_UNNAMED_VERIFIED admit list. Flag F largest residual guess in-shard.",
+    "observed": "Fresh EPT: 14,113 pts, roofOf=4.0 (guarded), p50=2.4, p75=4.0, p98=21.6, gap=17.6, bodyTight=true, massOk=true, dense 2 m band only 36.6%. Histogram peaks at grade (2 m:4,403 + 0 m:3,643). Nominatim reverse → parking amenity on Villa La Jolla Drive. Apple osm438.jpg centerRGB=161,164,167 ent=3.98 — grey pavement/lot, not a 20 m hall roof.",
+    "evidence": {
+      "lidar": "osm:438 14113 pts roofOf=4 p50=2.4 p75=4 p98=21.6 gap=17.6 dense2m=0.366 guard bodyTight massOk; hist 2m:4403 0m:3643; lidar.osmHeights[438]=undefined",
+      "gis": "null covering mass; nearest VA Medical Center OSM at (832.3,298.9) is a separate named ring",
+      "osm": "unnamed index 438 h=20 area≈7240 verts=5; Nominatim → parking/amenity, Villa La Jolla Drive",
+      "apple": "Apple snapshot osm438.jpg z17 at 32.873910,-117.232205 (3088 kB) — centerRGB=161,164,167 ent=3.98 (grey pavement); parking surface present today",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "OSM building tag / area-guess over a parking amenity — 20 m solid where Apple+Nominatim show a lot; 2014 returns are grade/deck smear (massOk only via bodyTight on a guarded low plane).",
+    "epoch_risk": "Low for existence of pavement today. Moderate that a post-2014 garage deck could sit here — but Nominatim class=parking and Apple grey pad argue against shipping a 20 m hall either way. Better absent than a 20 m box."
+  },
+  {
+    "id": "pcw-l1-midrise-stacks",
+    "entity": "Rya / Vela PCWest L1=3 pads under midrise masses",
+    "where": {"x": 761.1, "z": 2.5},
+    "claim": "Besides the tower duplicate, assembleMasses still extrudes multiple PCWest L1=3 pads renamed to Rya/Vela alongside taller midrise siblings on overlapping footprints.",
+    "observed": "Measured pairs: L1=3 @(759.8,2.6) vs L6=18.3 @(761.1,2.5) — d=1.30 m, coverage 1.000/0.774; L1=3 @(783.0,−69.7) vs L4=12.2 @(775.0,−69.5) — d=7.97 m, coverage 1.000/0.512. Five Rya L1=3 pads and two Vela L1=3 pads still render in-box. Sibling of the tower-duplicate class.",
+    "evidence": {
+      "lidar": "gis:Rya18 593 pts roofOf=14 p50=9.3 p75=11.4 p98=14 bodyTight=false massOk; 2014 returns are pre-PCW fabric — POST_2014_SITES bars admitting them as today's height",
+      "gis": "PCWest L1=3 pads stacked under L6=18.3 / L4=12.2 midrise rings; all host-renamed to Rya or Vela",
+      "osm": "Rya/Vela outlines suppressed; GIS masses carry the names",
+      "apple": "Apple snapshot pcw-cluster.jpg z17 at 32.877729,-117.232857 (3169 kB) — centerRGB=226,222,220 ent=5.45; finished white PCW midrise/tower fabric today",
+      "probe": "Regents: each tower connects to mid-rise (≈5-storey) wings — the midrise GIS heights (12–18 m) match that; the co-located L1=3 pads do not."
+    },
+    "severity": "medium",
+    "suspected_class": "Same facilities multi-level duplicate class as pcw-rya-l1-tower-duplicate — L1 plaza records left in massing beside the real midrise rings.",
+    "epoch_risk": "High for any 2014 plane under these rings (POST_2014). The L1 vs midrise conflict is a GIS records shape, not a date."
+  },
+  {
+    "id": "mandeville-host-vs-dense",
+    "entity": "Mandeville Center",
+    "where": {"x": 95.1, "z": 16.4},
+    "claim": "assembleMasses ships h=20.9 with massHeights absent — host reconcile against lidar.heights['Mandeville Center']=20.9 over gisH=17.1 / L4.",
+    "observed": "Fresh EPT: 17,909 pts, roofOf=10.7 (guarded), p50=10.4, p75=10.7, p98=19.5, gap=8.8, bodyTight=true, massOk=true. Histogram: 10 m bin 9,445 (52.7%); dense 2 m band 57.2% — under the 85% thin-shelf cut. Host 20.9 rides near p98 across the whole 5,448 m² footprint. Grade audit: centroid ground − rim median = −4.3 m (span 6.0) — roof-anchor class as well.",
+    "evidence": {
+      "lidar": "gis:Mandeville 17909 pts roofOf=10.7 p50=10.4 p75=10.7 p98=19.5 gap=8.8 dense2m=0.572@9 guard bodyTight massOk; hist 10m:9445; massHeights absent; lidar.heights['Mandeville Center']=20.9",
+      "gis": "Mandeville Center gisH=17.1 levels=4 area≈5448",
+      "osm": "Mandeville Center osmH=15; osmHeights[31]=undefined; host key supplies 20.9",
+      "apple": "Apple snapshot mandeville.jpg z17 at 32.877852,-117.240183 (3227 kB) — centerRGB=172,163,146 ent=5.18; finished Mandeville complex standing today",
+      "probe": "grade audit: Mandeville Δ=−4.3 span=6.0 (one of six in-box masses past 2 m)"
+    },
+    "severity": "medium",
+    "suspected_class": "Host lidar.heights pastes an upper shelf (~20 m, likely fly loft / plant) across a dense ~10.7 m body — Sanford/Otterson stepped class; dense band 57% so thin-shelf auto-rule does not fire. Needs parts split or an explicit hand-audit, not a silent p75 paste.",
+    "epoch_risk": "Low — Apple matches the pre-2014 arts complex. Split is assignment across volumes of one building, not a rebuild date."
+  },
+  {
+    "id": "osm-441-bike-parking",
+    "entity": "unnamed OSM building index 441",
+    "where": {"x": 571.7, "z": -273.4},
+    "claim": "assembleMasses ships src=osm area-guess h=4.5 (area≈146). Not in osmHeights.",
+    "observed": "Fresh EPT: 695 pts, roofOf=5.8, p50=5.3, p75=5.3, p98=5.8, gap=0.5, bodyTight=true, massOk=true, dense 4–5 m = 90.6%. Nominatim reverse → bicycle_parking amenity. Apple osm441.jpg centerRGB=200,198,195 ent=4.11 — light pad present today. Clean one-storey plane under a building extrusion of a bike-parking amenity.",
+    "evidence": {
+      "lidar": "osm:441 695 pts roofOf=5.8 p50=5.3 p75=5.3 p98=5.8 gap=0.5 dense2m=0.906 bodyTight massOk; hist 5m:625; osmHeights[441]=undefined",
+      "gis": "null",
+      "osm": "unnamed index 441 h=4.5 area≈146; Nominatim → bicycle_parking/amenity",
+      "apple": "Apple snapshot osm441.jpg z19 at 32.880473,-117.235085 (2088 kB) — centerRGB=200,198,195 ent=4.11; light covered pad present today",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Amenity (bicycle_parking) tagged/guessed as building — typology hole; plane is admit-clean if the judge treats it as a real roofed shelter, otherwise better absent.",
+    "epoch_risk": "Low — Apple and 2014 agree something low and roofed sits here. Disagreement is building vs amenity, not a date."
+  },
+  {
+    "id": "osm-1127-artwork-as-building",
+    "entity": "unnamed OSM building index 1127",
+    "where": {"x": -106.8, "z": 475.2},
+    "claim": "assembleMasses ships src=osm area-guess h=4.5 (area≈63) on the Revelle plaza.",
+    "observed": "Fresh EPT: 333 pts, roofOf=4.6, p50=p75=p98=4.6, bodyTight=true, massOk=true, dense 82.6%. Nominatim reverse → artwork/tourism 'Revelle Anchor'. A 63 m² solid extrusion where the named outdoor sculpture sits.",
+    "evidence": {
+      "lidar": "osm:1127 333 pts roofOf=4.6 p50=4.6 p75=4.6 p98=4.6 dense2m=0.826 bodyTight massOk; hist 4m:271; osmHeights[1127]=undefined",
+      "gis": "null",
+      "osm": "unnamed index 1127 h=4.5 area≈63; Nominatim → artwork/tourism Revelle Anchor",
+      "apple": "Apple snapshot osm1127.jpg z19 at 32.873702,-117.242342 (1942 kB) — centerRGB=186,181,174 ent=4.13; plaza fabric at Revelle",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Outdoor artwork / landmark ring mis-tagged as building and area-guessed — skipOsmAnchors / better-absent class.",
+    "epoch_risk": "Low — sculpture and plaza exist in both epochs. Wrong typology, not a missing rebuild."
+  },
+  {
+    "id": "vaf3-position-double",
+    "entity": "Visual Arts Facility - Building 3",
+    "where": {"x": 670.0, "z": -85.0},
+    "claim": "Both the GIS mass (h=11.5 at 660.9,−83.9) and the OSM ring (h=11.7 at 679.3,−86.1) still assemble under the same name — pass-1 handoff still open.",
+    "observed": "Re-measured: GIS 2,060 pts roofOf=11.5 massOk; OSM 473 pts roofOf=11.7 massOk. Footprint coverage OSM→GIS = 0.000 / GIS→OSM = 0.000. Exact-name twin rule yields when coverage fails, so both survive. Apple shows one VAF cluster.",
+    "evidence": {
+      "lidar": "gis:VAF3 2060 pts roofOf=11.5 p50=10.3 p75=10.3 p98=11.5 massOk; osm:VAF3 473 pts roofOf=11.7 p50=10.8 p75=11.1 p98=11.7 massOk",
+      "gis": "Visual Arts Facility - Building 3 gisH=8.5 → massH 11.5 area≈421 at (660.9,−83.9)",
+      "osm": "Visual Arts Facility - Building 3 still src=osm h=11.7 at (679.3,−86.1) area≈191",
+      "apple": "Apple snapshot vaf3-pair.jpg z18 at 32.878769,-117.234033 (2563 kB) — centerRGB=47,53,53 ent=4.93; finished VAF cluster",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Position/identity disagreement between university GIS numbering and OSM for the same VAF-3 name — open handoff from pass-1 / prior r1c1; needs a source, not a coverage-threshold tweak.",
+    "epoch_risk": "Low for existence — both rings sit on standing fabric. Risk is double-label / wrong footprint, not a date."
+  },
+  {
+    "id": "roof-anchor-mandeville-cmme",
+    "entity": "Mandeville Center / Cellular and Molecular Medicine East (grade)",
+    "where": {"x": 95.1, "z": 16.4},
+    "claim": "Renderer places roof at ground(centroid)+h while surveyed h = roof − median(rim ground).",
+    "observed": "Grade audit of all in-box rendered masses: six past a 2 m gate — Mandeville Δ=−4.3 span=6.0 h=20.9; CMME Δ=+4.2 span=5.2 h=19.1; Medical Teaching @(535.8,218) Δ=−4.1 span=5.0 h=19.7; York Δ=+2.5 span=4.5 h=15.1; VA Medical Center Δ=−2.5 span=2.9 h=10; South Parking Δ=−2.2 span=7.3 h=19.2. Bases remain per-vertex safe.",
+    "evidence": {
+      "lidar": "grade.json: 6 in-box masses with |gC−rimMed|>2; worst Mandeville −4.3 / CMME +4.2 / MedTeach −4.1",
+      "gis": "heights themselves mostly track massHeights / host where admitted",
+      "osm": null,
+      "apple": "Apple snapshots mandeville.jpg / york.jpg confirm finished buildings on grade today",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Cross-shard roof-anchor renderer class (Hopkins Parking / Canyon Vista / Tuolumne family) — height numbers are separate from the centroid-vs-rim roof placement.",
+    "epoch_risk": "None — placement maths, not a source-date conflict."
+  },
+  {
+    "id": "osm-39-cvs-pad",
+    "entity": "unnamed OSM building index 39",
+    "where": {"x": 373.3, "z": -58.5},
+    "claim": "assembleMasses ships src=osm area-guess h=4.5 (area≈175).",
+    "observed": "Fresh EPT: 394 pts, roofOf=4.6, p50=2.9, p75=3.6, p98=4.6, gap=1.0, bodyTight=true, massOk=true, dense 2–3 m = 79.4%. Δ guess−p75 = +0.9 m. Nominatim → pharmacy/amenity CVS Pharmacy. Apple osm39.jpg centerRGB=151,138,120 ent=4.98 — finished pad present today.",
+    "evidence": {
+      "lidar": "osm:39 394 pts roofOf=4.6 p50=2.9 p75=3.6 p98=4.6 gap=1 dense2m=0.794 bodyTight massOk; hist 2m:184 3m:129; osmHeights[39]=undefined",
+      "gis": "null",
+      "osm": "unnamed index 39 h=4.5 area≈175; Nominatim → pharmacy/amenity CVS Pharmacy",
+      "apple": "Apple snapshot osm39.jpg z19 at 32.878529,-117.237207 (2427 kB) — centerRGB=151,138,120 ent=4.98; finished low pad today",
+      "probe": null
+    },
+    "severity": "low",
+    "suspected_class": "Small residual unnamed guess near a measured one-storey body — Δ under a storey; optional OSM_UNNAMED_VERIFIED admit of ~3.6 if typology (pharmacy storefront) is accepted.",
+    "epoch_risk": "Low — standing today in Apple; 2014 plane is tight."
+  }
+]

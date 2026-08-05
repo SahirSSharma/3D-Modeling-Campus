@@ -190,8 +190,9 @@ const POST_2014_SITES = new Set([
         and measures separately through the per-index path below.
    833: the unnamed multi-deck garage south of the VA hospital, opened 2023
         with the SCI project. The flight read p50 0 — a surface lot — so the
-        ring keeps its stated area guess of 16, in family with the r1c1
-        verdict on the VA's other garage (osm:438).
+        ring keeps its stated area guess of 16. (osm:438 beside it was once
+        kept as a sibling "garage" guess; r1c1 pass-2 found it is a surface
+        parking amenity and removed it.)
    r2c1 judge sweep (2026-08-05), two more rings a name cannot answer for:
    718: the unnamed ring over the Satellite Utility Plant's west half. Its
         tight 3.9-4.1 m plane (450 returns) is the demolished predecessor

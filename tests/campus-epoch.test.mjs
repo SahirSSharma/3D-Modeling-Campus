@@ -159,6 +159,12 @@
  *      Laundry keeps massHeights 15.8 (roof-anchor Δ −2.9 is a
  *      renderer handoff, not a height bug); named Muir landmarks
  *      still track their shipped planes.
+ *  31. The r1c1 pass-2 re-sweep's measurements hold: seven PCWest L1=3
+ *      plaza pads nested under the Rya/Vela tower and midrise rings
+ *      stay dropped (nested-plaza coverage rule in build-campus-
+ *      arcgis); the Villa La Jolla parking ring (osm:438) and Revelle
+ *      Anchor artwork ring (osm:1127) render nothing; Mandeville's
+ *      host 20.9 / VAF-3 double / roof-anchor class stay as judged.
  */
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
@@ -1152,21 +1158,25 @@ describe("13. the r1c1 judge pass (2026-08-04)", () => {
     assert.equal(rendered[0].h, 6.4, `Solis renders ${rendered[0].h}, the audited roof is 6.4`);
   });
 
-  test("the TES tank and the VA plant ship their planes; the VA garage keeps its guess", () => {
+  test("the TES tank and the VA plant ship their planes; the parking lot stays unbuilt", () => {
     /* Three unnamed rings, three different answers. 224 is the Central
        Utilities Plant's thermal storage tank — one plane, p50 26.4 to
        p98 27.0, standing identically in both epochs; its area guess was
        9 m, an 18 m miss. 826 is the white plant block at the VA — p50 6.3
-       to max 6.5, the tightest plane in the batch. 438 is the VA parking
-       structure: Apple shows a finished multi-deck garage, but the 2014
-       returns read p50 2.4 m — a surface lot. It postdates the flight,
-       so no 2014 number may ship and the stated 20 m guess stands. */
+       to max 6.5, the tightest plane in the batch. 438 was kept as a
+       "VA garage" 20 m guess on the 2026-08-04 decide pass; r1c1 pass-2
+       re-checked: Nominatim class=parking, Apple centre is grey pavement
+       (RGB 161,164,167), and 14,113 returns mode at grade. A surface lot
+       is not a multi-deck garage — better absent than a 20 m hall
+       (skipOsmAnchors). The 2023 VA garage beside the hospital is a
+       different ring (see r1c2 §14). */
     assert.equal(LIDAR.osmHeights?.[224], 27, "the tank's plane");
     assert.equal(LIDAR.osmHeights?.[826], 6.4, "the VA plant's plane");
-    assert.equal(LIDAR.osmHeights?.[438], undefined, "the garage shipped a 2014 number it cannot have");
+    assert.equal(LIDAR.osmHeights?.[438], undefined, "the lot shipped a 2014 number it cannot have");
     assert.equal(rendersNear(195.8, 483.3).find((m) => m.src === "osm")?.h, 27);
     assert.equal(rendersNear(832.9, 357.7).find((m) => m.src === "osm")?.h, 6.4);
-    assert.equal(rendersNear(840.9, 452.2, 12).find((m) => m.src === "osm")?.h, 20);
+    assert.equal(rendersNear(840.9, 452.2, 12).find((m) => m.src === "osm"), undefined,
+      "osm:438 surface lot extrudes again");
   });
 
   test("the stepped complexes keep their verified state — rejected candidates stay rejected", () => {
@@ -2726,5 +2736,95 @@ describe("campus epoch — r1c0 pass-2 re-sweep (2026-08-05)", () => {
       assert.equal(LIDAR.osmHeights?.[bi], undefined,
         `osm:${bi} leaked a plane past the residual withhold`);
     }
+  });
+});
+
+describe("campus epoch — r1c1 pass-2 re-sweep (2026-08-05)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("PCWest nested L1 plaza pads stay dropped under Rya / Vela", () => {
+    /* Facilities extrusion shipped seven PCWest L1=3 pads on the same
+       footprints as the L22 Rya tower (67.1) and L4–L6 midrise wings —
+       coverage ≥0.85 under the taller sibling. Host rename handed both
+       the student name, so a 3 m phantom pad co-extruded with the real
+       mass. UC Regents / SDBJ: Rya is the finished 22-storey north
+       tower. Nested-plaza rule in build-campus-arcgis drops them; the
+       towers and midrise rings keep their GIS heights (POST_2014). */
+    const L1_PADS = [
+      [808.8, -9.5], [759.8, 2.6], [765.7, -67.4], [783.0, -69.7],
+      [750.8, -52.8], [758.9, 36.0], [764.4, 81.0],
+    ];
+    for (const [x, z] of L1_PADS) {
+      const phantom = rendersNear(x, z, 4).find(
+        (m) => m.src === "gis" && m.levels === 1 && m.h <= 3.5,
+      );
+      assert.equal(phantom, undefined,
+        `nested L1 plaza pad still extrudes near (${x}, ${z})`);
+    }
+    const ryaTower = rendersNear(807.6, -12.2, 4).find(
+      (m) => m.src === "gis" && m.name === "Rya",
+    );
+    assert.ok(ryaTower, "Rya tower vanished with its plaza pad");
+    assert.equal(ryaTower.h, 67.1, `Rya tower ships ${ryaTower.h}`);
+    assert.equal(ryaTower.levels, 22);
+    const velaTower = rendersNear(809.1, 96.6, 4).find(
+      (m) => m.src === "gis" && m.name === "Vela",
+    );
+    assert.ok(velaTower, "Vela tower vanished");
+    assert.equal(velaTower.h, 70.1, `Vela tower ships ${velaTower.h}`);
+    /* Midrise siblings that the L1 pads sat under must still render. */
+    assert.equal(rendersNear(761.1, 2.5, 3).find((m) => m.name === "Rya")?.h, 18.3);
+    assert.equal(rendersNear(775.0, -69.5, 3).find((m) => m.name === "Rya")?.h, 12.2);
+  });
+
+  test("Villa La Jolla parking lot and Revelle Anchor stay unbuilt", () => {
+    /* osm:438: 7,240 m² unnamed ring, 20 m area guess. Fresh EPT 14,113
+       pts — mode at grade, guarded roofOf 4.0, dense 2 m only 37%.
+       Nominatim class=parking on Villa La Jolla Drive; Apple centre is
+       grey pavement. Better absent than a 20 m hall over a lot.
+       osm:1127: 63 m² SanGIS building=yes on Revelle Plaza — Nominatim
+       tourism=artwork "Revelle Anchor". A solid extrusion invents a
+       building around an outdoor sculpture. */
+    assert.equal(rendersNear(840.9, 452.2, 8).find((m) => m.src === "osm"), undefined,
+      "osm:438 parking lot extrudes again");
+    assert.equal(rendersNear(-106.8, 475.2, 5).find((m) => m.src === "osm"), undefined,
+      "osm:1127 Revelle Anchor extrudes again");
+    assert.equal(LIDAR.osmHeights?.[438], undefined, "osm:438 must not ship a plane");
+    assert.equal(LIDAR.osmHeights?.[1127], undefined, "osm:1127 must not ship a plane");
+  });
+
+  test("Mandeville keeps host 20.9; VAF-3 double and amenity pads stand as judged", () => {
+    /* Mandeville: 17,909 pts, dense 57% in ~10.7 m under host 20.9 —
+       under the 85% thin-shelf cut (Sanford / Otterson stepped family).
+       Pasting p75 would flatten a real fly-loft / plant shelf the other
+       way. VAF-3: GIS and OSM exact-name twins with zero footprint
+       overlap — open handoff, no coverage-threshold tweak. osm:441
+       bicycle shelter and osm:39 CVS pad: Δ under a storey vs their
+       area guesses; typology / residual, not a height class this pass. */
+    assert.equal(LIDAR.heights["Mandeville Center"], 20.9);
+    const mand = rendersNear(95.1, 16.4, 5).find(
+      (m) => m.src === "gis" && /Mandeville/i.test(m.name || ""),
+    );
+    assert.ok(mand, "Mandeville vanished");
+    assert.equal(mand.h, 20.9, `Mandeville ships ${mand.h}`);
+    const vafGis = rendersNear(660.9, -83.9, 5).find(
+      (m) => m.src === "gis" && /Visual Arts Facility - Building 3/i.test(m.name || ""),
+    );
+    const vafOsm = rendersNear(679.3, -86.1, 5).find(
+      (m) => m.src === "osm" && /Visual Arts Facility - Building 3/i.test(m.name || ""),
+    );
+    assert.ok(vafGis, "VAF-3 GIS mass vanished");
+    assert.ok(vafOsm, "VAF-3 OSM ring vanished");
+    assert.equal(rendersNear(571.7, -273.4, 4).find((m) => m.src === "osm")?.h, 4.5);
+    assert.equal(rendersNear(373.3, -58.5, 4).find((m) => m.src === "osm")?.h, 4.5);
   });
 });
