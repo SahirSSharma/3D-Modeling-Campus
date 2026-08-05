@@ -346,6 +346,7 @@ east campus had no anchors. Both seeded at their site ways' centroids (way/26103
 | Preuss Fabrication Lab | crown top to bottom (p50 12.4 over a one-storey shop); the mass rule would ship 17.5. Its 4.6 m GIS record stands. |
 | Jerboa (4.8 vs 4.3), EMF 2 (4.0 vs 4.3), Preuss modulars (4.4/4.6 vs 4.3) | deltas ≤0.5 m — survey noise on small rings; records left unchallenged (same rule as r0c1's Info Center). |
 | Preuss OSM rings 49/50/54/101, BFS osm:782, CSC osm:449 | GIS-covered (suppressed at render); measured planes logged in probe-out.txt but not shipped — a value that never renders is noise in the data. |
+| Preuss soccer pitch (painted lines visible on Apple, east of the classroom wings) | not modelled in `campus-markings.json` — the shard ships zero markings. Fitting a NEW facility needs a template + a per-sample fit on registered imagery; Apple pixels are barred from fitting without a per-site registration (r0c0 rule), and no fit was attempted at the tail of a pass. Logged for a markings pass; better absent than wrong. |
 
 ### Measured, not changed — the roof-anchor class (two more data points)
 
@@ -378,6 +379,11 @@ all guesses, not changes).
   Biomedical Sciences, Mandeville Center) — all outside r0c2, all still open for their shards.
 - Campus Point / Alexandria construction: when OSM maps the new buildings, they are
   POST_2014_SITES candidates on arrival (the flight predates them by a decade).
+- Preuss soccer pitch: an unmodelled painted facility for the next markings pass (needs a
+  registered-imagery fit; see withheld table). Second screen of the shard's other entity
+  classes found nothing else: 0 markings, 0 furniture/landmark placements in bounds, and the
+  796 in-shard 2014 trees stay within believable ranges (tallest 30 m eucalyptus beside the
+  34 m hospital tower).
 
 ### Verification (real output)
 
