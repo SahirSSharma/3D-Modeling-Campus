@@ -704,6 +704,31 @@ const OSM_UNNAMED_VERIFIED = new Set([
        Hyatt / osm:83 / 497 / 289: prior composite / canopy withholds
              (HAND_AUDITED null / bodyTight=false). */
   1366, 1365, 285, 81, 287, 286, 1356, 1355,
+  /* r0c0 pass-2 re-sweep 2026-08-05 — remaining La Jolla Farms / Estancia
+     unnamed pads after pass-1's 331/149/974/1372/878/483 admissions.
+     Independent full-depth EPT (point counts matched the screener
+     exactly); Apple currency confirmed finished roofs, no crane:
+       976: 1,881 returns, clean p98 4.6 (dense 75% in 2–3 m) — was 9.
+       328: 1,705 returns, canopy-guarded p75 4.7 (dense 82% in 3–4 m,
+            gap 5.0 to canopy at 9.7) — was 9. Estancia amenity pad.
+       330: 1,521 returns, canopy-guarded p75 4.8 (gap 7.5) — was 9.
+            Estancia amenity sibling of 328 / 974.
+       830: 1,333 returns, clean p98 5.0 (dense 74% in 3–4 m) — was 9.
+       871: 2,100 returns, clean p98 6.1 (gap 0.3, dense 87%) — was 9.
+       972: 1,715 returns, clean p98 6.1 (bodyTight) — was 9.
+       977: 2,321 returns, clean p98 6.3 (bodyTight) — was 9.
+       493: 5,990 returns, clean p98 6.3 (dense 84%, gap 2.0 under the
+            thin-shelf cut — plant noise on the same plane) — was 9.
+       969: 1,609 returns, clean p98 6.3 (gap 0.4) — was 9. Residual
+            sibling of the mediums, same class.
+     Deliberately NOT admitted this pass:
+       828: near-ground / deck returns (p50 0.5, hist mode 0 m at 70%;
+            roofOf 1.7). Nominatim has no building address (Salk Institute
+            Road fringe); Apple darker low-entropy center consistent with
+            pavement/scrub. Epoch-ambiguous — do not invent a 1.7 m
+            "building." Keep the 4.5 m guess.
+       513: already withheld pass 1 (bodyTight=false coastal-scrub mix). */
+  976, 328, 330, 830, 871, 972, 977, 493, 969,
 ]);
 
 /* Hand-audited stats where the automatic roofOf() percentile choice is

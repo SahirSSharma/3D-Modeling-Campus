@@ -682,6 +682,30 @@ upper wing. Medical — dense 85.8%, gap 1.9 under the 2 m cut; roofOf 10.7 stan
 helipad osm:83 — prior composite withholds (HAND_AUDITED null / bodyTight=false); no
 parts source. Class-hole rejected as scoped.
 
+**The NW-campus pass-2 re-sweep (2026-08-05, r0c0).** Same Estancia / Sanford / Marshall /
+La Jolla Farms shard after pass 1 closed the first six unnamed admissions. Residual error
+mass was still the unnamed area-guess set (73 rings). Every candidate re-derived from an
+independent full-depth EPT (point counts matched the screener's 1,881 / 1,705 / 1,521 / …
+exactly); Apple currency re-checked per site.
+
+| Entity | Was shipping | Now ships | Why |
+|---|---|---|---|
+| Black Gold Rd house (unnamed, osm:976) | 9 m area guess | **4.6 m** | Clean one-storey plane (1,881 returns, dense 75% in 2–3 m). |
+| Estancia amenity pad (unnamed, osm:328) | 9 m area guess | **4.7 m** | Canopy-guarded p75 (dense 82% in 3–4 m; gap 5.0 to canopy at 9.7). |
+| Estancia amenity pad (unnamed, osm:330) | 9 m area guess | **4.8 m** | Canopy-guarded p75 (gap 7.5); sibling of 328 / 974. |
+| Black Gold Rd house (unnamed, osm:830) | 9 m area guess | **5.0 m** | Clean one-storey plane (1,333 returns, dense 74% in 3–4 m). |
+| Black Gold Rd building (unnamed, osm:871) | 9 m area guess | **6.1 m** | Tight single plane (gap 0.3, dense 87%). |
+| Crown Crest Ln house (unnamed, osm:972) | 9 m area guess | **6.1 m** | Body-tight plane (1,715 returns). |
+| La Jolla Farms Rd house (unnamed, osm:977) | 9 m area guess | **6.3 m** | Body-tight plane (2,321 returns). |
+| La Jolla Farms Rd house (unnamed, osm:493) | 9 m area guess | **6.3 m** | Clean p98 (dense 84%, gap 2.0 under the thin-shelf cut — plant noise). |
+| LJF residual sibling (unnamed, osm:969) | 9 m area guess | **6.3 m** | Clean single plane (gap 0.4); same class as the mediums. |
+
+Withheld: osm:828 — near-ground / deck returns (p50 0.5, hist mode 0 m at 70%); Nominatim
+has no building address on the Salk Institute Road fringe; Apple center reads pavement /
+scrub. Do not invent a 1.7 m building; the 4.5 m guess stands. osm:513's coastal-scrub
+withhold from pass 1 still stands. Class-hole rejected as scoped — remaining unnamed
+guesses need per-ring Apple + EPT, not a blanket admit.
+
 ### The colours, measured off footage
 
 Satellite imagery sees roofs and ground; it cannot see a wall, a tree trunk, or the sky. For

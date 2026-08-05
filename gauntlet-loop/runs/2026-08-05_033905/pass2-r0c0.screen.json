@@ -1,0 +1,172 @@
+[
+  {
+    "id": "osm-976-overheight",
+    "entity": "unnamed OSM building index 976",
+    "where": {"x": -621.3, "z": -537.9},
+    "claim": "assembleMasses ships src=osm area-guess h=9 (area≈666 m²). Not in lidar.osmHeights / OSM_UNNAMED_VERIFIED.",
+    "observed": "Fresh EPT of the OSM ring: 1,881 pts, roofOf=4.6, p50=3.4, p75=3.8, p98=4.6, gap=0.8, guard=false, bodyTight=true, massOk=true. Histogram mode 3 m (994/1,881) with 2 m next (415) — dense 2 m band 75% in 2–3 m. Δ = +4.4 m (~1.5 storeys) vs shipped guess. Flat grade (spread 1.2 m).",
+    "evidence": {
+      "lidar": "osm:976 1881 pts roofOf=4.6 p50=3.4 p75=3.8 p98=4.6 bodyTight massOk; hist mode 3 m (994) + 2 m (415); lidar.osmHeights[976]=undefined",
+      "gis": "null — nearest GIS mass Marshall Residence Hall T ~403 m east",
+      "osm": "unnamed way index 976, campus-3d h=9, area≈666 m², centroid (−621.3,−537.9); Nominatim reverse 32.882865,-117.247846 → building at 9674 Black Gold Road, La Jolla Farms",
+      "apple": "Apple snapshot osm976.jpg z19 at 32.882865,-117.247846 (2727 kB) — occupied residential footprint on Black Gold Road today; textured mid-tone roof/landscape (center RGB≈94,97,88 entropy 7.35), no bare-dirt construction pad",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Unnamed OSM area-guess still shipping while a clean guarded 2014 one-storey plane (~4–5 m) never entered osmHeights — same class as pass-1 r0c0 331/149/974 admissions.",
+    "epoch_risk": "Low for existence — Apple + Nominatim show a finished Black Gold Road building on this footprint today. The 9 vs 4.6 split is guess vs plane, not a missing post-2014 rebuild (flight already sees a tight low roof)."
+  },
+  {
+    "id": "osm-328-overheight",
+    "entity": "unnamed OSM building index 328",
+    "where": {"x": -363.3, "z": -861.0},
+    "claim": "assembleMasses ships src=osm area-guess h=9 (area≈642 m²). Not in lidar.osmHeights / OSM_UNNAMED_VERIFIED.",
+    "observed": "Fresh EPT: 1,705 pts, roofOf=4.7, p50=4.2, p75=4.7, p98=9.7, gap=5.0, guard=false on relative gap (absolute roofOf tree-guard selects p75), bodyTight=true, massOk=true. Histogram mode 4 m (714/1,705) + 3 m (688) — dense 82% in 3–4 m. Δ = +4.3 m vs shipped guess. Flat (grade spread 0.2 m).",
+    "evidence": {
+      "lidar": "osm:328 1705 pts roofOf=4.7 p50=4.2 p75=4.7 p98=9.7 bodyTight massOk; hist mode 4 m (714) + 3 m (688); lidar.osmHeights[328]=undefined",
+      "gis": "null — nearest GIS Asia Hall ~151 m east",
+      "osm": "unnamed way index 328, h=9, area≈642 m², centroid (−363.3,−861.0); ~91 m from Estancia La Jolla Hotel & Spa; Nominatim reverse → hotel/tourism at 9700 North Torrey Pines Road",
+      "apple": "Apple snapshot osm328.jpg z19 at 32.885787,-117.245086 (2693 kB) — finished Estancia-complex amenity/low pad among terracotta hotel roofs, courtyards and landscaping; standing today, no crane",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Unnamed OSM area-guess on an Estancia amenity pad; dense ~4 m band vs 9 m guess.",
+    "epoch_risk": "Low — Apple shows the Estancia neighbourhood finished. Guarded tall tail to p98=9.7 is canopy/neighbour, not evidence the body grew a storey after 2014."
+  },
+  {
+    "id": "osm-330-overheight",
+    "entity": "unnamed OSM building index 330",
+    "where": {"x": -363.9, "z": -682.6},
+    "claim": "assembleMasses ships src=osm area-guess h=9 (area≈619 m²). Not in lidar.osmHeights / OSM_UNNAMED_VERIFIED.",
+    "observed": "Fresh EPT: 1,521 pts, roofOf=4.8, p50=4.2, p75=4.8, p98=12.3, gap=7.5, guard=true, bodyTight=true, massOk=true. Histogram mode 4 m (618/1,521) + 3 m (520) — dense 75% in 3–4 m. Δ = +4.2 m vs shipped guess. Flat (grade spread 0.1 m).",
+    "evidence": {
+      "lidar": "osm:330 1521 pts roofOf=4.8 p50=4.2 p75=4.8 p98=12.3 guard bodyTight massOk; hist mode 4 m (618) + 3 m (520); lidar.osmHeights[330]=undefined",
+      "gis": "null — nearest GIS North America Hall ~163 m east",
+      "osm": "unnamed way index 330, h=9, area≈619 m², centroid (−363.9,−682.6); ~97 m from Estancia; Nominatim reverse → amenity/toilets at 9700 North Torrey Pines Road",
+      "apple": "Apple snapshot osm330.jpg z19 at 32.884173,-117.245092 (2847 kB) — finished low structure inside the Estancia La Jolla Hotel & Spa grounds (terracotta roofs, courtyards, pool, tennis court visible in frame); present today",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Unnamed OSM area-guess; guarded dense ~4–5 m Estancia amenity plane vs 9 m guess — sibling of osm:328.",
+    "epoch_risk": "Low for existence. Guarded p98=12.3 is a tall canopy/neighbour tail, not a rebuild signal; Apple confirms the hotel amenity pad is occupied today."
+  },
+  {
+    "id": "osm-830-overheight",
+    "entity": "unnamed OSM building index 830",
+    "where": {"x": -542.2, "z": -581.9},
+    "claim": "assembleMasses ships src=osm area-guess h=9 (area≈527 m²). Not in lidar.osmHeights / OSM_UNNAMED_VERIFIED.",
+    "observed": "Fresh EPT: 1,333 pts, roofOf=5.0, p50=3.4, p75=4.0, p98=5.0, gap=1.0, guard=false, bodyTight=true, massOk=true. Histogram mode 3 m (687/1,333) — dense 74% in 3–4 m. Δ = +4.0 m vs shipped guess. Flat (grade spread 0.3 m).",
+    "evidence": {
+      "lidar": "osm:830 1333 pts roofOf=5.0 p50=3.4 p75=4.0 p98=5.0 bodyTight massOk; hist mode 3 m (687); lidar.osmHeights[830]=undefined",
+      "gis": "null — nearest GIS Marshall Residence Hall S ~324 m east",
+      "osm": "unnamed way index 830, h=9, area≈527 m², centroid (−542.2,−581.9); Nominatim reverse 32.883263,-117.247000 → house at 9705 Black Gold Road, La Jolla Farms",
+      "apple": "Apple snapshot osm830.jpg z19 at 32.883263,-117.247000 (2672 kB) — occupied La Jolla Farms house footprint on Black Gold Road today; textured surface (center RGB≈89,92,85 entropy 7.28), not bare dirt",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Unnamed OSM area-guess on a La Jolla Farms one-storey house; clean ~4–5 m plane vs 9 m guess.",
+    "epoch_risk": "Low — Apple/Nominatim agree a finished house sits here; LiDAR plane is tight (p98−p75=1.0 m), not canopy or a predecessor lot."
+  },
+  {
+    "id": "osm-871-overheight",
+    "entity": "unnamed OSM building index 871",
+    "where": {"x": -606.1, "z": -594.2},
+    "claim": "assembleMasses ships src=osm area-guess h=9 (area≈768 m²). Not in lidar.osmHeights / OSM_UNNAMED_VERIFIED.",
+    "observed": "Fresh EPT: 2,100 pts, roofOf=6.1, p50=5.5, p75=5.8, p98=6.1, gap=0.3, guard=false, bodyTight=true, massOk=true. Histogram mode 5 m (1,526/2,100) — dense 87% in 5–6 m. Δ = +2.9 m vs shipped guess.",
+    "evidence": {
+      "lidar": "osm:871 2100 pts roofOf=6.1 p50=5.5 p75=5.8 p98=6.1 bodyTight massOk; hist mode 5 m (1526); lidar.osmHeights[871]=undefined",
+      "gis": "null",
+      "osm": "unnamed way index 871, h=9, area≈768 m², centroid (−606.1,−594.2); Nominatim reverse → building at 9704 Black Gold Road, La Jolla Farms",
+      "apple": "Apple snapshot osm871.jpg z19 at 32.883374,-117.247683 (2697 kB) — finished Black Gold Road building present today",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Unnamed OSM area-guess; tight ~6 m plane vs 9 m guess — measurable ~one storey, less eye-level-obvious than the 4 m+ highs.",
+    "epoch_risk": "None material — Apple and LiDAR agree a low building sits here; the disagreement is the area-guess magnitude."
+  },
+  {
+    "id": "osm-972-overheight",
+    "entity": "unnamed OSM building index 972",
+    "where": {"x": -654.4, "z": -648.5},
+    "claim": "assembleMasses ships src=osm area-guess h=9 (area≈621 m²). Not in lidar.osmHeights / OSM_UNNAMED_VERIFIED.",
+    "observed": "Fresh EPT: 1,715 pts, roofOf=6.1, p50=4.0, p75=4.4, p98=6.1, gap=1.7, guard=false, bodyTight=true, massOk=true. Histogram mode 4 m (761/1,715) + 3 m (676) — dense 84% in 3–4 m. Δ = +2.9 m vs roofOf; denser body (~4.4) sits ~4.6 m under the guess.",
+    "evidence": {
+      "lidar": "osm:972 1715 pts roofOf=6.1 p50=4.0 p75=4.4 p98=6.1 bodyTight massOk; hist mode 4 m (761) + 3 m (676); lidar.osmHeights[972]=undefined",
+      "gis": "null",
+      "osm": "unnamed way index 972, h=9, area≈621 m², centroid (−654.4,−648.5); Nominatim reverse → building at 2611 Crown Crest Lane, La Jolla Farms",
+      "apple": "Apple snapshot osm972.jpg z19 at 32.883865,-117.248200 (2798 kB) — finished Crown Crest Lane building present today",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Unnamed OSM area-guess on a La Jolla Farms pad; dense 3–4 m band with a mild upper shelf to 6.1 — guess still ~one storey high.",
+    "epoch_risk": "Low — Apple shows the house standing. Grade spread 3.2 m across the ring could hide a stepped roof; still a guess-vs-plane disagreement, not a confirmed rebuild."
+  },
+  {
+    "id": "osm-977-overheight",
+    "entity": "unnamed OSM building index 977",
+    "where": {"x": -712.3, "z": -613.9},
+    "claim": "assembleMasses ships src=osm area-guess h=9 (area≈923 m²). Not in lidar.osmHeights / OSM_UNNAMED_VERIFIED.",
+    "observed": "Fresh EPT: 2,321 pts, roofOf=6.3, p50=4.2, p75=4.6, p98=6.3, gap=1.7, guard=false, bodyTight=true, massOk=true. Histogram mode 4 m (1,083/2,321) + 3 m (839) — dense 83% in 3–4 m. Δ = +2.7 m vs roofOf.",
+    "evidence": {
+      "lidar": "osm:977 2321 pts roofOf=6.3 p50=4.2 p75=4.6 p98=6.3 bodyTight massOk; hist mode 4 m (1083) + 3 m (839); lidar.osmHeights[977]=undefined",
+      "gis": "null",
+      "osm": "unnamed way index 977, h=9, area≈923 m², centroid (−712.3,−613.9); Nominatim reverse → building at 9801 La Jolla Farms Road",
+      "apple": "Apple snapshot osm977.jpg z19 at 32.883552,-117.248819 (2741 kB) — finished La Jolla Farms Road building present today",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Unnamed OSM area-guess; dense ~4 m body with mild shelf to 6.3 vs 9 m guess.",
+    "epoch_risk": "Low — Apple confirms occupancy; LiDAR already sees a usable one-plane body (bodyTight)."
+  },
+  {
+    "id": "osm-493-overheight",
+    "entity": "unnamed OSM building index 493",
+    "where": {"x": -823.6, "z": -489.3},
+    "claim": "assembleMasses ships src=osm area-guess h=9 (area≈1153 m²). Not in lidar.osmHeights / OSM_UNNAMED_VERIFIED.",
+    "observed": "Fresh EPT: 5,990 pts, roofOf=6.3, p50=3.8, p75=4.3, p98=6.3, gap=2.0, guard=false, bodyTight=true, massOk=true. Histogram mode 3 m (3,121/5,990) + 4 m (1,906) — dense 84% in 3–4 m. Δ = +2.7 m vs roofOf. Grade spread 3.9 m.",
+    "evidence": {
+      "lidar": "osm:493 5990 pts roofOf=6.3 p50=3.8 p75=4.3 p98=6.3 bodyTight massOk; hist mode 3 m (3121) + 4 m (1906); lidar.osmHeights[493]=undefined",
+      "gis": "null — nearest named GIS Extended Studies N ~605 m east",
+      "osm": "unnamed way index 493, h=9, area≈1153 m², centroid (−823.6,−489.3); Nominatim reverse → house at 9756 La Jolla Farms Road",
+      "apple": "Apple snapshot osm493.jpg z18 at 32.882425,-117.250010 (3302 kB) — finished La Jolla Farms house present today",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Unnamed OSM area-guess on a large LJF residential ring; dense 3–4 m band vs 9 m guess (near thin-shelf cut: dense 84%, gap 2.0).",
+    "epoch_risk": "Low-to-moderate — slope (grade 3.9 m) + mild upper shelf to 6.3 could be a stepped roof; Apple shows the footprint occupied. Still guess-vs-plane, not a confirmed rebuild."
+  },
+  {
+    "id": "osm-828-near-ground",
+    "entity": "unnamed OSM building index 828",
+    "where": {"x": -770.2, "z": -926.0},
+    "claim": "assembleMasses ships src=osm area-guess h=4.5 (area≈367 m²). Not in lidar.osmHeights. Centroid-vs-rim-median ground delta −3.1 m (roof-anchor class).",
+    "observed": "Fresh EPT: 1,477 pts, roofOf=1.7, p50=0.5, p75=0.7, p98=1.7, gap=1.0, guard=false, bodyTight=true, massOk=true. Histogram mode 0 m (1,035/1,477) — dense 84% in 0–1 m. Shipped 4.5 is +2.8 m above roofOf and ~4 m above the dense near-ground band. Grade audit: centroid ground − rim-median = −3.1 m (spread 3.4 m).",
+    "evidence": {
+      "lidar": "osm:828 1477 pts roofOf=1.7 p50=0.5 p75=0.7 p98=1.7 bodyTight massOk; hist mode 0 m (1035); grade delta centroid−rimMed=−3.1; lidar.osmHeights[828]=undefined",
+      "gis": "null — nearest GIS ERC Pump House ~551 m east",
+      "osm": "unnamed way index 828, h=4.5, area≈367 m², centroid (−770.2,−926.0); Nominatim reverse → Salk Institute Road (service highway), no building address",
+      "apple": "Apple snapshot osm828.jpg z19 at 32.886374,-117.249438 (2785 kB) — coastal/Salk-road fringe; darker lower-entropy center (RGB≈78,82,74 entropy 7.11) consistent with pavement/scrub rather than a tall roof",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Near-ground / deck-like 2014 returns under an OSM building ring, plus roof-anchor grade delta — may be a parking canopy, open pad, or post-2014 low structure; do not admit roofOf=1.7 as a building height without an Apple identity call.",
+    "epoch_risk": "High — p50≈0.5 and Nominatim's lack of a building address both allow 'the flight saw an open pad and something low was added later,' OR 'OSM drew a building over pavement.' Apple must decide existence before any height admission; the 4.5 m guess may also be wrong either way. Grade Δ=−3.1 is the same roof-anchor class already logged on other shards."
+  },
+  {
+    "id": "unnamed-guess-residual",
+    "entity": "unnamed OSM buildings still shipping area-guesses in shard r0c0 after pass-1 admissions",
+    "where": {"x": -500.0, "z": -800.0},
+    "claim": "Of 103 OSM buildings in-box, assembleMasses still renders 73 unnamed rings from campus-3d area-guess heights (no lidar.osmHeights). Pass 1 admitted 331/149/974/1372/878/483 and withheld 513; 73 remain.",
+    "observed": "Targeted EPT of 48 remaining large unnamed guesses found 4 with ship−roofOf ≥ 4.0 m and bodyTight (976, 328, 330, 830 — listed above) plus several at 2.7–2.9 m (871, 972, 977, 493, 969). Named landmarks in-box (ERC halls, Village West #4–6, Salk wings, Estancia 9.5, Middle Earth 4.7, Marshall Lower Q/R/S, Marshall Res V now 6.8) track measured planes after assembleMasses. Residual error mass is still the unnamed-guess set.",
+    "evidence": {
+      "lidar": "pass2 probe.json 61 targets; 4 new highs with |Δ|≥4; previously fixed osmHeights 331=5.3 149=5.6 974=3.7 1372=7.3 878=5.9 483=8.3 still present; osm:513 still undefined (withheld)",
+      "gis": "Marshall Res V massHeights m:-183,-549=6.8; Ext Studies H/J/K/M/N still lack massHeights (Ext H/K/M planes ~3.4–3.6 vs gisH 4.3, Δ≤0.9 — under the Δ≥3 bar)",
+      "osm": "enumerate C_unnamedGuessShipping=73; F_unverifiedGuess=12",
+      "apple": "spot checks on the new highs/mediums (osm976/328/330/830/871/972/977/493) all show finished structures today — guesses are magnitude errors, not phantom footprints (osm:828 is the epoch-ambiguous exception)",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Shard-wide unnamed OSM area-guess coverage hole — OSM_UNNAMED_VERIFIED never admitted these rings, so assembleMasses keeps campus-3d.h. Same class hole pass 1 partially closed.",
+    "epoch_risk": "Per-ring: most LJF/Estancia pads look pre-2014 occupied on both Apple and LiDAR. osm:828 is the clear date/identity edge case — judge per sample, do not blanket-admit the remaining 73."
+  }
+]

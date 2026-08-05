@@ -131,6 +131,11 @@
  *      planes (two via thin-shelf host rule), the near-miss / stepped /
  *      composite withholds keep their guesses, and Medical / Hyatt /
  *      helipad residuals stay as judged.
+ *  27. The r0c0 pass-2 re-sweep's measurements hold: nine LJF / Estancia
+ *      unnamed pads ship their measured planes (two canopy-guarded),
+ *      the near-ground Salk-road fringe (osm:828) and coastal-scrub
+ *      pad (osm:513) keep their guesses, and the class-hole stays
+ *      per-ring.
  */
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
@@ -2426,5 +2431,53 @@ describe("campus epoch — r2c2 re-sweep (2026-08-05)", () => {
     assert.equal(LIDAR.osmHeights?.[83], undefined, "helipad composite shipped a plane");
     assert.equal(rendersNear(1305.1, 786.8, 4).find((m) => m.src === "osm")?.h, 16,
       "helipad ring keeps its declared guess");
+  });
+});
+
+describe("campus epoch — r0c0 pass-2 re-sweep (2026-08-05)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("the verified LJF / Estancia unnamed rings ship their planes", () => {
+    /* Independent full-depth EPT (point counts matched the screener
+       exactly); each standing finished on today's Apple. Numbers are
+       builderRoofOf (canopy guard + thin-shelf host rule). */
+    for (const [i, h, x, z] of [
+      [976, 4.6, -621.3, -537.9], [328, 4.7, -363.3, -861.0],
+      [330, 4.8, -363.9, -682.6], [830, 5.0, -542.2, -581.9],
+      [871, 6.1, -606.1, -594.2], [972, 6.1, -654.4, -648.5],
+      [977, 6.3, -712.3, -613.9], [493, 6.3, -823.6, -489.3],
+      [969, 6.3, -653.3, -709.6],
+    ]) {
+      assert.equal(LIDAR.osmHeights?.[i], h, `osm:${i}'s plane`);
+      assert.equal(rendersNear(x, z, 4).find((m) => m.src === "osm")?.h, h,
+        `osm:${i} renders at its plane`);
+    }
+  });
+
+  test("the near-ground Salk-road fringe keeps its declared guess", () => {
+    /* osm:828: 1,477 returns, p50 0.5 / hist mode 0 m (70%), roofOf 1.7.
+       Nominatim has no building address; Apple center reads pavement /
+       scrub. Epoch-ambiguous — do not invent a 1.7 m building. The 4.5 m
+       area guess stands. Sibling of pass-1's osm:513 withhold. */
+    assert.equal(LIDAR.osmHeights?.[828], undefined, "a 2014 number shipped for osm:828");
+    assert.equal(rendersNear(-770.2, -926.0, 4).find((m) => m.src === "osm")?.h, 4.5,
+      "the near-ground fringe keeps its declared guess");
+  });
+
+  test("pass-1's coastal-scrub withhold still stands", () => {
+    /* osm:513: bodyTight=false mix of near-ground / deck; already pinned
+       in §18. Re-pin so this pass cannot silently admit roofOf 4.6. */
+    assert.equal(LIDAR.osmHeights?.[513], undefined, "a 2014 number shipped for osm:513");
+    assert.equal(rendersNear(-768.4, -877.3, 4).find((m) => m.src === "osm")?.h, 9,
+      "the contaminated pad keeps its declared guess");
   });
 });

@@ -592,3 +592,65 @@ from each mass's histogram (builder `denseBandFraction` + gap vs p75).
   blanket-admit.
 - **osm:497 / 289**: prior stepped / canopy withholds re-confirmed
   (bodyTight=false); not re-opened this pass.
+
+---
+
+# FINDINGS — run `2026-08-05_033905` · shard r0c0 (pass 2)
+
+Pass 2 of the NW campus shard (Estancia / Sanford / Marshall Residence /
+La Jolla Farms / coastal fringe). Screen: 10 candidates (4 high / 6 medium).
+Judged by `cursor-grok-4.5-high`.
+
+Every candidate in `pass2-r0c0.screen.json` was re-derived before judgement
+with an independent full-depth targeted EPT re-sample (11 targets in
+`.cache/gauntlet-r0c0-p2/judge/reprobe.*`; point counts matched the
+screener's `/tmp/gauntlet-r0c0-pass2/probe.json` exactly — 1,881 / 1,705 /
+1,521 / 1,333 / 2,100 / 1,715 / 2,321 / 5,990 / 1,477 / 1,609 / 4,022),
+Apple snapshots from the screener's `/tmp/gauntlet-r0c0-pass2/apple/`
+(copied to `.cache/gauntlet-r0c0-p2/evidence/`), and the shipped data.
+
+### Fixed — heights (every value from this pass's full-depth re-sample)
+
+| Entity | Was shipping | Now ships | Source | Test |
+|---|---|---|---|---|
+| Black Gold Rd house (`osm-976-overheight`, osm:976) | 9 m area guess | **4.6 m** | `OSM_UNNAMED_VERIFIED`: 1,881 pts, clean p98 4.6, bodyTight; Apple finished residential | epoch §27 |
+| Estancia amenity (`osm-328-overheight`, osm:328) | 9 m area guess | **4.7 m** | `OSM_UNNAMED_VERIFIED`: 1,705 pts, canopy-guarded p75 4.7 (gap 5.0); Apple standing | epoch §27 |
+| Estancia amenity (`osm-330-overheight`, osm:330) | 9 m area guess | **4.8 m** | `OSM_UNNAMED_VERIFIED`: 1,521 pts, canopy-guarded p75 4.8 (gap 7.5); sibling of 328/974 | epoch §27 |
+| Black Gold Rd house (`osm-830-overheight`, osm:830) | 9 m area guess | **5.0 m** | `OSM_UNNAMED_VERIFIED`: 1,333 pts, clean p98 5.0, bodyTight | epoch §27 |
+| Black Gold Rd building (`osm-871-overheight`, osm:871) | 9 m area guess | **6.1 m** | `OSM_UNNAMED_VERIFIED`: 2,100 pts, clean p98 6.1 (gap 0.3, dense 87%) | epoch §27 |
+| Crown Crest Ln (`osm-972-overheight`, osm:972) | 9 m area guess | **6.1 m** | `OSM_UNNAMED_VERIFIED`: 1,715 pts, clean p98 6.1, bodyTight | epoch §27 |
+| La Jolla Farms Rd (`osm-977-overheight`, osm:977) | 9 m area guess | **6.3 m** | `OSM_UNNAMED_VERIFIED`: 2,321 pts, clean p98 6.3, bodyTight | epoch §27 |
+| La Jolla Farms Rd (`osm-493-overheight`, osm:493) | 9 m area guess | **6.3 m** | `OSM_UNNAMED_VERIFIED`: 5,990 pts, clean p98 6.3 (dense 84%, gap 2.0 under thin-shelf cut) | epoch §27 |
+| LJF residual (`unnamed-guess-residual` sample, osm:969) | 9 m area guess | **6.3 m** | `OSM_UNNAMED_VERIFIED`: 1,609 pts, clean p98 6.3 (gap 0.4); same class as the mediums | epoch §27 |
+
+### Withheld (better absent than wrong)
+
+- **`osm-828-near-ground` (osm:828)**: 1,477 returns, p50 0.5 / hist mode 0 m
+  (1,035/1,477), roofOf 1.7. Nominatim reverse → Salk Institute Road (service
+  highway), no building address. Apple center darker/lower-entropy, consistent
+  with pavement/scrub. Grade Δ centroid−rimMed = −3.1 m (roof-anchor class).
+  Epoch-ambiguous — do not invent a 1.7 m building; the 4.5 m area guess
+  stands. Pinned as EXCLUDED from osmHeights.
+- **`osm:513`**: pass-1 coastal-scrub withhold re-confirmed (bodyTight=false;
+  p50 0.2). Still undefined in osmHeights.
+
+### Rejected candidates (each re-measured before rejection; do not re-find these)
+
+- **`unnamed-guess-residual`** — REJECTED as scoped, same verdict as prior
+  shards: the mechanism exists and this pass used it for nine admissions and
+  one explicit refuse; admitting all ~64 remaining in-shard unnamed guesses
+  needs a per-ring Apple currency check each. Named landmarks in-box (ERC
+  halls, Village West #4–6, Salk wings, Estancia, Middle Earth, Marshall
+  Lower Q/R/S, Marshall Res V) already track measured planes after
+  assembleMasses.
+
+### Handoffs / observations for later shards / passes
+
+- **Remaining unnamed guesses in-box**: ~64 still ship area guesses after this
+  pass's nine admissions. Batch Apple+EPT verification remains the right
+  shape; do not blanket-admit.
+- **Roof-anchor at osm:828** (grade Δ −3.1): same cross-shard renderer class
+  already logged on other shards (Hopkins / Canyon Vista / Cuzco / VE4 /
+  osm:502). Height withhold stands independently of the renderer fix.
+- **Extended Studies H/J/K/M/N**: pass-1 handoff unchanged — Δ≤0.9 vs GIS
+  records, under the Δ≥3 bar.
