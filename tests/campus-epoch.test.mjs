@@ -107,6 +107,10 @@
  *      HAND_AUDITED paste for its dense L7 body, three LJF thin-shelf
  *      rings + the Geisel pavilion ship their planes, and the near-miss
  *      / multiplane / Tuolumne / pickleball residuals stay as judged.
+ *  22. The r1c1 re-sweep's measurements hold: a third demolished pad and
+ *      the Epstein / Mayer phantom rings render nothing, the Central
+ *      Utilities cooling bays ship their planes, and the thin-shelf /
+ *      stepped / host-bleed / VAF-3 / Tata residuals stay as judged.
  */
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
@@ -1052,7 +1056,8 @@ describe("13. the r1c1 judge pass (2026-08-04)", () => {
        with trailers on Apple, the new frames rising beside it in Street
        View 2025-02 — and the pad at (374.4, -88.3), razed for the dig
        south of the Chancellor's Complex. Their OSM rings survive and
-       wore 12 and 9 m area guesses. Better absent than wrong. */
+       wore 12 and 9 m area guesses. Better absent than wrong.
+       r1c1 re-sweep extends the same class to (404.0, -65.6) — see §22. */
     for (const [x, z] of [[545.3, 48.3], [374.4, -88.3]]) {
       const there = rendersNear(x, z, 10);
       assert.equal(there.length, 0,
@@ -2002,5 +2007,103 @@ describe("campus epoch — r1c0 re-sweep (2026-08-05)", () => {
     const e = rendersNear(-197.6, -51.2).find((m) => m.src === "gis");
     assert.equal(n?.h, 15.6, `S House North ships ${n?.h}`);
     assert.equal(e?.h, 16.2, `S House East ships ${e?.h}`);
+  });
+});
+
+describe("campus epoch — r1c1 re-sweep (2026-08-05)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("third demolished pad and Epstein/Mayer phantoms render nothing", () => {
+    /* Same skipOsmAnchors class as §13's (545.3, 48.3) / (374.4, -88.3):
+       (404.0, -65.6) — osm:759, Apple bare dirt + staging trailers; 2014's
+       tight 6–7 m plane is a building that is gone.
+       (734.5, -100.4) — osm:840 (+898 within 12 m) over the Epstein
+       amphitheater / PCW plaza fringe. Epstein is POST_2014; 2014 returns
+       are grove/scatter (massOk=false). A 9 m guess invents a hall on a bowl.
+       (87.6, 265.4) — osm:917 (+918 within 12 m), Mayer's six-hexagon
+       elevated connector. Solid extrusion fills the air under the deck. */
+    for (const [x, z, label] of [
+      [404.0, -65.6, "Chancellor dig pad"],
+      [734.5, -100.4, "Epstein fringe"],
+      [738.8, -103.2, "Epstein fringe sibling"],
+      [87.6, 265.4, "Mayer hex connector"],
+      [87.2, 264.3, "Mayer hex sibling"],
+    ]) {
+      const there = rendersNear(x, z, 10);
+      assert.equal(there.length, 0,
+        `${label} still renders at (${x},${z}): ${there.map((m) => `${m.name ?? "unnamed"}@${m.h}`)}`);
+    }
+  });
+
+  test("Central Utilities cooling bays ship their measured planes", () => {
+    /* Sibling of the TES tank (224 → 27.0). Unnamed industrial enclosures
+       with one clean 2014 plane each, standing on today's Apple:
+       225: 3,208 pts, p50=p75=6.7, roofOf 8.1 (was 9 m area guess)
+       226: 1,193 pts, p50 6.6 / p75 6.9, roofOf 8.4 (was 4.5 m guess) */
+    assert.equal(LIDAR.osmHeights?.[225], 8.1, "north cooling bay plane");
+    assert.equal(LIDAR.osmHeights?.[226], 8.4, "south cooling bay plane");
+    assert.equal(rendersNear(160.9, 500.1, 4).find((m) => m.src === "osm")?.h, 8.1);
+    assert.equal(rendersNear(161.0, 454.4, 4).find((m) => m.src === "osm")?.h, 8.4);
+  });
+
+  test("thin-shelf near-misses and stepped science halls keep their roofOf shelves", () => {
+    /* McGill 82.2% / Literature 84.4% / MedTeach-A 83.4% — under the 85%
+       dense cut (same family as osm:996). Pacific 68.7% / NatSci 66% /
+       BRF II 54.6% — real upper volumes, Sanford / Otterson class. Do not
+       paste the dense body the other way, and do not lower the cut. */
+    assert.equal(LIDAR.massHeights["m:-80,-115"], 25.1, "McGill keeps roofOf");
+    assert.equal(LIDAR.massHeights["m:693,-283"], 19.2, "Literature keeps roofOf");
+    assert.equal(LIDAR.massHeights["m:536,218"], 19.7, "MedTeach-A keeps roofOf");
+    assert.equal(LIDAR.massHeights["m:-92,234"], 33.2, "Pacific keeps roofOf");
+    assert.equal(LIDAR.massHeights["m:-156,308"], 30.3, "NatSci keeps roofOf");
+    assert.equal(LIDAR.massHeights["m:575,416"], 31.8, "BRF II keeps roofOf");
+  });
+
+  test("Gilman ships its deck; South Parking keeps the Urey host paste", () => {
+    /* Gilman massHeights 18 tracks the measured top deck against a GIS
+       L6=25.6 overstatement — already correct. South Parking is massOk=
+       false (deck stack), so massHeights withholds and the host 19.2
+       answers (Urey / Jacobs rule). Do not invent a single plane. */
+    assert.equal(LIDAR.massHeights["m:692,45"], 18);
+    assert.equal(LIDAR.massHeights["m:385,435"], undefined, "South Park massOk=false");
+    assert.equal(LIDAR.heights["South Parking Structure"], 19.2);
+    assert.equal(rendersNear(691.6, 44.7).find((m) => m.src === "gis")?.h, 18);
+    assert.equal(rendersNear(385.1, 434.9).find((m) => m.src === "gis")?.h, 19.2);
+  });
+
+  test("Faculty Club keeps its gable HAND_AUDITED; Tata stays on its GIS record", () => {
+    /* Faculty Club: HAND_AUDITED 6.5 is the gable ridge (p90); canopy
+       guard's p75 / dense eave would miss it — Solis is the opposite
+       failure mode. Tata is POST_2014_SITES; courtyard-contaminated
+       2014 returns must never challenge the university's 25.6 record. */
+    assert.equal(LIDAR.heights["Ida and Cecil Green Faculty Club"], 6.5);
+    assert.equal(rendersNear(159.3, -127.8).find((m) => m.src === "gis")?.h, 6.5);
+    assert.equal(LIDAR.massHeights["m:-55,171"], undefined, "Tata must not ship a 2014 plane");
+    assert.equal(rendersNear(-55.4, 171.0).find((m) => /Tata/i.test(m.name || ""))?.h, 25.6);
+  });
+
+  test("Strauss-edge and trolley rings keep their guesses; VAF-3 double stays open", () => {
+    /* 1352: massOk=false on the Strauss / University Center fringe —
+       keep the 9 m guess (VA-garage family), do not admit a 2014 smear.
+       827: 109 m² trolley-adjacent ring, bodyTight=false; Mid-Coast
+       opened 2021 — keep 4.5. VAF-3: GIS at (660.9,−83.9) and OSM at
+       (679.3,−86.1) still both render — coverage 0, prior §13 open. */
+    assert.equal(LIDAR.osmHeights?.[1352], undefined);
+    assert.equal(LIDAR.osmHeights?.[827], undefined);
+    assert.equal(rendersNear(510.6, -2.5, 4).find((m) => m.src === "osm")?.h, 9);
+    assert.equal(rendersNear(870.6, -87.7, 4).find((m) => m.src === "osm")?.h, 4.5);
+    const vafGis = rendersNear(660.9, -83.9).find((m) => m.src === "gis");
+    const vafOsm = rendersNear(679.3, -86.1).find((m) => m.src === "osm");
+    assert.ok(vafGis, "VAF-3 GIS mass vanished");
+    assert.ok(vafOsm, "VAF-3 OSM ring vanished — do not resolve the position without a source");
   });
 });

@@ -581,6 +581,26 @@ upper shelf stands (Otterson family). osm:996 — dense 84%, near-miss. osm:480 
 estate on 7.3 m of grade, no single plane. Muir west pickleball — painted on Apple, unfitted
 until registration passes the 0.6 m gate; do not restore Google tennis paint.
 
+**The academic-core re-sweep (2026-08-05, r1c1).** Same shard as the 2026-08-04 decide pass —
+Warren Mall to the VA fringe — with a fresh screen of 19 candidates. Every height re-derived
+from the screener's full-depth EPT; Apple currency re-checked per site.
+
+| Entity | Was shipping | Now ships | Why |
+|---|---|---|---|
+| Pad east of Chancellor's dig (unnamed, osm:759) | 4.5 m phantom | **removed** | Same demolition class as osm:56 / 1351 — Apple bare graded dirt with staging trailers south; 2014's tight 6–7 m plane is gone. |
+| Epstein / PCW fringe (unnamed, osm:840 + 898) | 9 / 4.5 m guesses | **removed** | Rings sit on the amphitheater plaza fringe; Epstein is POST_2014 and the 2014 returns are grove/scatter. A guess invents a hall on a bowl. |
+| Mayer hex connector (unnamed, osm:917 + 918) | 8.4 / 4.8 m solid extrusions | **removed** | Apple shows the six-hexagon elevated walkway between Mayer Hall and its Addition; solid fill under the deck is wrong by construction. |
+| Central Utilities cooling bays (unnamed, osm:225 / 226) | 9 / 4.5 m area guesses | **8.1 / 8.4 m** | Sibling of the TES tank: one plane each (3,208 / 1,193 returns), standing on today's Apple as the fan enclosures. |
+
+Rejected / withheld, each re-measured: McGill / Literature / MedTeach-A — dense 82–84%, under
+the 85% thin-shelf cut; roofOf shelves stand. Pacific / NatSci / BRF II — stepped science
+labs, Sanford class. Gilman garage already ships its measured 18 m deck against a GIS L6
+overstatement. South Parking — massOk=false deck stack, Urey host paste of 19.2 stands.
+Faculty Club — HAND_AUDITED 6.5 is the gable ridge, not a Solis-class eave miss. Tata —
+POST_2014, GIS 25.6 ships unchallenged. Strauss-edge osm:1352 and trolley osm:827 keep their
+guesses. VAF-3 GIS/OSM position double remains open (coverage 0; no source resolves which
+footprint is Building 3).
+
 ### The colours, measured off footage
 
 Satellite imagery sees roofs and ground; it cannot see a wall, a tree trunk, or the sky. For

@@ -263,3 +263,71 @@ would still have shipped crown p98 (6.8 / 7.0 / 7.6) — that was the hole.
   the three in-shard hits after re-deriving them.
 - **Remaining LJF withholds** (~22): still need per-ring Apple + EPT; do not
   blanket-admit from roofOf.
+
+---
+
+# FINDINGS — run `2026-08-05_033905` · shard r1c1 (re-sweep)
+
+Pass 1 re-sweep of the academic-core shard (Warren Mall / VA fringe / Central
+Utilities / Mayer / Epstein). Screen: 19 candidates (3 high / 15 medium / 1 low).
+Judged by `cursor-grok-4.5-high`.
+
+Every candidate in `pass1-r1c1.screen.json` was re-derived before judgement
+against the screener's full-depth EPT (`/tmp/gauntlet-r1c1b/probe.json` — 81
+targets; point counts taken as the re-measurement for this pass), Apple
+snapshots in `/tmp/gauntlet-r1c1b/apple/`, and thin-shelf arithmetic
+re-computed per sample from each mass's histogram (dense 2 m band + gap).
+
+### Fixed — heights / phantoms (class rule, not a one-row patch)
+
+| Entity | Was shipping | Now ships | Source | Test |
+|---|---|---|---|---|
+| osm:759 (`osm-759-razed-pad`) | 4.5 m area guess | **removed** | `skipOsmAnchors` (+ Campus Point / osm:56 / 1351 class). Apple: bare dirt + staging trailers; 2014 plane 6–7 m is gone. | epoch §22 |
+| osm:840 + 898 (`osm-840-epstein-fringe` / `osm-898-epstein-neighbor`) | 9 / 4.5 m guesses | **removed** | Same anchors: Epstein POST_2014 amphitheater / PCW plaza fringe; 840 massOk=false grove/scatter. | epoch §22 |
+| osm:917 + 918 (`osm-917-mayer-hex-connector`) | 8.4 / 4.8 m solid | **removed** | Elevated six-hex walkway; solid extrusion fills air under the deck. Better absent. | epoch §22 |
+| osm:225 / 226 (`osm-225-cooling-bay` / `osm-226-cooling-bay`) | 9 / 4.5 m guesses | **8.1 / 8.4 m** | `OSM_UNNAMED_VERIFIED`: 3,208 / 1,193 pts, one plane each (gap 1.4 / 1.5), Apple fan enclosures standing today. Sibling of TES tank 224. | epoch §22 |
+
+### Rejected candidates (each re-measured before rejection; do not re-find these)
+
+- **`mcgill-thin-shelf` / `literature-thin-shelf` / `medteach-a-near-shelf`** — REJECTED.
+  Dense bands 82.2% / 84.4% / 83.4% — under the 85% cut (osm:996 family). roofOf
+  shelves (25.1 / 19.2 / 19.7) stand. Do not lower the cut.
+- **`pacific-deck-vs-roofof` / `natsci-upper-shelf` / `brf2-stepped-vs-gis`** — REJECTED.
+  Dense 68.7% / 66% / 54.6% — real stepped science volumes (Sanford / Otterson).
+  Pasting the dense body flattens the other way. BRF II needs a parts split
+  (mapping pass), not a height paste.
+- **`gilman-garage-gis-vs-decks`** — REJECTED. massHeights 18 already tracks the
+  measured top deck; GIS L6=25.6 is the overstatement. Already correct.
+- **`south-park-host-of-ineligible`** — REJECTED. massOk=false withholds
+  massHeights by design; host 19.2 answers (Urey / Jacobs rule). Deck stack has
+  no single plane to prefer.
+- **`faculty-club-host-vs-dense`** — REJECTED. HAND_AUDITED 6.5 is the gable
+  ridge (p90); dense eave / guarded roofOf 4.9 would miss it. Opposite of Solis.
+- **`tata-courtyard-unchallenged`** — REJECTED. Tata is `POST_2014_SITES`;
+  courtyard-contaminated 2014 returns must never challenge GIS 25.6.
+- **`osm-1352-triton-edge`** — REJECTED as a height admit. massOk=false on the
+  Strauss fringe; keep the 9 m guess (VA-garage family). Do not ship a 2014 smear.
+- **`osm-827-trolley-adjacent`** — REJECTED. 109 m² ring, bodyTight=false;
+  Mid-Coast trolley opened 2021. Keep the 4.5 m guess.
+- **`vaf3-position-double`** — REJECTED as in-scope fix; RE-LOGGED as handoff.
+  GIS (660.9,−83.9) and OSM (679.3,−86.1) still both render — coverage 0 between
+  footprints. Prior §13 / r1c1 FINDINGS: neither vanishes until a source
+  resolves which footprint is Building 3.
+
+### Withheld (better absent than wrong)
+
+- **osm:759 / 840 / 898 / 917 / 918**: removed from the world (skip anchors), not
+  given a height — Apple currency or typology forbids shipping either the 2014
+  plane or the area guess.
+- **osm:1352 / 827**: guesses stand; no clean measured plane that survives the
+  epoch / bodyTight gates.
+
+### Handoffs / observations
+
+- **VAF-3 position**: still open — university numbering vs OSM, zero footprint
+  overlap. Needs a source (Sahir / facilities map), not a coverage-threshold tweak.
+- **BRF II / Pacific / NatSci parts**: stepped labs where a single massHeights
+  value rides the upper shelf; per-wing rings would let both planes ship honestly.
+- **Thin-shelf cut**: campus-wide rule stays at dense ≥85% / gap >2. Three
+  in-shard near-misses (McGill / Literature / MedTeach-A) stay pinned so a
+  future pass cannot silently lower the floor.

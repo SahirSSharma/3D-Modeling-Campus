@@ -1,0 +1,325 @@
+[
+  {
+    "id": "osm-759-razed-pad",
+    "entity": "unnamed OSM building index 759",
+    "where": {"x": 404.0, "z": -65.6},
+    "claim": "assembleMasses still ships src=osm area-guess h=4.5 (area≈249). Not in skipOsmAnchors (only 56/1351/Campus Point). Not in OSM_UNNAMED_VERIFIED.",
+    "observed": "Fresh EPT: 651 pts, roofOf=11.7, p50=6.3, p75=6.9, p98=11.7, bodyTight=true, massOk=true, dense 6–7 m = 80.2%. Apple z19 at the ring shows a bare graded dirt pad with construction trailers/staging immediately south — no standing building on this footprint today. Same demolished-pad class as the prior r1c1 anchors at (374.4,−88.3) and (545.3,48.3).",
+    "evidence": {
+      "lidar": "osm:759 651 pts roofOf=11.7 p50=6.3 p75=6.9 p98=11.7 bodyTight massOk; hist 6m:490 (75%); dense2m=80.2%; osmHeights[759]=undefined",
+      "gis": "null — no GIS mass on this pad; Chancellor's Complex OSM ring ~29 m west ships 5.3",
+      "osm": "unnamed way index 759, campus-3d h=4.5, area≈249, centroid (404.0,−65.6)",
+      "apple": "Apple snapshot osm759.jpg z19 at 32.878592,-117.236878 — cleared light-brown dirt pad with staging trailers south; no roof on the ring",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Demolished/staging pad still extruded from an OSM ring — skipOsmAnchors class (prior 56/1351).",
+    "epoch_risk": "HIGH — Apple's bare dirt vs 2014's ~6–7 m plane is a DATE. The 2014 structure (or canopy) is gone; shipping either the guess or the 2014 plane would invent a building that is not there today."
+  },
+  {
+    "id": "osm-840-epstein-fringe",
+    "entity": "unnamed OSM building index 840",
+    "where": {"x": 734.5, "z": -100.4},
+    "claim": "Ships as OSM area-guess h=9 (area≈925). Not in OSM_UNNAMED_VERIFIED / POST_2014_OSM_RINGS.",
+    "observed": "Fresh EPT: 2,840 pts, roofOf=14.6, p50=9.6, p75=14.6, p98=28.1, guard=true, bodyTight=false → massOk=false. Dense 2 m band only 13.3% (scattered). Ring sits ~35 m from the Epstein Family Amphitheater place anchor (743,−131.6); Epstein is in POST_2014_SITES (opened 2022 — laser saw eucalyptus). Apple shows the finished amphitheater shell + terraced seating and Pepper Canyon West white roofs on this pad today.",
+    "evidence": {
+      "lidar": "osm:840 2840 pts roofOf=14.6 p50=9.6 p75=14.6 p98=28.1 guard bodyTight=false massOk=false; dense2m=13.3%; osmHeights[840]=undefined",
+      "gis": "no GIS mass centroid on this ring; nearest VAF-6 at ~35 m ships 9.5; Rya/PCW masses west",
+      "osm": "unnamed index 840 h=9 area≈925; Epstein place at (743,−131.6) is building=no and unextruded",
+      "apple": "Apple snapshot osm840.jpg z19 at 32.878907,-117.233343 — finished Epstein amphitheater (white shell + terraced bowl) and adjacent PCW white roofs; no crane",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Unnamed OSM guess over a post-2014 amphitheater/PCW fringe — 2014 returns are grove/scatter (massOk=false), Apple shows finished 2022+ fabric.",
+    "epoch_risk": "HIGH — Epstein is explicitly POST_2014_SITES. Admitting any 2014 plane here would paste the predecessor grove; keeping the 9 m guess without a measured garage/shell source is also ungated."
+  },
+  {
+    "id": "osm-917-mayer-hex-connector",
+    "entity": "unnamed OSM building index 917",
+    "where": {"x": 87.6, "z": 265.4},
+    "claim": "Ships as OSM area-guess h=8.4 (area≈131) — a solid extruded 'building' between Mayer Hall and Mayer Hall Addition.",
+    "observed": "Fresh EPT: 385 pts, roofOf=19.0, p50=15.1, p75=15.2, p98=19.0, bodyTight=true, massOk=true, dense 14–15 m = 62.6%. Δ ship−p75 = −6.8 m. Apple z20 shows the distinctive six-hexagon elevated pedestrian connector bridging the Mayer pair — not a solid hall. Sibling ring osm:918 at (87.2,264.3) ships h=4.8 with the same ~15 m plane (398 pts).",
+    "evidence": {
+      "lidar": "osm:917 385 pts roofOf=19 p50=15.1 p75=15.2 p98=19 bodyTight massOk; hist 15m:239 (62%); osm:918 398 pts roofOf=18.9 p50=15.1 p75=15.1; osmHeights[917/918]=undefined",
+      "gis": "Mayer Hall gis mass ~25 m east ships 21.7; Mayer Addition ~56 m NE ships 23.8 — separate footprints",
+      "osm": "unnamed indices 917 (h=8.4) and 918 (h=4.8), ~131–135 m² each, centroids 1.2 m apart",
+      "apple": "Apple snapshot osm917.jpg / osm918.jpg z20 at 32.87560,-117.24026 — six interlocking hexagonal elevated walkway modules between two Mayer roofs (south roof has solar arrays)",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Elevated connector / bridge ring tagged as building and area-guessed — LiDAR reads the deck height (~15 m), the guess understates it, and a solid extrusion fills air under the hex modules.",
+    "epoch_risk": "Low for existence — Apple and 2014 both see the Mayer connector. Disagreement is typology/height assignment, not a post-2014 rebuild."
+  },
+  {
+    "id": "mcgill-thin-shelf",
+    "entity": "McGill Hall",
+    "where": {"x": -79.8, "z": -115.1},
+    "claim": "assembleMasses ships h=25.1 via massHeights[m:-80,-115] over gisH=21.3 / L5.",
+    "observed": "Fresh EPT of the GIS ring: 7,901 pts, roofOf=25.1, p50=20.2, p75=20.3, p98=25.1, guard=false, bodyTight=true, massOk=true. Histogram: 20 m bin 6,365 (80.6%); 25 m bin only 540 (6.8%). Dense 2 m band 20–21 = 82.2% — 3 points under the 85% thin-shelf cut. Gap p98−p75=4.8. Shipped roofOf is +4.8 m above the dense body.",
+    "evidence": {
+      "lidar": "gis:McGill 7901 pts roofOf=25.1 p50=20.2 p75=20.3 p98=25.1 bodyTight massOk; hist 20m:6365 25m:540; dense2m=82.2%; massHeights[m:-80,-115]=25.1",
+      "gis": "McGill Hall gisH=21.3 levels=5 area≈1189",
+      "osm": "McGill Hall lidar.heights=25.1; OSM tag h=12",
+      "apple": "Apple snapshot mcgill.jpg z19 at 32.879041,-117.242054 — finished McGill / Mandler academic block with flat tan roof and rooftop mechanical; standing today, no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Thin upper shelf on an admitted massHeights value — AsanteMeet / CSC-H / Tuolumne family, just under the 85% dense cut.",
+    "epoch_risk": "Low — Apple matches the 2014 footprint. Dual plane is intra-building (deck vs plant/step), not a post-2014 change."
+  },
+  {
+    "id": "literature-thin-shelf",
+    "entity": "Literature Building",
+    "where": {"x": 693.3, "z": -283.4},
+    "claim": "assembleMasses ships h=19.2 via massHeights over gisH=17.1 / L4.",
+    "observed": "Fresh EPT: 3,482 pts, roofOf=19.2, p50=15.4, p75=15.6, p98=19.2, bodyTight=true, massOk=true. Histogram: 15 m bin 2,927 (84.1%); 19 m bin 296 (8.5%). Dense 2 m band 15–16 = 84.4%. Gap=3.6. Shipped roofOf is +3.6 m above the dense body.",
+    "evidence": {
+      "lidar": "gis:Literature 3482 pts roofOf=19.2 p50=15.4 p75=15.6 p98=19.2 bodyTight massOk; hist 15m:2927 19m:296; dense2m=84.4%; massHeights path ships 19.2",
+      "gis": "Literature Building gisH=17.1 levels=4 area≈1354",
+      "osm": "Literature lidar.heights=19.2; OSM tag h=12",
+      "apple": "Apple snapshot literature.jpg z19 at 32.880563,-117.233784 — finished white flat-roof Literature building standing today with light rooftop plant; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Same thin-shelf massHeights family as McGill — dense mid-deck under a minority upper shelf, 0.6 points under the 85% cut.",
+    "epoch_risk": "Low — Apple shows the finished pre-2014 Literature hall. Shelf is mechanical/step, not a rebuild."
+  },
+  {
+    "id": "pacific-deck-vs-roofof",
+    "entity": "Pacific Hall",
+    "where": {"x": -92.3, "z": 234.3},
+    "claim": "assembleMasses ships h=33.2 via massHeights[m:-92,234] over gisH=25.6 / L6 (host lidar.heights['Pacific Hall']=33.9).",
+    "observed": "Fresh EPT: 15,352 pts, roofOf=33.3, p50=28.4, p75=29.3, p98=33.3, bodyTight=true, massOk=true. Dense 2 m band 28–29 = 68.7% (9,389 in the 28 m bin alone). Gap=4.0 — under the thin-shelf 85% cut. Shipped roofOf is +4.0 m above p75 / +4.9 m above the dense mode; GIS L6=25.6 understates the dense body by ~3 m.",
+    "evidence": {
+      "lidar": "gis:Pacific 15352 pts roofOf=33.3 p50=28.4 p75=29.3 p98=33.3 bodyTight massOk; hist 28m:9389 (61%); dense2m=68.7%; massHeights[m:-92,234]=33.2",
+      "gis": "Pacific Hall gisH=25.6 levels=6 area≈2631",
+      "osm": "Pacific Hall lidar.heights=33.9; OSM tag h=18",
+      "apple": "Apple snapshot pacific.jpg z18 at 32.875881,-117.242187 — finished multi-wing science hall with flat roofs and mechanical plant; standing today",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Stepped / dual-plane science hall where roofOf rides the upper shelf and GIS levels understate the dense body — Sanford/Pacific class, not thin-shelf (≥85%).",
+    "epoch_risk": "Low — Apple confirms Pacific standing on the 2014 pad. Split is assignment across volumes of one pre-2014 building."
+  },
+  {
+    "id": "brf2-stepped-vs-gis",
+    "entity": "Biomedical Research Facility II (BRF II)",
+    "where": {"x": 574.6, "z": 415.7},
+    "claim": "assembleMasses ships h=31.8 via massHeights[m:575,416] over gisH=21.3 / L5.",
+    "observed": "Fresh EPT: 20,244 pts, roofOf=31.9, p50=26.5, p75=29.6, p98=31.9, bodyTight=false, massOk=true. Dense 2 m band 26–27 = 54.6% (9,902 in the 26 m bin). OSM ring re-sample matches (22,524 pts, roofOf=31.5). Shipped plane is +10.5 m above the L5 record and ~5–6 m above the densest bin — a real stepped lab with a tall mechanical/penthouse shelf, not a clean single plane.",
+    "evidence": {
+      "lidar": "gis:BRF2 20244 pts roofOf=31.9 p50=26.5 p75=29.6 p98=31.9 bodyTight=false massOk; hist 26m:9902; dense2m=54.6%; osm:BRF2 22524 pts roofOf=31.5; massHeights[m:575,416]=31.8",
+      "gis": "Biomedical Research Facility II gisH=21.3 levels=5 area≈3075",
+      "osm": "BRF II lidar.heights=31.5; OSM tag h=16",
+      "apple": "Apple snapshot brf2.jpg z18 at 32.874241,-117.235054 — finished twin research bars with heavy rooftop mechanical; standing today, no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Stepped lab where GIS storey-default understates both the dense body (~26 m) and the shipped roofOf (~32 m) — needs a parts split or an explicit hand-audit, not a silent paste either way.",
+    "epoch_risk": "Low — Apple shows finished BRF II on the 2014 footprint. Disagreement is storey-default vs measured planes, not a date."
+  },
+  {
+    "id": "natsci-upper-shelf",
+    "entity": "Natural Science Building",
+    "where": {"x": -156.2, "z": 307.8},
+    "claim": "assembleMasses ships h=30.3 via massHeights[m:-156,308] over gisH=25.6 / L6.",
+    "observed": "Fresh EPT: 16,641 pts, roofOf=30.3, p50=27.1, p75=27.2, p98=30.3, bodyTight=true, massOk=true. Dense 2 m band 26–27 = 66%. Gap=3.1. Shipped roofOf is +3.1 m above the dense body; GIS L6 matches neither plane exactly.",
+    "evidence": {
+      "lidar": "gis:NatSci 16641 pts roofOf=30.3 p50=27.1 p75=27.2 p98=30.3 bodyTight massOk; hist 27m:8318 (50%); dense2m=66%; massHeights[m:-156,308]=30.3",
+      "gis": "Natural Sciences Building gisH=25.6 levels=6 area≈2676",
+      "osm": "Natural Science Building lidar.heights=30.2; OSM tag h=22.8",
+      "apple": "Apple snapshot natsci.jpg z18 at 32.875216,-117.242871 — finished Natural Sciences hall standing today with flat roof / plant; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Sibling of Pacific — dense mid-deck under a thinner upper shelf on an admitted massHeights value.",
+    "epoch_risk": "Low — Apple matches the 2014 science-hall footprint."
+  },
+  {
+    "id": "gilman-garage-gis-vs-decks",
+    "entity": "Gilman Parking Structure",
+    "where": {"x": 691.6, "z": 44.7},
+    "claim": "assembleMasses ships h=18 via massHeights[m:692,45] against gisH=25.6 / L6 (host lidar.heights['Gilman Parking Structure']=19.5).",
+    "observed": "Fresh EPT of the GIS ring: 12,835 pts, roofOf=18.0, p50=12.8, p75=16.5, p98=18.0, bodyTight=false, massOk=true. Dense 2 m band 11–12 = 58% (deck stack). OSM ring: 13,266 pts, roofOf=19.5. Shipped massHeights 18 tracks the measured top deck; GIS L6×4.27=25.6 overstates by ~7–8 m.",
+    "evidence": {
+      "lidar": "gis:GilmanPark 12835 pts roofOf=18 p50=12.8 p75=16.5 p98=18 bodyTight=false massOk; hist 12m:6820 17m:1988; dense2m=58%; massHeights[m:692,45]=18; osm ring roofOf=19.5",
+      "gis": "Gilman Parking gisH=25.6 levels=6 area≈4728",
+      "osm": "Gilman Parking Structure lidar.heights=19.5; OSM tag h=16",
+      "apple": "Apple snapshot gilman-park.jpg z18 at 32.877596,-117.233802 — multi-deck Gilman garage standing beside Pepper Canyon West / finished white roofs; cars on decks",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Parking-structure GIS storey-default vs measured deck stack — Campus Point West precedent (record levels overstate deck pitch).",
+    "epoch_risk": "Low for existence — Apple shows the garage standing. 2014 flight saw a finished deck stack; not a post-2014 rebuild."
+  },
+  {
+    "id": "south-park-host-of-ineligible",
+    "entity": "South Parking Structure",
+    "where": {"x": 385.1, "z": 434.9},
+    "claim": "assembleMasses ships h=19.2 with massHeights[m:385,435] undefined — height comes from host reconcile against lidar.heights['South Parking Structure']=19.2 over gisH=25.6 / L6.",
+    "observed": "Fresh EPT: 9,921 pts, roofOf=20.1, p50=14.5, p75=20.1, p98=30.3, guard=true, bodyTight=false → massOk=false under the build's own plane-coherence rule. Histogram is a spread deck stack (bins 12–16 each ~5–6%), not a single plane. massHeights correctly withholds; host reconcile still pastes 19.2. GIS L6=25.6 overstates either way.",
+    "evidence": {
+      "lidar": "gis:SouthPark 9921 pts roofOf=20.1 p50=14.5 p75=20.1 p98=30.3 guard bodyTight=false massOk=false; dense2m=11.2%; massHeights absent; host heights=19.2",
+      "gis": "South Parking gisH=25.6 levels=6 area≈8149",
+      "osm": "no covering OSM name on this ring in assembleMasses; host key 'South Parking Structure'",
+      "apple": "Apple snapshot south-park.jpg z17 at 32.874067,-117.237081 — multi-deck South Parking structure present in the medical/south campus cluster today",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Host-bleed onto a massHeights-ineligible stepped/garage ring — Jacobs/Urey path: massOk=false withholds massHeights, then reconcile pastes lidar.heights[host].",
+    "epoch_risk": "Low for existence — Apple shows the garage. Assignment across deck levels vs a single host number; not a date conflict."
+  },
+  {
+    "id": "vaf3-position-double",
+    "entity": "Visual Arts Facility - Building 3",
+    "where": {"x": 670.0, "z": -85.0},
+    "claim": "Both the GIS mass (h=11.5 at 660.9,−83.9) and the OSM ring (h=11.7 at 679.3,−86.1) still assemble and render under the same name.",
+    "observed": "Re-measured: GIS ring 2,060 pts roofOf=11.5 massOk; OSM ring 473 pts roofOf=11.7 massOk. Centroids ~18 m apart; prior r1c1 FINDINGS logged area coverage 0.000 between the footprints. Exact-name twin rule yields when coverage fails, so both survive. Apple shows one VAF cluster — two extruded rings for one named building.",
+    "evidence": {
+      "lidar": "gis:VAF3 2060 pts roofOf=11.5 p50=10.3 p75=10.3 p98=11.5 massOk; osm:VAF3 473 pts roofOf=11.7 p50=10.8 p75=11.1 massOk",
+      "gis": "Visual Arts Facility - Building 3 gisH=8.5 → massH 11.5 area≈421 at (660.9,−83.9)",
+      "osm": "Visual Arts Facility - Building 3 still src=osm h=11.7 at (679.3,−86.1) area≈191",
+      "apple": "Apple snapshot vaf3-pair.jpg z18 at 32.878769,-117.234033 — single VAF / amphitheater-adjacent cluster; finished white and grey roofs",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Position/identity disagreement between university GIS numbering and OSM for the same VAF-3 name — logged open from prior r1c1, still unresolved.",
+    "epoch_risk": "Low for existence — both rings sit on standing fabric. Risk is double-label / wrong footprint, not a date."
+  },
+  {
+    "id": "osm-225-cooling-bay",
+    "entity": "unnamed OSM building index 225",
+    "where": {"x": 160.9, "z": 500.1},
+    "claim": "Ships as OSM area-guess h=9 (area≈629) in the Central Utilities district. Not in OSM_UNNAMED_VERIFIED (sibling tank osm:224 already ships 27.0).",
+    "observed": "Fresh EPT: 3,208 pts, roofOf=8.1, p50=6.7, p75=6.7, p98=8.1, bodyTight=true, massOk=true. Dense 6–7 m = 64.3%. Δ guess−p75 = +2.3 m. Apple shows the linear cooling-fan enclosure (six large circular fans) plus the white thermal tank to the east — industrial plant, not a 9 m hall.",
+    "evidence": {
+      "lidar": "osm:225 3208 pts roofOf=8.1 p50=6.7 p75=6.7 p98=8.1 bodyTight massOk; hist 6m:1713 (53%); osmHeights[225]=undefined",
+      "gis": "null on this ring; Central Utilities Building ~90 m south ships separately; osm:224 tank already verified at 27.0",
+      "osm": "unnamed index 225 h=9 area≈629",
+      "apple": "Apple snapshot osm225.jpg z19 at 32.873477,-117.239479 — cooling-tower fan bay + white circular thermal storage tank; plant present today",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Unnamed OSM area-guess over a measured industrial enclosure — clean 2014 plane never admitted to osmHeights.",
+    "epoch_risk": "Low — Apple confirms the cooling bay on this footprint today; plane is tight (gap 1.4 m)."
+  },
+  {
+    "id": "osm-226-cooling-bay",
+    "entity": "unnamed OSM building index 226",
+    "where": {"x": 161.0, "z": 454.4},
+    "claim": "Ships as OSM area-guess h=4.5 (area≈246) just south of osm:225 in the same utilities district.",
+    "observed": "Fresh EPT: 1,193 pts, roofOf=8.4, p50=6.6, p75=6.9, p98=8.4, bodyTight=true, massOk=true. Dense 6–7 m = 74%. Δ guess−p75 = −2.4 m (guess understates the plane). Apple shows the southern cooling-fan / plant pads of the same Central Utilities cluster.",
+    "evidence": {
+      "lidar": "osm:226 1193 pts roofOf=8.4 p50=6.6 p75=6.9 p98=8.4 bodyTight massOk; hist 6m:682; osmHeights[226]=undefined",
+      "gis": "null",
+      "osm": "unnamed index 226 h=4.5 area≈246",
+      "apple": "Apple snapshot osm226.jpg z19 at 32.873891,-117.239478 — southern cooling-fan array and plant pads; standing today",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Sibling of osm:225 — unnamed utilities enclosure with a clean 2014 plane still wearing an area guess.",
+    "epoch_risk": "Low — same plant, present in both epochs."
+  },
+  {
+    "id": "osm-1352-triton-edge",
+    "entity": "unnamed OSM building index 1352",
+    "where": {"x": 510.6, "z": -2.5},
+    "claim": "Ships as OSM area-guess h=9 (area≈887). Not in skipOsmAnchors (sibling demolished pad 1351 at 545.3,48.3 already anchored).",
+    "observed": "Fresh EPT: 3,129 pts, roofOf=11.9, p50=3.7, p75=11.9, p98=17.1, guard=true, bodyTight=false → massOk=false. Dense band peaking near ground (−1–0 = 25.4%). ~26 m from The Strauss (UNDER_CONSTRUCTION / POST_2014) and ~41 m from Triton Alumni and Welcome Center. Apple shows finished white University Center / Strauss-edge fabric on and around this pad today.",
+    "evidence": {
+      "lidar": "osm:1352 3129 pts roofOf=11.9 p50=3.7 p75=11.9 p98=17.1 guard bodyTight=false massOk=false; dense2m=25.4%; osmHeights[1352]=undefined",
+      "gis": "null covering mass; nearest named are post-2014 Strauss / Student Success / Triton Welcome",
+      "osm": "unnamed index 1352 h=9 area≈887; The Strauss src=osm h=19 at (535.9,−6.1)",
+      "apple": "Apple snapshot osm1352.jpg z18 at 32.877978,-117.235738 — finished white flat-roof University Center cluster; landscaped courtyards; no crane on this pad",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Unnamed guess on the Triton Center fringe — 2014 returns are massOk=false (lot/canopy mix); Apple shows finished post-2014 fabric.",
+    "epoch_risk": "HIGH — same district as the anchored 1351 demolished pad and UNDER_CONSTRUCTION Strauss. Do not ship a 2014 plane as today's height; do not trust the 9 m guess without a source."
+  },
+  {
+    "id": "osm-898-epstein-neighbor",
+    "entity": "unnamed OSM building index 898",
+    "where": {"x": 738.8, "z": -103.2},
+    "claim": "Ships as OSM area-guess h=4.5 (area≈358), 5 m from osm:840 in the Epstein / PCW fringe.",
+    "observed": "Fresh EPT: 722 pts, roofOf=9.7, p50=7.2, p75=8.0, p98=9.7, bodyTight=true, massOk=true. Dense 7–8 m = 48%. Δ guess−p75 = −3.5 m. Apple frame shared with osm:840 shows finished amphitheater / PCW fabric.",
+    "evidence": {
+      "lidar": "osm:898 722 pts roofOf=9.7 p50=7.2 p75=8.0 p98=9.7 bodyTight massOk; osmHeights[898]=undefined",
+      "gis": "null on ring; VAF-6 / Rya nearby",
+      "osm": "unnamed index 898 h=4.5 area≈358; Epstein place (743,−131.6) ~28 m south",
+      "apple": "Apple snapshot osm898.jpg z19 at 32.878932,-117.233297 — same finished Epstein/PCW district as osm:840",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Sibling unnamed guess in the Epstein post-2014 fringe — tighter plane than 840 but same currency question.",
+    "epoch_risk": "HIGH secondary — even a tight 2014 plane next to a 2022 amphitheater may be a predecessor shed/grove edge. Apple decides existence; confirm the ring still outlines a real volume before admitting height."
+  },
+  {
+    "id": "medteach-a-near-shelf",
+    "entity": "Medical Teaching Facility (south block)",
+    "where": {"x": 535.8, "z": 218.0},
+    "claim": "assembleMasses ships h=19.7 via massHeights[m:536,218] over gisH=29.9 / L7. (North wing at 540.3,263.9 already ships guarded 8.3 by design.)",
+    "observed": "Fresh EPT: 11,306 pts, roofOf=19.7, p50=17.0, p75=17.1, p98=19.7, bodyTight=true, massOk=true. Dense 2 m band 16–17 = 83.4%. Gap=2.6. Shipped roofOf is +2.6 m above the dense body; GIS L7=29.9 overstates by ~10 m.",
+    "evidence": {
+      "lidar": "gis:MedTeachA 11306 pts roofOf=19.7 p50=17 p75=17.1 p98=19.7 bodyTight massOk; hist 17m:5105 16m:4324; dense2m=83.4%; massHeights[m:536,218]=19.7",
+      "gis": "Medical Teaching Facility gisH=29.9 levels=7 area≈1622 (this block); north wing area≈885 ships 8.3",
+      "osm": "Medical Teaching lidar.heights≈19.3",
+      "apple": "Apple snapshot medteach.jpg z18 at 32.875830,-117.235445 — finished Medical Teaching blocks standing today with flat roofs / plant",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Near-miss thin-shelf on an admitted massHeights block (83.4% / gap 2.6) plus a GIS storey-default that still overstates both planes.",
+    "epoch_risk": "Low — Apple matches the 2014 Medical Teaching footprint. North wing's 8.3 is already the intentional guarded low plane."
+  },
+  {
+    "id": "faculty-club-host-vs-dense",
+    "entity": "Ida and Cecil Green Faculty Club",
+    "where": {"x": 159.3, "z": -127.8},
+    "claim": "assembleMasses ships h=6.5 with massHeights absent — host reconcile against lidar.heights['Ida and Cecil Green Faculty Club']=6.5 over gisH=4.3 / L1. Faculty Club Expansion at (147.2,−172.8) keeps its 4.3 record.",
+    "observed": "Fresh EPT of the main GIS ring: 10,019 pts, roofOf=4.9, p50=3.6, p75=4.9, p98=16.9, guard=true, bodyTight=true, massOk=true. Dense 3–4 m = 55.6%. Host 6.5 sits above the guarded roofOf and the dense body; GIS L1=4.3 is closer to the dense eave.",
+    "evidence": {
+      "lidar": "gis:FacultyClub 10019 pts roofOf=4.9 p50=3.6 p75=4.9 p98=16.9 guard bodyTight massOk; hist 3m:4267; dense2m=55.6%; massHeights absent; host heights=6.5",
+      "gis": "Ida and Cecil Green Faculty Club gisH=4.3 levels=1 area≈2350; Expansion gisH=4.3 area≈681",
+      "osm": "Faculty Club OSM tag h=7; lidar.heights=6.5",
+      "apple": "Apple snapshot faculty-club.jpg z18 at 32.879150,-117.239496 — finished Faculty Club with surrounding canopy; standing today",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Host reconcile past a guarded dense eave on a canopy-contaminated ring — Solis-class (Solis was hand-audited down to 6.4 for the same failure mode).",
+    "epoch_risk": "Low for existence — Apple shows the club. p98=16.9 under guard is canopy, not a post-2014 tower."
+  },
+  {
+    "id": "osm-827-trolley-adjacent",
+    "entity": "unnamed OSM building index 827",
+    "where": {"x": 870.6, "z": -87.7},
+    "claim": "Ships as OSM area-guess h=4.5 (area≈109) east of the trolley corridor near Matthews.",
+    "observed": "Fresh EPT: 1,407 pts, roofOf=12.4, p50=7.2, p75=9.7, p98=12.4, bodyTight=false, massOk=true. Dense 9–10 = 22% — no clean body. Apple shows the finished light-rail station canopy / elevated track and a small grey utility pad beside Matthews apartments.",
+    "evidence": {
+      "lidar": "osm:827 1407 pts roofOf=12.4 p50=7.2 p75=9.7 p98=12.4 bodyTight=false massOk; dense2m=22%; osmHeights[827]=undefined",
+      "gis": "Matthews Housing Maintenance Carpentry Shop ~35 m east ships 4.3; Matthews A ~50 m",
+      "osm": "unnamed index 827 h=4.5 area≈109",
+      "apple": "Apple snapshot osm827.jpg z19 at 32.878798,-117.231888 — trolley station canopy / elevated track with a small utility structure east of the platform; finished today",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Tiny unnamed ring beside elevated rail — 2014 returns mix canopy/track; Apple shows station infrastructure that may post-date or dominate the pad.",
+    "epoch_risk": "Moderate — Mid-Coast Trolley (opened 2021) is post-2014. A 12 m roofOf on this 109 m² ring may be track/canopy returns, not a building height to ship."
+  },
+  {
+    "id": "tata-courtyard-unchallenged",
+    "entity": "Tata Hall for the Sciences",
+    "where": {"x": -55.4, "z": 171.0},
+    "claim": "assembleMasses ships unchallenged gisH=25.6 / L6 — massHeights absent, no host lidar.heights entry.",
+    "observed": "Fresh EPT: 11,300 pts, roofOf=19.3, p50=10.6, p75=14.8, p98=19.3, bodyTight=false, massOk=true. Histogram peaks at −1/0 m (courtyard/ground returns 28.4%) under mid-deck bins at 14–16 m. Plane is courtyard-contaminated; GIS L6 ships without a massHeights challenge.",
+    "evidence": {
+      "lidar": "gis:Tata 11300 pts roofOf=19.3 p50=10.6 p75=14.8 p98=19.3 bodyTight=false massOk; hist -1m:2851 15m:779; dense2m=28.4%; massHeights absent; hostLidar=null",
+      "gis": "Tata Hall gisH=25.6 levels=6 area≈2000",
+      "osm": "no lidar.heights['Tata Hall'] / Tata Hall for the Sciences host key",
+      "apple": "Apple snapshot tata.jpg z18 at 32.876454,-117.241793 — finished Tata / science cluster with courtyard geometry standing today",
+      "probe": null
+    },
+    "severity": "low",
+    "suspected_class": "Courtyard-contaminated GIS mass left on its storey-default because massOk bodyTight fails and no host lidar key exists — PRE_2014_GIS_VERIFIED / parts-split candidate.",
+    "epoch_risk": "Low — Apple shows Tata standing. 2014 returns are messy because of the courtyard, not because the building is new."
+  }
+]

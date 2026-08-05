@@ -339,8 +339,23 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
      in Street View 2025-02. The second razed for the dig south of the
      Chancellor's Complex — staging on the chunk, a flat pad on Apple.
      Their rings survive in OSM and wore 12 and 9 m area guesses; a ring
-     whose building was demolished renders nothing, whatever OSM says. */
-  const skipOsmAnchors = [[1416, -1299], [545.3, 48.3], [374.4, -88.3]];
+     whose building was demolished renders nothing, whatever OSM says.
+     r1c1 re-sweep (2026-08-05), three more unnamed phantoms:
+     (404.0, -65.6) — osm:759, a third demolished pad in the same
+     Chancellor's / Powell dig (Apple: bare graded dirt, staging
+     trailers immediately south; 2014 had a tight 6–7 m plane).
+     (734.5, -100.4) — osm:840 (+ osm:898 within 12 m), unnamed rings
+     over the Epstein Family Amphitheater / PCW plaza fringe. Epstein
+     is POST_2014 (opened 2022); the 2014 returns are grove/scatter
+     (massOk=false). Extruding a 9 m guess invents a hall on a bowl.
+     (87.6, 265.4) — osm:917 (+ osm:918 within 12 m), Mayer Hall's
+     six-hexagon elevated pedestrian connector. Apple and 2014 both
+     see the deck (~15 m), but a solid extrusion fills the air under
+     the hex modules. Better absent than a filled bridge. */
+  const skipOsmAnchors = [
+    [1416, -1299], [545.3, 48.3], [374.4, -88.3],
+    [404.0, -65.6], [734.5, -100.4], [87.6, 265.4],
+  ];
   /* Building indices whose ring (or any part) stands in the world — the
      host rename below must know, because a name may only move onto the
      massing when its own ring does NOT render (r2c1 judge sweep). */

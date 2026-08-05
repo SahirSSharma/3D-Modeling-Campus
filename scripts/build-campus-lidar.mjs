@@ -587,6 +587,19 @@ const OSM_UNNAMED_VERIFIED = new Set([
      withhold contradicted by today's Apple (square pyramid roof beside
      the pond) and a tight 2014 plane (542 pts, gap 0.5, roofOf 6.2). */
   903, 1028, 1094, 481,
+  /* r1c1 re-sweep 2026-08-05 — Central Utilities cooling-fan enclosures.
+     Sibling of the TES tank (224 → 27.0). Each ring is one plane, standing
+     unchanged on today's Apple (six circular fans on 225; southern fan
+     array on 226); area guesses were 9 / 4.5:
+       225: 3,208 returns, p50 = p75 = 6.7, roofOf 8.1, gap 1.4, bodyTight
+       226: 1,193 returns, p50 6.6 / p75 6.9, roofOf 8.4, gap 1.5, bodyTight
+     Deliberately NOT admitted this pass (epoch / typology / near-miss):
+       759: demolished pad — Apple bare dirt; skipOsmAnchors, not a height.
+       840 / 898: Epstein / PCW fringe — post-2014 amphitheater; skip.
+       917 / 918: Mayer hex connector — elevated walkway, not a solid hall.
+       1352: Strauss-edge fringe, massOk=false; keep the 9 m guess.
+       827: trolley-adjacent 109 m² ring, bodyTight=false; keep 4.5 guess. */
+  225, 226,
 ]);
 
 /* Hand-audited stats where the automatic roofOf() percentile choice is
