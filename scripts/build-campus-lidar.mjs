@@ -975,6 +975,48 @@ const OSM_UNNAMED_VERIFIED = new Set([
   600, 601,
   553, 554, 555, 560, 561, 562,
   1239, 1305,
+  /* r2c2 pass-3 re-sweep 2026-08-05 — University Center Lane / Nobel-Lebon
+     residual / Lebon-south / Sheraton-strip sibling / Whole Foods pad after
+     pass-2's LJVD terrace + Lebon 251–256 admissions. Independent full-depth
+     EPT re-derived (point counts matched the screener exactly: 1,643 /
+     1,783 / 1,481 / 1,659 / 2,313 / 2,051 / 1,845 / 2,086 / 1,963 / 1,861 /
+     1,535 / 1,463 / 1,676 / 1,299 / 0 for OOB 479); Apple currency confirmed
+     finished courtyard / residential / hospitality / retail roofs today, no
+     crane. Heights below are the build's own rimBase tiling (centroid-probe
+     sat the same band; rim vs centroid shifts absolute metres on grade):
+       Strict one-plane courtyard (was 9 area guess):
+         306: 12.5 (1643 pts; Nominatim University Center Lane /
+              Aventine-south pad; centroid-probe roofOf 14.4, dense 86.4%
+              @13, gap 0.7).
+       Nobel Drive / Lebon Drive residual strip (was 9; dense body clearly
+       above — same class as pass-2's 251–256, ≠ withheld 257/258):
+         267: 13.5 (1783)  268: 13.0 (1481)  269: 12.8 (1659)
+         270: 12.4 (2313)  271: 11.8 (2051)  272: 12.4 (1845)
+         273: 12.4 (2086)
+         Nominatim 3833 Nobel / 3425 Lebon / 3899 Nobel apartments.
+       Lebon Colony south connectors (was 9; Nominatim 3425 Lebon):
+         1390: 13.3 (1963)  1391: 13.2 (1861)
+         1393: 13.9 (1535)  1394: 11.9 (1463)
+       Sheraton-strip one-storey sibling of already-admitted 1365 / 1366:
+         1367: 5.2 canopy-guarded (1676 pts, dense 81.9% @5, gap 6.8) —
+              Nominatim 3299 Holiday Court; was 9.
+       Whole Foods / CVS commercial pad beside already-admitted strip:
+         457: 7.1 (1299 pts, dense ±1 95.4% in 5–6 m, gap 0.9) — was 9.
+              Neighbours Chick-fil-A / CVS / Whole Foods / osm:81 ship ~7.
+     Deliberately NOT admitted this pass:
+       1392: gap 2.8 / dense2 63% under the 85% thin-shelf cut — roofOf
+             would paste the 15.2 shelf over an ~12 m body (695 / 1364
+             near-miss family). Keep the 9 m guess.
+       479:  centroid past terrain x grid → 0 EPT pts / groundAt-null
+             (Regents / Vaughan apron class). Apple shows finished One
+             Miramar terracotta terraces today, but no 2014 plane
+             resolves. Keep the 9 m guess. Survey-box handoff.
+       Remaining ~40 in-shard unnamed guesses: per-ring Apple+EPT
+             handoff, not a blanket admit. */
+  306,
+  267, 268, 269, 270, 271, 272, 273,
+  1390, 1391, 1393, 1394,
+  1367, 457,
 ]);
 
 /* Hand-audited stats where the automatic roofOf() percentile choice is

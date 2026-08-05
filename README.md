@@ -876,6 +876,27 @@ body ≈ the 4.5 guess; roofOf 9.6 is a thin shelf. osm:42 (Truluck's) — multi
 centroids past terrain z_max → 0 EPT pts (Vaughan / Ritter apron); Apple shows finished
 Regents Road apartments, but no 2014 plane resolves. Class-hole rejected as scoped.
 
+**The east-of-I-5 / Nobel–Lebon residual pass-3 (2026-08-05, r2c2).** Fresh screen of 10
+candidates (8 high / 1 medium / 1 low). Every height re-derived from an independent
+full-depth EPT (point counts matched the screener's 1,643 / 1,783 / 1,481 / 1,659 /
+2,313 / 2,051 / 1,845 / 2,086 / 1,963 / 1,861 / 1,535 / 1,463 / 1,676 / 1,299 / 0
+exactly); Apple currency re-checked per site — finished University Center Lane courtyard,
+Nobel/Lebon apartments, Sheraton-strip low roofs, Whole Foods retail pad, no crane.
+
+| Entity | Was shipping | Now ships | Why |
+|---|---|---|---|
+| University Center Lane courtyard (unnamed, osm:306) | 9 m area guess | **12.5 m** | Strict one-plane (1,643 returns, dense 86.4% @13, gap 0.7). Build rimBase; centroid-probe roofOf 14.4. |
+| Nobel / Lebon residual strip (unnamed, osm:267–273 seven pads) | 9 m area guess | **11.8–13.5 m** | Dense body clearly above the guess — same class as pass-2's 251–256 (≠ withheld 257/258 dense≈guess). |
+| Lebon Colony south connectors (unnamed, osm:1390 / 1391 / 1393 / 1394) | 9 m area guess | **11.9–13.9 m** | Soft-under class south of 251–256; Nominatim 3425 Lebon Drive apartments. |
+| Sheraton-strip pad (unnamed, osm:1367) | 9 m area guess | **5.2 m** | Canopy-guarded one-storey (dense 81.9% @5, gap 6.8); sibling of already-admitted 1365 / 1366. |
+| Whole Foods / CVS pad (unnamed, osm:457) | 9 m area guess | **7.1 m** | Clean plane beside already-admitted Chick-fil-A / CVS / Whole Foods / osm:81 (~7 m strip). |
+
+Rejected / withheld, each re-measured: osm:1392 — gap 2.8 / dense2 63% under the 85%
+thin-shelf cut; roofOf would paste the 15.2 shelf over an ~12 m body (695 / 1364 family).
+osm:479 — centroid past terrain x grid → 0 EPT pts (Regents / Vaughan apron); Apple shows
+finished One Miramar terracotta terraces today, but no 2014 plane resolves. Class-hole
+rejected as scoped.
+
 **The NW-campus pass-2 re-sweep (2026-08-05, r0c0).** Same Estancia / Sanford / Marshall /
 La Jolla Farms shard after pass 1 closed the first six unnamed admissions. Residual error
 mass was still the unnamed area-guess set (73 rings). Every candidate re-derived from an

@@ -1615,3 +1615,82 @@ gap≤2 admitted under the existing class rule. Prior pass-2 withholds
   and only the 27 new `osmHeights` keys were patched in. Next agent who must
   full-rebuild needs to diagnose the EPT/tile non-determinism (or shared-point
   assignment) before re-pinning campus-wide.
+
+---
+
+# FINDINGS — run `2026-08-05_033905` · shard r2c2 (pass 3)
+
+Pass 3 of the east-of-I-5 / One Miramar / LJVD / Lebon / Nobel / Sheraton /
+Whole Foods shard. Screen: 10 candidates (8 high / 1 medium / 1 low). Judged
+by `cursor-grok-4.5-high`.
+
+Every candidate in `pass3-r2c2.screen.json` was re-derived before judgement with
+an independent full-depth targeted EPT re-sample (22 targets in
+`.cache/gauntlet-r2c2-p3/judge/reprobe.json`; point counts matched the screener's
+`/tmp/gauntlet-r2c2-p3/probe.json` exactly — 1,643 / 1,783 / 1,481 / 1,659 /
+2,313 / 2,051 / 1,845 / 2,086 / 1,963 / 1,861 / 1,672 / 1,535 / 1,463 / 1,676 /
+0 / 1,299 plus controls 251 / 256 / 1365 / 1366 / 257 / 258), Apple snapshots
+from the screener's `/tmp/gauntlet-r2c2-p3/apple/` (copied to
+`.cache/gauntlet-r2c2-p3/evidence/`), and thin-shelf / canopy-guard arithmetic
+re-computed per sample. Shipped heights are the trial full-rebuild's own
+rimBase tiling for these 14 indices only (centroid-probe sat the same band;
+rim vs centroid shifts absolute metres on grade).
+
+### Fixed — heights (class admission, not a one-row patch)
+
+| Entity | Was shipping | Now ships | Source | Test |
+|---|---|---|---|---|
+| osm:306 (`osm-306-underheight`) | 9 | **12.5** | Strict one-plane (1,643 pts, dense 86.4% @13, gap 0.7); Nominatim University Center Lane | epoch r2c2 pass-3 |
+| osm:267–273 (`nobel-lebon-9-residual-class`) | 9 | **11.8–13.5** | Dense body clearly above guess (≠ 257/258 dense≈guess); same corridor as pass-2 251–256 | epoch r2c2 pass-3 |
+| osm:1390 / 1391 / 1393 / 1394 (`lebon-south-1390-class`) | 9 | **11.9–13.9** | Soft-under south of 251–256; Nominatim 3425 Lebon | epoch r2c2 pass-3 |
+| osm:1367 (`osm-1367-overheight`) | 9 | **5.2** | Canopy-guarded one-storey sibling of 1365/1366 (dense 81.9% @5, gap 6.8) | epoch r2c2 pass-3 |
+| osm:457 (`osm-457-overheight`) | 9 | **7.1** | Clean plane beside Chick-fil-A / CVS / Whole Foods / osm:81 (~7 m strip) | epoch r2c2 pass-3 |
+
+Fourteen rings join `OSM_UNNAMED_VERIFIED` under the same Village Square /
+Lebon Colony / Sheraton-strip / Boardwalk under-tag and over-guess rules
+already used on this shard. Exemplars `osm-267-underheight` /
+`osm-269-underheight` / `osm-1391-underheight` are covered by the class rows
+above, not separate fixes.
+
+### Withheld (better absent than wrong)
+
+- **osm:1392** (from `lebon-south-1390-class`): gap 2.8 / dense2 63% under the
+  85% thin-shelf cut. roofOf would paste the 15.2 shelf over an ~12 m body
+  (695 / 1364 near-miss family). Keep the 9 m guess. Pinned as EXCLUDED from
+  osmHeights.
+- **osm:479 (`osm-479-oob-zero-lidar`)**: centroid past terrain x grid → 0 EPT
+  pts / groundAt-null (Regents / Vaughan apron class). Apple shows finished
+  One Miramar terracotta terraces + courts/pool today, but no 2014 plane
+  resolves. Keep the 9 m guess. Survey-box handoff — do not invent a roofOf.
+
+### Rejected candidates (each re-measured before rejection; do not re-find these)
+
+- **`unnamed-guess-residual`** — REJECTED as scoped, same verdict as every other
+  shard: the mechanism exists and this pass used it for fourteen admissions and
+  two explicit withholds; remaining in-shard unnamed guesses need per-ring
+  Apple + EPT, not a blanket admit. Named landmarks in-box (Chick-fil-A / CVS /
+  Whole Foods / Sheraton / Belmont / One Miramar GIS) already track measured
+  planes after assembleMasses.
+
+### Handoffs / observations
+
+- **One Miramar east OOB (osm:479)** joins Regents 233/245/246/248 / Vaughan /
+  Ritter / Villas Mallorca 656/658/661 at or past the terrain grid. Expanding
+  `AREA` / the terrain grid is a rebuild call — height invented with zero
+  returns is worse than the standing 9 m guess.
+- **Thin-shelf cut**: osm:1392 at dense2 63% / gap 2.8 stays a near-miss under
+  85% — do not lower the floor. A parts split for the shelf would let the
+  ~12 m body ship.
+- **Remaining unnamed guesses in-box**: still ~40 after this pass's fourteen
+  admissions. Batch Apple+EPT verification remains the right shape; do not
+  blanket-admit.
+- **Full-rebuild drift (same as r2c1 pass-3)**: a trial `npm run build:lidar`
+  after adding the Set entries also moved named heights by metres (Union Bank
+  8→5.3, Copley 10.2→6.4, Stewart Commons 10→7.5, East Campus Office Building
+  16.5→12.9, osm:453 19.9→16.2, osm:522 8.8→10.6, plus 13 other osmHeights
+  and 9 massHeights). That is not tenths-of-a-metre pin noise — shipping it
+  would silently undo prior measured planes. HEAD `campus-lidar.json` was
+  restored and only the 14 new `osmHeights` keys were patched in (rimBase
+  values from that trial rebuild for these indices). Next agent who must
+  full-rebuild needs to diagnose the EPT/tile non-determinism (or shared-point
+  assignment) before re-pinning campus-wide.

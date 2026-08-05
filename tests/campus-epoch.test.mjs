@@ -3583,3 +3583,89 @@ describe("campus epoch — r2c1 pass-3 Villa La Jolla / Residence Inn residual (
     }
   });
 });
+
+describe("campus epoch — r2c2 pass-3 re-sweep (2026-08-05)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("University Center Lane courtyard ships its measured mid-rise plane", () => {
+    /* Independent full-depth EPT matched the screener's 1,643 pts exactly.
+       Strict one-plane (dense 86.4% @13, gap 0.7, bodyTight) against a 9 m
+       area guess. Nominatim → University Center Lane. Apple: finished
+       multi-wing courtyard roofs with HVAC standing today. Height is the
+       build's own rimBase tiling (centroid-probe roofOf 14.4; rim vs
+       centroid shifts absolute metres on grade). */
+    assert.equal(LIDAR.osmHeights?.[306], 12.5, "osm:306's plane");
+    const [cx, cz] = centroidOf(CAMPUS.buildings[306].p);
+    assert.equal(rendersNear(cx, cz, 4).find((r) => r.src === "osm")?.h, 12.5,
+      "osm:306 renders at its plane");
+  });
+
+  test("Nobel / Lebon residual strip ships planes above the 9 m under-guess", () => {
+    /* Same class as pass-2's 251–256 — dense body clearly above the area
+       guess (≠ withheld 257/258 dense≈guess). Nominatim 3833 Nobel /
+       3425 Lebon / 3899 Nobel apartments. Apple: finished multi-storey
+       residential roofs + courtyard pools today. Heights are build
+       rimBase tiling. */
+    for (const [i, h] of [
+      [267, 13.5], [268, 13.0], [269, 12.8], [270, 12.4],
+      [271, 11.8], [272, 12.4], [273, 12.4],
+    ]) {
+      assert.equal(LIDAR.osmHeights?.[i], h, `osm:${i}'s plane`);
+      const [cx, cz] = centroidOf(CAMPUS.buildings[i].p);
+      assert.equal(rendersNear(cx, cz, 4).find((r) => r.src === "osm")?.h, h,
+        `osm:${i} renders at its plane`);
+    }
+  });
+
+  test("Lebon Colony south connectors ship their measured planes", () => {
+    /* Soft-under class south of pass-2's 251–256 (Nominatim 3425 Lebon
+       Drive apartments). Gap ≤1.8, bodyTight; build rimBase tiling.
+       Apple: finished terracotta/grey apartment roofs today. 1392 is
+       deliberately withheld (gap 2.8 / dense2 63% — thin-shelf near-miss). */
+    for (const [i, h] of [
+      [1390, 13.3], [1391, 13.2], [1393, 13.9], [1394, 11.9],
+    ]) {
+      assert.equal(LIDAR.osmHeights?.[i], h, `osm:${i}'s plane`);
+      const [cx, cz] = centroidOf(CAMPUS.buildings[i].p);
+      assert.equal(rendersNear(cx, cz, 4).find((r) => r.src === "osm")?.h, h,
+        `osm:${i} renders at its plane`);
+    }
+  });
+
+  test("Sheraton-strip and Whole Foods pads ship their measured low planes", () => {
+    /* 1367: canopy-guarded one-storey sibling of already-admitted 1365 /
+       1366 (dense 81.9% @5, gap 6.8 → p75). Nominatim 3299 Holiday Court.
+       457: clean p98 7.1 beside Chick-fil-A / CVS / Whole Foods / osm:81
+       (~7 m commercial strip). Both were 9 m area guesses; Apple shows
+       finished hospitality / white retail roofs today. */
+    for (const [i, h] of [[1367, 5.2], [457, 7.1]]) {
+      assert.equal(LIDAR.osmHeights?.[i], h, `osm:${i}'s plane`);
+      const [cx, cz] = centroidOf(CAMPUS.buildings[i].p);
+      assert.equal(rendersNear(cx, cz, 4).find((r) => r.src === "osm")?.h, h,
+        `osm:${i} renders at its plane`);
+    }
+  });
+
+  test("stepped near-miss and One Miramar OOB keep their guesses", () => {
+    /* 1392: gap 2.8 / dense2 63% under the 85% thin-shelf cut — roofOf
+       would paste the 15.2 shelf over an ~12 m body (695 / 1364 family).
+       479: centroid past terrain x grid → 0 EPT pts / groundAt-null
+       (Regents / Vaughan apron). Apple shows finished One Miramar
+       terracotta terraces today, but no 2014 plane resolves. */
+    for (const i of [1392, 479]) {
+      assert.equal(LIDAR.osmHeights?.[i], undefined, `osm:${i} must stay out`);
+      const [cx, cz] = centroidOf(CAMPUS.buildings[i].p);
+      const rendered = rendersNear(cx, cz, 4).find((r) => r.src === "osm");
+      assert.equal(rendered?.h, 9, `osm:${i} keeps the 9 m guess`);
+    }
+  });
+});
