@@ -1,27 +1,27 @@
 # Gauntlet progress
 
-_Generated 8/5/2026, 01:18:34 — refreshes every 30 min while the driver is up._
+_Generated 8/5/2026, 03:42:03 — refreshes every 30 min while the driver is up._
 
-**Driver:** 🟢 running   ·   **Run:** `2026-08-04_235219`   ·   **HEAD:** `7c3872f` (21 commits ahead of `origin/main`, unpushed)   ·   **Push guard:** 🔒 armed
+**Driver:** 🟢 running   ·   **Run:** `2026-08-05_033905`   ·   **HEAD:** `744e49d` (24 commits ahead of `origin/main`, unpushed)   ·   **Push guard:** 🔒 armed
 
 ## Pass 1 — every shard swept once
 
 ```
-shards  █████████████████████▊······  78%   7/9
-work    █████████████████████·······  75%   1048/1395 buildings
+shards  ████████████████████████████  100%   9/9
+work    ████████████████████████████  100%   1395/1395 buildings
 ```
 
-Remaining: `r2c0` (182), `r2c2` (165) — **3h03m** at the fitted rate.
+**Every shard swept.** The loop is now re-sweeping until a pass changes nothing — currently back on `r0c0`.
 
 ## Now
 
 ```
-pass 1  shard r2c0 (182 buildings)
-elapsed ▋···························  3%   2m of ~1h31m est
+pass 1  shard r0c0 (103 buildings)
+elapsed █···························  4%   3m of ~1h22m est
 ```
 
-- phase: **screening (Grok, Cursor Models pool)** — 2m in this phase
-- shard started 01:16:14
+- phase: **screening (Grok, Cursor Models pool)** — 3m in this phase
+- shard started 03:39:05
 
 ## Budget
 
@@ -30,14 +30,13 @@ Other Models  ███████████████████····�
 run budget    ██████████▍·················  37%   63% of the 190M run budget still available
 ```
 
-- routing tier: **1 — full Fable judging**
+- 🟢 **this phase cannot spend the Other Models pool at all.** It runs with `cursor-grok-4.5-high` as the judge, so no Fable call is reachable at any tier — the sweeps are free. Its budget line still reads 190M; that number is inert.
+- every shard judged this way is filed in `REAUDIT.md` automatically, because the router already treats judge==screener as degraded.
 - a Fable adjudication measures **~30–45M** (1 completed between readings, 45M spent) — the router was configured for **6M**, so its own odometer is low by roughly **7×**
-- the router is charging itself **40M** per adjudication, which is inside that measured range — so its cap is honest even though nobody is reading the dashboard
-- the router is governing off its **odometer**, not the pool: 1 Fable adjudication made against a **85M** cap, ~45M of that cap left (53%)
-- ~**1** Fable adjudication left; tier 2 in **0**, tier 3 in **0**
 - Grok screening bills the **Cursor Models** pool, which is effectively free at this scale — the bar above is only the expensive half.
 
-- ⚠️ **the reading above is stale and the router is NOT using it.** It is parked at `.quota.paused` so a number frozen overnight could not hold tier 1 while nobody was checking the dashboard. Routing is running off the odometer, hard-capped at ~2 Fable adjudications.
+- ⚠️ **the reading above is stale.** It was parked at `.quota.paused` overnight so a frozen number could not hold tier 1 while nobody was checking the dashboard. The Fable cap has since been spent in full and the loop has moved to free sweeps, so nothing is drawing on the pool now.
+- 🔴 **your real usage is well above 68%.** 3 Fable adjudications finished after that reading, charged at 40M each — putting you around **89–100%** of the Other Models pool. **Check the dashboard before running the 4-model panel**, which spends the same pool.
 
 Hand control back to the dashboard by writing a fresh percentage into `gauntlet-loop/.quota` — a real reading beats the odometer, and the router picks it up on the next shard without a restart.
 
@@ -47,16 +46,19 @@ The driver runs the pass-1 tail, then `--until-clean --max-passes 3`. A clean sw
 
 | outcome | what happens | remaining | done by |
 |---|---|---|---|
-| **best** | pass-1 tail, then one sweep changes nothing | 16h57m | Wed 18:15 |
-| **likely** | pass-1 tail, one fixing sweep, one clean sweep | 30h50m | Thu 08:08 |
-| **worst** | pass-1 tail, then all 3 passes, never converges | 44h43m | Thu 22:01 |
+| **best** | pass-1 tail, then one sweep changes nothing | 12h18m | Wed 16:00 |
+| **likely** | pass-1 tail, one fixing sweep, one clean sweep | 24h36m | Thu 04:18 |
+| **worst** | pass-1 tail, then all 3 passes, never converges | 36h55m | Thu 16:36 |
 
-One full 9-shard sweep is **13h53m** at the fitted rate.
+One full 9-shard sweep is **12h18m** at the fitted rate.
 
 ## What landed
 
-21 commits ahead of `origin/main`, none pushed:
+24 commits ahead of `origin/main`, none pushed:
 
+- `744e49d` 03:38 — Gauntlet r2c2 judged: the Hyatt stops pasting its tower onto the podium, and seven east-of-I-5 roofs get measured
+- `08482f5` 03:13 — Gauntlet r2c0 judged: buildings on the survey's west edge get whole-ring heights and the rebuilt Scripps shore leaves 2014
+- `3bbaba1` 01:18 — Report the budget the router is actually using, not the pool it stopped reading
 - `7c3872f` 01:15 — Gauntlet r2c1 judged: the theatre district splits into its real buildings and two groves stop being architecture
 - `550448f` 23:50 — Gauntlet r1c2 judged: duplicate names stop racing for one key, renames stop stealing, and the health campus gets measured
 - `287d683` 23:44 — Make the overnight run safe to leave alone
@@ -83,25 +85,27 @@ One full 9-shard sweep is **13h53m** at the fitted rate.
 
 | shard | buildings | pass 1 | tier | screen h/m/l | judge | commit | actual | fitted |
 |---|---:|---|---|---|---|---|---:|---:|
-| `r0c0` | 103 | done · 161701 run | — | — | `claude-fable-5-thinking-max` | — | 53m | 1h35m |
-| `r0c1` | 84 | done · 161701 run | — | — | `claude-fable-5-thinking-max` | — | 54m | 1h36m |
-| `r0c2` | 62 | done · 161701 run | — | — | `claude-fable-5-thinking-max` | — | 51m | 1h38m |
-| `r1c0` | 140 | done · 161701 run | — | — | `claude-fable-5-thinking-max` | — | 1h52m | 1h33m |
-| `r1c1` | 162 | done · 204721 run | 1 | 3/8/1 | `claude-fable-5-thinking-max` | `1147a4a` | 1h11m | 1h32m |
-| `r1c2` | 97 | done · 204721 run | 1 | 3/10/4 | `claude-fable-5-thinking-max` | `550448f` | 1h53m | 1h36m |
-| `r2c0` | 182 | **screen** (re-sweep) | — | — | — | — | — | 1h31m |
-| `r2c1` | 400 | done | 1 | 5/5/1 | `claude-fable-5-thinking-max` | `7c3872f` | 1h24m | 1h19m |
-| `r2c2` | 165 | queued | — | — | — | — | — | 1h32m |
+| `r0c0` | 103 | **screen** (re-sweep) | — | — | `claude-fable-5-thinking-max` | — | 53m | 1h22m |
+| `r0c1` | 84 | done · 161701 run | — | — | `claude-fable-5-thinking-max` | — | 54m | 1h22m |
+| `r0c2` | 62 | done · 161701 run | — | — | `claude-fable-5-thinking-max` | — | 51m | 1h22m |
+| `r1c0` | 140 | done · 161701 run | — | — | `claude-fable-5-thinking-max` | — | 1h52m | 1h22m |
+| `r1c1` | 162 | done · 204721 run | 1 | 3/8/1 | `claude-fable-5-thinking-max` | `1147a4a` | 1h11m | 1h22m |
+| `r1c2` | 97 | done · 204721 run | 1 | 3/10/4 | `claude-fable-5-thinking-max` | `550448f` | 1h53m | 1h22m |
+| `r2c0` | 182 | done · 235219 run | 1 | 5/4/1 | `claude-fable-5-thinking-max` | `08482f5` | 1h59m | 1h22m |
+| `r2c1` | 400 | done · 235219 run | 1 | 5/5/1 | `claude-fable-5-thinking-max` | `7c3872f` | 1h24m | 1h22m |
+| `r2c2` | 165 | done · 235219 run | 3 | 6/8/1 | `cursor-grok-4.5-high` | `744e49d` | 24m | 1h22m |
 
 ## How these numbers were made
 
-Duration is fitted against building count, least squares over **3 finished shards** from routed (screen+judge) shards:
+Fitted over **5 finished shards** from routed (screen+judge) shards:
 
 ```
-minutes ≈ 101.0 + -0.054 × buildings
-typical miss: ±16 min
+minutes ≈ 82, flat
+typical miss: ±34 min
 ```
 
-⚠️ 3 samples is a thin fit. Treat the ETAs as an order of magnitude, not a schedule — they tighten with every shard that lands.
+**Building count stopped predicting duration.** It did under the single-agent driver — 62 buildings took 51m, 140 took 1h52m. Under routing the regression goes flat or negative: r2c1's **400** buildings finished in **1h24m** while r1c2's **97** took **1h53m**. The screen is bounded by what a screener will look at and the judge by how many candidates it was handed, and neither scales with footprint count. So the estimate is a flat mean, which is the honest shape of the data rather than a slope fitted through noise.
+
+⚠️ 5 samples is a thin fit. Treat the ETAs as an order of magnitude, not a schedule — they tighten with every shard that lands.
 
 Everything above is read from files the driver already writes — `STATUS.md`, `shards.json`, `route-driver.log`, prompt-file mtimes, `.quota`, and `git`. Nothing here is a claim the driver did not make. Where a value could not be derived it shows `—` rather than a guess.

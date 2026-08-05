@@ -101,10 +101,18 @@ if (fitSet.length >= 2) {
   const my = fitSet.reduce((a, s) => a + s.minutes, 0) / fitSet.length;
   const sxy = fitSet.reduce((a, s) => a + (s.n - mx) * (s.minutes - my), 0);
   const sxx = fitSet.reduce((a, s) => a + (s.n - mx) ** 2, 0);
-  const b = sxx ? sxy / sxx : 0;
-  const a = my - b * mx;
+  let b = sxx ? sxy / sxx : 0;
+  let a = my - b * mx;
+  /* Under the single-agent driver, duration tracked building count closely. Under
+     routing it stopped: r2c1's 400 buildings finished in 1h24m while r1c2's 97
+     took 1h53m. The screen is bounded by what a screener will look at and the
+     judge by how many candidates it got, and neither scales with footprint count.
+     A fitted slope at or below zero is that fact, not a shard that finishes
+     faster for being bigger — so fall back to a flat mean and say why. */
+  const flat = b <= 0;
+  if (flat) { b = 0; a = my; }
   const resid = Math.sqrt(fitSet.reduce((t, s) => t + (s.minutes - (a + b * s.n)) ** 2, 0) / fitSet.length);
-  fit = { a, b, resid, n: fitSet.length };
+  fit = { a, b, resid, n: fitSet.length, flat };
 } else if (fitSet.length === 1) {
   fit = { a: 0, b: fitSet[0].minutes / fitSet[0].n, resid: null, n: 1 };
 }
@@ -187,7 +195,15 @@ const adjUseM = adjCost ? adjCost.high : ADJ_ASSUMED_M;
    off its startup line and count the adjudications it has actually made, so the
    headroom shown is the headroom the router will act on rather than a number
    that merely resembles it. */
-const launchBudgetM = +(driverLog.match(/budget (\d+)M/g) ?? []).slice(-1)[0]?.match(/\d+/)?.[0] || null;
+/* The sweep phase runs with GAUNTLET_JUDGE set to the screener, which makes a
+   Fable call unreachable at ANY tier. Its budget line still says 190M and its
+   odometer still reads 100%, so reporting the tier ladder here would advertise
+   spending headroom that cannot be spent. Read the judge off the startup line
+   and say so instead. */
+const launch = [...driverLog.matchAll(/^\[route\] screen (\S+)\s+judge (\S+)\s+budget (\d+)M/gm)].slice(-1)[0];
+const judgeModel = launch?.[2] ?? null;
+const fableReachable = !!judgeModel && judgeModel.includes("fable");
+const launchBudgetM = launch ? +launch[3] : null;
 /* The router charges itself GAUNTLET_ADJ_EST_M per adjudication, which is NOT
    the measured cost — it is whatever the launcher passed. Mirroring the router
    means using its constant, read from the script that actually launched it,
@@ -195,7 +211,7 @@ const launchBudgetM = +(driverLog.match(/budget (\d+)M/g) ?? []).slice(-1)[0]?.m
    than showing nothing. */
 const routerAdjM = +(read(path.join(ROOT, "scripts/gauntlet-reorder.sh")).match(/GAUNTLET_ADJ_EST_M=(\d+)/)?.[1] ?? 0) || adjUseM;
 const fableShards = (cur?.rows ?? []).filter((r) => r.judge && r.judge.includes("fable")).length;
-const odo = quotaStale && launchBudgetM
+const odo = quotaStale && launchBudgetM && fableReachable
   ? { budgetM: launchBudgetM, perAdjM: routerAdjM, spentM: fableShards * routerAdjM, leftM: Math.max(0, launchBudgetM - fableShards * routerAdjM) }
   : null;
 
@@ -214,11 +230,16 @@ const tier = tierPct == null ? "?" : tierPct > 25 ? "1 — full Fable judging" :
    once. Later passes exist only until a sweep changes nothing, so their count is
    genuinely unknown and is shown as a range, not a bar. */
 const pass1Done = new Set(runs.flatMap((r) => r.rows).filter((r) => r.pass === 1).map((r) => r.shard));
-/* A shard can carry a completed row from an earlier run and still be in flight
-   now — r1c1 was swept whole by the 14:17 pilot and is being re-swept under the
-   routed design. The driver is not going to skip it, so in-flight beats
-   historical credit; counting both would overstate the sweep. */
-if (live) pass1Done.delete(live.shard);
+/* This counts CAMPAIGN coverage — has each shard been swept at all — so a shard
+   being re-swept still counts as covered.
+ *
+ * It used to drop the in-flight shard from the set, which read correctly during
+ * the r1c1 re-sweep and then broke the moment the loop reached its second
+ * invocation: `--until-clean` numbers its own passes from 1, so re-sweeping
+ * r0c0 made a shard that finished hours ago look unswept, and the bar fell from
+ * 9/9 to 8/9. Coverage and progress-through-the-current-pass are two different
+ * questions and that special case was answering neither. */
+const resweeping = live && pass1Done.has(live.shard);
 const pass1Left = ALL_SHARDS.filter((s) => !pass1Done.has(s));
 const pass1LeftMin = fit ? pass1Left.reduce((t, id) => t + (predict(id) ?? 0), 0) : null;
 
@@ -247,7 +268,7 @@ L.push("```");
 L.push("");
 L.push(pass1Left.length
   ? `Remaining: ${pass1Left.map((s) => `\`${s}\` (${sizeOf[s] ?? "?"})`).join(", ")} — **${hm(pass1LeftMin)}** at the fitted rate.`
-  : `Pass 1 complete.`);
+  : `**Every shard swept.** The loop is now re-sweeping until a pass changes nothing${resweeping ? ` — currently back on \`${live.shard}\`` : ""}.`);
 L.push("");
 
 L.push(`## Now`);
@@ -289,21 +310,35 @@ if (usedPct != null) {
 }
 L.push("```");
 L.push("");
-L.push(`- routing tier: **${tier}**`);
+if (!fableReachable && judgeModel) {
+  L.push(`- 🟢 **this phase cannot spend the Other Models pool at all.** It runs with \`${judgeModel}\` as the judge, so no Fable call is reachable at any tier — the sweeps are free. Its budget line still reads ${launchBudgetM}M; that number is inert.`);
+  L.push(`- every shard judged this way is filed in \`REAUDIT.md\` automatically, because the router already treats judge==screener as degraded.`);
+} else {
+  L.push(`- routing tier: **${tier}**`);
+}
 if (adjCost) {
   L.push(`- a Fable adjudication measures **~${Math.round(adjCost.low)}–${Math.round(adjCost.high)}M** (${adjCost.samples} completed between readings, ${Math.round(adjCost.spentM)}M spent) — the router was configured for **${ADJ_ASSUMED_M}M**, so its own odometer is low by roughly **${(adjCost.high / ADJ_ASSUMED_M).toFixed(0)}×**`);
-  L.push(quotaStale
-    ? `- the router is charging itself **${odo?.perAdjM ?? "?"}M** per adjudication, which is inside that measured range — so its cap is honest even though nobody is reading the dashboard`
-    : `- that miscount does **not** affect routing: the router prefers the \`.quota\` reading over its estimate, so tier decisions are made on real numbers`);
+  if (odo) L.push(`- the router is charging itself **${odo.perAdjM}M** per adjudication, which is inside that measured range — so its cap is honest even though nobody is reading the dashboard`);
+  else if (!quotaStale) L.push(`- that miscount does **not** affect routing: the router prefers the \`.quota\` reading over its estimate, so tier decisions are made on real numbers`);
 } else {
   L.push(`- per-adjudication cost is still the router's **unverified ${ADJ_ASSUMED_M}M assumption** — needs two \`.quota\` readings bracketing at least one adjudication`);
 }
 if (odo) L.push(`- the router is governing off its **odometer**, not the pool: ${fableShards} Fable adjudication${fableShards === 1 ? "" : "s"} made against a **${odo.budgetM}M** cap, ~${Math.round(odo.leftM)}M of that cap left (${tierPct}%)`);
-if (adjLeft != null) L.push(`- ~**${adjLeft}** Fable adjudication${adjLeft === 1 ? "" : "s"} left; tier 2 in **${tripAt(25)}**, tier 3 in **${tripAt(10)}**`);
+if (adjLeft != null && fableReachable) L.push(`- ~**${adjLeft}** Fable adjudication${adjLeft === 1 ? "" : "s"} left; tier 2 in **${tripAt(25)}**, tier 3 in **${tripAt(10)}**`);
 L.push(`- Grok screening bills the **Cursor Models** pool, which is effectively free at this scale — the bar above is only the expensive half.`);
 L.push("");
 if (quotaStale) {
-  L.push(`- ⚠️ **the reading above is stale and the router is NOT using it.** It is parked at \`.quota.paused\` so a number frozen overnight could not hold tier 1 while nobody was checking the dashboard. Routing is running off the odometer, hard-capped at ~2 Fable adjudications.`);
+  /* How far the reading has drifted: every Fable adjudication that finished
+     after it, charged at the router's rate. The low bound assumes the one in
+     flight at reading time was already fully paid for inside that number; the
+     high bound assumes none of it was. */
+  const fableTotal = runs.flatMap((r) => r.rows).filter((r) => r.routed && r.judge?.includes("fable")).length;
+  const since = Math.max(0, fableTotal - (history[history.length - 1]?.adj ?? 0));
+  const pctOf = (m) => Math.min(100, Math.round(usedPct + (m / POOL_M) * 100));
+  L.push(`- ⚠️ **the reading above is stale.** It was parked at \`.quota.paused\` overnight so a frozen number could not hold tier 1 while nobody was checking the dashboard. ${fableReachable ? "Routing is running off the odometer instead." : "The Fable cap has since been spent in full and the loop has moved to free sweeps, so nothing is drawing on the pool now."}`);
+  if (since > 0) {
+    L.push(`- 🔴 **your real usage is well above ${usedPct}%.** ${since} Fable adjudication${since === 1 ? "" : "s"} finished after that reading, charged at ${routerAdjM}M each — putting you around **${pctOf(Math.max(0, since - 1) * routerAdjM)}–${pctOf(since * routerAdjM)}%** of the Other Models pool. **Check the dashboard before running the 4-model panel**, which spends the same pool.`);
+  }
 }
 L.push("");
 L.push(quotaStale
@@ -373,13 +408,17 @@ L.push("");
 L.push(`## How these numbers were made`);
 L.push("");
 if (fit) {
-  L.push(`Duration is fitted against building count, least squares over **${fit.n} finished shard${fit.n === 1 ? "" : "s"}** from ${fitPop}:`);
+  L.push(`Fitted over **${fit.n} finished shard${fit.n === 1 ? "" : "s"}** from ${fitPop}:`);
   L.push("");
   L.push("```");
-  L.push(`minutes ≈ ${fit.a.toFixed(1)} + ${fit.b.toFixed(3)} × buildings`);
+  L.push(fit.flat ? `minutes ≈ ${fit.a.toFixed(0)}, flat` : `minutes ≈ ${fit.a.toFixed(1)} + ${fit.b.toFixed(3)} × buildings`);
   if (fit.resid != null) L.push(`typical miss: ±${fit.resid.toFixed(0)} min`);
   L.push("```");
   L.push("");
+  if (fit.flat) {
+    L.push(`**Building count stopped predicting duration.** It did under the single-agent driver — 62 buildings took 51m, 140 took 1h52m. Under routing the regression goes flat or negative: r2c1's **400** buildings finished in **1h24m** while r1c2's **97** took **1h53m**. The screen is bounded by what a screener will look at and the judge by how many candidates it was handed, and neither scales with footprint count. So the estimate is a flat mean, which is the honest shape of the data rather than a slope fitted through noise.`);
+    L.push("");
+  }
   if (fit.n < 6) L.push(`⚠️ ${fit.n} samples is a thin fit. Treat the ETAs as an order of magnitude, not a schedule — they tighten with every shard that lands.`);
 } else {
   L.push(`No fit yet.`);
