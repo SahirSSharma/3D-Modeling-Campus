@@ -181,10 +181,33 @@ if (history.length >= 2) {
   }
 }
 const adjUseM = adjCost ? adjCost.high : ADJ_ASSUMED_M;
-const adjLeft = leftM == null ? null : Math.floor(leftM / adjUseM);
+
+/* When the reading is parked, the pool is NOT what governs — the driver's own
+   odometer is, against whatever budget it was launched with. Read that budget
+   off its startup line and count the adjudications it has actually made, so the
+   headroom shown is the headroom the router will act on rather than a number
+   that merely resembles it. */
+const launchBudgetM = +(driverLog.match(/budget (\d+)M/g) ?? []).slice(-1)[0]?.match(/\d+/)?.[0] || null;
+/* The router charges itself GAUNTLET_ADJ_EST_M per adjudication, which is NOT
+   the measured cost — it is whatever the launcher passed. Mirroring the router
+   means using its constant, read from the script that actually launched it,
+   because a tier shown here that disagrees with the tier it computes is worse
+   than showing nothing. */
+const routerAdjM = +(read(path.join(ROOT, "scripts/gauntlet-reorder.sh")).match(/GAUNTLET_ADJ_EST_M=(\d+)/)?.[1] ?? 0) || adjUseM;
+const fableShards = (cur?.rows ?? []).filter((r) => r.judge && r.judge.includes("fable")).length;
+const odo = quotaStale && launchBudgetM
+  ? { budgetM: launchBudgetM, perAdjM: routerAdjM, spentM: fableShards * routerAdjM, leftM: Math.max(0, launchBudgetM - fableShards * routerAdjM) }
+  : null;
+
+const headroomM = odo ? odo.leftM : leftM;
+const adjLeft = headroomM == null ? null : Math.floor(headroomM / (odo ? odo.perAdjM : adjUseM));
 /* When the ladder trips, in adjudications rather than percentages. */
-const tripAt = (pct) => (leftM == null ? null : Math.max(0, Math.floor((leftM - BUDGET_M * pct / 100) / adjUseM)));
-const tier = leftBudgetPct == null ? "?" : leftBudgetPct > 25 ? "1 — full Fable judging" : leftBudgetPct > 10 ? "2 — Fable only for high-severity shards" : "3 — Grok judges, withhold-on-doubt";
+const ladderBase = odo ? odo.budgetM : BUDGET_M;
+const tripAt = (pct) => (headroomM == null ? null : Math.max(0, Math.floor((headroomM - ladderBase * pct / 100) / (odo ? odo.perAdjM : adjUseM))));
+/* The tier the ROUTER will compute, which is the odometer's percentage while
+   the reading is parked — not the pool's. */
+const tierPct = odo ? Math.round((odo.leftM / odo.budgetM) * 100) : leftBudgetPct;
+const tier = tierPct == null ? "?" : tierPct > 25 ? "1 — full Fable judging" : tierPct > 10 ? "2 — Fable only for high-severity shards" : "3 — Grok judges, withhold-on-doubt";
 
 /* ----------------------------------------------------------------- pass 1 state */
 /* Pass 1 is the only phase with a knowable denominator: every shard gets swept
@@ -269,11 +292,14 @@ L.push("");
 L.push(`- routing tier: **${tier}**`);
 if (adjCost) {
   L.push(`- a Fable adjudication measures **~${Math.round(adjCost.low)}–${Math.round(adjCost.high)}M** (${adjCost.samples} completed between readings, ${Math.round(adjCost.spentM)}M spent) — the router was configured for **${ADJ_ASSUMED_M}M**, so its own odometer is low by roughly **${(adjCost.high / ADJ_ASSUMED_M).toFixed(0)}×**`);
-  L.push(`- that miscount does **not** affect routing: the router prefers the \`.quota\` reading over its estimate, so tier decisions are made on real numbers`);
+  L.push(quotaStale
+    ? `- the router is charging itself **${odo?.perAdjM ?? "?"}M** per adjudication, which is inside that measured range — so its cap is honest even though nobody is reading the dashboard`
+    : `- that miscount does **not** affect routing: the router prefers the \`.quota\` reading over its estimate, so tier decisions are made on real numbers`);
 } else {
   L.push(`- per-adjudication cost is still the router's **unverified ${ADJ_ASSUMED_M}M assumption** — needs two \`.quota\` readings bracketing at least one adjudication`);
 }
-if (adjLeft != null) L.push(`- ~**${adjLeft}** Fable adjudications left; tier 2 in **${tripAt(25)}**, tier 3 in **${tripAt(10)}**`);
+if (odo) L.push(`- the router is governing off its **odometer**, not the pool: ${fableShards} Fable adjudication${fableShards === 1 ? "" : "s"} made against a **${odo.budgetM}M** cap, ~${Math.round(odo.leftM)}M of that cap left (${tierPct}%)`);
+if (adjLeft != null) L.push(`- ~**${adjLeft}** Fable adjudication${adjLeft === 1 ? "" : "s"} left; tier 2 in **${tripAt(25)}**, tier 3 in **${tripAt(10)}**`);
 L.push(`- Grok screening bills the **Cursor Models** pool, which is effectively free at this scale — the bar above is only the expensive half.`);
 L.push("");
 if (quotaStale) {
