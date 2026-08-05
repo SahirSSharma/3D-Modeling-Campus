@@ -149,6 +149,16 @@
  *      >2 cut), XIMED keeps its 41.3 plant shelf (dense 68%), and the
  *      roof-anchor / QAA apron residuals stay renderer / survey
  *      handoffs.
+ *  30. The r1c0 pass-2 re-sweep's measurements hold: zero of the 21
+ *      residual LJF unnamed guesses clear the thin-shelf host cut
+ *      (dense ≥85% + gap >2 + bodyTight); osm:1013 stays epoch-
+ *      withheld (near-grade under a standing Apple house — do not
+ *      admit roofOf 4.3); osm:1022/1023 stay withheld (admitting
+ *      would paste crown 12.5/11.0, not the dense ~7 m body);
+ *      osm:322/982 stay under the dense cut; Tuolumne S House
+ *      Laundry keeps massHeights 15.8 (roof-anchor Δ −2.9 is a
+ *      renderer handoff, not a height bug); named Muir landmarks
+ *      still track their shipped planes.
  */
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
@@ -2627,5 +2637,94 @@ describe("campus epoch — r0c2 pass-2 re-sweep (2026-08-05)", () => {
     assert.equal(qaa?.h, 24.3, `QAA ships ${qaa?.h}`);
     const tower = rendersNear(1572.3, -681.7).find((m) => m.src === "osm");
     assert.equal(tower?.h, 34, `osm:502 ships ${tower?.h}`);
+  });
+});
+
+describe("campus epoch — r1c0 pass-2 re-sweep (2026-08-05)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("near-ground La Jolla Farms house keeps its guess — epoch, not a plane", () => {
+    /* osm:1013: 2,359 returns, hist mode at grade (0 m:1,026 + (−1) m:497)
+       with a thin 2 m shelf; roofOf 4.3. Apple + Nominatim show a finished
+       house at 9438 La Jolla Farms Road today. Admitting roofOf would wear
+       the 2014 slab/near-grade as a finished height — inverted-eucalyptus
+       / ERC-Laundry-East class. No Street-View floor count resolves
+       ESTIMATED_POST_2014 for an unnamed ring; the 9 m area guess stands. */
+    assert.equal(LIDAR.osmHeights?.[1013], undefined, "osm:1013 must not ship a near-grade plane");
+    assert.equal(rendersNear(-459.5, 125.0, 4).find((m) => m.src === "osm")?.h, 9);
+  });
+
+  test("Inyaha Lane under-guesses stay withheld — admitting pastes crown", () => {
+    /* osm:1022 / 1023: dense bodies ~6–7 m under 4.5 m area guesses, but
+       dense 2 m bands only 54% / 51% — under the 85% thin-shelf cut.
+       Unguarded roofOf would ship crown p98 12.5 / 11.0 (gap 4.8 / 3.9
+       under the 5 m canopy guard). Better the declared guess than a
+       false measurement. */
+    assert.equal(LIDAR.osmHeights?.[1022], undefined, "osm:1022 crown-paste must not ship");
+    assert.equal(LIDAR.osmHeights?.[1023], undefined, "osm:1023 crown-paste must not ship");
+    assert.equal(rendersNear(-409.6, 395.2, 4).find((m) => m.src === "osm")?.h, 4.5);
+    assert.equal(rendersNear(-448.0, 372.4, 4).find((m) => m.src === "osm")?.h, 4.5);
+  });
+
+  test("LJF overheight near-misses keep their guesses under the dense cut", () => {
+    /* osm:322: dense 76% in 2–3 m under a 9 m guess — under 85%; admitting
+       ships crown 6.9 not body ~3.6. osm:982: dense 83.3% (1.7 pts under),
+       Δ guess−p75 only +1.3 m — not storey-class. Cut stands at 85%. */
+    assert.equal(LIDAR.osmHeights?.[322], undefined, "osm:322 near-miss must not ship");
+    assert.equal(LIDAR.osmHeights?.[982], undefined, "osm:982 near-miss must not ship");
+    assert.equal(rendersNear(-379.6, 275.1, 4).find((m) => m.src === "osm")?.h, 9);
+    assert.equal(rendersNear(-630.2, -392.2, 4).find((m) => m.src === "osm")?.h, 4.5);
+  });
+
+  test("Tuolumne S House Laundry height stands; roof-anchor is a renderer handoff", () => {
+    /* massHeights 15.8 tracks the EPT plane (281 pts, roofOf 15.8). Grade
+       audit: centroid ground 123.3 vs rim-median 126.2, Δ −2.9 m on 3.0 m
+       of span — only in-box mass past the 2 m roof-anchor gate. Bases
+       per-vertex safe. Renderer change (roofY = rimMedian + h) is
+       cross-shard — same handoff as Hopkins Parking / Canyon Vista /
+       osm:502. */
+    assert.equal(LIDAR.massHeights["m:-196,-34"], 15.8);
+    const laundry = rendersNear(-195.8, -33.7, 3).find((m) => m.src === "gis");
+    assert.ok(laundry, "Tuolumne S House Laundry vanished");
+    assert.equal(laundry.h, 15.8, `Laundry ships ${laundry.h}`);
+  });
+
+  test("named Muir landmarks still track their shipped planes", () => {
+    /* Pass-2 H1 spot-check: Apple currency confirmed; EPT planes match
+       heights[] within the build's own tiling. Kaleidoscope / Tapestry
+       correctly remain ESTIMATED_POST_2014 (2014 near-ground / staging). */
+    const AGREE = {
+      "Tioga Hall": 35.8,
+      "Tenaya Hall": 22.4,
+      "Keeling Apartments North Tower": 34.4,
+      "Keeling Apartments West Bar": 18.2,
+      "Housing Dining and Hospitality Administration Building": 19.8,
+      "Audrey Geisel University House": 6.3,
+    };
+    for (const [n, h] of Object.entries(AGREE)) {
+      assert.equal(LIDAR.heights[n], h, `heights[${n}]`);
+    }
+    assert.equal(LIDAR.heights["Kaleidoscope"], undefined, "Kaleidoscope must stay post-2014");
+    assert.equal(LIDAR.heights["Tapestry"], undefined, "Tapestry must stay post-2014");
+  });
+
+  test("the 21 residual LJF unnamed guesses stay per-ring withholds", () => {
+    /* Full-depth EPT of all 21 (+ osm:485): zero clear dense≥85% + gap>2
+       + bodyTight. Closest: 996 at 84.5%, 982 at 83.3%, 1002 at 81.4%.
+       Do not blanket-admit from roofOf — §12 / §21 posture unchanged. */
+    for (const bi of [322, 480, 832, 904, 907, 909, 910, 982, 986, 996, 997,
+      999, 1002, 1007, 1008, 1013, 1017, 1022, 1023, 1024, 1089]) {
+      assert.equal(LIDAR.osmHeights?.[bi], undefined,
+        `osm:${bi} leaked a plane past the residual withhold`);
+    }
   });
 });

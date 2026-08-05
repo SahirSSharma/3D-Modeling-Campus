@@ -772,3 +772,81 @@ standing cut, not a gap to invent past.
   mass. This pass spliced the one in-shard stale hit (`m:1070,-561`) after
   re-deriving it; Asante / CSC H / VE6 already matched. CSC D (gap = 2.0)
   stays a near-miss under the cut — do not widen to ≥2.
+
+---
+
+# FINDINGS — run `2026-08-05_033905` · shard r1c0 (pass 2)
+
+Pass 2 of the Muir / La Jolla Farms / Geisel House west shard.
+Screen: 7 candidates (1 high / 4 medium / 2 low). Judged by `cursor-grok-4.5-high`.
+
+Every candidate in `pass2-r1c0.screen.json` was re-derived before judgement
+against the screener's full-depth EPT (`/tmp/gauntlet-r1c0-p2/probe.json` —
+copied to `.cache/gauntlet-r1c0-p2/judge/`; point counts taken as the
+re-measurement: osm:1013 2,359 / 1022 2,971 / 1023 2,142 / 322 1,136 /
+982 198 / Tuol@-196,-34 281), Apple snapshots in
+`/tmp/gauntlet-r1c0-p2/apple/` (copied to `.cache/gauntlet-r1c0-p2/evidence/`),
+an independent grade audit of all in-box GIS masses, and thin-shelf
+arithmetic re-computed per sample from each ring's histogram
+(`.cache/gauntlet-r1c0-p2/judge/rejudge.json`).
+
+### Fixed
+
+None. Zero of the 21 residual LJF unnamed guesses clear the host thin-shelf
+cut (dense ≥85% + gap >2 + bodyTight). Named Muir landmarks
+(Tioga / Tenaya / Keeling N+W / HDH / Geisel House) already track their
+shipped planes; Kaleidoscope / Tapestry correctly remain
+`ESTIMATED_POST_2014`.
+
+### Rejected candidates (each re-measured before rejection; do not re-find these)
+
+- **`osm-1013-near-ground-apple-house`** — REJECTED as a height fix /
+  WITHHELD. 2,359 pts, hist mode at grade (0 m:1,026 + (−1) m:497), thin
+  2 m shelf, roofOf 4.3. Apple + Nominatim show a finished house at 9438
+  La Jolla Farms Road today. Admitting roofOf would wear the 2014
+  slab/near-grade as a finished height (inverted-eucalyptus class). No
+  Street-View floor count resolves `ESTIMATED_POST_2014` for an unnamed
+  ring; the 9 m area guess stands. Pinned in §30.
+- **`osm-1022-underheight` / `osm-1023-underheight`** — REJECTED. Dense
+  bodies ~6–7 m under 4.5 m guesses, but dense bands only 54% / 51% —
+  under the 85% cut. Unguarded roofOf would ship crown p98 12.5 / 11.0
+  (gap 4.8 / 3.9 under the 5 m canopy guard). Better the declared guess
+  than a false crown paste. Pinned in §30.
+- **`osm-322-overheight-body`** — REJECTED. Dense 76% in 2–3 m under a
+  9 m guess — under 85%; admitting ships crown 6.9 not body ~3.6. Same
+  §12 withhold family. Pinned in §30.
+- **`osm-982-near-thin-shelf`** — REJECTED. Dense 83.3% (1.7 pts under
+  85%), Δ guess−p75 only +1.3 m — not storey-class. Cut stands. Pinned
+  in §30.
+- **`tuol-m-196-roof-anchor`** — REJECTED as in-scope fix; RE-LOGGED as
+  handoff. Independent grade audit: only in-box mass past 2 m is
+  Tuolumne S House Laundry @ (−196,−34), Δ −2.9 m (gC 123.3 vs rimMed
+  126.2, span 3.0). Height 15.8 tracks EPT roofOf. Bases per-vertex
+  safe. Renderer change (`roofY = rimMedian + h`) is cross-shard —
+  prior r0c1 / r0c2 FINDINGS unchanged. Pinned in §30.
+- **`ljf-21-residual-guesses`** — REJECTED as a blanket admit. Exactly
+  zero of 21 clear the thin-shelf cut (closest: 996 at 84.5%, 982 at
+  83.3%, 1002 at 81.4%). Per-ring Apple+EPT only; §12 / §21 posture
+  unchanged. Pinned in §30.
+
+### Withheld (better absent than wrong)
+
+- **osm:1013**: epoch-shaped near-grade under a standing Apple house —
+  no honest non-LiDAR finished height without a floor count.
+- **osm:1022 / 1023**: dense ~7 m body exists but auto-admit pastes
+  crown; guesses stand until a single plane clears the cut.
+- **The other 18 residual LJF rings**: crown / step mixes under every
+  standing cut — same as pass-1.
+
+### Handoffs / observations
+
+- **Roof-anchor class**: Tuolumne S House Laundry (−2.9) joins Hopkins
+  Parking / Canyon Vista admin / Cuzco / VE4 / osm:502 — still a
+  dedicated renderer pass (`roofY = rimMedian + h`).
+- **Muir west pickleball**: Apple shows the blue west pad today; still
+  unfitted until Apple registration residual passes the 0.6 m gate
+  (prior r1c0 handoff unchanged).
+- **osm:1013 rebuild dating**: if Sahir or Street View ever resolves a
+  floor count for 9438 La Jolla Farms Road, it becomes an
+  `ESTIMATED_POST_2014` / `POST_2014_OSM_RINGS` candidate — not a
+  roofOf admit of 4.3.

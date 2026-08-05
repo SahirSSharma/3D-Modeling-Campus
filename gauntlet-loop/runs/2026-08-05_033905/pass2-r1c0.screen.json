@@ -1,0 +1,121 @@
+[
+  {
+    "id": "osm-1013-near-ground-apple-house",
+    "entity": "unnamed OSM building index 1013",
+    "where": {"x": -459.5, "z": 125.0},
+    "claim": "assembleMasses ships src=osm area-guess h=9 (area≈652). Not in lidar.osmHeights / OSM_UNNAMED_VERIFIED. Epoch §12/§21 withhold list still applies.",
+    "observed": "Fresh EPT: 2,359 pts, roofOf=4.3, p50=0.1, p75=1.1, p98=4.3, gap=3.2, bodyTight=true, massOk=true. Histogram: 0 m:1,026 (43%) + (−1) m:497 (21%) + 2 m:496 (21%) — returns sit near grade with a thin 2 m shelf, not a 9 m body. Dense 2 m band 64.6%. Grade span 3.6 m. Δ guess−p75 = +7.9 m. Nominatim reverse 32.876870,-117.246115 → house at 9438 La Jolla Farms Road.",
+    "evidence": {
+      "lidar": "osm:1013 2359 pts roofOf=4.3 p50=0.1 p75=1.1 p98=4.3 gap=3.2 dense2m=0.646 bodyTight massOk; hist 0m:1026 (−1)m:497 2m:496; lidar.osmHeights[1013]=undefined",
+      "gis": "null — no GIS mass at this centroid",
+      "osm": "unnamed way index 1013, campus-3d h=9, area≈652, centroid (−459.5,125); Nominatim → house, 9438 La Jolla Farms Road",
+      "apple": "Apple snapshot osm1013.jpg z19 at 32.876870,-117.246115 (2802 kB) — centerRGB=225,222,217 ent=2.92 (light flat roof/pad); finished residential footprint on La Jolla Farms Road today, not bare dirt",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Near-ground 2014 returns under a standing Apple/Nominatim house still wearing a 9 m area guess — ERC Laundry East / post-2014-rebuild class (needs epoch bookkeeping or Street-View floor count, not a roofOf admit of 4.3).",
+    "epoch_risk": "Primary. LiDAR reads slab/near-grade; Apple + Nominatim show a finished house today. Do not treat roofOf=4.3 as the finished height — that is the inverted eucalyptus failure. The laser cannot date the rebuild; ESTIMATED_POST_2014 / POST_2014_OSM_RINGS is the question, not thin-shelf."
+  },
+  {
+    "id": "osm-1022-underheight",
+    "entity": "unnamed OSM building index 1022",
+    "where": {"x": -409.6, "z": 395.2},
+    "claim": "assembleMasses ships src=osm area-guess h=4.5 (area≈360). Epoch withhold; osmHeights undefined.",
+    "observed": "Fresh EPT: 2,971 pts, roofOf=12.5, p50=6.8, p75=7.7, p98=12.5, gap=4.8, bodyTight=true, massOk=true. Histogram peaks at 6 m:839 + 7 m:767 = 1,606/2,971 (54%) in the 6–7 m band — under the 85% thin-shelf cut, but the dense body is already ~3 m above the shipped 4.5 guess. Flat (grade span 1.1 m). Nominatim → building at 2630 Inyaha Lane.",
+    "evidence": {
+      "lidar": "osm:1022 2971 pts roofOf=12.5 p50=6.8 p75=7.7 p98=12.5 gap=4.8 dense2m=0.541 bodyTight massOk; hist 6m:839 7m:767; lidar.osmHeights[1022]=undefined",
+      "gis": "null",
+      "osm": "unnamed way index 1022, campus-3d h=4.5, area≈360, centroid (−409.6,395.2); Nominatim → building, 2630 Inyaha Lane",
+      "apple": "Apple snapshot osm1022.jpg z19 at 32.874426,-117.245581 (2795 kB) — centerRGB=30,32,35 ent=6.29 (dark roof/shade); finished building footprint present today on Inyaha Lane; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Unnamed OSM under-guess — small-area 4.5 m shed default under a ~7 m 2014 body that is not thin-shelf-clean enough to auto-admit roofOf.",
+    "epoch_risk": "Low for existence — Apple/Nominatim agree a building sits here. The 4.5 vs ~7.7 split is guess vs plane, not a missing rebuild date; the multimodal upper shelf to p98=12.5 is crown/step, not evidence the body is three storeys."
+  },
+  {
+    "id": "osm-1023-underheight",
+    "entity": "unnamed OSM building index 1023",
+    "where": {"x": -448.0, "z": 372.4},
+    "claim": "assembleMasses ships src=osm area-guess h=4.5 (area≈366). Epoch withhold; osmHeights undefined.",
+    "observed": "Fresh EPT: 2,142 pts, roofOf=11.0, p50=6.3, p75=7.1, p98=11.0, gap=3.9, bodyTight=true, massOk=true. Histogram: 5 m:353 + 6 m:749 + 7 m:327 = 1,429/2,142 (67%) in 5–7 m. Δ guess−p75 = −2.6 m. Sibling of osm:1022 on Inyaha Lane. Nominatim → building at 2620 Inyaha Lane.",
+    "evidence": {
+      "lidar": "osm:1023 2142 pts roofOf=11 p50=6.3 p75=7.1 p98=11 gap=3.9 dense2m=0.514 bodyTight massOk; hist 5m:353 6m:749 7m:327; lidar.osmHeights[1023]=undefined",
+      "gis": "null",
+      "osm": "unnamed way index 1023, campus-3d h=4.5, area≈366, centroid (−448,372.4); Nominatim → building, 2620 Inyaha Lane",
+      "apple": "Apple snapshot osm1023.jpg z19 at 32.874632,-117.245992 (2857 kB) — centerRGB=88,87,88 ent=6.44; finished building footprint present today; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Sibling of osm-1022-underheight — Inyaha Lane 4.5 m guesses under ~7 m 2014 bodies.",
+    "epoch_risk": "Low — same as 1022. Apple confirms standing structures; disagreement is assignment of a single plane across a stepped/crowned ring, not a date."
+  },
+  {
+    "id": "osm-322-overheight-body",
+    "entity": "unnamed OSM building index 322",
+    "where": {"x": -379.6, "z": 275.1},
+    "claim": "assembleMasses ships src=osm area-guess h=9 (area≈505). Epoch withhold; osmHeights undefined.",
+    "observed": "Fresh EPT: 1,136 pts, roofOf=6.9, p50=3.1, p75=3.6, p98=6.9, gap=3.3, bodyTight=true, massOk=true. Histogram: 2 m:470 + 3 m:396 = 866/1,136 (76.2%) in the 2–3 m band — under the 85% thin-shelf cut. Δ guess−p75 = +5.4 m (~1.5–2 storeys). Nominatim → house at 9321 La Jolla Farms Road.",
+    "evidence": {
+      "lidar": "osm:322 1136 pts roofOf=6.9 p50=3.1 p75=3.6 p98=6.9 gap=3.3 dense2m=0.762 bodyTight massOk; hist 2m:470 3m:396; lidar.osmHeights[322]=undefined",
+      "gis": "null",
+      "osm": "unnamed way index 322, campus-3d h=9, area≈505, centroid (−379.6,275.1); Nominatim → house, 9321 La Jolla Farms Road",
+      "apple": "Apple snapshot osm322.jpg z19 at 32.875512,-117.245260 (2878 kB) — centerRGB=143,133,128 ent=5.34; finished La Jolla Farms house footprint present today; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Residual LJF area-guess over a dense one-storey body that misses the 85% thin-shelf cut (76%) — same family as the pass-1 withhold class, not a new rule hit.",
+    "epoch_risk": "Low — Apple/Nominatim show a finished house. The 6.9 p98 is the crown tail; not evidence the body grew two storeys after 2014."
+  },
+  {
+    "id": "tuol-m-196-roof-anchor",
+    "entity": "Tuolumne Apartments (GIS mass at m:-196,-34)",
+    "where": {"x": -195.8, "z": -33.7},
+    "claim": "assembleMasses ships h=15.8 via massHeights[m:-196,-34] (gisH=15.2). Renderer places the roof at ground(centroid)+h while surveyed h = roof − median(rim ground).",
+    "observed": "Grade audit of all in-box rendered masses: this is the only one past a 2 m roof-anchor gate — centroid ground 123.3 vs rim-median 126.2, Δ = −2.9 m, grade span 3.0 m. Fresh EPT of the same ring: 281 pts, roofOf=15.8, p50=13.0, p75=14.7, p98=15.8 (height itself tracks the shipped plane). Bases remain per-vertex safe; the bug class is the centroid roof anchor on a sloped pad.",
+    "evidence": {
+      "lidar": "grade audit: only in-box mass with |gC−rimMed|>2 m is Tuol@-196,-34 Δ=-2.9 span=3.0; EPT gis:Tuol@-196,-34 281 pts roofOf=15.8 p50=13 p75=14.7 p98=15.8; massHeights[m:-196,-34]=15.8",
+      "gis": "Tuolumne Apartments gisH=15.2 levels (house mass) area small; nine Tuolumne GIS houses still render (OSM outline suppressed)",
+      "osm": "Tuolumne Apartments outline still skipOsm; house renders from GIS",
+      "apple": "Apple snapshot tuol-anchor.jpg z19 at 32.878305,-117.243294 (2327 kB) — finished Tuolumne house standing today with light flat roof; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Roof-anchor / centroid-vs-rim-median class on a graded Tuolumne pad — same renderer definition handoff as Hopkins Parking / Canyon Vista admin on other shards.",
+    "epoch_risk": "None for the height number — Apple matches the 2014 footprint. This is placement-of-the-box-on-grade, not a date conflict."
+  },
+  {
+    "id": "osm-982-near-thin-shelf",
+    "entity": "unnamed OSM building index 982",
+    "where": {"x": -630.2, "z": -392.2},
+    "claim": "assembleMasses ships src=osm area-guess h=4.5 (area≈74). Epoch withhold; osmHeights undefined.",
+    "observed": "Fresh EPT: 198 pts, roofOf=5.4, p50=3.2, p75=3.2, p98=5.4, gap=2.2, bodyTight=true, massOk=true. Histogram: 3 m:158/198 (80%); dense 2 m band 83.3% — 1.7 points under the 85% thin-shelf cut. Δ guess−p75 = +1.3 m (small). Nominatim → building at 9648 Black Gold Road.",
+    "evidence": {
+      "lidar": "osm:982 198 pts roofOf=5.4 p50=3.2 p75=3.2 p98=5.4 gap=2.2 dense2m=0.833 bodyTight massOk; hist 3m:158; lidar.osmHeights[982]=undefined",
+      "gis": "null — nearest named is Audrey Geisel University House ~200 m east",
+      "osm": "unnamed way index 982, campus-3d h=4.5, area≈74, centroid (−630.2,−392.2); Nominatim → building, 9648 Black Gold Road",
+      "apple": "Apple snapshot osm982.jpg z20 at 32.881547,-117.247941 (1655 kB) — centerRGB=232,232,230 ent=3.37 (bright flat roof); small finished structure present today",
+      "probe": null
+    },
+    "severity": "low",
+    "suspected_class": "Near-miss thin-shelf on a tiny pad (83.3% < 85%); guess already within ~1 m of p75 — not a storey-class error.",
+    "epoch_risk": "Low — Apple shows a standing structure. Residual is whether 83% is enough to prefer p75; the absolute Δ is small either way."
+  },
+  {
+    "id": "ljf-21-residual-guesses",
+    "entity": "21 La Jolla Farms / coastal unnamed OSM guesses still shipping (post–§21)",
+    "where": {"x": -450.0, "z": 0.0},
+    "claim": "After pass-1 admissions (903/1028/1094/481), enumerate C still finds 21 in-box unnamed OSM rings with osmHeights undefined rendering at area-guess heights. Epoch §21 pinned the near-miss/multiplane residuals (996/480) and rejected blanket admit.",
+    "observed": "Fresh full-depth EPT of all 21 (+ osm:485): zero clear the host thin-shelf cut (dense≥85% + gap>2 + bodyTight). Closest: 996 at 84.5% (still under; §21 pin), 982 at 83.3%, 1002 at 81.4%. Named Muir H1 spot-check: Tioga/Tenaya/Keeling N+W/HDH/GeiselHouse all track shipped planes within ≤0.1 m. Roof-anchor: 1 mass past 2 m (Tuol@-196,-34, separate candidate). Kaleidoscope/Tapestry correctly remain ESTIMATED_POST_2014 (2014 near-ground / staging).",
+    "evidence": {
+      "lidar": "21 withhold rings + named Muir targets in /tmp/gauntlet-r1c0-p2/probe.json; thin-shelf hits = 0; verified-ring spot check /tmp/gauntlet-r1c0-p2/probe-verified.json — no crown-paste thin-shelf on sampled verified hosts",
+      "gis": "UNEX A/B/C/D/L still massHeights=undefined (eucalyptus/canopy bodyTight=false); UNEX E/F/G/X/Z still at PRE_2014 planes 3.2–3.9",
+      "osm": "21 residual unnamed guesses in-box; 0 double-renders; Tuolumne outline still suppressed; Tenaya now ships 22.4",
+      "apple": "Contact sheet /tmp/gauntlet-r1c0-p2/apple/ — LJF estates standing; Muir west recreation pad still painted blue; ntpll-basketball present (facility minCover 0.26 intentionally lowered for worn paint)",
+      "probe": null
+    },
+    "severity": "low",
+    "suspected_class": "Documented residual class hole after §21 — no new thin-shelf auto-admits; per-ring Apple+EPT only, do not blanket-admit from roofOf.",
+    "epoch_risk": "Per-ring. Most withholds stay real crown/step mixes (date-stable). osm:1013 is the epoch-shaped outlier called out separately. Muir west pickleball remains an Apple-registration handoff (not re-opened here)."
+  }
+]
