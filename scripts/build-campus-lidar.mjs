@@ -916,6 +916,24 @@ const OSM_UNNAMED_VERIFIED = new Set([
             a 6.8 m plane; keep the 9 m guess.
        513: already withheld pass 1 (bodyTight=false coastal-scrub mix). */
   496, 874, 962,
+  /* r2c0 pass-3 re-sweep 2026-08-05 — residual Poole Street unnamed pad
+     after pass-2's 1097 / 1147 admissions. Independent full-depth EPT
+     (point counts matched the screener exactly: 485 / 512 / 441 control);
+     Apple currency confirmed finished Poole Street residential roofs,
+     no crane:
+       1105: 485 returns, clean p98 6.8 (p50 6.2 / p75 6.5, dense 62.9%
+             in the 6 m bin, gap 0.4, bodyTight) — was 4.5 under-guess at
+             9521 Poole Street (Nominatim). Strict one-plane filter
+             (bodyTight + gap≤2 + dense≥50 + |Δ|≥2) PASSES. Sibling of
+             already-admitted 1097 at 9535 Poole (7.6).
+     Deliberately NOT admitted this pass:
+       1120: body sits above the 4.5 guess (p50 6.7 / p75 7.3 / roofOf
+             8.0) but dense only 36.9% in the 7 m bin (±1 69.5%) — no
+             single dominant plane to admit (1062 multimodal family).
+             Keep the guess rather than invent 8.0 from a 6/7 split.
+       Remaining ~100 in-shard unnamed guesses: per-ring Apple+EPT
+             handoff, not a blanket admit. */
+  1105,
 ]);
 
 /* Hand-audited stats where the automatic roofOf() percentile choice is

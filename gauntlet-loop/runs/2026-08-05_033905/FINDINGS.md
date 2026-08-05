@@ -1484,3 +1484,55 @@ does not re-find them as height bugs.
   different evidence quality.
 - **Nuevo West - Marketplace** GIS name host-renames to Street Corner;
   the Set key is the OSM / assembled name.
+
+---
+
+# FINDINGS — run `2026-08-05_033905` · shard r2c0 (pass 3)
+
+Pass 3 of the Scripps / La Jolla Shores shard (pier to Discovery Way / Shores
+residential / Eighth fringe). Screen: 3 candidates (1 high / 2 medium). Judged
+by `cursor-grok-4.5-high`.
+
+Every candidate in `pass3-r2c0.screen.json` was re-derived before judgement with
+an independent full-depth targeted EPT re-sample (3 targets in
+`.cache/gauntlet-r2c0-p3/judge/reprobe.*`; point counts matched the screener's
+`/tmp/gauntlet-r2c0-p3/probe.json` exactly — osm:1105 485 / osm:1120 512 /
+osm:1097 control 441), Apple snapshots from the screener's
+`/tmp/gauntlet-r2c0-p3/apple/` (copied to `.cache/gauntlet-r2c0-p3/evidence/`),
+and the shipped data. Strict one-plane filter re-applied per sample
+(bodyTight + gap≤2 + dense≥50 + |Δ|≥2).
+
+### Fixed — heights (class admission, not a one-row patch)
+
+| Entity | Was shipping | Now ships | Source | Test |
+|---|---|---|---|---|
+| osm:1105 (`osm-1105-underheight`) | 4.5 m area guess | **6.8** | `OSM_UNNAMED_VERIFIED`: 485 pts, clean p98 6.8 (dense 62.9% @6, gap 0.4); Nominatim 9521 Poole Street; Apple finished house | epoch §39 |
+
+### Withheld (better absent than wrong)
+
+- **osm:1120 (`osm-1120-underheight`)**: body sits above the 4.5 guess (p50 6.7 /
+  p75 7.3 / roofOf 8.0) but dense only 36.9% (±1 69.5%) — no single dominant
+  plane to admit (1062 multimodal family; do not invent 8.0 from a 6/7 split).
+  Keep the guess. Pinned as EXCLUDED from osmHeights.
+
+### Rejected candidates (each re-measured before rejection; do not re-find these)
+
+- **`poole-shores-still-guess-residual`** — REJECTED as scoped, same verdict as
+  every prior pass on this shard: the mechanism exists and this pass used it for
+  one admission and one explicit withhold; remaining ~100 in-shard unnamed
+  guesses need per-ring Apple + EPT, not a blanket admit. Named SIO landmarks
+  (Munk / Isaacs / Spiess / Nierenberg / Scholander / Kaplan / IGPP3000 / Keck3 /
+  MSDC / Old Director) re-checked: |ship−roofOf|≤1.0 or already-pinned
+  thin-shelf/stepped cases — no new named height bug at the storey bar.
+
+### Handoffs / observations
+
+- **Remaining unnamed guesses in-box**: still ~100 after this pass's one
+  admission. Batch Apple+EPT verification remains the right shape; do not
+  blanket-admit. Strict filter across the 47 previously unprobed rings found
+  only 1105.
+- **Terrain / survey-box south edge** (Vaughan / Ritter / shore-colony
+  1144/1146/1160) and **roof-anchor / grade-span** (Keck2 south, Eckart)
+  handoffs from pass 2 stand unchanged — not in this screen.
+- **Thin-shelf cut**: Hubbs at 80.2% stays a near-miss under 85% — do not
+  lower the floor.

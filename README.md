@@ -755,6 +755,22 @@ apron past z_max=1386; heights (where measured) correct, survey-box handoff. Eck
 15.2 m grade span already past the Voigt per-vertex rule in spirit; height near the
 guarded body.
 
+**The Scripps / Shores pass-3 re-sweep (2026-08-05, r2c0).** Same pier-to-Shores shard after
+pass 2 closed Poole Street 1097 and Bordeaux 1147. Fresh screen of 3 candidates (1 high /
+2 medium). Every height re-derived from an independent full-depth EPT (point counts matched
+the screener's 485 / 512 / 441 control exactly); Apple currency re-checked per site.
+
+| Entity | Was shipping | Now ships | Why |
+|---|---|---|---|
+| Poole Street house (unnamed, osm:1105) | 4.5 m area guess | **6.8 m** | Clean single plane (485 returns, dense 62.9% in the 6 m bin, gap 0.4); Nominatim 9521 Poole Street. Strict one-plane filter PASSES. Sibling of already-admitted 1097 at 9535. |
+
+Withheld: osm:1120 — body sits above the 4.5 guess (p50 6.7 / roofOf 8.0) but dense only
+36.9% (±1 69.5%); no single dominant plane (1062 multimodal family). Keep the guess rather
+than invent 8.0 from a 6/7 split. Class-hole rejected as scoped — remaining ~100 in-shard
+unnamed guesses need per-ring Apple + EPT, not a blanket admit. Named SIO landmarks
+(Munk / Isaacs / Spiess / Scholander / IGPP / Keck3) re-checked at |ship−roofOf|≤1.0 or
+already-pinned thin-shelf cases — no new named height bug.
+
 **The theatre-district / Boardwalk pass-2 (2026-08-05, r2c1).** Fresh screen of 13
 candidates (5 high / 7 medium / 1 low). Every height re-derived from the screener's
 full-depth EPT (point counts matched exactly: 665 / 653 / 858 / 623 / 1,517 / 5,567 /

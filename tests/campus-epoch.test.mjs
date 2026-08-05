@@ -182,6 +182,10 @@
  *      area within 40 m, area <50 m²; nested-plaza coverage cannot
  *      fire because coverage=0. Main Bonner (19.2) and International
  *      Center West (8.2) keep their measured planes.
+ *  39. The r2c0 pass-3 re-sweep's measurements hold: Poole Street
+ *      osm:1105 ships its clean 6.8 m plane (strict one-plane PASS);
+ *      osm:1120 stays withheld (dense 36.9% under the 50% cut — 1062
+ *      multimodal family); already-admitted 1097 stays at 7.6.
  */
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
@@ -3461,5 +3465,41 @@ describe("campus epoch — r1c2 pass-3 (2026-08-05)", () => {
     assert.equal(rendersNear(1660.1, 471.9).find((m) => /Education Center C/i.test(m.name || ""))?.h, 4.3);
     assert.equal(LIDAR.massHeights["m:1660,472"], undefined);
     assert.equal(LIDAR.massHeights["m:1670,455"], undefined);
+  });
+});
+
+describe("campus epoch — r2c0 pass-3 Poole Street residual (2026-08-05)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("Poole Street osm:1105 ships its measured plane beside 1097", () => {
+    /* Independent full-depth EPT matched the screener (485 pts). Strict
+       one-plane filter PASSES: bodyTight, gap 0.4, dense 62.9% @6,
+       |Δ|=2.3 vs the 4.5 guess. Nominatim 9521 Poole Street; Apple
+       finished residential roof today among the Shores row. Sibling of
+       already-admitted 1097 (9535 Poole, 7.6). */
+    assert.equal(LIDAR.osmHeights?.[1105], 6.8, "osm:1105's plane");
+    assert.equal(rendersNear(-291.0, 569.5, 4).find((m) => m.src === "osm")?.h, 6.8,
+      "osm:1105 renders at its plane");
+    assert.equal(LIDAR.osmHeights?.[1097], 7.6, "sibling 1097 stays at its plane");
+  });
+
+  test("Poole Street osm:1120 keeps its guess — no dominant plane", () => {
+    /* 512 pts, body above the 4.5 guess (p50 6.7 / roofOf 8.0) but dense
+       only 36.9% in the 7 m bin (±1 69.5%) — under the 50% / 85% cuts.
+       Same multimodal withhold class as osm:1062. Do not invent 8.0 from
+       a 6/7 split. Apple shows a finished house today; existence is not
+       the question. */
+    assert.equal(LIDAR.osmHeights?.[1120], undefined, "a multimodal smear shipped for osm:1120");
+    assert.equal(rendersNear(-290.5, 674.2, 4).find((m) => m.src === "osm")?.h, 4.5,
+      "osm:1120 keeps its declared guess");
   });
 });

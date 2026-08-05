@@ -1,0 +1,53 @@
+[
+  {
+    "id": "osm-1105-underheight",
+    "entity": "unnamed OSM building index 1105 (9521 Poole Street)",
+    "where": {"x": -291.0, "z": 569.5},
+    "claim": "assembleMasses ships src=osm area-guess h=4.5 (area≈205). Not in lidar.osmHeights / OSM_UNNAMED_VERIFIED.",
+    "observed": "Fresh full-depth EPT: 485 pts, roofOf=6.8, p50=6.2, p75=6.5, p98=6.8, gap=0.4, bodyTight=true, massOk=true, dense 6 m = 62.9% (305/485) ±1 = 76.7%. Strict one-plane filter (bodyTight + gap≤2 + dense≥50 + |Δ|≥2) PASSES — only in-shard still-guess hit across the 47 previously unprobed rings. Shipping 4.5 is 2.3 m under the measured plane. Nominatim reverse 32.872850,-117.244313 → 9521 Poole Street. Apple osm1105.jpg z19 — finished Poole Street house roof standing today among the Shores residential row; no crane. Flat grade (span 0.7 m).",
+    "evidence": {
+      "lidar": "osm:1105 485 pts roofOf=6.8 p50=6.2 p75=6.5 p98=6.8 gap=0.4 bodyTight massOk dense6=62.9%±76.7%; hist 6m:305 5m:64 3m:57 2m:46; lidar.osmHeights[1105]=undefined",
+      "gis": null,
+      "osm": "unnamed index 1105 h=4.5 area≈205 verts=18; Nominatim → 9521 Poole Street, Torrey Pines",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c0-p3/apple/osm1105.jpg z19 at 32.872850,-117.244313 (2736 kB, centerRGB=95,96,91 ent=7.38) — finished Poole Street residential roof today; no crane",
+      "probe": "strict one-plane PASS; sibling 1097 (9535 Poole) already admitted at 7.6 in pass-2"
+    },
+    "severity": "high",
+    "suspected_class": "Unnamed OSM under-guess — small-area 4.5 shed default under a textbook single-plane ~6.5–6.8 m 2014 body (same Poole Street family as pass-2 osm:1097).",
+    "epoch_risk": "Low for existence — Apple + Nominatim agree a finished house sits here. The 4.5 vs 6.8 split is guess vs laser, not a rebuild date; hist has no canopy smear (p98−p50=0.6)."
+  },
+  {
+    "id": "osm-1120-underheight",
+    "entity": "unnamed OSM building index 1120 (9463 Poole Street)",
+    "where": {"x": -290.5, "z": 674.2},
+    "claim": "assembleMasses ships src=osm area-guess h=4.5 (area≈204). Not in lidar.osmHeights / OSM_UNNAMED_VERIFIED.",
+    "observed": "Fresh full-depth EPT: 512 pts, roofOf=8.0, p50=6.7, p75=7.3, p98=8.0, gap=0.6, bodyTight=true, massOk=true. Dense mode only 36.9% (7 m) / ±1 = 69.5% — under the 50% mode / 85% ±1 auto-admit cut — but hist 6m:166 + 7m:189 = 355/512 (69.3%) sits ~2–3.5 m above the 4.5 guess with a tight p98−p50=1.3 m body. Nominatim → 9463 Poole Street. Apple osm1120.jpg z19 — finished Poole Street residential roof standing today (solar arrays visible on neighbouring roofs); no crane. Flat grade (span 0.8 m).",
+    "evidence": {
+      "lidar": "osm:1120 512 pts roofOf=8.0 p50=6.7 p75=7.3 p98=8.0 gap=0.6 bodyTight massOk dense7=36.9%±69.5%; hist 7m:189 6m:166 3m:73 4m:35; lidar.osmHeights[1120]=undefined",
+      "gis": null,
+      "osm": "unnamed index 1120 h=4.5 area≈204 verts=12; Nominatim → 9463 Poole Street, Torrey Pines",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c0-p3/apple/osm1120.jpg z19 at 32.871903,-117.244307 (2693 kB, centerRGB=80,82,78 ent=7.14) — finished Poole Street house roof today among the same corridor as 1105",
+      "probe": "fails strict dense≥50 mode cut; body still clearly above the 4.5 guess — hand-admit candidate beside 1105, not auto-batch"
+    },
+    "severity": "medium",
+    "suspected_class": "Unnamed under-guess with a tight 6–8 m body but no single dominant bin for auto-admit — Poole Street neighbour of 1105 / 1097.",
+    "epoch_risk": "Low for existence. Spread across 6–7 m could be a stepped or multi-plane roof; do not admit roofOf=8.0 without choosing the plane — but the 4.5 guess is already low vs p50=6.7."
+  },
+  {
+    "id": "poole-shores-still-guess-residual",
+    "entity": "remaining unnamed OSM still-guess rings in-shard (104 after pass-2 admissions)",
+    "where": {"x": -350.0, "z": 600.0},
+    "claim": "After pass-1/2 admissions and documented withholds, enumerate still flags 104 in-shard unnamed OSM masses shipping area guesses (almost all h=4.5; five remaining h=9).",
+    "observed": "Fresh enumerate C_unnamedGuessShipping=104. Full-depth EPT on all 47 previously unprobed still-guess rings produced exactly one strict one-plane PASS (1105) and one strong soft underheight (1120). Other |Δ|≥2 softs are canopy/multimodal (1083/1112/1113/1118/1119/1153/1159) or already-documented withholds (1033 terrace). Remaining 9 m guesses (1032/1035/1037/1043) stay bodyTight-false or |Δ|<1 vs their planes. Named SIO landmarks (Munk/Isaacs/Spiess/Nierenberg/Scholander/Kaplan/IGPP3000/Keck3/MSDC/Old Director) re-checked: |ship−roofOf|≤1.0 or already-pinned thin-shelf/stepped cases — no new named height bug at the storey bar.",
+    "evidence": {
+      "lidar": "47-target full-depth probe in /tmp/gauntlet-r2c0-p3/probe.json + prior pass-2 57-ring coverage; strict filter PASSes = {1105} only",
+      "gis": "named GIS soft-spots re-sampled (Munk roofOf 12.1/ship 9.6 dense 53%; Isaacs roofOf 7.6/ship 7.8 dense 94.4% @6 gap 1.1; Kaplan roofOf 7.2/ship 8.2 dense 70.7% @5) — Hubbs/thin-shelf near-miss family, not new admits",
+      "osm": "enumerate.out C=104 still-guess; unnamedVerifiedSize now 403 campus-wide",
+      "apple": "Contact sheet /tmp/gauntlet-r2c0-p3/apple/ — Poole Street + SIO shore mostly finished fabric today",
+      "probe": "do not blanket-admit; per-ring Apple+EPT remains the shape — same scoped verdict as every prior pass"
+    },
+    "severity": "medium",
+    "suspected_class": "Standing unnamed-guess class hole (handoff, not a one-row patch) — residual after the one clean Poole Street admission this pass.",
+    "epoch_risk": "Per-ring — some pads could be post-2014 or canopy-smeared (1033 is the documented terrace withhold). That is why OSM_UNNAMED_VERIFIED is index-keyed."
+  }
+]
