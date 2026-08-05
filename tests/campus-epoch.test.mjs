@@ -111,6 +111,12 @@
  *      the Epstein / Mayer phantom rings render nothing, the Central
  *      Utilities cooling bays ship their planes, and the thin-shelf /
  *      stepped / host-bleed / VAF-3 / Tata residuals stay as judged.
+ *  23. The r1c2 re-sweep's measurements hold: One Miramar 3/4 render once
+ *      each via case-insensitive exact-name twins at their measured
+ *      planes, Outpatient / Piedra / Tierra join POST_2014_SITES,
+ *      Hamilton sheds its thin shelf, two unnamed modular pads ship
+ *      their planes, Foodworx Dining Room stays absent, and the dual-
+ *      plane / near-shelf / unfitted-court residuals stay as judged.
  */
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
@@ -174,6 +180,11 @@ const POST_2014 = [
   // roofline in the 2021-23 conversion. The flight measured predecessors.
   "Center for Coastal Studies",
   "Marine Conservation Facility",
+  // r1c2 re-sweep: Outpatient Pavilion opened 2018; Nuevo East (Piedra /
+  // Tierra) opened July 2020. The flight saw an empty lot / predecessor
+  // Mesa fabric — never today's buildings.
+  "Outpatient Pavilion",
+  "Piedra", "Tierra",
 ];
 
 describe("1. LiDAR never claims a measurement of a post-2014 building", () => {
@@ -502,14 +513,15 @@ describe("9. the north-west shard sweep (r0c0, 2026-08-04)", () => {
 
   test("suppression never orphans a building's name", () => {
     /* The area test yields when no covering mass would inherit the ring's
-       name (Village East Building 4, One Miramar 3/4 all sample ≥0.85
-       under masses named something else). The suppression orphans below
-       are from before the sweeps and may only shrink (r0c1 resolved Earth
-       Hall, Douglas Hall, both Canyon Vistas and Village East 5; r1c2's
-       word-suffix rule resolved Spiess Hall, the greenhouses, and the
-       Mesa Nueva / Nuevo West short names by renaming their masses, and
-       carries the Matthews parcel letters on the full "Matthews
-       Apartments X" labels).
+       name. One Miramar 3/4 used to be in this class — their GIS twins
+       wore "Building N" against OSM's "building N", so the exact-string
+       twin missed and both sources extruded (r1c2 re-sweep fixed the
+       case fold). The suppression orphans below are from before the
+       sweeps and may only shrink (r0c1 resolved Earth Hall, Douglas Hall,
+       both Canyon Vistas and Village East 5; r1c2's word-suffix rule
+       resolved Spiess Hall, the greenhouses, and the Mesa Nueva / Nuevo
+       West short names by renaming their masses, and carries the Matthews
+       parcel letters on the full "Matthews Apartments X" labels).
        A name counts as carried when a mass wears it exactly OR as a word
        suffix — "Matthews Apartments E" carries "E", "Mesa Nueva - Cala"
        would carry "Cala" — the same identity rule the builder now uses.
@@ -2105,5 +2117,94 @@ describe("campus epoch — r1c1 re-sweep (2026-08-05)", () => {
     const vafOsm = rendersNear(679.3, -86.1).find((m) => m.src === "osm");
     assert.ok(vafGis, "VAF-3 GIS mass vanished");
     assert.ok(vafOsm, "VAF-3 OSM ring vanished — do not resolve the position without a source");
+  });
+});
+
+describe("campus epoch — r1c2 re-sweep (2026-08-05)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("One Miramar 3 and 4 render once each at their measured planes", () => {
+    /* OSM "building N" vs GIS "Building N" — case-sensitive twin missed,
+       centroids sit 2.7 / 4.4 m apart with mutual containment false, but
+       area coverage is 0.85 / 0.86. Both sources extruded; GIS wore the
+       unchallenged L5 default (15.2) over a measured ~13.1 plane. Case-
+       insensitive exact-name twin + massHeights from the same twin path. */
+    for (const [n, x, z, h] of [
+      ["One Miramar Street, building 3", 1326.4, 443.6, 13.1],
+      ["One Miramar Street, building 4", 1393.2, 411.7, 13.2],
+    ]) {
+      const all = MASSES.filter((m) => m.name === n);
+      assert.equal(all.length, 1, `${n} renders ${all.length} times`);
+      assert.equal(all[0].src, "gis", `${n} renders from ${all[0].src}`);
+      assert.equal(all[0].h, h, `${n} ships ${all[0].h}, plane is ${h}`);
+      const [cx, cz] = centroidOf(all[0].rings[0]);
+      assert.ok(Math.hypot(cx - x, cz - z) < 5, `${n} drifted from (${x},${z})`);
+    }
+    assert.equal(LIDAR.massHeights["m:1326,444"], 13.1);
+    assert.equal(LIDAR.massHeights["m:1393,412"], 13.2);
+  });
+
+  test("Outpatient, Piedra and Tierra join POST_2014 — no 2014 plane ships", () => {
+    /* Outpatient Pavilion opened 2018-03-12 (UCSD Today); 11,304 returns
+       read near-grade (roofOf 0.8). GIS L4 = 17.1 ships unchallenged.
+       Piedra / Tierra are Nuevo East (HDH, July 2020); lidar.heights
+       19.4 / 17.8 were predecessor Mesa fabric (bodyTight=false). Piedra
+       keeps fac.newer 36.6; Tierra falls back to the facilities L5 15.2. */
+    assert.equal(LIDAR.heights["Outpatient Pavilion"], undefined);
+    assert.equal(LIDAR.massHeights["m:1610,-23"], undefined,
+      "Outpatient must not ship the 2014 empty-lot plane");
+    assert.equal(LIDAR.heights["Piedra"], undefined, "Piedra predecessor plane leaked");
+    assert.equal(LIDAR.heights["Tierra"], undefined, "Tierra predecessor plane leaked");
+    assert.equal(rendersNear(1610, -23.3).find((m) => m.src === "gis")?.h, 17.1);
+    assert.equal(rendersNear(1874.4, 285.3).find((m) => m.name === "Piedra")?.h, 36.6);
+    assert.equal(rendersNear(1846.6, 351.6).find((m) => m.name === "Tierra")?.h, 15.2);
+  });
+
+  test("Hamilton sheds its thin 12.7 m shelf for the dense 9.4 m body", () => {
+    /* 4,501 returns, 86.3% in 9–10 m, gap 3.3, bodyTight — same cut as
+       Asante / CSC-H. GIS L2 = 8.5 understates the deck; p98 rode the
+       mechanical plant. Apple: finished clinic roof with plant standing. */
+    assert.equal(LIDAR.massHeights["m:1726,-121"], 9.4);
+    const h = rendersNear(1726, -121.5).find((m) => m.src === "gis");
+    assert.ok(h, "Hamilton vanished");
+    assert.equal(h.h, 9.4, `Hamilton ships ${h.h}`);
+  });
+
+  test("two unnamed modular pads ship their measured planes", () => {
+    /* 776: beside the already-admitted 775 / 9435 banks north of Sulpizio
+       — 630 pts, roofOf 4.0, dense 89% @2–3 (was 4.5 guess).
+       766: VA / Gilman corridor — 641 pts, roofOf 6.2, gap 0.8, bodyTight
+       (was 4.5). Sibling 765 is stepped and stays out. */
+    assert.equal(LIDAR.osmHeights?.[776], 4.0);
+    assert.equal(LIDAR.osmHeights?.[766], 6.2);
+    assert.equal(LIDAR.osmHeights?.[765], undefined, "stepped sibling 765 must stay out");
+    assert.equal(rendersNear(1276.5, 1.7, 4).find((m) => m.src === "osm")?.h, 4.0);
+    assert.equal(rendersNear(1075.4, 316.6, 4).find((m) => m.src === "osm")?.h, 6.2);
+  });
+
+  test("Foodworx Dining Room stays absent; dual-plane and near-shelf residuals stand", () => {
+    /* Dining Room: 93% of returns at grade, Apple shows outdoor seating
+       south of the real Foodworx gable (7.8). Better absent than a 4.3 m
+       solid box. PC1200/1800 dense ~54% — Sanford dual-plane, keep
+       roofOf. Perlman dense 82.8% — under the 85% cut, keep 13.3. */
+    assert.equal(
+      MASSES.filter((m) => /Foodworx Dining/i.test(m.name || "")).length, 0,
+      "Foodworx Dining Room extrudes again");
+    assert.equal(rendersNear(1007.3, -87.7).find((m) => m.name === "Foodworx")?.h, 7.8);
+    assert.equal(LIDAR.massHeights["m:1039,43"], 14.7, "PC1200 keeps roofOf");
+    assert.equal(LIDAR.massHeights["m:1038,64"], 14.2, "PC1800 keeps roofOf");
+    assert.equal(LIDAR.massHeights["m:1537,-19"], 13.3, "Perlman keeps roofOf");
+    assert.equal(rendersNear(1039.2, 43.5).find((m) => m.src === "gis")?.h, 14.7);
+    assert.equal(rendersNear(1037.7, 63.9).find((m) => m.src === "gis")?.h, 14.2);
+    assert.equal(rendersNear(1536.7, -18.9).find((m) => m.src === "gis")?.h, 13.3);
   });
 });

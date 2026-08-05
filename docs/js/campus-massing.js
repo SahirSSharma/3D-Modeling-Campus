@@ -361,11 +361,19 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
      massing when its own ring does NOT render (r2c1 judge sweep). */
   const renderedOsm = new Set();
   const gisCentroids = covered.map((r) => centroidOf(r));
+  /* Case-folded twin index (r1c2 re-sweep, 2026-08-05): OSM and the
+     facilities inventory disagree on capitalisation for the same identity
+     ("One Miramar Street, building 3" vs "Building 3"). An exact-string
+     map missed those twins, the ≥0.85 area test never ran, and both
+     sources extruded the same pad. Matching ignores case; the rename
+     below still prefers OSM's spelling as the name a student uses. */
+  const namesEqual = (a, b) => !!a && !!b && a.toLowerCase() === b.toLowerCase();
   const gisNameCentroids = new Map();
   gis.forEach((m, i) => {
     if (!m.n) return;
-    if (!gisNameCentroids.has(m.n)) gisNameCentroids.set(m.n, []);
-    gisNameCentroids.get(m.n).push(gisCentroids[i]);
+    const key = m.n.toLowerCase();
+    if (!gisNameCentroids.has(key)) gisNameCentroids.set(key, []);
+    gisNameCentroids.get(key).push(gisCentroids[i]);
   });
   campus.buildings.forEach((b, i) => {
     if (b.n && skipOsm.has(b.n)) return;
@@ -380,13 +388,16 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
        its centroid misses the OSM ring (CMRR too), so the name test
        failed, the ≥0.85 area test never ran, and both rendered twice —
        the OSM copy extruded through the massing that already IS the
-       building and already SAYS its name. */
+       building and already SAYS its name. Case is not identity: One
+       Miramar 3/4 failed the exact-string form of this test while
+       sampling ≥0.85 under their GIS twins. */
     const [bcx, bcz] = centroidOf(b.p);
     const nameCarried = !b.n ||
       gisCentroids.some(([x, z]) => inRing(x, z, b.p)) ||
-      (gisNameCentroids.get(b.n) || []).some(([x, z]) => Math.hypot(x - bcx, z - bcz) < 150) ||
-      gis.some((m, gi) => m.n && m.n !== b.n &&
-        (m.n.endsWith(` - ${b.n}`) || m.n.endsWith(` ${b.n}`)) &&
+      (gisNameCentroids.get(b.n.toLowerCase()) || []).some(([x, z]) => Math.hypot(x - bcx, z - bcz) < 150) ||
+      gis.some((m, gi) => m.n && !namesEqual(m.n, b.n) &&
+        (m.n.toLowerCase().endsWith(` - ${b.n.toLowerCase()}`) ||
+          m.n.toLowerCase().endsWith(` ${b.n.toLowerCase()}`)) &&
         Math.hypot(gisCentroids[gi][0] - bcx, gisCentroids[gi][1] - bcz) < 150);
     const fac = arcgis?.buildings?.[b.n];
     /* The per-index measurement outranks the name key: a duplicate OSM name
@@ -513,13 +524,26 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
        (Cala's does, the same trick Rya and Vela play on the centroid test
        above). */
     if (!m._host && m.name) {
-      const nameHost = namedRings.find((b) => {
-        if (b.n.length < 3 || b.n === m.name) return false;
-        if (!m.name.endsWith(` - ${b.n}`) && !m.name.endsWith(` ${b.n}`)) return false;
+      /* Case-insensitive exact twin: GIS "Building 3" IS OSM "building 3"
+         within 150 m. Take the OSM spelling so suppression does not orphan
+         the name the student (and the orphan test) look for. */
+      const caseTwin = namedRings.find((b) => {
+        if (!namesEqual(b.n, m.name) || b.n === m.name) return false;
         const [rcx, rcz] = centroidOf(b.p);
         return Math.hypot(rcx - m._c[0], rcz - m._c[1]) < 150;
       });
-      if (nameHost) { m._host = nameHost; m._hostNameOnly = true; }
+      if (caseTwin) { m._host = caseTwin; m._hostNameOnly = true; }
+      else {
+        const nameHost = namedRings.find((b) => {
+          if (b.n.length < 3 || namesEqual(b.n, m.name)) return false;
+          const ml = m.name.toLowerCase();
+          const bl = b.n.toLowerCase();
+          if (!ml.endsWith(` - ${bl}`) && !ml.endsWith(` ${bl}`)) return false;
+          const [rcx, rcz] = centroidOf(b.p);
+          return Math.hypot(rcx - m._c[0], rcz - m._c[1]) < 150;
+        });
+        if (nameHost) { m._host = nameHost; m._hostNameOnly = true; }
+      }
     }
   }
   for (let settled = false; !settled;) {

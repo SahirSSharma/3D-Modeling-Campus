@@ -1,0 +1,223 @@
+[
+  {
+    "id": "om3-case-twin-double",
+    "entity": "One Miramar Street, building 3 / Building 3",
+    "where": {"x": 1326.5, "z": 446.3},
+    "claim": "Both extrude: OSM 'building 3' src=osm h=13.1 (lidar) AND GIS 'Building 3' src=gis h=15.2 (unchallenged L5). OM1/OM2 of the same complex suppress correctly.",
+    "observed": "OSM↔GIS centroids 2.7 m apart but neither ring contains the other's centroid, so host-rename never fires. Exact-name twin then fails on case ('building 3' ≠ 'Building 3'). Fresh EPT: osm ring 16,573 pts roofOf=13.0 p50=12.6 p75=12.7 dense12–13=77.2% bodyTight; GIS ring 16,030 pts roofOf=13.1 p50=12.7 p75=12.8 dense12–13=88.7% bodyTight. GIS ships +2.1 m over its own plane. Apple z18 shows one finished residential block on this pad.",
+    "evidence": {
+      "lidar": "osm:OM3 16573 pts roofOf=13.0 p50=12.6 p75=12.7 p98=13.0 gap=0.3 bodyTight massOk dense12-13=77.2%; gis:OM3 16030 pts roofOf=13.1 p50=12.7 p75=12.8 p98=13.1 dense12-13=88.7%",
+      "gis": "One Miramar Street, Building 3 gisH=15.2 L5 area≈2625 @ (1326.4,443.6); massH=null",
+      "osm": "One Miramar Street, building 3 index 356 h=12; lidar.heights path ships 13.1 on the OSM copy. Sibling indices 354/355 ('building 1'/'building 2') rename+suppress; 356/357 do not.",
+      "apple": "Apple snapshot om3.jpg z18 at 32.873988,-117.227012 — one finished light-roof residential block standing; no crane, no second volume",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Case-sensitive exact-name twin + non-containing centroids → OSM+GIS double-render (OM1/OM2 prove the happy path when containment works).",
+    "epoch_risk": "Low for existence — Apple and 2014 both see the same finished block. The disagreement is identity/dedup + an unchallenged GIS storey default, not a post-2014 rebuild."
+  },
+  {
+    "id": "om4-case-twin-double",
+    "entity": "One Miramar Street, building 4 / Building 4",
+    "where": {"x": 1388.8, "z": 411.3},
+    "claim": "Same double-render as OM3: OSM 'building 4' src=osm h=13.1 and GIS 'Building 4' src=gis h=15.2 both ship.",
+    "observed": "Centroids 4.4 m apart, mutual containment false. Fresh EPT: osm 7,108 pts roofOf=13.2 p50=12.6 p75=12.7 dense12–13=84.8%; GIS 6,978 pts roofOf=13.2 p50=12.6 p75=12.7 dense12–13=97.5%. GIS +2.0 m over plane. Apple z18: one finished block.",
+    "evidence": {
+      "lidar": "osm:OM4 7108 pts roofOf=13.2 p50=12.6 p75=12.7 p98=13.2 bodyTight dense12-13=84.8%; gis:OM4 6978 pts roofOf=13.2 dense12-13=97.5%",
+      "gis": "One Miramar Street, Building 4 gisH=15.2 L5 area≈2969 @ (1393.2,411.7); massH=null",
+      "osm": "One Miramar Street, building 4 index 357 h=16; assembled src=osm h=13.1 alongside the GIS twin",
+      "apple": "Apple snapshot om4.jpg z18 at 32.874277,-117.226298 — finished residential roof on a single pad; garage to the south",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Same case-twin / non-containment double-render class as om3-case-twin-double.",
+    "epoch_risk": "Low — Apple matches the 2014 footprint. Duplicate extrusion is a geometry bug, not a date conflict."
+  },
+  {
+    "id": "outpatient-koman-missing-post2014",
+    "entity": "Outpatient Pavilion (Koman Family Outpatient Pavilion)",
+    "where": {"x": 1610.0, "z": -23.3},
+    "claim": "GIS mass ships unchallenged gisH=17.1 / L4 after OSM host rename to 'Outpatient Pavilion'. Not in POST_2014_SITES (unlike Altman / Athena / Viterbi in the same medical corridor).",
+    "observed": "Fresh EPT: 11,304 pts, roofOf=0.8, p50=0.2, p75=0.8, p98=9.1, guard=true, bodyTight=true, dense −1–0 = 75.6% — 2014 empty lot / near-grade. UCSD Today: opened to patients 2018-03-12 (construction from 2015). Apple z18 shows the finished four-storey pavilion standing today. Shipping 17.1 without an epoch guard pastes a floor-count onto a site the laser never saw as a building.",
+    "evidence": {
+      "lidar": "gis:Outpatient 11304 pts roofOf=0.8 p50=0.2 p75=0.8 p98=9.1 guard bodyTight massOk; dense-1-0=75.6%; massHeights absent (correct for empty lot, but POST_2014 list also absent)",
+      "gis": "Koman Family Outpatient Pavilion gisH=17.1 L4 area≈4054; assembled name 'Outpatient Pavilion'",
+      "osm": "host rename from OSM 'Outpatient Pavilion'; no lidar.heights",
+      "apple": "Apple snapshot outpatient.jpg z18 at 32.878211,-117.223979 — finished multi-storey outpatient volume on the medical campus; no crane",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "POST_2014_SITES miss — finished post-flight medical building ships GIS storeys over a 2014 empty-lot plane (Altman/Athena class, name never listed).",
+    "epoch_risk": "HIGH — Apple's finished pavilion vs LiDAR's near-zero plane is a DATE. Do not admit roofOf=0.8; the open question is whether 17.1 GIS/L4 is the cited non-LiDAR source or whether the mass should stay epoch-listed and unmeasured."
+  },
+  {
+    "id": "piedra-nuevo-east-missing-post2014",
+    "entity": "Piedra (Nuevo East)",
+    "where": {"x": 1874.4, "z": 285.3},
+    "claim": "OSM Piedra ships src=osm h=36.6 via fac.newer=true (12 levels). lidar.heights['Piedra']=19.4 is still written. Piedra is NOT in POST_2014_SITES — unlike Mesa Nueva (Cala/Arena/…) and Nuevo West (Viento/Brisa) neighbours that are.",
+    "observed": "Fresh EPT: 5,866 pts, roofOf=17.4, p50=5.4, p75=13.2, p98=17.4, bodyTight=false, dense 0–1 = 37.9% — smeared predecessor Mesa fabric, not a 12-storey tower. HDH: Nuevo East (Piedra/Tierra/…) opened July 2020. Apple z18 shows the finished white high-rise cluster standing. Facilities already flags newer:true; the epoch set does not.",
+    "evidence": {
+      "lidar": "osm:Piedra 5866 pts roofOf=17.4 p50=5.4 p75=13.2 p98=17.4 bodyTight=false massOk; lidar.heights['Piedra']=19.4 still present",
+      "gis": "no Piedra-named GIS mass; arcgis.buildings.Piedra={levels:12,height:36.6,newer:true}",
+      "osm": "Piedra index 716 h=44.4; assembled src=osm h=36.6 (fac.newer path)",
+      "apple": "Apple snapshot piedra.jpg z18 at 32.875420,-117.221151 — finished Nuevo East white roofs / courtyards standing; no crane",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Nuevo East tower missing from POST_2014_SITES while fac.newer already admits GIS floor-count; 2014 heights key is predecessor bleed (Mesa Nueva sibling class).",
+    "epoch_risk": "HIGH — 2020 Nuevo East vs 2014 Mesa predecessor. Treating lidar.heights 19.4 as Piedra's roof would invent the wrong building; the 36.6 is a floor-count estimate that needs the epoch list, not a LiDAR plane."
+  },
+  {
+    "id": "tierra-nuevo-east-lidar-as-current",
+    "entity": "Tierra (Nuevo East)",
+    "where": {"x": 1846.6, "z": 351.6},
+    "claim": "OSM Tierra ships src=osm h=17.8 from lidar.heights (fac height 15.2, not newer). Not in POST_2014_SITES.",
+    "observed": "Fresh EPT: 1,971 pts, roofOf=18.1, p50=10.0, p75=13.5, p98=18.1, bodyTight=false, dense 6–7 = 40.4% — no single tight plane. Same Nuevo East (2020) generation as Piedra. Apple z18 shows finished white mid-rise fabric. Shipping the 2014 smear as Tierra's height risks the predecessor Mesa block.",
+    "evidence": {
+      "lidar": "osm:Tierra 1971 pts roofOf=18.1 p50=10.0 p75=13.5 p98=18.1 bodyTight=false dense6-7=40.4%; lidar.heights['Tierra']=17.8",
+      "gis": "no Tierra-named GIS mass; arcgis.buildings.Tierra={levels:5,height:15.2} (newer not set)",
+      "osm": "Tierra index 717 h=19.2; assembled src=osm h=17.8",
+      "apple": "Apple snapshot tierra.jpg z18 at 32.874820,-117.221448 — finished Nuevo East mid-rise white roofs / pool courtyard; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Nuevo East sibling of Piedra — missing POST_2014 entry; lidar.heights may be predecessor, fac 15.2 is the non-LiDAR candidate.",
+    "epoch_risk": "HIGH — same 2020 Nuevo East date as Piedra. Disagreement between lidar 17.8 and fac 15.2 is small in metres but the epoch question is whether any 2014 return on this ring is admissible at all."
+  },
+  {
+    "id": "hamilton-thin-shelf",
+    "entity": "Hamilton Glaucoma and Jacobs Retina Center",
+    "where": {"x": 1726.0, "z": -121.5},
+    "claim": "assembleMasses ships h=12.7 via massHeights[m:1726,-121] over gisH=8.5 / L2.",
+    "observed": "Fresh EPT: 4,501 pts, roofOf=12.7, p50=9.3, p75=9.4, p98=12.7, bodyTight=true, gap=3.3. Histogram: 9 m bin 3,752 (83.4%); dense 9–10 = 86.3% ≥ 85% thin-shelf cut; gap > 2. Current roofOf/massHeights thin-shelf rule (Asante Meet / CSC-H) would return p75=9.4, but the shipped massHeights value is still p98 12.7. Apple z18: finished clinic roof with mechanical plant standing.",
+    "evidence": {
+      "lidar": "gis:Hamilton 4501 pts roofOf=12.7 p50=9.3 p75=9.4 p98=12.7 gap=3.3 bodyTight massOk; hist 9m:3752 10m:132 12m:204; dense9-10=86.3%; massHeights[m:1726,-121]=12.7",
+      "gis": "Hamilton Glaucoma and Jacobs Retina Center gisH=8.5 L2 area≈1005",
+      "osm": "host lidar.heights=13.2",
+      "apple": "Apple snapshot hamilton.jpg z18 at 32.879099,-117.222738 — finished Hamilton/Shiley medical roofs standing; Athena garage east",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Thin-shelf massHeights miss — dense ≥85% + gap >2 + bodyTight should prefer p75 (AsanteMeet class), but this mass still ships p98.",
+    "epoch_risk": "Low — Apple matches the 2014 footprint. Dual plane is intra-building (deck vs plant), not a post-2014 change."
+  },
+  {
+    "id": "pc1200-dual-plane",
+    "entity": "Pepper Canyon Apartments 1200",
+    "where": {"x": 1039.2, "z": 43.5},
+    "claim": "GIS mass ships h=14.7 via massHeights over gisH=9.1 / L3. Host OSM lidar.heights=11.0.",
+    "observed": "Fresh EPT: 1,677 pts, roofOf=14.6, p50=10.1, p75=10.9, p98=14.6, bodyTight=true, gap=3.7. Dense 9–10 = 54.4% — under the 85% thin-shelf cut, so auto-rule keeps p98. Dual body (~10–11) vs upper shelf (~14.6) is still measurable; host OSM key sits on the lower band. Apple z19: finished gabled Pepper Canyon warren standing.",
+    "evidence": {
+      "lidar": "gis:PC1200 1677 pts roofOf=14.6 p50=10.1 p75=10.9 p98=14.6 gap=3.7 bodyTight dense9-10=54.4%; massHeights[m:1039,43]=14.7; host lidar.heights PC1200=11.0",
+      "gis": "Pepper Canyon Apartments 1200 gisH=9.1 L3 area≈549",
+      "osm": "Pepper Canyon Apartments 1200 named host present",
+      "apple": "Apple snapshot pc1200.jpg z19 at 32.877607,-117.230084 — finished dark gabled Pepper Canyon roofs with mature trees; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Dual-plane residential mass whose dense body is under the 85% cut — Sanford/Otterson family; hand-audit candidate, not an auto thin-shelf hit.",
+    "epoch_risk": "Low — Pepper Canyon stock is pre-2014; Apple matches. Risk is picking the wrong plane of a stepped/gabled roof, not a rebuild."
+  },
+  {
+    "id": "pc1800-dual-plane",
+    "entity": "Pepper Canyon Apartments 1800",
+    "where": {"x": 1037.7, "z": 63.9},
+    "claim": "GIS mass ships h=14.2 via massHeights over gisH=9.1 / L3. Host lidar.heights=13.3.",
+    "observed": "Fresh EPT: 1,139 pts, roofOf=14.2, p50=9.9, p75=10.8, p98=14.2, bodyTight=true, gap=3.4. Dense 9–10 = 54.2% — same under-cut dual plane as PC1200. Apple: same finished warren.",
+    "evidence": {
+      "lidar": "gis:PC1800 1139 pts roofOf=14.2 p50=9.9 p75=10.8 p98=14.2 gap=3.4 bodyTight dense9-10=54.2%; massHeights[m:1038,64]=14.2",
+      "gis": "Pepper Canyon Apartments 1800 gisH=9.1 L3 area≈391",
+      "osm": "host lidar.heights=13.3",
+      "apple": "Apple snapshot pc1800.jpg z19 at ~32.8774,-117.2301 — finished Pepper Canyon gabled roofs (same warren as pc1200)",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Same dual-plane Pepper Canyon class as pc1200-dual-plane.",
+    "epoch_risk": "Low — pre-2014 housing; Apple confirms the footprint."
+  },
+  {
+    "id": "pepper-canyon-courts-unmarked",
+    "entity": "Pepper Canyon / Foodworx tennis + pickleball courts",
+    "where": {"x": 1007.0, "z": -60.0},
+    "claim": "campus-markings.json has no fitted facility for the courts immediately north of Foodworx. Only in-shard marking is Warren basketball @ (1031.4,-168.4).",
+    "observed": "Apple foodworx.jpg z19 at 32.8788,-117.2304 shows one full tennis court (red/green) plus four blue pickleball courts with fresh white paint directly north of the Foodworx / Pepper Canyon Market building — the same Muir-style repaint currency Apple is authoritative for. Enumerate walk of campus-markings facilities: 1 in-shard (Warren basketball), 0 near Foodworx. No fitError_m / fitCoverage logged for these courts because they are absent.",
+    "evidence": {
+      "lidar": null,
+      "gis": null,
+      "osm": null,
+      "apple": "Apple snapshot foodworx.jpg z19 — tennis court + 4 blue pickleball courts + partial basketball north of Foodworx; mature landscaping, finished paint",
+      "probe": "markings facilities in-shard: only Warren basketball (fitError_m=0.22, fitCoverage=0.82) ~100 m south; Foodworx court cluster absent"
+    },
+    "severity": "medium",
+    "suspected_class": "Missing sports-surface coverage — Apple-currency pickleball/tennis present, never fitted into campus-markings (Muir pickleball class).",
+    "epoch_risk": "Currency is Apple's job here (paint may post-date Google chunks). Absence is not a LiDAR/OSM height conflict; it is an unbuilt marking the mandate's 'better absent than wrong' already permits — flagging the gap, not inventing paint."
+  },
+  {
+    "id": "foodworx-dining-grade",
+    "entity": "Foodworx Dining Room",
+    "where": {"x": 1001.5, "z": -109.3},
+    "claim": "Hostless GIS mass ships unchallenged gisH=4.3 / L1. Sibling Foodworx already ships measured 7.8.",
+    "observed": "Fresh EPT: 1,077 pts, roofOf=3.7, p50=−0.1, p75=0.1, p98=3.7, bodyTight=true, dense −1–0 = 93.0% — almost all returns at grade. Apple shows the gabled Foodworx market as a real building; this separate 'Dining Room' ring may be patio/canopy/open dining rather than a 4.3 m box.",
+    "evidence": {
+      "lidar": "gis:FoodworxDR 1077 pts roofOf=3.7 p50=-0.1 p75=0.1 p98=3.7 dense-1-0=93%; Foodworx proper 1921 pts roofOf=7.8",
+      "gis": "Foodworx Dining Room gisH=4.3 L1 area≈157; Foodworx gisH=4.3 massH=7.8",
+      "osm": "no separate Dining Room OSM host",
+      "apple": "Apple snapshot foodworx.jpg — gabled Foodworx/Market volume present; outdoor seating/umbrellas on lawn west of it",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Hostless GIS one-storey default over a near-grade / open-air dining pad — better absent than a solid 4.3 m box if Apple shows no roof.",
+    "epoch_risk": "Moderate — if the dining room is a post-2014 canopy the 2014 grade is expected; if it is open air the GIS row is an entity-class mismatch. Apple must decide existence before any height moves."
+  },
+  {
+    "id": "osm-776-modular-plane",
+    "entity": "unnamed OSM building index 776",
+    "where": {"x": 1276.5, "z": 1.7},
+    "claim": "Still ships OSM area-guess h=4.5 (area≈133). Sibling osm:775 was admitted to 3.8 in the prior r1c2 pass; 776 was not.",
+    "observed": "Fresh EPT: 630 pts, roofOf=4.0, p50=3.8, p75=3.9, p98=4.0, bodyTight=true, dense 2–3 = 88.7% — clean one-storey plane, Δ = −0.5 m vs guess. Apple z19: low modular/office pad north of Sulpizio / 9435 banks.",
+    "evidence": {
+      "lidar": "osm:776 630 pts roofOf=4.0 p50=3.8 p75=3.9 p98=4.0 bodyTight massOk dense2-3=88.7%; osmHeights[776]=undefined",
+      "gis": "nearest 9435 Modular Offices @ (1315,-8) already ships measured 3.7",
+      "osm": "unnamed index 776 h=4.5 area≈133; not in OSM_UNNAMED_VERIFIED",
+      "apple": "Apple snapshot osm776.jpg z19 at ~32.87799,-117.22755 — low white modular pad standing",
+      "probe": null
+    },
+    "severity": "low",
+    "suspected_class": "Unnamed OSM guess slightly high vs a clean 2014 one-storey plane — OSM_UNNAMED_VERIFIED leftover beside the already-admitted 775/9435 modular banks.",
+    "epoch_risk": "Low — Apple matches the 2014 low pad. Not a post-2014 rebuild."
+  },
+  {
+    "id": "osm-766-va-pad",
+    "entity": "unnamed OSM building index 766",
+    "where": {"x": 1075.4, "z": 316.6},
+    "claim": "Ships OSM area-guess h=4.5 (area≈270).",
+    "observed": "Fresh EPT: 641 pts, roofOf=6.2, p50=4.6, p75=5.4, p98=6.2, bodyTight=true, dense 4–5 = 62.4%. Δ = +1.7 m vs guess (guess under the plane). Apple z19: low pad on the VA / Gilman corridor north of SCI.",
+    "evidence": {
+      "lidar": "osm:766 641 pts roofOf=6.2 p50=4.6 p75=5.4 p98=6.2 bodyTight massOk dense4-5=62.4%",
+      "gis": "no close GIS host",
+      "osm": "unnamed index 766 h=4.5 area≈270; sibling osm:765 @ (1074,252.4) is stepped (p50=0.3 / p75=4.3, bodyTight=false)",
+      "apple": "Apple snapshot osm766.jpg z19 — low finished pad on the west-edge VA corridor",
+      "probe": null
+    },
+    "severity": "low",
+    "suspected_class": "Unnamed OSM guess slightly low vs a usable 2014 plane — OSM_UNNAMED_VERIFIED candidate if Apple footprint is the structure (not a shed under canopy).",
+    "epoch_risk": "Low if Apple footprint matches; confirm it is not a post-2014 VA pad before admitting 6.2. Sibling 765 is stepped — do not batch-admit."
+  },
+  {
+    "id": "perlman-near-shelf",
+    "entity": "Perlman Ambulatory Care Center",
+    "where": {"x": 1536.7, "z": -18.9},
+    "claim": "GIS mass ships h=13.3 via massHeights over gisH=17.1 / L4.",
+    "observed": "Fresh EPT: 7,145 pts, roofOf=13.3, p50=9.1, p75=9.2, p98=13.3, bodyTight=true, gap=4.1. Dense 8–9 = 82.8% — under the 85% thin-shelf cut, so auto-rule correctly keeps p98. Same shape as Hamilton but 3 pts under the cut. Apple: finished Perlman volume standing.",
+    "evidence": {
+      "lidar": "gis:Perlman 7145 pts roofOf=13.3 p50=9.1 p75=9.2 p98=13.3 gap=4.1 bodyTight dense8-9=82.8%; massHeights ships 13.3",
+      "gis": "Perlman Ambulatory Care Unit gisH=17.1 L4 area≈1870; assembled as Perlman Ambulatory Care Center",
+      "osm": "Perlman Ambulatory Care Center lidar.heights=13.5",
+      "apple": "Apple snapshot perlman.jpg z18 at ~32.8782,-117.2247 — finished ambulatory-care roofs standing",
+      "probe": null
+    },
+    "severity": "low",
+    "suspected_class": "Near-miss thin-shelf (82.8% vs 85% cut) — Hamilton sibling; logged so a threshold tweak cannot silently reclassify it.",
+    "epoch_risk": "Low — Apple matches. Dual plane is plant vs deck, not a date conflict."
+  }
+]

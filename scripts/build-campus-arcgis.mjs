@@ -197,6 +197,17 @@ const UNDER_RECONSTRUCTION = [
   { n: "RIMAC Annex", near: [65, -867] },
 ];
 
+/* GIS rings that name a "building" where Apple and the 2014 flight agree
+   nothing solid stands — open-air dining, patio, canopy-over-grade.
+   Extruding the storey default invents a box. Better absent than wrong.
+   r1c2 re-sweep (2026-08-05): Foodworx Dining Room — 1,077 returns, 93%
+   in −1..0 m (near grade), roofOf 3.7 is a thin shelf over empty air;
+   Apple shows umbrellas / outdoor seating south of the real Foodworx
+   gable (which already ships its measured 7.8 m). */
+const NO_SOLID_ROOF = [
+  { n: "Foodworx Dining Room", near: [1001.5, -109.3] },
+];
+
 /* What the facilities inventory calls a mass -> the OSM building it IS.
    "Douglas Apartments" is Warren's Douglas Hall (the ring spans the hall
    and its east annex — one complex, one height class); without the OSM
@@ -334,6 +345,7 @@ async function build() {
       if (cx < box.x0 || cx > box.x1 || cz < box.z0 || cz > box.z1) continue;
       if (massCorrection(UNION_OUTLINES, p.building, cx, cz)) continue;
       if (massCorrection(UNDER_RECONSTRUCTION, p.building, cx, cz)) continue;
+      if (massCorrection(NO_SOLID_ROOF, p.building, cx, cz)) continue;
       const rename = massCorrection(MASS_RENAMES, p.building, cx, cz);
       massing.push({
         n: rename ? rename.to : p.building,

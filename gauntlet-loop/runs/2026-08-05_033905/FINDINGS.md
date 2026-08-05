@@ -331,3 +331,61 @@ re-computed per sample from each mass's histogram (dense 2 m band + gap).
 - **Thin-shelf cut**: campus-wide rule stays at dense ≥85% / gap >2. Three
   in-shard near-misses (McGill / Literature / MedTeach-A) stay pinned so a
   future pass cannot silently lower the floor.
+
+---
+
+# FINDINGS — run `2026-08-05_033905` · shard r1c2 (re-sweep)
+
+Pass 1 re-sweep of the health-campus / Pepper Canyon / One Miramar east shard.
+Screen: 13 candidates (4 high / 6 medium / 3 low). Judged by `cursor-grok-4.5-high`.
+
+Every candidate in `pass1-r1c2.screen.json` was re-derived before judgement
+against the screener's full-depth EPT (`/tmp/gauntlet-r1c2b/probe.json` — 59
+targets; point counts taken as the re-measurement for this pass), Apple
+snapshots in `/tmp/gauntlet-r1c2b/apple/`, thin-shelf arithmetic re-computed
+per sample, and OM3/OM4 area-coverage re-derived from the shipped rings
+(0.851 / 0.855 under their GIS twins).
+
+### Fixed — heights / phantoms / doubles (class rule, not a one-row patch)
+
+| Entity | Was shipping | Now ships | Source | Test |
+|---|---|---|---|---|
+| One Miramar building 3 / 4 (`om3/om4-case-twin-double`) | OSM 13.1 **and** GIS 15.2 | **13.1 / 13.2 once each (GIS)** | Case-insensitive exact-name twin in `campus-massing.js` + the same twin path in `build-campus-lidar.mjs` so massHeights keys. Re-sample: 16,030 / 6,978 pts, roofOf 13.1 / 13.2. | epoch §23 |
+| Outpatient Pavilion (`outpatient-koman-missing-post2014`) | 17.1 over 2014 empty lot | **17.1, POST_2014** | Opened 2018-03-12; 11,304 pts roofOf 0.8. Joins Altman / Athena. | epoch §23 |
+| Piedra / Tierra (`piedra-` / `tierra-nuevo-east`) | lidar.heights 19.4 / 17.8 | **36.6 / 15.2** | Nuevo East (HDH July 2020) added to `POST_2014_SITES`. Predecessor Mesa fabric barred; Piedra keeps fac.newer, Tierra takes facilities L5. | epoch §23 |
+| Hamilton (`hamilton-thin-shelf`) | 12.7 massHeights p98 | **9.4** | Thin-shelf rule (already in builder): dense 86.3% @9–10, gap 3.3 → p75. File was stale vs the rule. | epoch §23 |
+| osm:776 / 766 (`osm-776-modular-plane` / `osm-766-va-pad`) | 4.5 / 4.5 guesses | **4.0 / 6.2** | `OSM_UNNAMED_VERIFIED`: clean one-storey planes, Apple standing. | epoch §23 |
+| Foodworx Dining Room (`foodworx-dining-grade`) | 4.3 GIS L1 box | **removed** | `NO_SOLID_ROOF` in `build-campus-arcgis.mjs`: 93% at grade; Apple outdoor seating. | epoch §23 |
+
+### Rejected candidates (each re-measured before rejection; do not re-find these)
+
+- **`pc1200-dual-plane` / `pc1800-dual-plane`** — REJECTED. Dense bands 54.4% /
+  54.2% — under the 85% cut. Real dual-plane residential (Sanford /
+  Otterson). roofOf 14.7 / 14.2 stand. Pinned in §23.
+- **`perlman-near-shelf`** — REJECTED. Dense 82.8% — under the cut (osm:996 /
+  McGill family). roofOf 13.3 stands. Pinned in §23.
+- **`pepper-canyon-courts-unmarked`** — REJECTED as in-scope fix; RE-LOGGED as
+  handoff. Apple shows tennis + four blue pickleball courts north of
+  Foodworx; no registered fit. Better absent than wrong — same posture as
+  Muir west pickleball / Preuss pitch. Apple pixels barred without per-site
+  registration residual ≤ 0.6 m.
+
+### Withheld (better absent than wrong)
+
+- **Foodworx Dining Room**: removed from massing (no solid roof), not given a
+  height.
+- **Pepper Canyon / Foodworx courts**: painted on Apple, unfitted until
+  registration passes gate.
+
+### Handoffs / observations
+
+- **Pepper Canyon tennis + pickleball**: needs a template + per-sample fit on
+  registered imagery (Apple pixels barred without per-site registration).
+  Do not invent paint from an unregistered Apple snapshot.
+- **Case-insensitive twin**: next full `build:lidar` applies the same twin
+  path campus-wide. This pass spliced the two in-shard massHeights hits
+  (OM3/OM4) after re-deriving them; OM1/OM2 already answered through
+  containment.
+- **Nuevo East complete**: Piedra + Tierra were the only OSM-named Nuevo
+  East towers missing from `POST_2014_SITES` (Cala / Artesa already listed
+  under Mesa Nueva).

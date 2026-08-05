@@ -155,6 +155,24 @@ const POST_2014_SITES = new Set([
   // record ships unchallenged, and Street View 2025-02 (the MCTF sign is on
   // the building) supports a 4-level block stepping down the bluff.
   "Marine Conservation Facility",
+  // r1c2 re-sweep (2026-08-05). Three more sites the flight never saw as
+  // today's building:
+  // Outpatient Pavilion (Koman Family Outpatient Pavilion) — opened to
+  // patients 2018-03-12 (UCSD Today; construction from 2015). 11,304
+  // returns over the GIS ring read near-grade (roofOf 0.8, 76% in −1..0)
+  // — the empty lot. Apple shows the finished four-storey pavilion; the
+  // university's 17.1 m / L4 record ships unchallenged (Altman / Athena
+  // class). Sibling Altman / Athena / Viterbi in the same corridor were
+  // already listed; this name was the miss.
+  "Outpatient Pavilion",
+  // Nuevo East graduate housing (opened July 2020, HDH) — Piedra and
+  // Tierra. Mesa Nueva (Cala/Arena/…) and Nuevo West (Viento/Brisa) are
+  // already listed; Nuevo East was not. Piedra's lidar.heights 19.4 and
+  // Tierra's 17.8 are predecessor Mesa fabric (bodyTight=false, dense
+  // bands 38–40%), not the towers standing on today's Apple. Piedra
+  // already wears fac.newer → 36.6; Tierra falls back to the facilities
+  // 15.2 / L5 record once the 2014 smear is barred.
+  "Piedra", "Tierra",
 ]);
 
 /* Post-2014 sites keyed by OSM ring INDEX — for what a name cannot say.
@@ -600,6 +618,17 @@ const OSM_UNNAMED_VERIFIED = new Set([
        1352: Strauss-edge fringe, massOk=false; keep the 9 m guess.
        827: trolley-adjacent 109 m² ring, bodyTight=false; keep 4.5 guess. */
   225, 226,
+  /* r1c2 re-sweep 2026-08-05 — modular / VA-corridor pads beside the
+     already-admitted 775 / 9435 banks and the west-edge VA strip:
+       776: 630 returns, p50 3.8 / p75 3.9 / roofOf 4.0, dense 89% @2–3,
+            bodyTight — clean one-storey plane (was 4.5 area guess).
+       766: 641 returns, p50 4.6 / p75 5.4 / roofOf 6.2, gap 0.8,
+            bodyTight — usable one plane (was 4.5). Sibling 765 is
+            stepped (bodyTight=false) and stays out.
+     Deliberately NOT admitted: PC1200/1800 dual-plane (dense ~54%),
+     Perlman near-shelf (82.8%), Foodworx Dining Room (93% at grade —
+     excluded from massing, not a height). */
+  776, 766,
 ]);
 
 /* Hand-audited stats where the automatic roofOf() percentile choice is
@@ -983,9 +1012,21 @@ async function build() {
     let hostName = host?.n ?? null;
     let hostBi = host?.bi ?? null;
     if (!hostName) {
-      const twin = (namedByName.get(m.n) || [])
+      /* Exact twin first; then case-insensitive (r1c2 re-sweep, 2026-08-05).
+         One Miramar Building 3/4 wear "Building N" in GIS and "building N"
+         in OSM — the exact map missed them, massHeights never emitted, and
+         the L5 storey default (15.2) shipped over a measured 13.1 plane. */
+      let twin = (namedByName.get(m.n) || [])
         .find((b) => Math.hypot(b.c[0] - cx, b.c[1] - cz) < 150);
-      if (twin) { hostName = m.n; hostBi = twin.bi; }
+      if (!twin) {
+        const want = m.n.toLowerCase();
+        for (const [n, rings] of namedByName) {
+          if (n.toLowerCase() !== want) continue;
+          twin = rings.find((b) => Math.hypot(b.c[0] - cx, b.c[1] - cz) < 150);
+          if (twin) break;
+        }
+      }
+      if (twin) { hostName = twin.n; hostBi = twin.bi; }
     }
     /* epoch answered by the hand-verified build date instead of a host */
     if (!hostName && PRE_2014_GIS_VERIFIED.has(m.n)) hostName = m.n;

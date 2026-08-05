@@ -601,6 +601,24 @@ POST_2014, GIS 25.6 ships unchallenged. Strauss-edge osm:1352 and trolley osm:82
 guesses. VAF-3 GIS/OSM position double remains open (coverage 0; no source resolves which
 footprint is Building 3).
 
+**The health-campus / Pepper Canyon re-sweep (2026-08-05, r1c2).** Fresh screen of 13
+candidates (4 high / 6 medium / 3 low). Every height re-derived from the screener's
+full-depth EPT (59 targets); Apple currency re-checked per site.
+
+| Entity | Was shipping | Now ships | Why |
+|---|---|---|---|
+| One Miramar Street, building 3 / 4 | OSM 13.1 **and** GIS 15.2 (double) | **13.1 / 13.2 once each** | Case-insensitive exact-name twin: OSM lowercase vs GIS "Building N" broke the carrier test while area coverage sat at 0.85 / 0.86. Same twin path now keys massHeights so the L5 storey default no longer stands unchallenged. |
+| Outpatient Pavilion (Koman) | 17.1 m GIS L4 over a 2014 empty lot | **17.1 m, epoch-listed** | Opened 2018-03-12; 11,304 returns read near-grade (roofOf 0.8). Joins Altman / Athena in `POST_2014_SITES` — the record ships, the lot plane never does. |
+| Piedra / Tierra (Nuevo East) | LiDAR 19.4 / 17.8 (predecessor Mesa fabric) | **36.6 / 15.2** | HDH opened July 2020; Mesa Nueva and Nuevo West were already listed, Nuevo East was the miss. Piedra keeps `fac.newer`; Tierra falls back to the facilities L5 record. |
+| Hamilton Glaucoma / Jacobs Retina | 12.7 m massHeights p98 | **9.4 m** | Thin-shelf rule: 86% in 9–10 m, gap 3.3 → p75. Mechanical plant was the shelf. |
+| Unnamed modular pads (osm:776 / 766) | 4.5 / 4.5 m area guesses | **4.0 / 6.2 m** | Clean one-storey planes beside the already-admitted 775 / 9435 banks and on the VA corridor. Sibling 765 stays stepped-out. |
+| Foodworx Dining Room | 4.3 m GIS L1 solid box | **removed** | 93% of returns at grade; Apple shows outdoor seating south of the real Foodworx gable (already 7.8). Better absent than a patio extruded as a room. |
+
+Rejected / withheld, each re-measured: Pepper Canyon 1200 / 1800 — dense ~54%, real
+dual-plane residential (Sanford class), roofOf stands. Perlman — dense 82.8%, under the
+85% cut; shelf stays. Pepper Canyon / Foodworx tennis + pickleball courts — painted on
+Apple, unfitted until registration passes the 0.6 m gate (Muir pickleball class).
+
 ### The colours, measured off footage
 
 Satellite imagery sees roofs and ground; it cannot see a wall, a tree trunk, or the sky. For
