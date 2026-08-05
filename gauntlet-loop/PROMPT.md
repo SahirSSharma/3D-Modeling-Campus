@@ -197,24 +197,37 @@ check. Named hard cases to walk after any terrain/path/building change nearby: t
 Ridge Walk / Hopkins Dr hill, Argo Hall/Blake Hall (the first two heights anyone checks), the
 RIMAC four-pitch flats, Warren Mall's stairs/terracing.
 
-## Named open target — Eighth College / Ridge Walk North
+## CORRECTED — the Eighth College mistake, and what it teaches
 
-Found 2026-08-04, unfixed at time of writing. Start here; it exercises every rule above at once.
+**Do not repeat this. Read it before touching any college affiliation.**
 
-- **The label is misplaced.** `campus-3d.json` `places` puts "Eighth College" at
-  `{x: -99.4, z: 608.5}` → 32.8725, −117.2423, which renders a canyon and a road interchange. OSM
-  puts Eighth College at **Ridge Walk North**, 32.882, −117.2397 — roughly a kilometre away, wrong
-  direction. Fix the coordinate and pin it with a test.
-- **The buildings do not exist in any repo dataset.** OSM lists Alianza (18 levels), Umoja (16),
-  Coalition (10), Malk Hall (6), Mosaic (7), The Jeannie. None appear in `campus-3d.json` or
-  `campus-arcgis.json`. Neighbourhood centroid ≈ 32.882627, −117.240227.
-- **No LiDAR height exists or ever will** — the site is post-2014. This is a `POST_2014_SITES` /
-  `ESTIMATED_POST_2014` case: university GIS massing, or OSM `building:levels` × a stated
-  floor-height convention, with the convention written down. Never a height off the Google mesh,
-  which shows this site mid-construction.
-- **Better absent than wrong still applies.** If GIS massing cannot resolve these to gate, leave
-  them unbuilt and say so in the README — do not extrude 18 levels from a guessed floor height and
-  call it measured.
+An earlier version of this file asserted that Eighth College is Alianza, Umoja, Coalition and Malk
+Hall at Ridge Walk North, and told you to move the label there. **That was wrong.** Sahir, who
+attends this university, corrected it 2026-08-04:
+
+- **Eighth College is Sankofa, Pulse, Podemos, Azad and Survivance** — clustered near
+  `x ≈ −131, z ≈ 594` (≈ 32.8727, −117.2425). The ORIGINAL seed `(-99.4, 608.5)` was correct.
+- **Alianza, Umoja, Coalition and Malk Hall belong to Thurgood Marshall College.** They are real
+  buildings and belong in the world — just never under Eighth's name.
+
+Two failures produced that error, and both are already forbidden above:
+
+1. **An OSM neighbourhood name was read as a college affiliation.** "Ridge Walk North Living and
+   Learning Neighborhood" is a place name, not a statement about which college lives there. OSM is
+   authoritative for footprints and names, and for NOTHING about institutional structure. There is
+   no source in this repo for college affiliation — if you need one, ask Sahir. Do not infer it.
+2. **An epoch was misread as a position error.** The original anchor "looked wrong" because the
+   Google 3D mesh over that spot predates 2023 and still shows a bare construction site. An absent
+   building in a stale mesh is a DATE, not a misplaced label — the exact failure mode listed under
+   Forbidden failure modes. The check that would have caught it: an Apple snapshot, which shows all
+   five buildings standing.
+
+`tests/campus-epoch.test.mjs` §8 now pins the label to Eighth's own five buildings AND asserts
+Marshall's four are far from it, so this specific mistake cannot recur silently.
+
+**The standing rule this leaves behind:** when a claim about identity or affiliation comes from an
+inference rather than a source, say so and leave it. Sahir is the authority on what belongs to
+which college, and asking him costs a sentence.
 
 ## Definition of done — falsifiable, not aspirational
 

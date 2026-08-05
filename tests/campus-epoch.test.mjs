@@ -296,14 +296,30 @@ describe("8. the amphitheater is open air and the Eighth College label is home",
     assert.ok(p, "place anchor lost");
     assert.ok(Math.abs(p.x - 743) < 2 && Math.abs(p.z - (-131.6)) < 2, `anchor drifted to ${p.x},${p.z}`);
   });
-  test("the Eighth College label sits at Ridge Walk North, not the canyon", () => {
-    /* Mean of its four member buildings (Alianza, Umoja, Coalition, Malk
-       Hall) from OSM, 2026-08-04. The old seed put it 1.1 km south in a
-       canyon interchange. */
+  test("Eighth College is Sankofa/Pulse/Podemos/Azad/Survivance, not Marshall's halls", () => {
+    /* Corrected 2026-08-04 by Sahir, a student here, after a gauntlet pass
+       moved the anchor onto Thurgood Marshall's Ridge Walk North halls.
+       This test exists to stop that specific mistake recurring: the label
+       must sit on Eighth's OWN five buildings. */
     const p = CAMPUS.places["Eighth College"];
     assert.ok(p, "Eighth College place missing");
-    assert.ok(Math.abs(p.x - 122.5) < 2 && Math.abs(p.z - (-515.1)) < 2,
-      `label at ${p.x},${p.z} — expected Ridge Walk North (122.5, -515.1)`);
+    assert.ok(Math.abs(p.x - (-131.2)) < 20 && Math.abs(p.z - 593.6) < 20,
+      `label at ${p.x},${p.z} — expected Eighth's own buildings near (-131.2, 593.6)`);
+
+    /* The label must land among Eighth's buildings and nowhere near Marshall's. */
+    const near = (n) => {
+      const b = CAMPUS.buildings.find((b) => b.n === n);
+      assert.ok(b, `${n} missing`);
+      const cx = b.p.reduce((a, q) => a + q[0], 0) / b.p.length;
+      const cz = b.p.reduce((a, q) => a + q[1], 0) / b.p.length;
+      return Math.hypot(cx - p.x, cz - p.z);
+    };
+    for (const n of ["Sankofa", "Pulse", "Podemos", "Azad", "Survivance"]) {
+      assert.ok(near(n) < 200, `${n} is ${near(n).toFixed(0)} m from the Eighth College label`);
+    }
+    for (const n of ["Alianza", "Umoja", "Coalition", "Malk Hall"]) {
+      assert.ok(near(n) > 800, `${n} is Marshall's, but sits ${near(n).toFixed(0)} m from the Eighth College label`);
+    }
   });
 });
 

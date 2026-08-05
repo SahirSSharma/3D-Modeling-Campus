@@ -345,13 +345,16 @@ const SEEDED_PLACES = {
   "Thurgood Marshall College": { x: -160, z: -590 },
   "Eleanor Roosevelt College": { x: -69.5, z: -655.3 },
   "International House": { x: -75.6, z: -688 },
-  /* Ridge Walk North. The old seed (-99.4, 608.5) pointed at a canyon and a
-     road interchange ~1.1 km south-west of the college — nothing named
-     "Eighth College" exists in OSM to import, so the anchor is the mean of
-     its four member buildings' OSM footprints (Alianza 1274990079, Umoja
-     1274990081, Coalition 1274990080, Malk Hall 1274990078; queried
-     2026-08-04), the same way the Marshall anchor rides its buildings. */
-  "Eighth College": { x: 122.5, z: -515.1 },
+  /* CORRECTED 2026-08-04 by Sahir, who attends this university: Eighth
+     College is Sankofa, Pulse, Podemos, Azad and Survivance — NOT Alianza,
+     Umoja, Coalition and Malk Hall, which belong to Thurgood Marshall.
+     A gauntlet pass had moved this anchor 1.1 km north to Marshall's new
+     Ridge Walk North halls, on the strength of an OSM neighbourhood name.
+     The original seed was right all along; it only looked wrong because the
+     Google 3D mesh over that spot predates 2023 and still shows the bare
+     construction site — the epoch trap this project exists to avoid.
+     Anchor is the mean of the five member buildings' footprints. */
+  "Eighth College": { x: -131.2, z: 593.6 },
   "UC San Diego Central Campus Trolley Station": { x: 875, z: -75 },
   "Scholars Parking Structure": { x: -36.1, z: -259.4 },
   /* Its ring's centroid, kept as a place after building=no dropped the ring:
