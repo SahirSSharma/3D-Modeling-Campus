@@ -1,0 +1,155 @@
+[
+  {
+    "id": "csc-h-thin-shelf",
+    "entity": "Campus Services Complex - Building H",
+    "where": {"x": 1091.8, "z": -608.9},
+    "claim": "assembleMasses ships h=7.0 via massHeights[m:1092,-609] over gisH=4.3 / L1. Not in PRE_2014_GIS_VERIFIED; admitted because the centroid sits inside the oversized OSM host ring named Environmental Management Facility (osm:148), whose host path unlocks massHeights.",
+    "observed": "Fresh EPT of the GIS Building H ring: 743 pts, roofOf=7.0, p50=4.7, p75=4.8, p98=7.0, guard=false (p98−p75=2.2 < 5), bodyTight=true, massOk=true. Histogram: 4 m:623/743 (84%); 7 m bin only 34 pts. Dense one-storey body ~4.7–4.8; shipped 7.0 rides a thin tall tail (~+2.2 m). The r0c1 thin-shelf rule (gap > 2.5 AND dense ≥ 85%) misses this by 0.3 m on the gap cut.",
+    "evidence": {
+      "lidar": "gis:CSCH 743 pts roofOf=7.0 p50=4.7 p75=4.8 p98=7.0 guard=false bodyTight massOk; hist 4m:623 (84%) 7m:34; massHeights[m:1092,-609]=7; host osm:148 EMF lidar.heights=9.4 (composite over a 6965 m² multi-building ring)",
+      "gis": "Campus Services Complex - Building H gisH=4.3 levels=1 area≈303; not in PRE_2014_GIS_VERIFIED",
+      "osm": "no OSM way named Building H; centroid falls inside unnamed-host-suppressed osm:148 Environmental Management Facility",
+      "apple": "Apple snapshot csc-h.jpg z19 at 32.883508,-117.229520 — finished low CSC shop pad among the service-yard cluster; standing today, no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Thin-shelf massHeights over a dense one-storey body — AsanteMeet family; host-containment unlocked the admission on a ring that was never hand-verified in the first r0c2 PRE list, and the 2.5 m gap cut misses it.",
+    "epoch_risk": "Low for existence — Apple shows a finished low shop on this pad today, and the 2014 body plane is tight at ~4.7 m. The 7.0 vs 4.7 split is assignment (tail vs body), not a post-2014 rebuild."
+  },
+  {
+    "id": "anderson-835-post2014-guess",
+    "entity": "unnamed OSM building index 835 (Anderson Medical Pavilion)",
+    "where": {"x": 1584.8, "z": -850.0},
+    "claim": "assembleMasses ships src=osm area-guess h=16. Not in osmHeights / OSM_UNNAMED_VERIFIED / POST_2014_OSM_RINGS. Epoch §11 correctly bars any 2014 plane (osmHeights[835] undefined; partHeights[835/0] undefined).",
+    "observed": "Fresh EPT: 23,030 pts, roofOf=4.0, p50=0.8, p75=4.0, p98=10.4, guard=true, bodyTight=false, massOk=false. Histogram peaks at −1 m / 0 m (25%+25%) — slab/staging returns, not a finished roof. Apple today shows a finished multi-storey hospital pavilion on this pad. The 16 m area guess is the only height shipping; it is unverified against any non-LiDAR source.",
+    "evidence": {
+      "lidar": "osm:835 23030 pts roofOf=4 p50=0.8 p75=4 p98=10.4 guard bodyTight=false massOk=false; hist −1m:5870 0m:5701 3m:3211 4m:3156; osmHeights[835]=undefined (epoch-correct)",
+      "gis": "null — no GIS mass named Anderson Medical Pavilion in campus-arcgis.json",
+      "osm": "unnamed way index 835, building=hospital, campus-3d h=16, area≈5013, centroid (1584.8,−850)",
+      "apple": "Apple snapshot anderson-835.jpg z17 at 32.885687,-117.224246 — finished hospital pavilion standing today south of the Scripps Memorial campus; no crane, no bare pad",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Post-2014 finished building still wearing an OSM area guess after LiDAR was correctly refused — Spanos APC / VA-garage class; needs Street View floor count or ESTIMATED_POST_2014 / GIS, never roofOf.",
+    "epoch_risk": "Primary. Prior r0c2 FINDINGS: Anderson opened 2016; the flight saw foundations/staging (p50 0.8). Do not admit roofOf=4 or p98=10.4. The residual question is whether the 16 m guess matches the finished pavilion Apple shows today."
+  },
+  {
+    "id": "prebys-n-772-post2014-guess",
+    "entity": "unnamed OSM building index 772 (Prebys north parking pad)",
+    "where": {"x": 1605.3, "z": -581.9},
+    "claim": "assembleMasses ships src=osm levels-derived guess h=19.2 (OSM building=parking, levels=5). Not in osmHeights / POST_2014_OSM_RINGS. Epoch §11 bars any 2014 plane.",
+    "observed": "Fresh EPT: 35,168 pts, roofOf=1.8, p50=0.8, p75=1.8, p98=10.2, guard=true, bodyTight=true, massOk=true. Histogram: 64% in −1..1 m — bare pad / low scatter at flight time. Apple today shows a finished multi-deck parking structure with rooftop solar arrays on this footprint. The 19.2 m levels guess is unverified against the finished deck count.",
+    "evidence": {
+      "lidar": "osm:772 35168 pts roofOf=1.8 p50=0.8 p75=1.8 p98=10.2 guard bodyTight massOk; hist 0m:9450 −1m:6805 1m:6330; osmHeights[772]=undefined (epoch-correct)",
+      "gis": "null — no GIS mass covering this ring",
+      "osm": "unnamed way index 772, building=parking levels=5, campus-3d h=19.2, area≈10343, centroid (1605.3,−581.9)",
+      "apple": "Apple snapshot prebys-north-772.jpg z17 at 32.883263,-117.224032 — finished parking garage with three long rooftop solar arrays standing today north of Prebys; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Post-2014 finished garage still wearing an OSM levels×storey guess after LiDAR was correctly refused — same family as Anderson 835 and the VA garage keep-guess precedent.",
+    "epoch_risk": "Primary. Prior r0c2: Prebys north wing pad was construction/bare in 2014. Do not admit roofOf=1.8. Residual is whether levels=5 → 19.2 matches the finished garage Apple shows, or needs a measured non-LiDAR height."
+  },
+  {
+    "id": "scripps-503-stepped-residual",
+    "entity": "unnamed OSM building index 503 (main Scripps Memorial complex)",
+    "where": {"x": 1486.1, "z": -786.5},
+    "claim": "assembleMasses ships src=osm area-guess h=20. Epoch §11 pins the withhold: osmHeights[503] and partHeights[503/0] stay undefined; the rendered guess is the documented fallback.",
+    "observed": "Fresh EPT reconfirms no single plane: 30,069 pts, roofOf=9.5 (guarded), p50=5.7, p75=9.5, p90=27.9, p98=32.2, bodyTight=false, massOk=false. Histogram: 5 m:10481 (35%) under a 27 m tower band (3508, 12%). Automatic roofOf would flatten the towers to 9.5 — worse than the 20 m guess. Still one extrusion over a stepped 1960s–2000s chain.",
+    "evidence": {
+      "lidar": "osm:503 30069 pts roofOf=9.5 p50=5.7 p75=9.5 p90=27.9 p98=32.2 guard bodyTight=false massOk=false; hist 5m:10481 4m:4265 9m:4116 27m:3508; osmHeights[503]=undefined",
+      "gis": "null — no per-wing GIS rings for the main Scripps chain in this shard",
+      "osm": "unnamed way index 503, campus-3d h=20, area≈11986 — one ring wrapping the stepped hospital",
+      "apple": "Apple snapshot scripps-main-503.jpg z16 at 32.885117,-117.225305 — finished multi-wing Scripps Memorial campus standing today; towers and low wings both present",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Stepped multi-era complex mapped as one OSM ring — no honest single plane; needs per-wing rings before any height can replace the documented guess (Scripps Memorial / Birch gallery class).",
+    "epoch_risk": "Low for existence — Apple matches a finished pre- and post-flight hospital campus. The disagreement is intra-footprint height variation across decades of additions, not a date misread of the whole site."
+  },
+  {
+    "id": "qaa-terrain-apron",
+    "entity": "Qualcomm AA",
+    "where": {"x": 1712.0, "z": -1408.4},
+    "claim": "Height ships correctly at 24.3 m (HAND_AUDITED / KNOWN_HEIGHTS after the survey-box clip fix). Terrain grid ends at z0=−1383; the building is planted via campus-terrain.js edge clamp / apron.",
+    "observed": "Of 34 footprint vertices, only 7 have an in-grid ground sample (northern edge at ~90.7–92.5 m datum); 27 vertices including the centroid (1712, −1408) fall south of z0=−1383 and return null before clamp. Extrusion therefore uses apron-clamped edge heights for most of the ring — flat planting at the north-edge elevation rather than per-vertex grade across the full footprint. Same AREA-box family as the original Qualcomm AA height miss.",
+    "evidence": {
+      "lidar": "osm:QAA 30780 pts roofOf=24.3 p50=20.3 p75=21.6 p98=24.3 bodyTight massOk (height itself reconfirmed); terrain grid z0=−1383 cell=3; 7/34 verts in-grid, 27/34 null before clamp",
+      "gis": "null — Qualcomm AA is OSM-only in this shard",
+      "osm": "Qualcomm AA way, shipped h=24.3 via HAND_AUDITED",
+      "apple": "Apple snapshot qaa.jpg z17 at 32.890734,-117.222888 — finished Qualcomm AA standing today; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Survey/terrain grid truncation at the shard edge — height was fixed with a full-ring EPT re-sample, but ground sampling still clamps most vertices to the apron; Voigt-grade per-vertex rule cannot apply until the grid covers the ring.",
+    "epoch_risk": "None for the height number (2014 roof agrees with today's Apple footprint). The planting issue is a coverage hole inside one epoch, not a source-date conflict."
+  },
+  {
+    "id": "roof-anchor-502",
+    "entity": "unnamed OSM building index 502 (Scripps Memorial east tower)",
+    "where": {"x": 1572.3, "z": -681.7},
+    "claim": "Renderer sets roofY = ground(centroid) + h while surveyed h = roof − median(rim ground). Ships h=34 via osmHeights[502]. Prior r0c2 grade audit logged this mass at −2.66 m roof-anchor delta.",
+    "observed": "Re-ran grade audit over all in-box rendered masses: osm:502 still past the 2 m gate — centroid ground 101.7 vs rim-median 104.4, delta=−2.7 m, footprint span 3.8 m, h=34. Fresh EPT still matches the shipped plane (17,637 pts, roofOf=34, p50=30.3, p75=30.4). Bases remain per-vertex safe. Only other |delta|>2 in-box was the QAA null-centroid artifact.",
+    "evidence": {
+      "lidar": "grade audit: osm:502 delta=−2.7 span=3.8 h=34; EPT osm:502 17637 pts roofOf=34 p50=30.3 p75=30.4 bodyTight; osmHeights[502]=34",
+      "gis": "null",
+      "osm": "unnamed way index 502 — Scripps east tower",
+      "apple": "Apple snapshot east-tower-502.jpg z17 at 32.884168,-117.224385 — finished east tower standing today",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Cross-shard roof-anchor render class (centroid ground vs rim-median definition of h) — still open since the first r0c2 handoff; not a per-building height bug.",
+    "epoch_risk": "None — geometry definition mismatch inside one epoch, not a source-date conflict."
+  },
+  {
+    "id": "osm-508-post2014-canopy",
+    "entity": "unnamed OSM building index 508",
+    "where": {"x": 1621.1, "z": -680.8},
+    "claim": "assembleMasses ships src=osm area-guess h=4.5. Epoch §11 bars osmHeights[508] — flight saw bare ground (0.4 m).",
+    "observed": "Fresh EPT: 877 pts, roofOf=0.4, p50=0.1, p75=0.3, p98=0.4, bodyTight=true — 99% in −1..1 m. Still shipping the 4.5 m guess. Prior r0c2 called this a post-2014 canopy; Apple closeup shows finished structure/canopy context beside the east tower, not a vacant lot.",
+    "evidence": {
+      "lidar": "osm:508 877 pts roofOf=0.4 p50=0.1 p75=0.3 p98=0.4 bodyTight; hist 0m:611 −1m:255; osmHeights[508]=undefined",
+      "gis": "null",
+      "osm": "unnamed way index 508, campus-3d h=4.5, area≈395",
+      "apple": "Apple snapshot canopy-508.jpg z19 at 32.884159,-117.223861 — finished low canopy/structure present today beside the hospital east tower; no bare pad",
+      "probe": null
+    },
+    "severity": "low",
+    "suspected_class": "Post-2014 canopy/pad still wearing an area guess after LiDAR correctly refused — small absolute height, keep-guess family unless a non-LiDAR measure appears.",
+    "epoch_risk": "Primary for the 2014 returns (bare ground). Apple says something stands today; the date explains the laser, not an error in the withhold."
+  },
+  {
+    "id": "preuss-pitch-absent",
+    "entity": "Preuss School soccer pitch (east of classroom wings)",
+    "where": {"x": 1850.0, "z": -520.0},
+    "claim": "campus-markings.json still has zero facilities in this shard. Prior r0c2 FINDINGS logged the painted Preuss pitch as a deliberate absence (better absent than wrong — no registered fit attempted).",
+    "observed": "Apple snapshot preuss-pitch.jpg z17 at 32.882703,-117.221412 shows a maintained green rectangular sports field east of the Preuss classroom cluster with visible painted lines. No facility entry, fitError_m, or fitCoverage exists in campus-markings.json for this site. Shard markings count remains 0.",
+    "evidence": {
+      "lidar": "null — markings are imagery fits, not LiDAR heights",
+      "gis": "null",
+      "osm": "The Preuss School place anchor at (1791.6,−480.3) exists; no pitch outline in campus-3d buildings",
+      "apple": "Apple snapshot preuss-pitch.jpg z17 — finished green pitch with painted lines present today east of Preuss A/B/C",
+      "probe": null
+    },
+    "severity": "low",
+    "suspected_class": "Markings coverage hole — painted field visible on Apple but unmodelled; fitting needs a template + per-sample fit on registered imagery (Apple pixels barred without per-site registration).",
+    "epoch_risk": "Low for existence — Apple shows the pitch today. Not a height/date conflict; it is an unbuilt marking, previously logged as better absent than wrong."
+  },
+  {
+    "id": "transit-p98-tail",
+    "entity": "Transit Operations Trailer",
+    "where": {"x": 1083.3, "z": -716.9},
+    "claim": "GIS mass ships h=5.2 via massHeights[m:1083,-717] over gisH=4.3 / L1.",
+    "observed": "Fresh EPT: 850 pts, roofOf=5.2, p50=4.2, p75=4.3, p98=5.2, guard=false, bodyTight=true. Histogram: 4 m:799/850 (94%). Dense body matches ~4.2–4.3; shipped 5.2 is a +0.9 m p98 tail — under the AsanteMeet / thin-shelf bars, logged as class-adjacent noise.",
+    "evidence": {
+      "lidar": "gis:Transit 850 pts roofOf=5.2 p50=4.2 p75=4.3 p98=5.2 bodyTight; hist 4m:799 (94%); massHeights[m:1083,-717]=5.2",
+      "gis": "Transit Operations Trailer gisH=4.3 levels=1 area≈370",
+      "osm": "Transit Operations Trailer way; lidar.heights host path=5.3",
+      "apple": "null — not separately snapshotted; covered in csc-h / emf-gis cluster frames showing finished CSC trailers",
+      "probe": null
+    },
+    "severity": "low",
+    "suspected_class": "Mild p98 tail over a tight one-storey body — below the thin-shelf gap cut; same family as noise-line withholds (Δ≤1 m).",
+    "epoch_risk": "Low — finished pre-2014 trailer on today's Apple cluster views; not a date conflict."
+  }
+]

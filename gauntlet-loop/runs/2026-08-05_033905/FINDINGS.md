@@ -126,3 +126,77 @@ ships the right answer or is a real upper volume / date / renderer-class questio
 - **Thin-shelf rule campus-wide**: next full `build:lidar` applies it to every mass. This
   pass spliced the one in-shard hit (`m:-85,-666`) after re-deriving it; Marshall H/L are
   protected by the test without shipping a plane today.
+
+---
+
+# FINDINGS — run `2026-08-05_033905` · shard r0c2 (re-sweep)
+
+Pass 1 re-sweep of the east-campus shard (hospital district / CSC yard / Preuss /
+Qualcomm AA). Screen: 9 candidates (0 high / 6 medium / 3 low). Judged by
+`cursor-grok-4.5-high`.
+
+Every candidate in `pass1-r0c2.screen.json` was re-derived before judgement against
+the screener's full-depth EPT (`/tmp/gauntlet-r0c2/probe.json` — 29 targets; point
+counts taken as the re-measurement for this pass), Apple snapshots in
+`/tmp/gauntlet-r0c2/apple/`, and thin-shelf arithmetic re-computed per sample from
+each mass's histogram (dense 2 m band + gap).
+
+### Fixed — heights (class rule, not a one-row patch)
+
+| Entity | Was shipping | Now ships | Source | Test |
+|---|---|---|---|---|
+| Campus Services Complex - Building H (`csc-h-thin-shelf`) | 7.0 m massHeights p98 | **4.8 m** | Thin-shelf massHeights rule: gap cut lowered from 2.5 → 2 (half a storey). Re-sample: 743 pts, dense 2 m band 91.8% in 4–5 m, p50=4.7 p75=4.8 p98=7.0 (34 pts in 7 m bin, gap 2.2). GIS L1=4.3. Apple: finished low CSC shop pad today. | epoch §20 |
+
+The same rule still catches Asante (gap 3.1). In-shard neighbours stay off it:
+Transit gap 0.9, Electric 0.8, CSC Shops 0.8, EMF GIS 1.2, Fleet south 1.8 — all
+under the cut or under the dense floor.
+
+### Rejected candidates (each re-measured before rejection; do not re-find these)
+
+- **`anderson-835-post2014-guess`** — REJECTED as a height fix. Epoch §11 correctly
+  bars any 2014 plane (23,030 pts, p50 0.8, staging/slab). Apple shows the finished
+  pavilion today; no Street-View floor count or GIS mass resolves a finished height.
+  OSM area guess 16 m stands — VA-garage keep-guess family. Do not admit roofOf=4
+  or p98=10.4.
+- **`prebys-n-772-post2014-guess`** — REJECTED same family. Epoch bars the bare-pad
+  returns (35,168 pts, 64% in −1..1 m). OSM levels=5 → 19.2 stands without a
+  measured non-LiDAR height. Do not admit roofOf=1.8.
+- **`scripps-503-stepped-residual`** — REJECTED / already withheld. No single plane
+  (p75 9.5 under towers at 32); roofOf would flatten worse than the documented
+  20 m guess. Needs per-wing rings — mapping pass, not height.
+- **`qaa-terrain-apron`** — REJECTED as in-scope height bug; RE-LOGGED as handoff.
+  Height 24.3 is correct (HAND_AUDITED). 27/34 footprint vertices sit south of
+  terrain `z0=−1383` and clamp to the apron — survey-box coverage, same AREA-edge
+  family as the original QAA miss. Expanding the terrain grid is a rebuild call.
+- **`roof-anchor-502`** — REJECTED as in-scope fix; RE-LOGGED as handoff. Grade
+  audit still finds osm:502 at Δ=−2.7 (centroid ground 101.7 vs rim-median 104.4).
+  Bases per-vertex safe. Renderer change (`roofY = rimMedian + h`) is cross-shard
+  — prior r0c1 / r0c2 FINDINGS unchanged.
+- **`osm-508-post2014-canopy`** — REJECTED. Epoch bars the bare-ground plane
+  (0.4 m); Apple shows a finished low canopy today. Keep the 4.5 m guess.
+- **`preuss-pitch-absent`** — REJECTED / withheld. Apple shows painted lines; no
+  registered fit was attempted. Better absent than wrong — same posture as prior
+  r0c2 FINDINGS. Fitting needs a template + per-sample fit on registered imagery
+  (Apple pixels barred without per-site registration).
+- **`transit-p98-tail`** — REJECTED. Gap 0.9 over a 97.9%-dense 4 m body — under
+  every thin-shelf cut. The +0.9 m p98 is noise; roofOf 5.2 stands. Pinned in §20
+  so a future pass cannot silently "fix" it to GIS 4.3.
+
+### Withheld (better absent than wrong)
+
+None new this pass. The post-2014 hospital pads and the stepped Scripps ring
+already withhold LiDAR; their guesses are the documented fallback, not an
+invention of this pass.
+
+### Handoffs / observations
+
+- **Terrain apron at Qualcomm AA**: extend the terrain grid (or a local apron
+  sample) past `z0=−1383` so per-vertex ground covers the full ring — height
+  already correct.
+- **Roof-anchor class**: osm:502 (−2.7) joins r0c1's four; still a dedicated
+  renderer pass.
+- **Thin-shelf rule campus-wide**: next full `build:lidar` applies gap > 2 to
+  every mass. This pass spliced the one in-shard hit (`m:1092,-609`) after
+  re-deriving it.
+- **Scripps main / Anderson / Prebys north**: still need per-wing OSM rings or
+  Street-View floor counts before any height can replace the guesses.

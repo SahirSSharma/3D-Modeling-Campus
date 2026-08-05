@@ -1190,16 +1190,20 @@ async function build() {
      p75−p50 ≤ 2 m the fallback sits on a real plane; if the body is smeared
      wider, emit nothing and let the host-level reconcile answer instead.
 
-     A third shape the 5 m guard misses (r0c1 re-sweep, 2026-08-05): a tight
-     dense body under a THIN upper shelf whose gap sits under the threshold.
-     Asante House Meeting Rooms — 1,854 returns, 88% in a 3–4 m band matching
-     the L1 record, p98 7.1 with only 43 points in the 7 m bin (gap 3.1) —
-     shipped the shelf. Same Stage Room / Solis failure mode when the guard
-     never fires. Prefer p75 when the body is tight, the shelf is more than
-     half a storey above it, AND a dense 2 m band holds ≥85% of returns.
+     A third shape the 5 m guard misses (r0c1 / r0c2 re-sweeps, 2026-08-05):
+     a tight dense body under a THIN upper shelf whose gap sits under the
+     canopy threshold. Asante House Meeting Rooms — 1,854 returns, 88% in a
+     3–4 m band matching the L1 record, p98 7.1 with only 43 points in the
+     7 m bin (gap 3.1) — shipped the shelf. Campus Services Complex Building
+     H — 743 returns, 92% in a 4–5 m band (GIS L1 = 4.3), p98 7.0 (34 points
+     in the 7 m bin, gap 2.2) — same shape, missed when the gap cut sat at
+     2.5. Prefer p75 when the body is tight, the shelf is more than half a
+     storey (~2 m) above it, AND a dense 2 m band holds ≥85% of returns.
      That last cut keeps Otterson's mechanical plant (74% on the deck, ~21%
      on the plant) and Copley's stepped conference volume (79%) on roofOf —
-     both real upper volumes, not thin tails. */
+     both real upper volumes, not thin tails. Transit Operations Trailer
+     (gap 0.9 over a 98%-dense 4 m body) stays on roofOf — noise, not a
+     shelf. */
   const denseBandFraction = (roofs, base) => {
     const hist = new Map();
     for (const z of roofs) {
@@ -1231,7 +1235,7 @@ async function build() {
       roof = p75;
     } else if (
       p75 - p50 <= 2 &&
-      p98 - p75 > 2.5 &&
+      p98 - p75 > 2 &&
       denseBandFraction(t.roofs, base) >= 0.85
     ) {
       roof = p75; // thin shelf over a dense body — Stage Room class under 5 m

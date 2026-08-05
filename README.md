@@ -538,7 +538,7 @@ candidate re-derived from a full-depth targeted EPT re-sample before judgement.
 
 | Entity | Was shipping | Now ships | Why |
 |---|---|---|---|
-| Asante House Meeting Rooms | 7.1 m (`massHeights` p98) | **4.0 m** | 88 % of 1,854 returns in a 3–4 m band matching the L1 record; p98 rode 43 points in the 7 m bin (gap 3.1 under the 5 m canopy guard). Thin-shelf rule: body tight + gap > 2.5 + dense 2 m band ≥ 85 % → p75. |
+| Asante House Meeting Rooms | 7.1 m (`massHeights` p98) | **4.0 m** | 88 % of 1,854 returns in a 3–4 m band matching the L1 record; p98 rode 43 points in the 7 m bin (gap 3.1 under the 5 m canopy guard). Thin-shelf rule: body tight + gap > 2 + dense 2 m band ≥ 85 % → p75. |
 
 Rejected, each re-measured: Spanos APC "needs a multi-storey estimate" — TCA project profile
 says Number of Floors 1, tallest panel 24 ft 6 in; the 4.4 m audit (and the eucalyptus bar)
@@ -547,6 +547,23 @@ conference), dense bands 74 % / 79 % under the 85 % cut. Marshall Upper H/L cano
 bodies already match GIS 6.1; pinned against a future auto-admit. Stewart multi-modal —
 stepped Warren residence, no single plane to prefer. Roof-anchor class — still the
 cross-shard renderer handoff (Hopkins / Canyon Vista admin / Cuzco / VE4).
+
+**The east-campus re-sweep (2026-08-05, r0c2).** Hospital district / CSC yard / Preuss /
+Qualcomm AA — a second pass after the first r0c2 sweep measured the nameless rings. Every
+candidate re-derived from the screener's full-depth EPT (point counts matched) before
+judgement; thin-shelf arithmetic re-checked per sample.
+
+| Entity | Was shipping | Now ships | Why |
+|---|---|---|---|
+| Campus Services Complex - Building H | 7.0 m (`massHeights` p98) | **4.8 m** | 92 % of 743 returns in a 4–5 m band matching the L1 record (4.3); p98 rode 34 points in the 7 m bin (gap 2.2). The r0c1 cut at 2.5 missed it by 0.3 m — gap cut is now > 2 (half a storey). |
+
+Rejected / withheld, each re-measured: Anderson 835 / Prebys north 772 / canopy 508 — epoch
+still bars any 2014 plane (slab/staging/bare ground); OSM guesses stand without a Street-View
+floor count (VA-garage family). Main Scripps 503 — no single plane (p75 9.5 under towers at
+32); documented 20 m guess stays. Transit Trailer — gap 0.9 over a 98 %-dense body, noise not
+a shelf. Qualcomm AA terrain apron — height 24.3 is correct; most vertices clamp south of
+`z0=−1383`, a survey-box coverage handoff. Roof-anchor at osm:502 (−2.7) — same cross-shard
+renderer class. Preuss pitch — painted on Apple, unfitted; better absent than wrong.
 
 ### The colours, measured off footage
 

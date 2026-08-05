@@ -98,6 +98,11 @@
  *      massHeights rule), Marshall Upper H/L keep the GIS body against
  *      canopy p98, the 2015 Spanos APC stays one storey with eucalyptus
  *      out, and Otterson / Copley keep their real upper volumes.
+ *  20. The r0c2 re-sweep's measurements hold: CSC Building H sheds its
+ *      thin 7.0 m shelf for the dense 4.8 m body (gap cut lowered from
+ *      2.5 to 2 — half a storey), Transit Trailer keeps its 5.2 (gap
+ *      0.9, noise), and the post-2014 / stepped hospital residuals stay
+ *      on their documented guesses.
  */
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
@@ -1802,7 +1807,7 @@ describe("campus epoch — r0c1 re-sweep (2026-08-05)", () => {
     /* 1,854 returns, 88% in a 3–4 m band matching the L1 record (4.3);
        p98 7.1 rides 43 points in the 7 m bin — gap 3.1 under the canopy
        guard's 5 m threshold. The thin-shelf massHeights rule (body tight,
-       gap > 2.5, dense 2 m band ≥85%) takes p75 = 4.0. Apple shows the
+       gap > 2, dense 2 m band ≥85%) takes p75 = 4.0. Apple shows the
        finished low pad among the Asante / Great Hall cluster today. */
     assert.equal(LIDAR.massHeights["m:-85,-666"], 4.0);
     const meet = rendersNear(-84.6, -666.0, 3).find((m) => m.src === "gis");
@@ -1849,5 +1854,76 @@ describe("campus epoch — r0c1 re-sweep (2026-08-05)", () => {
     const copley = rendersNear(-13.3, -773.8, 3).find((m) => m.src === "gis");
     assert.equal(otter?.h, 18.9, `Otterson ships ${otter?.h}`);
     assert.equal(copley?.h, 10.6, `Copley ships ${copley?.h}`);
+  });
+});
+
+describe("campus epoch — r0c2 re-sweep (2026-08-05)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("CSC Building H sheds its thin 7.0 m shelf", () => {
+    /* 743 returns, 92% in a 4–5 m band (GIS L1 = 4.3); p98 7.0 rides 34
+       points in the 7 m bin — gap 2.2, under the original 2.5 cut by
+       0.3 m. Thin-shelf rule now uses gap > 2 (half a storey) and takes
+       p75 = 4.8. Apple shows the finished low CSC shop pad today. */
+    assert.equal(LIDAR.massHeights["m:1092,-609"], 4.8);
+    const h = rendersNear(1091.8, -608.9, 3).find((m) => m.src === "gis");
+    assert.ok(h, "CSC Building H vanished");
+    assert.equal(h.h, 4.8, `CSC Building H ships ${h.h}`);
+  });
+
+  test("Transit Operations Trailer keeps its mild p98 tail", () => {
+    /* 850 returns, 98% in the 4 m bin, gap only 0.9 — under every
+       thin-shelf cut. The +0.9 m p98 is noise, not a shelf; roofOf 5.2
+       stands. Do not "fix" it down to the GIS 4.3. */
+    assert.equal(LIDAR.massHeights["m:1083,-717"], 5.2);
+    const t = MASSES.find((m) => m.name === "Transit Operations Trailer" && m.src === "gis");
+    assert.ok(t, "Transit Trailer vanished");
+    assert.equal(t.h, 5.2, `Transit Trailer ships ${t.h}`);
+  });
+
+  test("post-2014 hospital pads keep their guesses — epoch still bars LiDAR", () => {
+    /* Anderson (835, opened 2016) and Prebys north (772) were bare /
+       staging in 2014; 508 is a canopy the flight saw as bare ground.
+       No Street-View floor count or GIS mass resolves a finished height,
+       so the OSM guesses stand — VA-garage keep-guess family. */
+    for (const bi of ["772", "835", "508"]) {
+      assert.equal(LIDAR.osmHeights?.[bi], undefined, `osmHeights[${bi}] leaked`);
+    }
+    const anderson = rendersNear(1584.8, -850.0).find((m) => m.src === "osm");
+    const prebysN = rendersNear(1605.3, -581.9).find((m) => m.src === "osm");
+    const canopy = rendersNear(1621.1, -680.8).find((m) => m.src === "osm");
+    assert.equal(anderson?.h, 16, `Anderson ships ${anderson?.h}`);
+    assert.equal(prebysN?.h, 19.2, `Prebys north ships ${prebysN?.h}`);
+    assert.equal(canopy?.h, 4.5, `canopy 508 ships ${canopy?.h}`);
+  });
+
+  test("main Scripps complex still has no single plane to admit", () => {
+    /* Reconfirm §11: stepped 1960s–2000s chain, roofOf would flatten
+       towers to 9.5 — worse than the documented 20 m guess. */
+    assert.equal(LIDAR.osmHeights?.["503"], undefined);
+    const m = rendersNear(1486.1, -786.5).find((x) => x.src === "osm");
+    assert.ok(m, "Scripps main vanished");
+    assert.equal(m.h, 20, `Scripps main ships ${m.h}`);
+  });
+
+  test("Qualcomm AA still ships its audited roof; terrain apron is a handoff", () => {
+    /* Height itself is correct (24.3). Most footprint vertices sit south
+       of terrain z0=−1383 and clamp to the apron — a survey-box coverage
+       hole, not a height bug. Pin the height so a terrain pass cannot
+       silently drop the HAND_AUDITED plane while "fixing" planting. */
+    assert.equal(LIDAR.heights["Qualcomm AA"], 24.3);
+    const qaa = CAMPUS.buildings.find((b) => b.n === "Qualcomm AA");
+    assert.ok(qaa, "Qualcomm AA left the dataset");
+    const m = rendersNear(1712.0, -1408.4).find((x) => x.src === "osm");
+    assert.equal(m?.h, 24.3, `QAA ships ${m?.h}`);
   });
 });
