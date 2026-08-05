@@ -1,0 +1,257 @@
+[
+  {
+    "id": "hyatt-podium-tower-union",
+    "entity": "Hyatt Regency La Jolla at Aventine",
+    "where": {"x": 1467.0, "z": 799.9},
+    "claim": "Single OSM ring (index 76, area≈4366 m², 26 verts) ships h=45.1 from lidar.heights['Hyatt Regency La Jolla at Aventine']=45.1. OSM tag was 16; no GIS mass, no parts.",
+    "observed": "Fresh EPT of the OSM ring: 11,029 non-ground returns, p25=4.4, p50=4.7, p75=45.2, p90=50.4, p98=51.6, roofOf=45.2, guard=true, bodyTight=false, massOk=false. Histogram is strongly bimodal: 5,413 returns in the 4 m bin (podium / circular terracotta roof / low wings) vs a tower band at 41–52 m (~3,900 returns). Extruding the whole 92×96 m footprint at 45.1 m lifts the podium and courtyard-adjacent roofs by ~40 m.",
+    "evidence": {
+      "lidar": "osm:76 11029 pts roofOf=45.2 p50=4.7 p75=45.2 p98=51.6 guard bodyTight=false massOk=false; hist 4:5413 then tower 41–52; lidar.heights['Hyatt Regency La Jolla at Aventine']=45.1",
+      "gis": null,
+      "osm": "Hyatt Regency La Jolla at Aventine way index 76, osmH=16, area≈4366 m², 26 verts, no parts; ships src=osm h=45.1",
+      "apple": "Apple hyatt-tight.jpg z19 at 32.870766,-117.225508 — Aventine complex: circular terracotta-roof pavilion, low mechanical/wing roofs, pool courtyard with palms, and a taller hotel mass; finished, SV metadata 2025-02",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Single OSM multipolygon wrapping podium + tower; roofOf/p75 rides the tower and pastes it onto the low mass — same geometry class as a union outline, inverted from the under-height tower cases below.",
+    "epoch_risk": "Low for existence — Apple and SV 2025-02 show the finished hotel. The 4.7 vs 45.2 split is mixed massing inside one ring, not a rebuild."
+  },
+  {
+    "id": "osm83-helipad-tower-underheight",
+    "entity": "unnamed OSM building index 83",
+    "where": {"x": 1305.1, "z": 786.8},
+    "claim": "Ships as OSM area-guess h=16 m (still rendering; area≈3267 m²). Not in lidar.osmHeights / OSM_UNNAMED_VERIFIED.",
+    "observed": "EPT: 17,693 pts, p25=31.4, p50=31.5, p75=55.9, p90=63.0, p98=63.5, roofOf=55.9, guard=true, bodyTight=false, massOk=false. Δ ≈ +40 m vs the 16 m guess on the tower plane. Apple shows a composite: square tower capped with a red 'H' EMERGENCY ONLY helipad plus a lower rectangular wing with terracotta trim (UC San Diego Health / East Campus medical).",
+    "evidence": {
+      "lidar": "osm:83 17693 pts roofOf=55.9 p50=31.5 p75=55.9 p98=63.5 guard bodyTight=false massOk=false",
+      "gis": null,
+      "osm": "unnamed building way index 83, h=16, area≈3267 m², 30 verts; bbox ≈1284..1380 × 758..811",
+      "apple": "Apple osm83-tight.jpg z19 at 32.870884,-117.227240 — helipad tower + lower east wing + west curved ramp; tennis courts north; finished; SV 2025-02",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Unnamed OSM area-guess on a multi-storey medical tower (helipad) — under by multiple storeys; also a podium+tower composite like Hyatt.",
+    "epoch_risk": "Low — Apple/SV 2025-02 show the helipad tower standing on this footprint. Not a date conflict."
+  },
+  {
+    "id": "osm95-tower-underheight",
+    "entity": "unnamed OSM building index 95",
+    "where": {"x": 1185.8, "z": 1121.1},
+    "claim": "Ships as OSM area-guess h=12 m (still rendering; area≈1989 m²).",
+    "observed": "EPT: 5,723 pts, roofOf=30.9, p25=25.9, p50=26.0, p75=26.2, p90=30.6, p98=30.9, guard=false, bodyTight=true, massOk=true. Clean mid-rise plane ≈26–31 m; Δ = +18.9 m vs the 12 m guess. Apple shows a white multi-storey block casting a long shadow west of I-5 / La Jolla Village Drive.",
+    "evidence": {
+      "lidar": "osm:95 5723 pts roofOf=30.9 p50=26.0 p75=26.2 p98=30.9 massOk=true",
+      "gis": null,
+      "osm": "unnamed building way index 95, h=12, area≈1989 m², 30 verts",
+      "apple": "Apple osm95.jpg z18 at 32.867861,-117.228516 — finished white mid-rise with mechanical penthouse and long W/SW shadow; SV 2025-02",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Unnamed OSM area-guess far below a clean 2014 mid-rise roof plane — OSM_UNNAMED_VERIFIED admission candidate.",
+    "epoch_risk": "Low — Apple and LiDAR agree a multi-storey building stands here; the miss is the 12 vs ~26–31 guess."
+  },
+  {
+    "id": "osm497-aventines-underheight",
+    "entity": "unnamed OSM building index 497",
+    "where": {"x": 1411.4, "z": 776.8},
+    "claim": "Ships as OSM area-guess h=9 m (still rendering; area≈1109 m²), west of the Hyatt ring.",
+    "observed": "EPT: 2,510 pts, roofOf=18.9, p25=14.3, p50=14.4, p75=18.8, p90=18.9, p98=18.9, guard=false, bodyTight=false, massOk=true. Δ = +9.9 m vs the 9 m guess (~3 storeys).",
+    "evidence": {
+      "lidar": "osm:497 2510 pts roofOf=18.9 p50=14.4 p75=18.8 p98=18.9 massOk=true",
+      "gis": null,
+      "osm": "unnamed building way index 497, h=9, area≈1109 m², 26 verts; adjacent to Hyatt at (1467,800)",
+      "apple": "Apple osm497.jpg z18 at 32.870975,-117.226103 — Aventine wing / office mass west of Hyatt courtyard; finished; SV 2025-02",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Unnamed OSM area-guess below a measured Aventine wing plane.",
+    "epoch_risk": "Low — Apple confirms a finished multi-storey wing on this pad."
+  },
+  {
+    "id": "osm198-bigbox-overheight",
+    "entity": "unnamed OSM building index 198",
+    "where": {"x": 898.1, "z": 1399.3},
+    "claim": "Ships as OSM area-guess h=20 m (still rendering; area≈19936 m² — largest ring in shard).",
+    "observed": "EPT: 96,121 pts, roofOf=8.1, p25=6.3, p50=6.6, p75=7.6, p90=7.9, p98=8.1, guard=false, bodyTight=true, massOk=true. Clean low commercial plane; Δ = −11.9 m vs the 20 m guess. Rim ground only 16/51 verts (ring extends past the terrain grid south edge at z≈1386).",
+    "evidence": {
+      "lidar": "osm:198 96121 pts roofOf=8.1 p50=6.6 p75=7.6 p98=8.1 massOk=true; rim=16/51 (terrain clip); hist dense at 6–7 m",
+      "gis": null,
+      "osm": "unnamed building way index 198, h=20, area≈19936 m², 51 verts; bbox ≈810..964 × 1219..1488 (154×269 m)",
+      "apple": "Apple osm198.jpg z16 at 32.865345,-117.231594 — large low commercial / retail roofs west of I-5 near the trolley corridor; finished; no registered Google chunk over this pad (Apple-only nadir); SV 2022-07",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Huge unnamed OSM area-guess (~2 storeys too tall) over a clean 1-storey commercial roof plane; also a terrain-rim edge case.",
+    "epoch_risk": "Low for height — LiDAR and Apple both read a low big-box roof. SV 2022-07 is older than other shard pans but still shows built fabric, not a bare lot."
+  },
+  {
+    "id": "osm785-garage-plane-vs-guess",
+    "entity": "unnamed OSM building index 785",
+    "where": {"x": 961.6, "z": 1320.4},
+    "claim": "Ships as OSM area-guess h=16 m (still rendering; area≈3910 m²).",
+    "observed": "EPT: 13,396 pts, roofOf=1.2, p25=0.4, p50=0.8, p75=1.2, p90=5.7, p98=7.6, guard=true, bodyTight=true, massOk=true. Δ = −14.8 m vs the 16 m guess. Apple shows a multi-level open-deck parking structure with cars on the roof beside the Blue Line trolley / I-5. The 1.2 m plane may be top-deck-vs-high-rim on a graded site rather than a one-metre building — do not ship 1.2 as 'done' without a grade check.",
+    "evidence": {
+      "lidar": "osm:785 13396 pts roofOf=1.2 p50=0.8 p75=1.2 p98=7.6 guard bodyTight=true massOk=true",
+      "gis": null,
+      "osm": "unnamed building way index 785, h=16, area≈3910 m², 28 verts",
+      "apple": "Apple osm785-tight.jpg z18 at 32.866059,-117.230914 — multi-level parking garage, cars on top deck, elevated trolley + I-5 east; finished today; no Google chunk; SV metadata date=2018-11 (older than other shard pans)",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Parking-structure ring: area-guess 16 m vs near-grade 2014 deck plane — either a graded garage the flight saw as a deck, or a post-2014 vertical expansion.",
+    "epoch_risk": "HIGH — Apple today shows a multi-storey garage; SV nearest pano is 2018-11; 2014 plane sits at ~1 m above rim. Judge must not treat the 1.2 m plane as the current garage height without an epoch/grade resolution; do not keep 16 without a source that resolves the vertical."
+  },
+  {
+    "id": "temple-multilevel-spread",
+    "entity": "San Diego California Temple",
+    "where": {"x": 1168.7, "z": 1283.1},
+    "claim": "Ships h=21.6 from lidar.heights (OSM tag was 12). Single ring area≈1788 m².",
+    "observed": "EPT: 5,559 pts, roofOf=21.6, p25=13.0, p50=17.3, p75=21.6, p90=25.9, p98=36.8, max=61.9, guard=true, bodyTight=false, massOk=false. Histogram shows stacked roof bands (~11–12, 16–17, 20–21) plus a spire tail to 62 m. Shipping one 21.6 m extrusion over the whole star footprint over-heights the lower terraces.",
+    "evidence": {
+      "lidar": "osm:207 5559 pts roofOf=21.6 p50=17.3 p75=21.6 p98=36.8 max=61.9 guard bodyTight=false massOk=false; lidar.heights['San Diego California Temple']=21.6",
+      "gis": null,
+      "osm": "San Diego California Temple way index 207, osmH=12, area≈1788 m², 38 verts; ships src=osm h=21.6",
+      "apple": "Apple temple-tight.jpg z19 at 32.866396,-117.228699 — finished white multi-tier star temple with twin spire shadows; formal lawns; SV 2025-02",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Architecturally multi-level sacred building + spires inside one OSM ring — roofOf picks an upper terrace; lower wings and spires are not separate parts.",
+    "epoch_risk": "None for existence — temple predates 2014 and Apple shows it unchanged. The disagreement is vertical complexity, not a date."
+  },
+  {
+    "id": "belmont-named-short-wing",
+    "entity": "Belmont Village Senior Living",
+    "where": {"x": 1623.0, "z": 977.2},
+    "claim": "Named OSM ring (index 808, 4 verts, area≈1754 m²) ships h=9.1 from lidar.heights. OSM tag was 62.4 (ignored for height).",
+    "observed": "EPT: 6,947 pts, roofOf=9.1, p25=−0.5, p50=2.8, p75=4.6, p90=7.2, p98=9.1, massOk=true — plane matches shipped 9.1. Histogram has 2,539 returns in the −1 m bin (courtyard/void inside the rectangle). Neighbouring unnamed osm:1359 at (1674,876) measures roofOf=18.9 (ships 20) and osm:289 measures a canopy-mixed taller plane — the senior-living complex's taller masses are unnamed while the short wing carries the public name.",
+    "evidence": {
+      "lidar": "osm:808 6947 pts roofOf=9.1 p50=2.8 p75=4.6 p98=9.1 massOk=true hist -1:2539; osm:1359 44002 pts roofOf=18.9; osm:289 14838 pts roofOf=22.6 guard massOk=false",
+      "gis": null,
+      "osm": "Belmont Village Senior Living way 808 osmH=62.4 lidarH=9.1 4 verts; neighbours unnamed 1359 h=20 area≈6845 and 289 h=12 area≈2653",
+      "apple": "Apple belmont-tight.jpg z19 at 32.869162,-117.223840 — multi-building senior campus with terracotta pitched roofs, white mechanical roof, pool; finished; SV 2025-02",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Campus-name on a short 4-vert wing while taller complex rings stay unnamed — identity/label coverage, not a wrong LiDAR number on this ring.",
+    "epoch_risk": "Low — Apple shows the Belmont campus standing. OSM tag 62.4 looks like a levels/ft misfire already overridden by LiDAR; the open question is which ring should carry the name."
+  },
+  {
+    "id": "osm337-overheight",
+    "entity": "unnamed OSM building index 337",
+    "where": {"x": 1187.7, "z": 1183.1},
+    "claim": "Ships as OSM area-guess h=12 m (still rendering; area≈2009 m²), north of the Temple.",
+    "observed": "EPT: 6,748 pts, roofOf=3.5, p25=2.0, p50=2.1, p75=2.1, p90=2.1, p98=3.5, massOk=true. Δ = −8.5 m. Apple shows a low deck / pavilion north of the temple grounds beside surface parking.",
+    "evidence": {
+      "lidar": "osm:337 6748 pts roofOf=3.5 p50=2.1 p75=2.1 p98=3.5 massOk=true",
+      "gis": null,
+      "osm": "unnamed building way index 337, h=12, area≈2009 m², 5 verts",
+      "apple": "Apple osm337.jpg z18 at 32.867300,-117.228496 — low structure / deck north of temple lawns; finished; SV 2025-02",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Unnamed OSM area-guess above a clean low 2014 plane (temple-adjacent).",
+    "epoch_risk": "Low — Apple and LiDAR agree a low pad stands here."
+  },
+  {
+    "id": "osm288-overheight",
+    "entity": "unnamed OSM building index 288",
+    "where": {"x": 885.6, "z": 793.7},
+    "claim": "Ships as OSM area-guess h=12 m (still rendering; area≈1237 m²), west of I-5 near the Sheraton strip.",
+    "observed": "EPT: 8,470 pts, roofOf=4.5, p25=4.4, p50=4.5, p75=4.5, p90=7.7, p98=11.8, guard=true, bodyTight=true, massOk=true. Guarded plane 4.5 m is 7.5 m below the guess; p98 tail is canopy.",
+    "evidence": {
+      "lidar": "osm:288 8470 pts roofOf=4.5 p50=4.5 p75=4.5 p98=11.8 guard bodyTight=true massOk=true",
+      "gis": null,
+      "osm": "unnamed building way index 288, h=12, area≈1237 m², 4 verts",
+      "apple": "Apple osm288.jpg z18 at 32.870822,-117.231727 — bright white L-shaped low commercial roof west of I-5 / Sheraton area; finished; SV 2022-07",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Unnamed OSM area-guess above a tight guarded 2014 1-storey plane.",
+    "epoch_risk": "Low — Apple shows a finished low commercial roof."
+  },
+  {
+    "id": "osm305-overheight",
+    "entity": "unnamed OSM building index 305",
+    "where": {"x": 1481.2, "z": 1006.9},
+    "claim": "Ships as OSM area-guess h=16 m (still rendering; area≈3013 m²).",
+    "observed": "EPT: 7,015 pts, roofOf=9.5, p25=8.2, p50=8.3, p75=8.3, p90=8.4, p98=9.5, massOk=true (max=940.6 is a single LiDAR glitch, discarded by p98). Δ = −6.5 m vs the guess.",
+    "evidence": {
+      "lidar": "osm:305 7015 pts roofOf=9.5 p50=8.3 p75=8.3 p98=9.5 massOk=true max=940.6 (outlier)",
+      "gis": null,
+      "osm": "unnamed building way index 305, h=16, area≈3013 m², 14 verts",
+      "apple": "Apple osm305.jpg z17 at 32.868894,-117.225357 — finished mid commercial / residential roofs east of I-5; SV 2025-02",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Unnamed OSM area-guess above a clean ~2–3 storey 2014 plane.",
+    "epoch_risk": "Low — Apple and LiDAR agree a mid-height building stands here."
+  },
+  {
+    "id": "osm51-underheight",
+    "entity": "unnamed OSM building index 51",
+    "where": {"x": 1273.4, "z": 907.5},
+    "claim": "Ships as OSM area-guess h=12 m (still rendering; area≈2474 m²).",
+    "observed": "EPT: 12,792 pts, roofOf=17.0, p25=16.7, p50=16.8, p75=17.0, p90=20.8, p98=22.7, guard=true, bodyTight=true, massOk=true. Guarded plane ≈17 m; Δ = +5.0 m vs the guess.",
+    "evidence": {
+      "lidar": "osm:51 12792 pts roofOf=17.0 p50=16.8 p75=17.0 p98=22.7 guard bodyTight=true massOk=true",
+      "gis": null,
+      "osm": "unnamed building way index 51, h=12, area≈2474 m², 28 verts",
+      "apple": "Apple osm51.jpg z17 at 32.869793,-117.227579 — finished multi-storey roofs in the medical / Aventine south strip; SV 2022-07",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Unnamed OSM area-guess below a tight guarded mid-rise plane.",
+    "epoch_risk": "Low — Apple confirms standing multi-storey fabric."
+  },
+  {
+    "id": "osm62-underheight",
+    "entity": "unnamed OSM building index 62",
+    "where": {"x": 1245.0, "z": 965.4},
+    "claim": "Ships as OSM area-guess h=12 m (still rendering; area≈2642 m²).",
+    "observed": "EPT: 13,454 pts, roofOf=16.2, p25=16.1, p50=16.2, p75=16.2, p90=17.5, p98=21.2, guard=false, bodyTight=true, massOk=true. Δ = +4.2 m vs the guess.",
+    "evidence": {
+      "lidar": "osm:62 13454 pts roofOf=16.2 p50=16.2 p75=16.2 p98=21.2 massOk=true",
+      "gis": null,
+      "osm": "unnamed building way index 62, h=12, area≈2642 m², 12 verts",
+      "apple": "Apple osm62.jpg z17 at 32.869269,-117.227883 — finished multi-storey commercial/medical roofs; SV 2025-02",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Unnamed OSM area-guess below a clean mid-rise 2014 plane (pair with osm:51).",
+    "epoch_risk": "Low — Apple and LiDAR agree."
+  },
+  {
+    "id": "osm289-canopy-mixed",
+    "entity": "unnamed OSM building index 289",
+    "where": {"x": 1704.2, "z": 984.1},
+    "claim": "Ships as OSM area-guess h=12 m (still rendering; area≈2653 m²), east of Belmont.",
+    "observed": "EPT: 14,838 pts, roofOf=22.6, p25=12.4, p50=13.3, p75=22.6, p90=63.6, p98=68.6, guard=true, bodyTight=false, massOk=false. Body band near 12–13 m is close to the 12 m guess; roofOf rides a canopy/tall-object tail. Not a clean admission without a histogram hand-audit.",
+    "evidence": {
+      "lidar": "osm:289 14838 pts roofOf=22.6 p50=13.3 p75=22.6 p98=68.6 guard bodyTight=false massOk=false",
+      "gis": null,
+      "osm": "unnamed building way index 289, h=12, area≈2653 m², 17 verts",
+      "apple": "Apple osm289.jpg z17 at 32.869100,-117.222971 — Belmont-adjacent residential/senior roofs with mature trees; finished; SV 2025-02",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Canopy-contaminated unnamed ring — body plane may already match the guess; roofOf must not be pasted without a dense-band hand-audit (Che Café class).",
+    "epoch_risk": "Low for existence. The p90–p98 tail to 68 m is trees/outliers, not a 20-storey rebuild."
+  },
+  {
+    "id": "unnamed-guess-class-hole",
+    "entity": "121 unnamed OSM rings still shipping area-guesses in r2c2",
+    "where": {"x": 1400.0, "z": 1000.0},
+    "claim": "Shard has 165 buildings (9 named). assembleMasses still extrudes 121 unnamed OSM rings at their tag/area guess with no lidar.osmHeights and not in OSM_UNNAMED_VERIFIED. 35 unnamed twins of Mesa/Lebon/Regents GIS masses are correctly suppressed (r2c1 0.5-floor fix; osm:359 not re-found).",
+    "observed": "Enumerate counts: osmIn=165, unnamed rendering=121, suppressed=35. Flag F (large unverified guesses area≥800 or h≥12): 48. Spot-checks above show both over- and under-guesses of several metres; Mesa GIS bodies at gisH=6.1 agree with p50≈5.8–6.4 under canopy (not reported as height bugs). No markings in-shard.",
+    "evidence": {
+      "lidar": "sample probes in .cache/gauntlet-r2c2/probe.json; Mesa9236/9226 p50≈6.4 under canopy roofOf≈19–21 (gisH=6.1 stands)",
+      "gis": "36 GIS masses in box (Mesa apartments, Lebon/Regents, Child Dev, One Miramar) — Mesa/Lebon lack massHeights but body planes agree where probed",
+      "osm": "121 unnamed still src=osm; 9 named all ship lidar.heights (Chick-fil-A 6.8, CVS 7.0, Whole Foods 7.3, Sheraton 10.7, Medical 10.7, One Miramar GIS 13.2 — those agree with fresh EPT)",
+      "apple": "Shard is largely outside registered Google chunks east of ~x=1400; Apple is the only current nadir for Temple/Belmont/medical/Hyatt east pads",
+      "probe": null
+    },
+    "severity": "low",
+    "suspected_class": "Class hole: unverified unnamed OSM height guesses east of campus — same family as r2c1's rejected wholesale Mesa batch; fix via per-ring OSM_UNNAMED_VERIFIED admissions, not a blanket number.",
+    "epoch_risk": "Per-ring — some pads (see osm:785) may be post-2014; most commercial roofs here agree Apple-vs-2014 on existence. Do not admit all 121 without Apple currency each."
+  }
+]

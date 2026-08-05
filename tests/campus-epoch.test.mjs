@@ -84,6 +84,11 @@
  *      measured roof, the Birch union splits so Hillgarth is its own
  *      building, the verified shore rings ship their planes, and the
  *      withheld rings stay withheld.
+ *  17. The r2c2 judge pass's measurements hold: the Hyatt's podium+tower
+ *      union stops shipping a 45 m paste, the verified east-of-I-5
+ *      unnamed rings ship their planes, the post-2014 trolley-corridor
+ *      garage keeps its declared guess, and the stepped / canopy /
+ *      multi-tier withholds stay withheld.
  */
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
@@ -1626,5 +1631,82 @@ describe("16. the r2c0 judge pass (2026-08-05)", () => {
       "the Eighth pavilion keeps its declared guess");
     assert.equal(rendersNear(-573.3, 797.5, 4).filter((m) => m.src === "osm").length, 0,
       "osm:216 renders through the massing that is the building");
+  });
+});
+
+describe("17. the r2c2 judge pass (2026-08-05)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("the Hyatt stops pasting its tower onto the podium", () => {
+    /* One OSM ring wraps the hotel tower AND the low podium / circular
+       terracotta pavilion. 11,029 returns are bimodal — 49% in a dense
+       4 m podium band, the rest a tower plane at 41-52 m — so roofOf's
+       p75 landed ON the tower and shipped 45.1 across the whole 92×96 m
+       footprint. Neither single extrusion is honest (no OSM parts);
+       the audit emits nothing and the OSM tag of 16 stands as a stated
+       guess until a parts-level source exists. */
+    assert.equal(LIDAR.heights["Hyatt Regency La Jolla at Aventine"], undefined,
+      "the tower paste is back on the Hyatt");
+    const hyatt = MASSES.filter((m) => m.name === "Hyatt Regency La Jolla at Aventine");
+    assert.equal(hyatt.length, 1, `Hyatt renders ${hyatt.length} times`);
+    assert.equal(hyatt[0].h, 16, `Hyatt ships ${hyatt[0].h} — the 45 m paste again?`);
+  });
+
+  test("the verified east-of-I-5 rings ship their planes", () => {
+    /* Each re-sampled full-depth and standing unchanged on today's
+       Apple; every ring read as one plane. Numbers are the build's own
+       tiling (targeted re-sample agreed within 0.1 m). */
+    for (const [i, h, x, z] of [
+      [95, 30.9, 1185.8, 1121.1], [198, 8.1, 898.1, 1399.3],
+      [337, 3.5, 1187.7, 1183.1], [288, 4.6, 885.6, 793.7],
+      [305, 9.6, 1481.2, 1006.9], [51, 16.9, 1273.4, 907.5],
+      [62, 16.2, 1245.0, 965.4],
+    ]) {
+      assert.equal(LIDAR.osmHeights?.[i], h, `osm:${i}'s plane`);
+      assert.equal(rendersNear(x, z, 4).find((m) => m.src === "osm")?.h, h,
+        `osm:${i} renders at its plane`);
+    }
+  });
+
+  test("the post-2014 trolley-corridor garage keeps its declared guess", () => {
+    /* osm:785: today's Apple shows a finished multi-deck garage with
+       cars on the top deck beside the Blue Line / I-5; the 2014 returns
+       read one near-grade plane (p50 0.8 to p75 1.2) — a surface lot or
+       low deck, not the structure standing today. The VA garage
+       precedent: no 2014 number may ship. */
+    assert.equal(LIDAR.osmHeights?.[785], undefined, "a 2014 number shipped for osm:785");
+    assert.equal(rendersNear(961.6, 1320.4, 4).find((m) => m.src === "osm")?.h, 16,
+      "the garage keeps its declared guess");
+  });
+
+  test("the stepped and canopy-mixed withholds stay withheld", () => {
+    /* 83: helipad tower + lower wing in one ring (dense band 31 m,
+       tower 52-63) — no single plane.
+       497: Aventine wing stepped 14 m / 18 m — body not tight.
+       289: Belmont-adjacent under canopy; body near 12-13 already
+       matches the guess, roofOf rides crowns to 68.
+       Temple and Belmont's named rings keep their existing answers
+       (21.6 upper-terrace paste logged as unfixable without parts;
+       9.1 is the short wing's own correct plane). */
+    for (const i of [83, 497, 289]) {
+      assert.equal(LIDAR.osmHeights?.[i], undefined, `a 2014 number shipped for osm:${i}`);
+    }
+    assert.equal(rendersNear(1305.1, 786.8, 4).find((m) => m.src === "osm")?.h, 16,
+      "the helipad composite keeps its declared guess");
+    assert.equal(rendersNear(1411.4, 776.8, 4).find((m) => m.src === "osm")?.h, 9,
+      "the stepped Aventine wing keeps its declared guess");
+    assert.equal(LIDAR.heights["San Diego California Temple"], 21.6,
+      "the Temple's existing plane must not silently change");
+    assert.equal(LIDAR.heights["Belmont Village Senior Living"], 9.1,
+      "Belmont's short-wing plane must not silently change");
   });
 });

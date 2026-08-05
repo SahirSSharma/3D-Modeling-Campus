@@ -192,3 +192,69 @@ the towers; the Shores houses sit on their lawns.
   the rename to OSM's current name. The record ring stood in 2014 (tight 84 % band at 2.8 —
   a same-footprint predecessor structure); if a future pass dates the current café fit-out as a
   full rebuild, the epoch entry goes in then — the present render is measured, not guessed.
+
+## Pass 1, shard r2c2 (lat 32.864542..32.873467, lng −117.231752..−117.220569 — 165 buildings, 9 named)
+
+`npm test`: **398/398 pass** (was 394; §17 of `campus-epoch.test.mjs` is new — 4 tests).
+`npm run check`: all five validators pass (284 measured heights — one fewer than r2c0 left it,
+because the Hyatt's bimodal paste is now a null audit; 304 massing parts; 10,683 trees). Every
+candidate in `pass1-r2c2.screen.json` was re-derived before judgement with a full-depth targeted
+EPT re-sample (15 targets; counts matched the screener's exactly — its probe was already
+full-depth), Apple snapshots for every site, and Street View metadata where a garage epoch
+mattered. Probe artifacts in `.cache/gauntlet-r2c2/judge/` (miniprobe.out, miniprobe.json).
+
+Judged by `cursor-grok-4.5-high` (Fable budget exhausted — see REAUDIT.md). Held the bar higher:
+composites without parts and date/grade unresolved cases were withheld, not invented.
+
+### Fixed — heights (every value from this pass's full-depth re-sample or the build's own tiling)
+
+| Entity | Was shipping | Now ships | Source | Test |
+|---|---|---|---|---|
+| Hyatt Regency La Jolla at Aventine (`hyatt-podium-tower-union`) | 45.1 m tower paste over the whole ring | **16 m (OSM tag, stated guess)** | HAND_AUDITED null: 11,029 returns bimodal — 49% dense 4 m podium band, tower at 41–52; roofOf's p75 landed ON the tower. No OSM parts; neither extrusion is honest | epoch §17 |
+| Mid-rise west of I-5 (`osm95-tower-underheight`, osm:95) | 12 m area guess | **30.9 m** | OSM_UNNAMED_VERIFIED: 5,723 returns, p25 25.9 → p98 30.9, body tight; standing on today's Apple | epoch §17 |
+| Big-box retail (`osm198-bigbox-overheight`, osm:198) | 20 m area guess | **8.1 m** | OSM_UNNAMED_VERIFIED: 96,121 returns, 86% in a 6–7 m band; rim 16/51 (AREA south-edge clip — same in-box class as osm:1145, dense band is the whole building) | epoch §17 |
+| Temple-north deck (`osm337-overheight`, osm:337) | 12 m area guess | **3.5 m** | OSM_UNNAMED_VERIFIED: 6,748 returns, 92% in a 1–2 m band | epoch §17 |
+| L-block west of I-5 (`osm288-overheight`, osm:288) | 12 m area guess | **4.6 m** | OSM_UNNAMED_VERIFIED: 74% in the 4 m bin; guarded p75 (targeted 4.5, build tiling 4.6); p98 tail is canopy | epoch §17 |
+| Mid commercial east of I-5 (`osm305-overheight`, osm:305) | 16 m area guess | **9.6 m** | OSM_UNNAMED_VERIFIED: 91% in the 8 m bin (targeted 9.5, build tiling 9.6); single 940 m glitch discarded by p98 | epoch §17 |
+| Medical / Aventine-south (`osm51-underheight` / `osm62-underheight`) | 12 m guesses | **16.9 / 16.2 m** | OSM_UNNAMED_VERIFIED: tight guarded mid-rise planes (69% / 83% in the 16 m bin); build tiling | epoch §17 |
+
+### Epoch verdicts (dates, not errors)
+
+- **`osm785-garage-plane-vs-guess`** — POST_2014, the VA garage shape. Today's Apple shows a
+  finished multi-deck garage with cars on the top deck beside the Blue Line / I-5; the 2014
+  returns read one near-grade plane (13,396 returns, p50 0.8 to p75 1.2). Joins
+  `POST_2014_OSM_RINGS`; keeps its stated 16 m area guess. Shipping 1.2 would have been the
+  exact failure the screen warned against.
+
+### Withheld (better absent than wrong)
+
+- **Hyatt tower above the podium plane**: logged with the null audit above — no parts source.
+- **`osm83-helipad-tower-underheight`**: helipad tower + lower wing in one ring (dense band 31 m
+  at 38%, tower 52–63 with the red H on today's Apple). Two buildings, one ring; the 16 m guess
+  stands.
+- **`osm497-aventines-underheight`**: stepped 14 m / 18 m planes (body not tight). roofOf would
+  paste 18.9 across both; the 9 m guess stands.
+- **`osm289-canopy-mixed`**: body band near 12–13 already matches the 12 m guess; roofOf 22.6
+  rides crowns to 68. No admission without a dense-band hand-audit the body does not need.
+- **`temple-multilevel-spread`**: multi-tier sacred building + spire tail to 62 m inside one
+  OSM ring. Keeps its existing 21.6 (upper-terrace via guard); inventing a single "better"
+  number without parts would be the Birch gallery failure. Logged, not changed.
+
+### Rejected candidates (each re-measured before rejection; do not re-find these)
+
+- **`belmont-named-short-wing`** — REJECTED: the named ring's 9.1 is its own correct plane
+  (6,947 returns, massOk). The taller complex rings (osm:1359 at 18.9, osm:289 canopy-mixed)
+  are unnamed — an identity/label coverage question, not a height bug on this ring. OSM tag
+  62.4 was already overridden by LiDAR.
+- **`unnamed-guess-class-hole`** — REJECTED as scoped, same verdict as r2c1/r2c0: the mechanism
+  exists and this pass used it for seven admissions and four explicit refusals; admitting all
+  121 in-shard unnamed rings needs a per-ring Apple currency check each, which stays a batch
+  job. Mesa GIS bodies probed at ~6 m agree with their 6.1 records — not height bugs.
+
+### Handoffs / observations for later shards / passes
+
+- **Hyatt / osm:83 parts**: both need an OSM (or GIS) parts-level source before either plane
+  can ship honestly. Hand off to a mapping pass, not a height pass.
+- **Temple parts**: same — lower terraces, upper mass, and spires cannot share one extrusion.
+- **osm:1359** (Belmont's tall unnamed mass): clean plane 18.9 against a 20 m guess — agreement
+  within ~1 m; not admitted this pass (no lie large enough to fix). A batch pass could take it.

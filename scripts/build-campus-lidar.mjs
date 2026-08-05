@@ -194,8 +194,15 @@ const POST_2014_SITES = new Set([
         Built with the 2023 neighbourhood: the flight read 549 returns, ALL
         below grade (max -0.1 m) — the bare site. No 2014 number may ever
         ship for it; the ring keeps its stated guess of 4.5, which a
-        one-storey pavilion supports. */
-const POST_2014_OSM_RINGS = new Set([954, 833, 718, 1354, 1345]);
+        one-storey pavilion supports.
+   785: the multi-deck parking structure west of I-5 / the Blue Line
+        trolley (r2c2 judge sweep, 2026-08-05). Today's Apple shows cars
+        on the top deck of a finished multi-level garage; the 2014
+        returns read one near-grade plane (13,396 returns, p50 0.8 to
+        p75 1.2) — a surface lot or low deck, not the structure standing
+        today. The VA garage precedent (438 / 833) again: no 2014 number
+        may ship, and the ring keeps its stated area guess of 16. */
+const POST_2014_OSM_RINGS = new Set([954, 833, 718, 1354, 1345, 785]);
 
 /* GIS masses verified PRE-2014 by hand (r0c1 sweep, 2026-08-04) whose ring
    has neither a named-OSM host nor an exact OSM name twin — the two paths
@@ -481,7 +488,46 @@ const MEASURE_MINUS_CONTAINED_HOSTS = {
      1068: a house whose returns are 73% eucalyptus (p50 17.1 over a
         one-storey band at 2-3 m). The dense band is only 27% — below
         every precedent this list has admitted — so the laser cannot see
-        this roof and the guess stands. */
+        this roof and the guess stands.
+   r2c2 judge sweep (2026-08-05) — east of I-5: the medical / Aventine /
+   Village Square / Temple corridor. Each admission re-sampled full-depth
+   and standing unchanged on today's Apple; every ring read as ONE plane
+   (no-guard p98-p75 <= 2 m, or a guarded body tight to p75-p50 <= 2 m):
+     95: white mid-rise west of I-5 / La Jolla Village Drive (5,723
+        returns, p25 25.9 to p98 30.9, body tight): plane against a 12 m
+        area guess — under by multiple storeys.
+     198: the large low commercial / retail roof west of I-5 near the
+        trolley corridor (96,121 returns, 86% in a 6-7 m band, roofOf
+        8.1): plane against a 20 m guess. Rim ground only 16/51 verts
+        (ring past AREA's south edge) — same in-box class as 1145; the
+        dense band is the whole building.
+     337: the low deck / pavilion north of the Temple lawns (6,748
+        returns, 92% in a 1-2 m band, roofOf 3.5): plane against a 12 m
+        guess.
+     288: bright white L-shaped low commercial west of I-5 (8,470
+        returns, 74% in the 4 m bin; guarded p75 4.5, the p98 tail is
+        canopy): plane against a 12 m guess.
+     305: mid commercial / residential east of I-5 (7,015 returns, 91%
+        in the 8 m bin, roofOf 9.5; a single 940 m LiDAR glitch is
+        discarded by p98): plane against a 16 m guess.
+     51: multi-storey medical / Aventine-south strip (12,792 returns,
+        69% in the 16 m bin, guarded roofOf 17.0): plane against a 12 m
+        guess.
+     62: neighbour of 51 (13,454 returns, 83% in the 16 m bin, roofOf
+        16.2): plane against a 12 m guess.
+   Verified and deliberately NOT admitted:
+     83: the helipad medical tower + lower wing composite (17,693
+        returns): dense band at 31-32 m (38%), tower plane at 52-63 with
+        the red H pad on today's Apple — two buildings in one ring, the
+        Hyatt shape. No single plane; the 16 m guess stands.
+     497: Aventine wing west of the Hyatt courtyard — stepped, 59% at
+        14 m and a second plane at 18 m (body not tight). roofOf would
+        paste 18.9 across both; the 9 m guess stands.
+     289: Belmont-adjacent residential under mature canopy — body band
+        near 12-13 m already matches the 12 m guess; roofOf 22.6 rides
+        the crowns to 68 m. No admission without a dense-band hand
+        audit, and the guess already agrees with the body.
+     785: post-2014 garage — see POST_2014_OSM_RINGS. */
 const OSM_UNNAMED_VERIFIED = new Set([
   786, 893,
   93, 77, 333, 335,
@@ -499,6 +545,7 @@ const OSM_UNNAMED_VERIFIED = new Set([
   224, 826,
   764, 775,
   403, 1036, 1048, 1053, 1073, 1141, 1145,
+  95, 198, 337, 288, 305, 51, 62,
 ]);
 
 /* Hand-audited stats where the automatic roofOf() percentile choice is
@@ -594,6 +641,16 @@ const OSM_UNNAMED_VERIFIED = new Set([
      but the "T-25 Cottage" GIS ring is drawn wide like T-30's and
      shipped a 9 m mass plane off the crowns. The audit pins the roof and
      bars the mass — same failure, one grove.
+   - Hyatt Regency La Jolla at Aventine (r2c2 judge sweep, 2026-08-05):
+     one OSM ring wraps the hotel tower AND the low podium / circular
+     terracotta pavilion / courtyard-adjacent roofs. 11,029 returns are
+     bimodal — 49% in a dense 4 m podium band, the rest a tower plane at
+     41-52 m — so roofOf's p75 lands ON the tower and pastes 45.1 across
+     the whole 92×96 m footprint, lifting the podium ~40 m. Neither
+     single extrusion is honest (the Scripps Memorial / Birch gallery
+     verdict: a stepped mass with no OSM parts). Null: emit nothing, the
+     OSM tag of 16 stands as a stated guess until a parts-level source
+     exists.
    A null here means "measured, but not trustworthy: emit nothing". */
 const HAND_AUDITED = {
   "Tenaya Hall": 27.6,
@@ -612,6 +669,7 @@ const HAND_AUDITED = {
   "Hubbs Hall Confrence Center": 4.0,
   "T-30": 5.0,
   "T-25": 4.8,
+  "Hyatt Regency La Jolla at Aventine": null,
 };
 
 const R = 6378137;

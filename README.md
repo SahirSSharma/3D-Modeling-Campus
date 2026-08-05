@@ -483,6 +483,34 @@ nothing to fix; T-31 measures its own clean 5.0 and is pinned so its audited sib
 never leak onto it; and an unnamed re-trace 75 % covered by the university's "9369 Discovery
 Way" mass needs no entry at all — the r2c1 unnamed-ring floor already suppresses it.
 
+**The east-of-I-5 judge pass (2026-08-05, r2c2).** The medical / Aventine / Village Square /
+Temple corridor. Fifteen screened candidates; eight were real fixes, and the rest were dates,
+composites with no parts-level source, or numbers already correct. Every candidate was
+re-derived from a full-depth targeted EPT re-sample before judgement.
+
+| Entity | Was shipping | Now ships | Why |
+|---|---|---|---|
+| Hyatt Regency La Jolla at Aventine | 45.1 m (tower paste over the whole ring) | **16 m (OSM tag, stated guess)** | one OSM ring wraps the hotel tower AND the low podium / circular terracotta pavilion. 11,029 returns are bimodal — 49 % in a dense 4 m podium band, the rest a tower plane at 41–52 m — so roofOf's p75 landed ON the tower and lifted the podium ~40 m. Neither single extrusion is honest (no OSM parts); the audit emits nothing until a parts-level source exists. |
+| Mid-rise west of I-5 (unnamed, osm:95) | 12 m (area guess) | **30.9 m** | clean mid-rise plane, 5,723 returns, p25 25.9 to p98 30.9; under by multiple storeys. |
+| Big-box retail west of I-5 (unnamed, osm:198) | 20 m (area guess) | **8.1 m** | 96,121 returns, 86 % in a 6–7 m band — a one-storey commercial roof the guess made two storeys too tall. |
+| Temple-north deck (unnamed, osm:337) | 12 m (area guess) | **3.5 m** | 92 % of 6,748 returns in a 1–2 m band; a low pavilion beside the temple lawns. |
+| L-block west of I-5 (unnamed, osm:288) | 12 m (area guess) | **4.6 m** | 74 % in the 4 m bin; the p98 tail is canopy the guard discards. |
+| Mid commercial east of I-5 (unnamed, osm:305) | 16 m (area guess) | **9.6 m** | 91 % in the 8 m bin; a single 940 m LiDAR glitch is discarded by p98. |
+| Medical / Aventine-south strip (unnamed, osm:51 / 62) | 12 m guesses | **16.9 / 16.2 m** | tight guarded mid-rise planes (69 % / 83 % in the 16 m bin). |
+
+The epoch work: the multi-deck parking structure west of I-5 / the Blue Line trolley (osm:785)
+joins `POST_2014_OSM_RINGS` — today's Apple shows cars on a finished top deck, the 2014 returns
+read a near-grade plane (p50 0.8 to p75 1.2), the VA garage precedent again. Its stated 16 m
+guess stands.
+
+The withhelds, better absent than wrong: the helipad medical tower + lower wing (osm:83 — dense
+band at 31 m, tower at 52–63, two buildings in one ring), the stepped Aventine wing (osm:497 —
+14 m and 18 m planes), the Belmont-adjacent canopy ring (osm:289 — body already matches the
+12 m guess), and the Temple's multi-tier / spire mass (keeps its existing 21.6; no parts source
+can carry the lower terraces and the spires in one extrusion). Belmont Village's named short
+wing already measures correctly at 9.1 — the taller complex rings are unnamed, which is an
+identity coverage question, not a height bug on this ring.
+
 ### The colours, measured off footage
 
 Satellite imagery sees roofs and ground; it cannot see a wall, a tree trunk, or the sky. For
