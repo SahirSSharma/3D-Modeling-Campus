@@ -89,6 +89,15 @@
  *      unnamed rings ship their planes, the post-2014 trolley-corridor
  *      garage keeps its declared guess, and the stepped / canopy /
  *      multi-tier withholds stay withheld.
+ *  18. The r0c0 re-sweep's measurements hold: six NW unnamed rings ship
+ *      their planes, Marshall Residence Hall V ships its guarded 6.8,
+ *      the contaminated coastal pad keeps its guess, and Sanford's
+ *      lab-bar / pavilion split stands.
+ *  19. The r0c1 re-sweep's measurements hold: Asante House Meeting Rooms
+ *      sheds its thin 7.1 m shelf for the dense 4.0 m body (thin-shelf
+ *      massHeights rule), Marshall Upper H/L keep the GIS body against
+ *      canopy p98, the 2015 Spanos APC stays one storey with eucalyptus
+ *      out, and Otterson / Copley keep their real upper volumes.
  */
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
@@ -1774,5 +1783,71 @@ describe("campus epoch — r0c0 re-sweep (2026-08-05)", () => {
     const sanford = MASSES.filter((m) => m.name === "Sanford Consortium for Regenerative Medicine" && m.src === "gis")
       .map((m) => m.h).sort((a, b) => a - b);
     assert.deepEqual(sanford, [6.2, 24.5], `Sanford ships ${sanford}`);
+  });
+});
+
+describe("campus epoch — r0c1 re-sweep (2026-08-05)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("Asante House Meeting Rooms sheds its thin 7.1 m shelf", () => {
+    /* 1,854 returns, 88% in a 3–4 m band matching the L1 record (4.3);
+       p98 7.1 rides 43 points in the 7 m bin — gap 3.1 under the canopy
+       guard's 5 m threshold. The thin-shelf massHeights rule (body tight,
+       gap > 2.5, dense 2 m band ≥85%) takes p75 = 4.0. Apple shows the
+       finished low pad among the Asante / Great Hall cluster today. */
+    assert.equal(LIDAR.massHeights["m:-85,-666"], 4.0);
+    const meet = rendersNear(-84.6, -666.0, 3).find((m) => m.src === "gis");
+    assert.ok(meet, "Asante meeting-rooms mass vanished");
+    assert.equal(meet.h, 4.0, `meeting rooms ship ${meet.h}`);
+  });
+
+  test("Marshall Upper H and L keep the GIS body, not the canopy p98", () => {
+    /* Eucalyptus tails: H roofOf 10.3 / L 10.2 over dense 6.0–6.1 bodies
+       that already match the L2 record. Neither ships a massHeights entry
+       today; the thin-shelf rule would take p75 if one were ever admitted.
+       Pin the rendered bodies so a future auto-admit cannot paste the tree. */
+    assert.equal(LIDAR.massHeights["m:27,-566"], undefined,
+      "Marshall Upper H must not auto-admit canopy");
+    assert.equal(LIDAR.massHeights["m:-70,-589"], undefined,
+      "Marshall Upper L must not auto-admit canopy");
+    const h = MASSES.find((m) => m.name === "Marshall Upper Apartments H" && m.src === "gis");
+    const l = MASSES.find((m) => m.name === "Marshall Upper Apartments L" && m.src === "gis");
+    assert.equal(h?.h, 6.1, `Marshall Upper H ships ${h?.h}`);
+    assert.equal(l?.h, 6.1, `Marshall Upper L ships ${l?.h}`);
+  });
+
+  test("the 2015 Spanos APC stays one storey; LiDAR eucalyptus stays out", () => {
+    /* Screen claimed a multi-storey finished building needing ESTIMATED_POST_2014.
+       TCA project profile (tilt-up.org #6097): Number of Floors 1, tallest
+       panel 24 ft 6 in, 6,740 sq ft — a high-bay one-storey. The 11–16 m
+       2014 smear remains the eucalyptus cleared for it. Do not re-admit. */
+    assert.equal(LIDAR.heights["Spanos Athletic Performance Center"], 4.4);
+    assert.equal(LIDAR.massHeights["m:61,-1355"], undefined,
+      "APC must not ship the 2014 eucalyptus plane");
+    const apc = MASSES.find((m) => m.name === "Spanos Athletic Performance Center" && m.src === "gis");
+    assert.ok(apc, "Spanos APC vanished");
+    assert.ok(apc.h <= 4.4, `Spanos APC renders ${apc.h}`);
+  });
+
+  test("Otterson and Copley keep their roofOf upper volumes", () => {
+    /* Otterson: 71% on a 15 m deck, ~21% on a 17–18 m plant/solar shelf —
+       dense band only 74%, under the 85% thin-shelf cut. Copley: stepped
+       conference volume, dense band 79%. Both stay on roofOf; Sanford-class
+       (real upper volume, not a 2% tail). */
+    assert.equal(LIDAR.massHeights["m:7,-940"], 18.9);
+    assert.equal(LIDAR.massHeights["m:-13,-774"], 10.6);
+    const otter = rendersNear(6.9, -939.9, 3).find((m) => m.src === "gis");
+    const copley = rendersNear(-13.3, -773.8, 3).find((m) => m.src === "gis");
+    assert.equal(otter?.h, 18.9, `Otterson ships ${otter?.h}`);
+    assert.equal(copley?.h, 10.6, `Copley ships ${copley?.h}`);
   });
 });

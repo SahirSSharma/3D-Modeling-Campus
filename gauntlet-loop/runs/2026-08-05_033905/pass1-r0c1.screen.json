@@ -1,0 +1,121 @@
+[
+  {
+    "id": "asante-meet-overheight",
+    "entity": "Asante House Meeting Rooms (renders as Asante Hall)",
+    "where": {"x": -84.6, "z": -666.0},
+    "claim": "assembleMasses ships h=7.1 via lidar.massHeights[m:-85,-666] over gisH=4.3 / L1. Host rename pastes the OSM name Asante Hall onto this mass.",
+    "observed": "Fresh EPT of the GIS meeting-rooms ring: 1,854 pts, roofOf=7.1, p50=4.0, p75=4.0, p98=7.1, guard=false (p98−p75=3.1 < 5), bodyTight=true, massOk=true. Histogram: 3 m:1263 + 4 m:371 = 1,634/1,854 (88%) in the 3–4 m band; 7 m bin only 43 pts. Dense body matches the L1 record (~4.3); shipped 7.1 rides a thin tall tail (~+3.1 m / ~1 storey).",
+    "evidence": {
+      "lidar": "gis:AsanteMeet 1854 pts roofOf=7.1 p50=4.0 p75=4.0 p98=7.1 guard=false bodyTight massOk; hist 3m:1263 4m:371 7m:43; massHeights[m:-85,-666]=7.1; sibling Asante House West/East massHeights 11.5/11.6 match their dense planes",
+      "gis": "Asante House Meeting Rooms gisH=4.3 levels=1 area≈352; Asante House West/East gisH=12.2 L3/L4",
+      "osm": "Asante Hall way lidar.heights=11.6 (the residential wings' plane); meeting-rooms mass centroid falls in that host ring so it takes the name",
+      "apple": "Apple snapshot asante-meet.jpg z19 at 32.884023,-117.242109 — finished low pad at the meeting-rooms site among the Asante/Great Hall cluster; no crane; adjacent Great Hall is the taller fan-roof volume",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "massHeights admitted roofOf past a one-storey dense body because the canopy/clerestory guard threshold is 5 m and the tail sits at 3.1 m — GIS L1 and the 3–4 m mode agree; same failure mode as Stage Room / Solis when the guard misses.",
+    "epoch_risk": "Low for existence — Apple shows a finished low structure on this pad today, and the 2014 body plane is tight at 4 m. The 7.1 vs 4.0 split is assignment (tail vs body), not a post-2014 rebuild."
+  },
+  {
+    "id": "spanos-apc-gis-l1-vs-finished",
+    "entity": "Spanos Athletic Performance Center",
+    "where": {"x": 60.7, "z": -1355.2},
+    "claim": "GIS mass ships h=4.4 (gisH=4.3 / L1). massHeights[m:61,-1355] is intentionally undefined. HAND_AUDITED['Spanos Athletic Performance Center']=4.4 bars both Spanos GIS masses from adopting the 2014 crown smear. Epoch test pins both Spanos renders at h≤4.4.",
+    "observed": "Fresh EPT of the Performance Center GIS ring: 1,181 pts, roofOf=16.0, p50=11.1, p75=13.5, p98=16.0, bodyTight=false — dense 11–15 m band (matches the README's rejected '15.8 m LiDAR read'). Sibling Training Facility GIS ring: 3,423 pts, roofOf=4.4, p50=4.3, p75=4.4, guard=true — clean one-storey plane, correctly shipping. OSM twins: osm:176 (Training footprint) roofOf=4.4; osm:714 (APC footprint) roofOf=15.8. Apple today shows a finished multi-storey athletic building with mechanical plant on this pad — not a vacant lot and not a 4.3 m bungalow.",
+    "evidence": {
+      "lidar": "gis:SpanosPerf 1181 pts roofOf=16 p50=11.1 p75=13.5 p98=16 bodyTight=false; gis:SpanosTrain 3423 pts roofOf=4.4 p50=4.3 p75=4.4 guard; osm:714 roofOf=15.8; osm:176 roofOf=4.4; HAND_AUDITED name=4.4; massHeights[m:61,-1355]=undefined",
+      "gis": "Spanos Athletic Performance Center gisH=4.3 levels=1 area≈748; Spanos Athletic Training Facility gisH=4.3 L1 area≈1327",
+      "osm": "two ways both named Spanos Athletic Performance Center (indices 176 @ z≈−1306 and 714 @ z≈−1367); shared name is the collision HAND_AUDITED documents",
+      "apple": "Apple snapshots spanos-perf.jpg / spanos-train.jpg / spanos-wide.jpg z17–18 at 32.890254,-117.240548 — finished white-roof athletic complex with rooftop plant standing today next to Triton Track; no crane on the APC pad",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Post-2014 finished building still wearing a university L1/4.3 eave after the eucalyptus adjudication correctly refused the 2014 smear — needs a non-LiDAR height (Street View floor count / ESTIMATED_POST_2014), not a massHeights admission.",
+    "epoch_risk": "Primary. Prior r1c0 audit (README + epoch §12) states the APC broke ground June 2015 and that the 11–16 m 2014 returns are the eucalyptus row cleared for it. That blocks LiDAR. The residual question is whether GIS L1 is right for the finished building Apple shows today — a date problem the laser cannot answer. Do not re-admit roofOf=16."
+  },
+  {
+    "id": "copley-dense-body-vs-roofof",
+    "entity": "Copley International Conference Center",
+    "where": {"x": -13.3, "z": -773.8},
+    "claim": "GIS mass ships h=10.6 via massHeights[m:-13,-774] over gisH=4.3 / L1. Host lidar.heights['Copley International Conference Center']=10.2.",
+    "observed": "Fresh EPT: 2,514 pts, roofOf=10.6, p50=5.9, p75=6.8, p98=10.6, guard=false, bodyTight=true, massOk=true. Histogram: 5 m:1278 + 6 m:717 = 1,995/2,514 (79%) in the 5–6 m band; 9–11 m bins only 128 pts combined. Shipped 10.6 tracks the thin upper shelf, ~4–5 m above the dense hall body.",
+    "evidence": {
+      "lidar": "gis:Copley 2514 pts roofOf=10.6 p50=5.9 p75=6.8 p98=10.6 bodyTight massOk; hist 5m:1278 6m:717 7m:322 9m:52 10m:44; massHeights[m:-13,-774]=10.6; lidar.heights host=10.2",
+      "gis": "Copley International Conference Center gisH=4.3 levels=1 area≈929 — L1 record understates both the dense body and the upper shelf",
+      "osm": "Copley International Conference Center way present; host plane 10.2",
+      "apple": "Apple snapshot copley.jpg z18 at 32.885000,-117.241339 — finished conference-center roof among the Institute of the Americas / Robinson cluster; standing today, no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Stepped / clerestory roofOf admitted over a dense mid-hall band — same family as Sanford mechanical and AsanteMeet (guard threshold misses a 3–4 m shelf).",
+    "epoch_risk": "Low — Apple matches a finished pre-2014 conference building. The 10.6 vs ~6 vs GIS 4.3 split is measurement assignment across a stepped roof, not a date conflict."
+  },
+  {
+    "id": "otterson-dense-deck-vs-roofof",
+    "entity": "Otterson Hall",
+    "where": {"x": 6.9, "z": -939.9},
+    "claim": "GIS mass ships h=18.9 via massHeights[m:7,-940] over gisH=17.1 / L4. Host lidar.heights['Otterson Hall']=20.1.",
+    "observed": "Fresh EPT: 4,426 pts, roofOf=18.9, p50=15.6, p75=15.7, p98=18.9, guard=false (p98−p75=3.2 < 5), bodyTight=true, massOk=true. Histogram mode 15 m (3,159/4,426 = 71%); 17–18 m bins are a thinner upper band (513+437). Shipped 18.9 is ~3.2 m above the dense deck.",
+    "evidence": {
+      "lidar": "gis:Otterson 4426 pts roofOf=18.9 p50=15.6 p75=15.7 p98=18.9 bodyTight massOk; hist 15m:3159 17m:513 18m:437; massHeights[m:7,-940]=18.9",
+      "gis": "Otterson Hall gisH=17.1 levels=4 area≈1577",
+      "osm": "Otterson Hall (relation-mapped) lidar.heights=20.1",
+      "apple": "Apple snapshot otterson.jpg z18 at 32.886501,-117.241125 — finished Rady wedge with solar arrays on the SE roof; standing today, no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Mechanical-plant / upper-shelf roofOf over a dense roof deck — Sanford-class (guard misses by ~1.8 m).",
+    "epoch_risk": "Low — Otterson predates 2014 and Apple shows it finished with solar. The 18.9 vs ~15.7 split is plant vs deck, not a rebuild."
+  },
+  {
+    "id": "roof-anchor-class",
+    "entity": "Hopkins Parking / Canyon Vista admin / Cuzco Hall / Village East Building 4",
+    "where": {"x": 182.0, "z": -634.0},
+    "claim": "Renderer sets roofY = ground(centroid) + h while surveyed h = roof − median(rim ground). Prior r0c1 pass logged four in-shard masses past a 2 m roof-anchor gate and left them for a cross-shard renderer fix.",
+    "observed": "Re-ran the same grade audit on current assembleMasses: still exactly four masses with |centroid ground − rim median| > 2 m — Hopkins Parking Structure +3.17 m (span 15.73 m, h=21.5), Canyon Vista Administration building +2.93 m (span 4.65 m, h=12), Cuzco Hall −2.55 m (span 2.6 m, h=11.8), Village East Building 4 −2.34 m (span 4.53 m, h=12.1). Bases remain per-vertex safe. Steepest footprint spans also include RIMAC Arena 16.65 m and Pangea 12.12 m (informational).",
+    "evidence": {
+      "lidar": "grade audit over all in-box rendered masses; four exceed 2 m roof-anchor delta; Hopkins / Canyon Vista admin / Cuzco / VE4 numbers match the prior r0c1 log",
+      "gis": "Hopkins Parking gisH=18.3 massH=21.5; Canyon Vista admin renders from OSM osmHeights; Cuzco GIS wings; VE4 OSM osmHeights=12.1",
+      "osm": "Canyon Vista Administration building osmHeights[86]=12; Village East Building 4 osmHeights via host path =12.1",
+      "apple": "not required for this class — it is a renderer anchor definition, not a currency question",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Cross-shard roof-anchor render class (centroid ground vs rim-median definition of h) — still open since the prior r0c1 handoff; not a per-building height bug.",
+    "epoch_risk": "None — this is a geometry definition mismatch inside one epoch, not a source-date conflict."
+  },
+  {
+    "id": "marshall-upper-hl-canopy-guard",
+    "entity": "Marshall Upper Apartments H and L",
+    "where": {"x": 26.7, "z": -566.4},
+    "claim": "Both ship unchallenged GIS h=6.1 / L2 (no massHeights). Prior r0c1 FINDINGS documented eucalyptus tails over H/L/M and kept the GIS body.",
+    "observed": "Fresh EPT H: 1,753 pts, roofOf=10.3, p50=6.0, p75=6.1, p98=10.3, guard=false (p98−p75=4.2 < 5), hist mode 6 m (986). L: 4,196 pts, roofOf=10.2, p50=6.0, p75=6.1, p98=10.2, guard=false (Δ=4.1), hist mode 6 m (2042). Bodies match GIS 6.1; roofOf would admit canopy. Siblings G/J/K dense-match 6.1 (roofOf 6.8–6.9); M guard fires and roofOf=6.2.",
+    "evidence": {
+      "lidar": "gis:MarshUpH 1753 pts roofOf=10.3 p50=6 p75=6.1 p98=10.3 guard=false; gis:MarshUpL 4196 pts roofOf=10.2 p50=6 p75=6.1 p98=10.2 guard=false; G/J/K/M bodies agree with 6.1",
+      "gis": "Marshall Upper Apartments H/L gisH=6.1 levels=2; none in PRE_2014_GIS_VERIFIED; massHeights absent",
+      "osm": "no OSM ways named Marshall Upper Apartments H/L",
+      "apple": "Apple snapshots marsh-h.jpg / marsh-l.jpg / marshall-upper.jpg z17–19 — finished Marshall Upper townhome cluster standing; mature canopy adjacent to roofs",
+      "probe": null
+    },
+    "severity": "low",
+    "suspected_class": "Canopy tail where the 5 m guard threshold misses by ~0.8–0.9 m — bodies already agree with GIS; risk is a future auto-admit of roofOf if someone adds them to PRE_2014_GIS_VERIFIED without checking hist.",
+    "epoch_risk": "Low — Apple confirms the 2014 townhome footprints. The 10 m p98 is canopy contamination (prior r0c1 already said so), not a rebuild."
+  },
+  {
+    "id": "stewart-multimodal-step",
+    "entity": "Stewart Hall",
+    "where": {"x": 817.2, "z": -691.6},
+    "claim": "GIS mass ships h=18.8 via massHeights[m:817,-692] over gisH=15.2 / L5. Host lidar.heights['Stewart Hall']=17.2.",
+    "observed": "Fresh EPT: 3,196 pts, roofOf=18.7, p50=12.1, p75=15.0, p98=18.7, guard=false, bodyTight=false, massOk=true. Histogram is multi-modal: 9 m:678, 15 m:619, 12 m:576 — no single dense plane. Shipped 18.8 ≈ roofOf at the high end of a stepped Warren residence.",
+    "evidence": {
+      "lidar": "gis:Stewart 3196 pts roofOf=18.7 p50=12.1 p75=15 p98=18.7 bodyTight=false; hist 9m:678 15m:619 12m:576; massHeights[m:817,-692]=18.8; host lidar.heights=17.2",
+      "gis": "Stewart Hall gisH=15.2 levels=5 area≈1064",
+      "osm": "Stewart Hall way osmH=9 lidarH=17.2",
+      "apple": "Apple snapshot stewart.jpg z18 at 32.884258,-117.232461 — finished Warren residential cluster on the canyon edge; standing today",
+      "probe": null
+    },
+    "severity": "low",
+    "suspected_class": "Stepped multi-wing residence where roofOf picks the high wing — measurable but not a clean one-plane disagreement; siblings Bates/Brown/Harlan show the same bodyTight=false pattern and already ship their roofOf values.",
+    "epoch_risk": "Low — Warren halls are pre-2014 and Apple shows them finished. Multi-modality is stepped roofs on grade, not an epoch miss."
+  }
+]

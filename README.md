@@ -532,6 +532,22 @@ Sanford's lab-bar "mechanical overheight" — the dense 19 m deck and the 22–2
 are both real on today's Apple; without a parts split, trading the pinned 24.5 for the deck
 would paste the other way. Pavilion stays 6.2.
 
+**The North-campus re-sweep (2026-08-05, r0c1).** Warren / Rady / Marshall Upper / Spanos /
+Asante — a second pass after the first r0c1 sweep closed the union-outline holes. Every
+candidate re-derived from a full-depth targeted EPT re-sample before judgement.
+
+| Entity | Was shipping | Now ships | Why |
+|---|---|---|---|
+| Asante House Meeting Rooms | 7.1 m (`massHeights` p98) | **4.0 m** | 88 % of 1,854 returns in a 3–4 m band matching the L1 record; p98 rode 43 points in the 7 m bin (gap 3.1 under the 5 m canopy guard). Thin-shelf rule: body tight + gap > 2.5 + dense 2 m band ≥ 85 % → p75. |
+
+Rejected, each re-measured: Spanos APC "needs a multi-storey estimate" — TCA project profile
+says Number of Floors 1, tallest panel 24 ft 6 in; the 4.4 m audit (and the eucalyptus bar)
+stands. Otterson / Copley "dense deck vs roofOf" — real upper volumes (plant/solar; stepped
+conference), dense bands 74 % / 79 % under the 85 % cut. Marshall Upper H/L canopy tails —
+bodies already match GIS 6.1; pinned against a future auto-admit. Stewart multi-modal —
+stepped Warren residence, no single plane to prefer. Roof-anchor class — still the
+cross-shard renderer handoff (Hopkins / Canyon Vista admin / Cuzco / VE4).
+
 ### The colours, measured off footage
 
 Satellite imagery sees roofs and ground; it cannot see a wall, a tree trunk, or the sky. For

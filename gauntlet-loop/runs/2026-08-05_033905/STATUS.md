@@ -10,3 +10,4 @@
 | 1 | r0c0 | 3 | cursor-grok-4.5-high | 4/5/0 | cursor-grok-4.5-high | dd7caa8 | ~25m |
 
 **r0c0 re-sweep judged without Fable — see `REAUDIT.md`.**
+| 1 | r0c0 | 1 | cursor-grok-4.5-high | 4/5/0 | cursor-grok-4.5-high | 144e487 | 22m22s |

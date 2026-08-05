@@ -57,3 +57,72 @@ the screener's `/tmp/gauntlet-r0c0/apple/`.
   check — Ext H/K/M read clean ~3.4–3.6 planes vs 4.3 records (Δ≤0.9, noise line); Ext J/N are
   canopy-stepped. Not height bugs at the Δ≥3 bar this pass used; leave for a quieter pass if
   needed.
+
+---
+
+# FINDINGS — run `2026-08-05_033905` · shard r0c1 (re-sweep)
+
+Pass 1 re-sweep of the North campus shard (Warren / Rady / Marshall Upper / Spanos / Asante).
+Screen: 7 candidates (1 high / 4 medium / 2 low). Judged by `cursor-grok-4.5-high`.
+
+Every candidate in `pass1-r0c1.screen.json` was re-derived before judgement with an independent
+full-depth targeted EPT re-sample (13 targets in `.cache/gauntlet-r0c1b/judge/reprobe.*`; point
+counts matched the screener's `/tmp/gauntlet-r0c1/probe.out` exactly), Apple snapshots from the
+screener's `/tmp/gauntlet-r0c1/apple/`, and a non-LiDAR source check for the Spanos APC claim.
+
+### Fixed — heights (class rule, not a one-row patch)
+
+| Entity | Was shipping | Now ships | Source | Test |
+|---|---|---|---|---|
+| Asante House Meeting Rooms (`asante-meet-overheight`) | 7.1 m massHeights p98 | **4.0 m** | Thin-shelf massHeights rule in `build-campus-lidar.mjs`: body tight + (p98−p75) > 2.5 + dense 2 m band ≥ 85% → p75. Re-sample: 1,854 pts, 88% in 3–4 m, p50=p75=4.0, p98=7.1 (43 pts in the 7 m bin). GIS L1=4.3. Apple: finished low pad among Asante / Great Hall today. | epoch §19 |
+
+The same rule would take Marshall Upper H/L to their dense 6.1 bodies if a future pass ever
+auto-admitted their canopy p98 (10.3 / 10.2) — those masses do not ship massHeights today; the
+test pins the rendered GIS bodies so the next agent cannot paste the tree.
+
+### Rejected candidates (each re-measured before rejection; do not re-find these)
+
+- **`spanos-apc-gis-l1-vs-finished`** — REJECTED. Screen claimed Apple shows a multi-storey
+  finished building needing `ESTIMATED_POST_2014`. Independent check: Tilt-Up Concrete
+  Association project profile #6097 lists **Number of Floors: 1**, footprint 6,740 sq ft,
+  tallest panel 24 ft 6 in (7.47 m) — a high-bay one-storey tilt-up opened Oct 2015. The
+  11–16 m 2014 smear over the APC ring remains the eucalyptus cleared for it (prior r1c0 /
+  README / epoch §12). `HAND_AUDITED` 4.4 and the massHeights bar stand. Do not re-admit
+  roofOf=16.
+- **`copley-dense-body-vs-roofof`** — REJECTED. Dense band 79% in 5–7 m (under the 85%
+  thin-shelf cut); upper shelf is a real stepped conference volume, Sanford-class. Ships
+  roofOf 10.6. GIS L1=4.3 understates both planes; pasting the dense body would flatten the
+  high volume the other way.
+- **`otterson-dense-deck-vs-roofof`** — REJECTED. Dense deck ~15.7 with ~21% of returns on a
+  17–18 m plant/solar shelf (Apple shows solar on the SE roof). Dense band 74% — under the
+  cut. Ships roofOf 18.9. Same Sanford mechanical verdict.
+- **`roof-anchor-class`** — REJECTED as in-scope fix; RE-LOGGED as handoff. Grade audit still
+  finds exactly four in-shard masses past 2 m (Hopkins Parking +3.17, Canyon Vista admin
+  +2.93, Cuzco −2.55, VE4 −2.34). Bases per-vertex safe. Renderer change
+  (`roofY = rimMedian + h`) is cross-shard and belongs to a dedicated pass — prior r0c1 /
+  r0c2 FINDINGS unchanged.
+- **`marshall-upper-hl-canopy-guard`** — REJECTED as a current height bug (bodies already
+  ship GIS 6.1). Documented and pinned in §19 so a future `PRE_2014_GIS_VERIFIED` admission
+  cannot silently take roofOf's unguarded p98. Prior r0c1 FINDINGS already said this.
+- **`stewart-multimodal-step`** — REJECTED. Multi-modal hist (9 / 12 / 15 m peaks),
+  bodyTight=false — a stepped Warren residence on grade, same pattern as Bates/Brown/Harlan.
+  roofOf at the high wing is the measurable answer; no single plane to prefer.
+
+### Withheld (better absent than wrong)
+
+None this pass. The one fix had a clean dense body; every other candidate either already
+ships the right answer or is a real upper volume / date / renderer-class question.
+
+### Handoffs / observations
+
+- **Roof-anchor class** (Hopkins Parking, Canyon Vista admin, Cuzco, VE4, plus r0c2's
+  osm:502/−2.7 and osm:509/+1.9): still open for a cross-shard renderer pass.
+- **Asante Hall rename**: the Meeting Rooms / West / East GIS masses all render under the
+  OSM host name "Asante Hall". West/East are the residential wings; Meeting Rooms is a
+  distinct university building whose centroid falls in the same outline. Height is fixed;
+  identity is OSM-name-authority behaviour (same shape as other complex outlines), not a
+  Spanos-style theft of a name another mass already wears. Leave unless Sahir wants the
+  university meeting-rooms label kept.
+- **Thin-shelf rule campus-wide**: next full `build:lidar` applies it to every mass. This
+  pass spliced the one in-shard hit (`m:-85,-666`) after re-deriving it; Marshall H/L are
+  protected by the test without shipping a plane today.
