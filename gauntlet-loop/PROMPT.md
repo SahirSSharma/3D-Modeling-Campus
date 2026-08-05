@@ -229,6 +229,25 @@ Marshall's four are far from it, so this specific mistake cannot recur silently.
 inference rather than a source, say so and leave it. Sahir is the authority on what belongs to
 which college, and asking him costs a sentence.
 
+### Affiliation ledger — the only affiliations we actually have a source for
+
+Everything here came from Sahir directly. **Nothing may be added to this table by inference.** If
+you need an affiliation that is not listed, it is unknown — say so and move on.
+
+| Building | College | Source |
+|---|---|---|
+| Sankofa, Pulse, Podemos, Azad, Survivance | **Eighth** | Sahir, 2026-08-04 |
+| Alianza, Umoja, Coalition, Malk Hall | **Thurgood Marshall** | Sahir, 2026-08-04 |
+| Mosaic | **Sixth** | Sahir, 2026-08-04 |
+| The Jeannie (auditorium — a venue, not housing) | near Marshall and Sixth; affiliation not stated | Sahir, 2026-08-04 |
+
+**Known gap, do not paper over it:** only three colleges have place anchors at all — Thurgood
+Marshall, Eleanor Roosevelt and Eighth. Sixth, Revelle, Muir, Warren and Seventh have none, though
+`Revelle Plaza`, `Warren Mall` and `Muir Lane` exist as separate landmarks. Adding a college anchor
+is legitimate ONLY from an OSM feature that is itself named for the college (a name and a location,
+which is OSM's job). Deriving one by deciding which buildings "look like" that college's is the
+exact mistake documented above.
+
 ## Definition of done — falsifiable, not aspirational
 
 A region only counts as done when ALL of:
