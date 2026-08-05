@@ -12,6 +12,7 @@ cd "$(dirname "$0")/.."
 INTERVAL="${1:-1800}"
 echo "[progress] watching, every ${INTERVAL}s — writes gauntlet-loop/PROGRESS.md"
 
+MISSES=0
 while true; do
   node scripts/gauntlet-progress.mjs || echo "[progress] generator failed; will retry next tick"
 
@@ -19,9 +20,22 @@ while true; do
   # the file before this exits. `pgrep -f` needs a pattern that actually matches
   # the real argv — a pgrep that silently never matches would look identical to
   # a finished run and stop the watcher early.
-  if ! pgrep -f "gauntlet-route.sh" > /dev/null; then
-    echo "[progress] driver is gone — wrote the final snapshot, stopping."
-    exit 0
+  #
+  # A single miss is not death. The reorder supervisor stops one driver and
+  # starts another, and a tick landing in that few-second gap would end the
+  # watcher for the night. Require two misses a minute apart, and count the
+  # supervisor as life since it is about to produce a driver.
+  if pgrep -f "gauntlet-route.sh" > /dev/null || pgrep -f "gauntlet-reorder.sh" > /dev/null; then
+    MISSES=0
+  else
+    MISSES=$(( MISSES + 1 ))
+    if (( MISSES >= 2 )); then
+      echo "[progress] driver gone for two checks — wrote the final snapshot, stopping."
+      exit 0
+    fi
+    echo "[progress] no driver seen (miss $MISSES/2) — rechecking in 60s"
+    sleep 60
+    continue
   fi
   sleep "$INTERVAL"
 done

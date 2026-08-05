@@ -144,7 +144,13 @@ if (cur) {
 
 /* ----------------------------------------------------------------- the budget */
 const POOL_M = 373, BUDGET_M = 190, ADJ_ASSUMED_M = 6;
-const quotaRaw = read(path.join(LOOP, ".quota")).replace(/[^0-9.]/g, "");
+/* Overnight the reading is parked at .quota.paused so a frozen number cannot
+   hold tier 1 while nobody is watching the dashboard. It is still the last
+   thing known to be true, so it is still what gets reported — labelled stale. */
+const quotaLive = read(path.join(LOOP, ".quota")).replace(/[^0-9.]/g, "");
+const quotaParked = read(path.join(LOOP, ".quota.paused")).replace(/[^0-9.]/g, "");
+const quotaRaw = quotaLive || quotaParked;
+const quotaStale = !quotaLive && !!quotaParked;
 const usedPct = quotaRaw ? +quotaRaw : null;
 const leftM = usedPct == null ? null : POOL_M * (1 - usedPct / 100);
 const leftBudgetPct = leftM == null ? null : Math.max(0, Math.round((leftM / BUDGET_M) * 100));
@@ -253,7 +259,7 @@ L.push(`## Budget`);
 L.push("");
 L.push("```");
 if (usedPct != null) {
-  L.push(`Other Models  ${bar(usedPct, 100)}   ${usedPct}% used, ~${Math.round(leftM)}M left of ${POOL_M}M`);
+  L.push(`Other Models  ${bar(usedPct, 100)}   ${usedPct}% used${quotaStale ? " AS OF THE LAST READING" : ""}, ~${Math.round(leftM)}M left of ${POOL_M}M`);
   L.push(`run budget    ${bar(BUDGET_M - Math.min(BUDGET_M, leftM), BUDGET_M)}   ${leftBudgetPct}% of the ${BUDGET_M}M run budget still available`);
 } else {
   L.push(`no reading in gauntlet-loop/.quota — the router is estimating instead`);
@@ -270,7 +276,13 @@ if (adjCost) {
 if (adjLeft != null) L.push(`- ~**${adjLeft}** Fable adjudications left; tier 2 in **${tripAt(25)}**, tier 3 in **${tripAt(10)}**`);
 L.push(`- Grok screening bills the **Cursor Models** pool, which is effectively free at this scale — the bar above is only the expensive half.`);
 L.push("");
-L.push(`Update it by writing the dashboard percentage into \`gauntlet-loop/.quota\`. A real reading always beats the router's own estimate.`);
+if (quotaStale) {
+  L.push(`- ⚠️ **the reading above is stale and the router is NOT using it.** It is parked at \`.quota.paused\` so a number frozen overnight could not hold tier 1 while nobody was checking the dashboard. Routing is running off the odometer, hard-capped at ~2 Fable adjudications.`);
+}
+L.push("");
+L.push(quotaStale
+  ? `Hand control back to the dashboard by writing a fresh percentage into \`gauntlet-loop/.quota\` — a real reading beats the odometer, and the router picks it up on the next shard without a restart.`
+  : `Update it by writing the dashboard percentage into \`gauntlet-loop/.quota\`. A real reading always beats the router's own estimate.`);
 L.push("");
 
 L.push(`## Remaining work`);
@@ -294,6 +306,28 @@ if (fit && sweepMinutes) {
   L.push(`Not enough finished shards to fit a rate yet.`);
 }
 L.push("");
+
+/* The one section worth reading after being away: what actually changed, in
+   commit order, with the judge that produced it. */
+L.push(`## What landed`);
+L.push("");
+const landed = sh(`git log --format=%h%x09%ad%x09%s --date=format:%H:%M origin/main..HEAD`)
+  .split("\n").filter(Boolean).map((l) => l.split("\t"));
+if (landed.length) {
+  L.push(`${landed.length} commit${landed.length === 1 ? "" : "s"} ahead of \`origin/main\`, none pushed:`);
+  L.push("");
+  for (const [sha, when, subject] of landed) L.push(`- \`${sha}\` ${when} — ${subject}`);
+} else {
+  L.push(`Nothing ahead of \`origin/main\`.`);
+}
+L.push("");
+const reaudit = read(path.join(cur?.dir ?? "", "REAUDIT.md")).split("\n").filter((l) => l.startsWith("- pass"));
+if (reaudit.length) {
+  L.push(`**${reaudit.length} shard${reaudit.length === 1 ? "" : "s"} judged without Fable** — these carry less judgement than the rest and should be re-audited first:`);
+  L.push("");
+  for (const r of reaudit) L.push(r);
+  L.push("");
+}
 
 L.push(`## Per-shard`);
 L.push("");

@@ -126,6 +126,25 @@ const POST_2014_SITES = new Set([
   "RIMAC Annex",
 ]);
 
+/* Post-2014 sites keyed by OSM ring INDEX — for what a name cannot say.
+   POST_2014_SITES is a set of NAMES, and two of this campus's post-2014
+   buildings cannot be named without also naming something older: one shares
+   its OSM name with a pre-2014 twin, the other has no name at all. Index
+   entries ride the same campus-3d.json coupling that OSM_UNNAMED_VERIFIED
+   and partHeights already do. Each entry cites what it is (r1c2 judge
+   sweep, 2026-08-04):
+   954: the second "Spinal Cord Injury Building" ring — the VA's replacement
+        SCI/CLC hospital, built 2021-2026 (accepted from the builder July
+        2026), standing finished on today's Apple. The 2014 returns under it
+        (p50 1.2, p90 10.6) are the lot and the low predecessor structures
+        it replaced. Its 1990s namesake at osm:223 is a real 2014 building
+        and measures separately through the per-index path below.
+   833: the unnamed multi-deck garage south of the VA hospital, opened 2023
+        with the SCI project. The flight read p50 0 — a surface lot — so the
+        ring keeps its stated area guess of 16, in family with the r1c1
+        verdict on the VA's other garage (osm:438). */
+const POST_2014_OSM_RINGS = new Set([954, 833]);
+
 /* GIS masses verified PRE-2014 by hand (r0c1 sweep, 2026-08-04) whose ring
    has neither a named-OSM host nor an exact OSM name twin — the two paths
    the epoch guard normally answers through. For each name below the build
@@ -194,6 +213,40 @@ const PRE_2014_GIS_VERIFIED = new Set([
      returns, p75 11.8 to p98 13.0). T House East answers through its own
      ring; this one has none. */
   "Tuolumne Apartments - T House North",
+  /* r1c2 judge sweep (2026-08-04). Hostless records on the Matthews /
+     health-campus shard wearing the levels-derived default (4.27 m a
+     storey) while the flight reads a clean plane off each roof. Build
+     dates documented; Apple (2026-08-04) shows each standing unchanged
+     on its 2014 footprint.
+     Matthews Apartments B/D/E: 1972 student housing, still occupied.
+     Their OSM letter-rings ("B", "D", "E") are drawn offset enough that
+     no centroid answers, so the records stood at 6.1 while the planes
+     read 8.5-8.7 (A and C already measure through their letter-ring
+     hosts at 8.6 each).
+     Campus Point Parking Structure West: complete in the 2014 flight —
+     12,626 returns, p50 12.9 to p98 14.4, a finished deck stack — unlike
+     its East sibling, which went up with Jacobs Medical Center and stays
+     in POST_2014_SITES. The 21.3 record is five levels at the 4.27
+     default; a garage's decks pitch ~2.9 m and the measured stack is
+     14.4.
+     East Campus Utilities Plant: the ~2000 plant block (record 4.3,
+     plane 8.2). Its 2016 Expansion is a separate post-2014 mass and is
+     deliberately NOT here: the 7.5 m of 2014 returns under the Expansion
+     footprint are its predecessor, not it, and no admissible source
+     resolves the finished structure — the record stands, stated as a
+     record.
+     9435 Modular Offices: the trailer banks north of Sulpizio, on their
+     2014 footprint today. Record 8.5 — two "storeys" for single-storey
+     trailers; the plane is 3.8.
+     Stuart Collection Storage: the campus-services shed (university
+     building 91, in the CSC yard's generation). Record 8.5, plane 4.3. */
+  "Matthews Apartments B",
+  "Matthews Apartments D",
+  "Matthews Apartments E",
+  "Campus Point Parking Structure West",
+  "East Campus Utilities Plant",
+  "9435 Modular Offices",
+  "Stuart Collection Storage",
 ]);
 
 /* A facilities record that models a building as a whole-footprint ring PLUS
@@ -288,7 +341,22 @@ const MEASURE_MINUS_CONTAINED = {
    objects. The garage postdates the flight, so no 2014 number may ship
    and the ring keeps its stated area guess of 20, in family with a
    five-deck garage. (The Google chunk over this footprint is censored —
-   federal facility — so Apple is the only current view of it.) */
+   federal facility — so Apple is the only current view of it.)
+   r1c2 judge sweep (2026-08-04) — two unnamed rings on the VA / health
+   corridor, each standing identically on today's Apple:
+     764: the VA campus plant building east of the hospital (a 19-vertex
+        ring, 8,426 returns): p50 6.9 under a roofOf of 9.7, against a
+        12 m area guess.
+     775: the small modular beside the 9435 banks north of Sulpizio
+        (650 returns, p50 3.8, roofOf 3.9; guessed 4.5).
+   Verified and deliberately NOT here: 833 (the VA's 2023 garage — see
+   POST_2014_OSM_RINGS), 762 (a 197 m² service structure between
+   Sulpizio and the bed tower: three-quarters of its returns are
+   neighbour bleed up to 24 m, and the dense band's p50 of 4.8 agrees
+   with the 4.5 guess it already wears), and 365 (the ring beside the
+   Mesa Nueva towers, the same bleed shape — p50 17.9 over what the
+   record and Apple both read as low structures; the 8.4 guess stands
+   because the laser cannot see past the towers). */
 const OSM_UNNAMED_VERIFIED = new Set([
   786, 893,
   0, 55, 63, 113, 119, 132, 186, 204, 453, 501, 502, 504, 505, 506, 507,
@@ -303,6 +371,7 @@ const OSM_UNNAMED_VERIFIED = new Set([
   1025, 1026, 1027, 1029, 1030, 1031, 1088, 1090, 1091, 1092, 1095, 1386,
   1387, 1388,
   224, 826,
+  764, 775,
 ]);
 
 /* Hand-audited stats where the automatic roofOf() percentile choice is
@@ -590,11 +659,16 @@ async function build() {
      a matching name stay unchallenged, as before: with no name there is no
      way to know the site's build date, and a 2014 return off a newer
      building's predecessor is the exact lie the epoch rule exists to stop. */
-  const namedByName = new Map(namedLocalRings.map((b) => {
+  /* All rings per name, not a Map that keeps only the last: a duplicate OSM
+     name must resolve to the NEARBY twin, not to whichever ring the loader
+     happened to visit last (the same collision the heights emission fixes). */
+  const namedByName = new Map();
+  for (const b of namedLocalRings) {
     let x = 0, z = 0;
     for (const p of b.p) { x += p[0]; z += p[1]; }
-    return [b.n, { ...b, c: [x / b.p.length, z / b.p.length] }];
-  }));
+    if (!namedByName.has(b.n)) namedByName.set(b.n, []);
+    namedByName.get(b.n).push({ ...b, c: [x / b.p.length, z / b.p.length] });
+  }
   const massTargets = [];
   for (const m of arcgisData?.massing || []) {
     const ring = m.r[0].map(([x, z]) => [x / 10, z / 10]);
@@ -603,19 +677,22 @@ async function build() {
     cx /= ring.length; cz /= ring.length;
     const host = namedLocalRings.find((b) => inLocalRing(cx, cz, b.p));
     let hostName = host?.n ?? null;
+    let hostBi = host?.bi ?? null;
     if (!hostName) {
-      const twin = namedByName.get(m.n);
-      if (twin && Math.hypot(twin.c[0] - cx, twin.c[1] - cz) < 150) hostName = m.n;
+      const twin = (namedByName.get(m.n) || [])
+        .find((b) => Math.hypot(b.c[0] - cx, b.c[1] - cz) < 150);
+      if (twin) { hostName = m.n; hostBi = twin.bi; }
     }
     /* epoch answered by the hand-verified build date instead of a host */
     if (!hostName && PRE_2014_GIS_VERIFIED.has(m.n)) hostName = m.n;
     if (!hostName) continue; // no named host: today's GIS value stands unchallenged
     if (POST_2014_SITES.has(hostName)) continue; // the flight predates the building
+    if (hostBi !== null && POST_2014_OSM_RINGS.has(hostBi)) continue; // per-ring epoch answer
     if (hostName in HAND_AUDITED) continue; // the audited value already answers
     const t = addTarget(ring, `m:${Math.round(cx)},${Math.round(cz)}`, null);
     if (t) {
       t.isMass = true;
-      t.bi = (host ?? namedByName.get(hostName))?.bi ?? -1;
+      t.bi = hostBi ?? -1;
       const minus = MEASURE_MINUS_CONTAINED[m.n];
       if (minus) {
         t.exclude = (arcgisData.massing || [])
@@ -736,6 +813,19 @@ async function build() {
   const osmHeights = {};
   const measured = [];
   const baseByBuilding = new Map();
+  /* OSM names are not unique. Nine names on this campus belong to two rings
+     each (both halves of Earth Hall and of the Salk Institute, paired
+     greenhouses, the two Spinal Cord Injury Buildings…), and a name-keyed
+     heights entry is then a last-writer-wins race: whichever ring the loop
+     visits second overwrites the first. Both SCI footprints shipped the
+     southern ring's 6.4 m — the plane of a mostly-empty post-2014 site —
+     while the 1990s building at osm:223 measures 17.2 (r1c2 judge sweep,
+     2026-08-04). A collided name emits per ring INDEX instead, and the
+     renderer prefers the index. HAND_AUDITED stays name-level ON PURPOSE:
+     its one collided entry (Spanos) is an audit of the shared name's whole
+     situation, written knowing both rings. */
+  const dupNames = new Map();
+  for (const b of campus.buildings) if (b.n) dupNames.set(b.n, (dupNames.get(b.n) || 0) + 1);
   for (const t of targets) {
     if (!t.isHost) continue;
     /* Too few returns to trust — a narrow building under tree cover,
@@ -752,12 +842,18 @@ async function build() {
     measured.push({ n: t.name, h, pts: t.roofs.length });
     if (!t.name) {
       const bi = Number(t.key.slice(1));
+      if (POST_2014_OSM_RINGS.has(bi)) continue; // the flight predates the building
       if (OSM_UNNAMED_VERIFIED.has(bi)) osmHeights[bi] = h;
       continue;
     }
     if (POST_2014_SITES.has(t.name)) continue; // building postdates the flight
     if (t.name in HAND_AUDITED) {
       if (HAND_AUDITED[t.name] !== null) heights[t.name] = HAND_AUDITED[t.name];
+      continue;
+    }
+    if ((dupNames.get(t.name) || 0) > 1) {
+      if (POST_2014_OSM_RINGS.has(t.bi)) continue; // per-ring epoch: the shared name cannot answer
+      osmHeights[t.bi] = h;
       continue;
     }
     heights[t.name] = h;
@@ -768,6 +864,7 @@ async function build() {
     if (t.isHost || t.isMass || t.roofs.length < 12) continue;
     const hostName = campus.buildings[t.bi]?.n;
     if (hostName && POST_2014_SITES.has(hostName)) continue; // same epoch rule
+    if (POST_2014_OSM_RINGS.has(t.bi)) continue; // same rule, per-ring form
     /* An UNNAMED host has no name to look up in POST_2014_SITES, so its
        parts answer the epoch question the way its slab does: through the
        per-index verification. Without this, Anderson Medical Pavilion
