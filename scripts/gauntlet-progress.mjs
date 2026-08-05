@@ -422,6 +422,90 @@ if (suspect.length || dangling.length) {
   }
 }
 
+/* ------------------------------------------------------------ road to ship
+   The gauntlet's own numbers answer "is the loop busy", which is not the
+   question. The question is how much of the campus is actually right, and what
+   still stands between here and Sahir pressing ship. Every row below is derived,
+   not asserted — an unknown prints as "unknown", because a roadmap that guesses
+   its own progress is worse than no roadmap. */
+const ship = [];
+const tick = (ok) => (ok === null ? "🔸" : ok ? "✅" : "⬜");
+
+/* 1. Does the shipped data reproduce from the code that claims to build it? */
+let repro = null;
+try {
+  const pkg = JSON.parse(read(path.join(ROOT, "package.json")));
+  repro = (pkg.scripts?.check ?? "").includes("--verify");
+} catch { repro = null; }
+ship.push([tick(repro), "Data reproduces from its builders",
+  repro === null ? "unknown — could not read package.json"
+  : repro ? "`npm run check` rebuilds and compares; drift exits 1. Judgements the measurement cannot make live in `MEASURED_OVERRIDES` with their evidence."
+  : "**no gate** — the shipped file can drift from the builder in silence"]);
+
+/* 2. The largest VISIBLE gap: buildings still extruded from an area guess. */
+let unnamed = null, measured = null;
+try {
+  const c3 = JSON.parse(read(path.join(ROOT, "docs/data/campus-3d.json")));
+  const lid = JSON.parse(read(path.join(ROOT, "docs/data/campus-lidar.json")));
+  const osm = lid.osmHeights ?? {};
+  unnamed = 0; measured = 0;
+  c3.buildings.forEach((b, i) => {
+    if (b.n) return;
+    unnamed++;
+    if (osm[String(i)] !== undefined) measured++;
+  });
+} catch { unnamed = null; }
+const backlog = unnamed === null ? null : unnamed - measured;
+ship.push([tick(backlog === null ? null : backlog === 0), "Unnamed buildings measured, not guessed",
+  backlog === null ? "unknown — could not read the campus data"
+  : `**${measured} of ${unnamed}** measured · **${backlog} still extruded from a flat area guess**. This is the biggest thing a person walking the campus would see, and the loop retires it 6–8 per pass.`]);
+
+/* 3. A clean pass: the loop's own definition of finished. */
+const lastPass = cur?.rows?.length ? Math.max(...cur.rows.map((r) => r.pass)) : null;
+const lastRows = (cur?.rows ?? []).filter((r) => r.pass === lastPass);
+const lastFindings = lastRows.reduce((t, r) => {
+  const m = (r.counts ?? "").match(/^(\d+)\/(\d+)\/(\d+)$/);
+  return t + (m ? +m[1] + +m[2] + +m[3] : 0);
+}, 0);
+const cleanPass = lastPass === null ? null : (lastRows.length >= ALL_SHARDS.length && lastFindings === 0);
+ship.push([tick(cleanPass), "A gauntlet pass finds nothing",
+  lastPass === null ? "unknown — no pass rows yet"
+  : `pass ${lastPass} closed with **${lastFindings} finding(s)** across ${lastRows.length}/${ALL_SHARDS.length} shards.` +
+    (lastFindings ? " Two mechanisms guarantee a non-empty pass: the curated epoch name-lists and the unnamed backlog above are both retired one building at a time." : "")]);
+
+/* 4. The independent panel. A reduced panel is explicitly NOT the full gate. */
+let panel = null, panelNote = "not run";
+try {
+  const p = path.join(ROOT, "gauntlet-loop/verify/latest/PANEL.md");
+  if (fs.existsSync(p)) {
+    const t = read(p);
+    const reduced = /REDUCED PANEL/.test(t);
+    const verdicts = [...t.matchAll(/\|\s*(fable|opus|sol|codex)\s*\|[^|]*\|[^|]*\|\s*([A-Z ]+?)\s*\|/g)]
+      .map((m) => `${m[1]}=${m[2].trim()}`);
+    panel = verdicts.length > 0 && !verdicts.some((v) => /FAIL|no verdict/.test(v)) && !reduced;
+    panelNote = verdicts.length
+      ? `${verdicts.join(", ")}${reduced ? " — ⚠️ **REDUCED panel, not the four-family gate**" : ""}`
+      : "PANEL.md exists but no verdicts parsed";
+  }
+} catch { panel = null; }
+ship.push([tick(panel), "Independent panel passes (4 families)", panelNote]);
+
+/* 5 & 6. His calls, and nobody else's. */
+ship.push(["⬜", "Sahir walks it and signs off", "the campus is judged by eye, at eye level — no gate substitutes for this"]);
+ship.push(["⬜", "Ship to production", "**his call alone.** Push guard armed; nothing is deployed without an explicit OK."]);
+
+L.push(`## Road to ship`);
+L.push("");
+L.push(`| | milestone | where it stands |`);
+L.push(`|---|---|---|`);
+for (const [t, name, note] of ship) L.push(`| ${t} | ${name} | ${note} |`);
+L.push("");
+const done = ship.filter((s) => s[0] === "✅").length;
+L.push(`**${done} of ${ship.length} clear.** ✅ met · ⬜ not met · 🔸 could not be determined.`);
+L.push("");
+L.push(`Ship requires **both** a clean pass and a panel pass — a clean loop with a failing panel is not a ship, and neither is the reverse.`);
+L.push("");
+
 L.push(`## Per-shard`);
 L.push("");
 L.push(`| shard | buildings | pass 1 | tier | screen h/m/l | judge | commit | actual | fitted |`);

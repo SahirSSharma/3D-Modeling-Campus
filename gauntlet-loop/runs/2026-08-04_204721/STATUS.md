@@ -8,3 +8,4 @@
 | pass | shard | tier | screen | high/med/low | judge | commit | duration |
 |---|---|---|---|---|---|---|---|
 | 1 | r1c1 | 1 | cursor-grok-4.5-high | 3/8/1 | claude-fable-5-thinking-max | 1147a4a | 70m53s |
+| 1 | r1c2 | 1 | cursor-grok-4.5-high | 3/10/4 | claude-fable-5-thinking-max | 550448f | 112m30s |

@@ -1,0 +1,155 @@
+[
+  {
+    "id": "villa-east-4.5-underheight-class",
+    "entity": "unnamed OSM pads osm:632/633/635–640/642/643/645–651 (Villa La Jolla Drive / Morning Way apartment connectors)",
+    "where": {"x": 600, "z": 1150},
+    "claim": "assembleMasses still extrudes this strip as src=osm area-guess h=4.5. None in lidar.osmHeights (indices not in OSM_UNNAMED_VERIFIED).",
+    "observed": "Fresh full-depth EPT on the strip: a shared ~8–10 m 2014 body under the 4.5 shed. Strict one-plane admits (bodyTight + gap≤2 + dense≥50 + |Δ|≥2): 642 roofOf=9.1 dense7=52.6%; 649 roofOf=9.3 dense7=50.9%; 651 roofOf=9.1 dense7=52%. Near-strict siblings (dense 39–48%, gap≤1.1, p75≈8.2–9.7): 632/633/635/636/637/638/639/640/643/645/646/647/648/650. Shipping 4.5 is −3.7…−6.0 m under roofOf. Nominatim: 642/640/639→8746 Villa La Jolla Dr; 649→8720 Villa La Jolla Dr; 633→3123 Morning Way. Apple villa-east-cluster.jpg z17 + osm642/649/651/640/633 z19 — finished multi-unit brown/charcoal gabled apartment roofs + pool/tennis fabric standing today; no crane.",
+    "evidence": {
+      "lidar": "strict: 642:895pts roofOf=9.1 p50=7.5 p75=8.2 gap=0.8 dense7=52.6%±88.4; 649:853/9.3/7.7/8.3/1.0/50.9%±90.7; 651:868/9.1/7.7/8.4/0.7/52%±87.9. Soft strip (gap≤1.1): 640:889pts roofOf=10.5 p75=9.6 dense8=42.6%; 633:909/10.4/9.5/43.6%; 638:948/10.3/9.6/43%; 639:860/10.4/9.7/39.8%±91.3; 636:922/8.9/8.2/48.4%; 632:931/9.3/8.4/46.7%. osmHeights[i]=undefined for all",
+      "gis": null,
+      "osm": "unnamed rings shipH=4.5 area≈323–359; Nominatim Villa La Jolla Drive / Morning Way addresses",
+      "apple": "Apple /tmp/gauntlet-r2c1-p3/apple/villa-east-cluster.jpg z17 + osm642.jpg osm649.jpg osm651.jpg osm640.jpg osm633.jpg z19 — finished Villa La Jolla multi-unit roofs, pools, tennis; no crane",
+      "probe": "strict filter PASSes = {642,649,651}; 14 near-strict siblings same strip; /tmp/gauntlet-r2c1-p3/probe.json"
+    },
+    "severity": "high",
+    "suspected_class": "Unnamed OSM under-tag cluster — Boardwalk/Mesa (518) family continuing east onto Villa La Jolla / Morning Way under a shared ~9 m 2014 plane.",
+    "epoch_risk": "Low for existence — Apple and 2014 both describe standing multi-storey apartments. Disagreement is guess vs laser, not a rebuild date. Soft siblings under dense≥50 should admit via p75/dense body, not unguarded roofOf."
+  },
+  {
+    "id": "osm-642-underheight",
+    "entity": "unnamed osm:642 (8746 Villa La Jolla Drive connector)",
+    "where": {"x": 626.3, "z": 1123.3},
+    "claim": "OSM area guess ships h=4.5 (src=osm); not in OSM_UNNAMED_VERIFIED.",
+    "observed": "Fresh full-depth EPT (895 pts): roofOf=9.1, p50=7.5, p75=8.2, p98=9.1, gap=0.8, bodyTight=true, massOk=true, dense 7 m bin 52.6% ±1=88.4%. Shipping 4.5 is −4.6 m under roofOf / −3.7 under p75. Strict one-plane PASS. Nominatim → 8746 Villa La Jolla Drive.",
+    "evidence": {
+      "lidar": "osm:642 895 pts roofOf=9.1 p50=7.5 p75=8.2 p98=9.1 gap=0.8 dense7=52.6%±88.4 bodyTight massOk; hist 7:471 8:277; lidar.osmHeights[642] absent",
+      "gis": null,
+      "osm": "index 642 unnamed h=4.5 area≈350; Nominatim → 8746 Villa La Jolla Drive",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c1-p3/apple/osm642.jpg z19 at 32.867841,-117.234501 (2627 kB, centerRGB=99,99,96 ent=7.47) — finished multi-unit gabled roofs standing today",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Exemplar of the Villa La Jolla east 4.5→~9 under-tag class.",
+    "epoch_risk": "Low — standing pre-2014 apartment fabric on Apple and LiDAR."
+  },
+  {
+    "id": "osm-649-underheight",
+    "entity": "unnamed osm:649 (8720 Villa La Jolla Drive connector)",
+    "where": {"x": 611.8, "z": 1178.3},
+    "claim": "OSM area guess ships h=4.5 (src=osm); not in OSM_UNNAMED_VERIFIED.",
+    "observed": "Fresh full-depth EPT (853 pts): roofOf=9.3, p50=7.7, p75=8.3, p98=9.3, gap=1.0, bodyTight=true, massOk=true, dense 7 m bin 50.9% ±1=90.7%. Shipping 4.5 is −4.8 m under roofOf. Strict one-plane PASS. Nominatim → 8720 Villa La Jolla Drive.",
+    "evidence": {
+      "lidar": "osm:649 853 pts roofOf=9.3 p50=7.7 p75=8.3 p98=9.3 gap=1.0 dense7=50.9%±90.7 bodyTight massOk; hist 7:434 8:282; lidar.osmHeights[649] absent",
+      "gis": null,
+      "osm": "index 649 unnamed h=4.5 area≈331; Nominatim → 8720 Villa La Jolla Drive",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c1-p3/apple/osm649.jpg z19 at 32.867344,-117.234656 (2870 kB, centerRGB=99,97,93 ent=7.44) — finished charcoal/brown gabled apartment roofs + pool/tennis fabric today",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Same Villa La Jolla east 4.5 under-tag class.",
+    "epoch_risk": "Low — not a date conflict."
+  },
+  {
+    "id": "osm-651-underheight",
+    "entity": "unnamed osm:651 (Villa La Jolla Drive connector)",
+    "where": {"x": 632.5, "z": 1178.8},
+    "claim": "OSM area guess ships h=4.5 (src=osm); not in OSM_UNNAMED_VERIFIED.",
+    "observed": "Fresh full-depth EPT (868 pts): roofOf=9.1, p50=7.7, p75=8.4, p98=9.1, gap=0.7, bodyTight=true, massOk=true, dense 7 m bin 52% ±1=87.9%. Shipping 4.5 is −4.6 m under roofOf. Strict one-plane PASS. Sibling of 649 on the same row.",
+    "evidence": {
+      "lidar": "osm:651 868 pts roofOf=9.1 p50=7.7 p75=8.4 p98=9.1 gap=0.7 dense7=52%±87.9 bodyTight massOk; hist 7:451 8:297; lidar.osmHeights[651] absent",
+      "gis": null,
+      "osm": "index 651 unnamed h=4.5 area≈323; Nominatim → Villa La Jolla Drive",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c1-p3/apple/osm651.jpg z19 at 32.867339,-117.234435 (2821 kB) — finished interlocking apartment roofs standing today",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Same Villa La Jolla east 4.5 under-tag class.",
+    "epoch_risk": "Low."
+  },
+  {
+    "id": "osm-600-underheight",
+    "entity": "unnamed osm:600 (3139 Evening Way pad)",
+    "where": {"x": 434.1, "z": 1024.4},
+    "claim": "OSM area guess ships h=4.5 (src=osm); not in OSM_UNNAMED_VERIFIED.",
+    "observed": "Fresh full-depth EPT (600 pts): roofOf=9.4, p50=8.2, p75=8.7, p98=9.4, gap=0.7, bodyTight=true, massOk=true, dense 8 m bin 51.7% ±1=82.3%. Shipping 4.5 is −4.9 m under a textbook single plane. Strict one-plane PASS. Soft sibling osm:601 (612 pts roofOf=8.7 dense7=43%) on the same Evening Way strip. Nominatim → 3139 Evening Way. Apple osm600.jpg — finished tan multi-unit roofs + pool fabric standing today.",
+    "evidence": {
+      "lidar": "osm:600 600 pts roofOf=9.4 p50=8.2 p75=8.7 p98=9.4 gap=0.7 dense8=51.7%±82.3 bodyTight massOk; sibling 601:612pts roofOf=8.7 p75=8.1 dense7=43%; osmHeights absent",
+      "gis": null,
+      "osm": "index 600 unnamed h=4.5 area≈256; Nominatim → 3139 Evening Way",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c1-p3/apple/osm600.jpg z19 at 32.868736,-117.236557 (2560 kB, centerRGB=101,100,96 ent=7.47) — finished tan hipped apartment roofs + kidney pool today; no crane",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Unnamed under-tag on the Evening Way / Residence Inn periphery — same 4.5 shed vs ~9 m plane as Villa La Jolla east.",
+    "epoch_risk": "Low — Apple and 2014 agree a finished multi-unit pad sits here."
+  },
+  {
+    "id": "osm-1239-overheight",
+    "entity": "unnamed osm:1239 (8946 La Jolla Scenic Drive North)",
+    "where": {"x": 43.9, "z": 995.4},
+    "claim": "OSM area guess ships h=9 (src=osm); not in OSM_UNNAMED_VERIFIED.",
+    "observed": "Fresh full-depth EPT (917 pts): roofOf=4.0, p50=3.2, p75=3.6, p98=4.0, gap=0.5, bodyTight=true, massOk=true, dense 3 m bin 61.6% ±1=96.8%. Shipping 9 is +5.0 m over a clean low plane (hist 2:277 3:565 4:46). Strict one-plane PASS as overheight. Nominatim → 8946 La Jolla Scenic Drive North. Apple osm1239.jpg — finished residential roofs with courtyard opening and solar standing today; no crane.",
+    "evidence": {
+      "lidar": "osm:1239 917 pts roofOf=4.0 p50=3.2 p75=3.6 p98=4.0 gap=0.5 dense3=61.6%±96.8 bodyTight massOk; hist dominated by 2–3 m bins; osmHeights[1239] absent",
+      "gis": null,
+      "osm": "index 1239 unnamed h=9 area≈407; Nominatim → 8946 La Jolla Scenic Drive North",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c1-p3/apple/osm1239.jpg z19 at 32.868998,-117.240730 (2800 kB, centerRGB=101,102,97 ent=7.4) — finished residential fabric with courtyard / solar today",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Unnamed area-guess overheight — 9 m guess over a measured ~4 m 2014 body (possible courtyard-ring or true low pad).",
+    "epoch_risk": "Non-trivial — Apple shows finished multi-wing residential fabric today. The 2014 plane at ~4 m could be a courtyard/carport sampling of a ring that now holds a taller house, or a true low structure the 9 m guess overstates. Do not treat Apple's apparent storey count as a height source; judge whether the OSM ring is the building body or a courtyard enclosure."
+  },
+  {
+    "id": "osm-1305-overheight",
+    "entity": "unnamed osm:1305 (8835 Robinhood Lane)",
+    "where": {"x": -7.1, "z": 1203.0},
+    "claim": "OSM area guess ships h=9 (src=osm); not in OSM_UNNAMED_VERIFIED.",
+    "observed": "Fresh full-depth EPT (955 pts): roofOf=5.3, p50=3.5, p75=5.3, p98=5.3, gap=0.1, bodyTight=true, massOk=true, dense 3 m bin 60.8% (bimodal hist 3:581 + 5:333). Shipping 9 is +3.7 m over roofOf / +5.5 over the dense 3 m mode. Strict one-plane PASS as overheight. Nominatim → 8835 Robinhood Lane. Apple osm1305.jpg — finished Torrey Pines single-family roofs with solar + pools standing today.",
+    "evidence": {
+      "lidar": "osm:1305 955 pts roofOf=5.3 p50=3.5 p75=5.3 p98=5.3 gap=0.1 dense3=60.8%±61.6 bodyTight massOk; hist 3:581 5:333; osmHeights[1305] absent",
+      "gis": null,
+      "osm": "index 1305 unnamed h=9 area≈405; Nominatim → 8835 Robinhood Lane",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c1-p3/apple/osm1305.jpg z19 at 32.867120,-117.241276 (2687 kB, centerRGB=106,107,101 ent=7.5) — finished residential roofs with solar arrays today; no crane",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Unnamed area-guess overheight on the Robinhood / Cliffridge west fringe — 9 m guess over a ~5 m 2014 body.",
+    "epoch_risk": "Low for existence. Apple shows finished 1–2 storey houses; 2014 plane at 5.3 matches that reading better than the 9 m guess. Bimodal 3/5 hist is body vs ridge/plant inside one epoch, not a rebuild."
+  },
+  {
+    "id": "residence-inn-connectors-residual",
+    "entity": "unnamed osm:553/554/555/560/561/562 (pads beside Residence Inn / Gilman–Evening Way)",
+    "where": {"x": 355, "z": 890},
+    "claim": "All six still ship src=osm area-guess h=4.5. Pass-2 already admitted siblings 548/549/550 to roofOf≈9.9–10.0; host Residence Inn ships lidarH=10.5.",
+    "observed": "Fresh full-depth EPT: 553 611pts roofOf=9.8 p50=7.2 p75=8.2 gap=1.6 dense7=26.2%; 554 600pts roofOf=9.9 p75=8.0 dense7=25%; 555 578pts roofOf=10.1 p75=8.1 dense7=26.6%; 560 549pts roofOf=9.9 p75=8.2 dense7=25.9%; 561 590pts roofOf=9.4 p75=8.0 dense7=25.1%; 562 538pts roofOf=9.4 p75=8.0 dense7=26.4%. Same stepped hist shape as the admitted 548–550 trio. Shipping 4.5 is −3.5…−5.6 m under p75/roofOf. Nominatim 553→5 Gilman Drive; 554→18 Evening Way; 555→4 Evening Way. Apple ri-553/554 + ri-cluster — finished dark-hipped Residence Inn complex with courtyard pool standing today.",
+    "evidence": {
+      "lidar": "553–562 ~540–610 pts each roofOf≈9.4–10.1 p75≈8.0–8.2 dense7≈25–27% bodyTight gap≤2; siblings 548/549/550 already in osmHeights at 9.9/10.0/10.0; host Residence Inn lidarH=10.5",
+      "gis": null,
+      "osm": "553/554/555/560/561/562 unnamed h=4.5 area≈251–254; Nominatim Gilman Drive / Evening Way",
+      "apple": "Apple /tmp/gauntlet-r2c1-p3/apple/ri-553.jpg ri-554.jpg ri-cluster.jpg z18–19 — finished Residence Inn multi-wing dark roofs + turquoise pool today",
+      "probe": "same admit path as pass-2 548–550 (stepped hist → prefer p75/~8–10, not unguarded if parts-split needed)"
+    },
+    "severity": "medium",
+    "suspected_class": "Residual of the Residence Inn connector under-tag class — pass-2 admitted three pads; six more on the same host plane remain on the 4.5 shed.",
+    "epoch_risk": "Low for existence. Stepped returns are roof + plant on a pre-2014 hotel, not a date; do not paste a single unguarded roofOf across a multi-plane ring without the thin-shelf arithmetic."
+  },
+  {
+    "id": "unnamed-guess-residual",
+    "entity": "remaining unnamed OSM still-guess rings in-shard (328 after pass-1/2 admissions)",
+    "where": {"x": 500, "z": 1000},
+    "claim": "After pass-1/2 admissions and documented withholds (520/1218/1339/656/658/661 EXCLUDED-verified), enumerate still flags 328 in-shard unnamed OSM masses shipping area guesses (255×4.5, 68×9, plus 4.8/8.4/12).",
+    "observed": "Fresh enumerate C_unnamedGuessShipping=328. Full-depth EPT on all 284 previously unprobed still-guess rings + prior softs produced six strict one-plane PASSes (600/642/649/651 under; 1239/1305 over) and one Residence Inn residual cluster (553–562). Named landmarks re-checked (Forum/Theatre/Wagner/Potiker/Shank/Rita/Residence Inn/Nordstrom/Union Bank/UC Cyclery/Urban Plates/Health/Extended Studies/Mobil/CRS/James/Che/LaurelExt): |ship−roofOf|≤1.0 or already-pinned thin-shelf/stepped/canopy cases — no new named height bug at the storey bar. Jacobs/Potiker dual GIS rings both match their massHeights (13.5 @47,733 and 9.4 @58,773).",
+    "evidence": {
+      "lidar": "310-target full-depth probe in /tmp/gauntlet-r2c1-p3/probe.json; strict PASSes = {600,642,649,651,1239,1305}; named/GIS soft-spots within noise or prior rejects",
+      "gis": "Potiker/Jacobs dual masses re-probed independently — both planes already correct; CRS span 4.6 m remains a roof-anchor handoff not a height miss",
+      "osm": "enumerate.out C=328 still-guess; unnamedVerifiedSize now 408 campus-wide",
+      "apple": "Contact sheet /tmp/gauntlet-r2c1-p3/apple/ — Villa La Jolla / Evening Way / Robinhood / theatre district mostly finished fabric today",
+      "probe": "do not blanket-admit; per-ring Apple+EPT remains the shape — same scoped verdict as every prior pass"
+    },
+    "severity": "medium",
+    "suspected_class": "Standing unnamed-guess class hole (handoff, not a one-row patch) — residual after this pass's six strict admits and the Residence Inn residual cluster.",
+    "epoch_risk": "Per-ring — some pads could be post-2014 or courtyard-smeared (1239 is the documented epoch-risk overheight). That is why OSM_UNNAMED_VERIFIED is index-keyed."
+  }
+]

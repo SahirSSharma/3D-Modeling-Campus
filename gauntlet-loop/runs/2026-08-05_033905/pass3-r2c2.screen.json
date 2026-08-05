@@ -1,0 +1,172 @@
+[
+  {
+    "id": "osm-306-underheight",
+    "entity": "unnamed osm:306 (University Center Lane / Aventine-south courtyard pad)",
+    "where": {"x": 1463.5, "z": 894.5},
+    "claim": "OSM area guess ships h=9 (src=osm); not in OSM_UNNAMED_VERIFIED / lidar.osmHeights.",
+    "observed": "Fresh full-depth EPT (1,643 pts): roofOf=14.4, p50=13.6, p75=13.7, p98=14.4, gap=0.7, bodyTight=true, massOk=true, dense 13 m bin 86.4% ±1=90.3%. Shipping 9 is −5.4 m under roofOf / −4.7 under p75. Strict one-plane PASS (only strict in-shard this pass). Nominatim reverse → University Center Lane. Apple osm306.jpg z19 — finished light multi-wing courtyard roofs with HVAC standing today; no crane.",
+    "evidence": {
+      "lidar": "osm:306 1643 pts roofOf=14.4 p50=13.6 p75=13.7 p98=14.4 gap=0.7 dense13=86.4%±90.3 bodyTight massOk; lidar.osmHeights[306] absent; assembleMasses ships src=osm h=9",
+      "gis": null,
+      "osm": "index 306 unnamed h=9 area≈689 verts=4; Nominatim → University Center Lane",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c2-p3/apple/osm306.jpg z19 at 32.869910,-117.225546 (2361 kB, centerRGB=128,128,124 ent=7.58) — finished courtyard fabric today",
+      "probe": "strict filter PASS = {306}; /tmp/gauntlet-r2c2-p3/probe.json"
+    },
+    "severity": "high",
+    "suspected_class": "Unnamed OSM under-guess on a textbook single mid-rise plane — densest body admit left in r2c2 after pass-1/2.",
+    "epoch_risk": "Low — Apple and 2014 both describe a standing multi-storey courtyard pad. Disagreement is guess vs laser, not a rebuild."
+  },
+  {
+    "id": "nobel-lebon-9-residual-class",
+    "entity": "unnamed OSM pads osm:267/268/269/270/271/272/273 (Nobel Drive / Lebon Drive apartment strip)",
+    "where": {"x": 1670, "z": 1200},
+    "claim": "assembleMasses still extrudes this strip as src=osm area-guess h=9. Pass-2 admitted siblings 251–256 on the same corridor; these seven remain unverified.",
+    "observed": "Fresh full-depth EPT: each dense body sits ~2–4 m above the 9 m guess with gap≤2. 267 1783pts roofOf=14.3 p50=11.8 p75=12.6 dense11=35.4%; 268 1481/13.5/10.9/11.9 dense10=36.2%; 269 1659/14.1/11.2/12.2 dense11=41%; 270 2313/13.0/10.9/11.5 dense10=28.4%; 271 2051/12.2/10.1/10.6 dense10=42.4%; 272 1845/12.9/10.9/11.7 dense10=37.1%; 273 2086/12.7/10.7/11.4 dense10=39.5%. All bodyTight massOk. Same admit shape as pass-2 lebon-9 (≠ withheld 257/258 dense≈guess). Nominatim: 267/268/269→3833 Nobel Drive; 270→3425 Lebon Drive apartments; 272→3899 Nobel Drive. Apple nobel-lebon-cluster + osm267/268/269/270/272 — finished multi-storey residential roofs + pools standing today.",
+    "evidence": {
+      "lidar": "267:1783pts roofOf=14.3 p75=12.6; 268:1481/13.5/11.9; 269:1659/14.1/12.2; 270:2313/13.0/11.5; 271:2051/12.2/10.6; 272:1845/12.9/11.7; 273:2086/12.7/11.4; osmHeights absent all seven",
+      "gis": "nearby Lebon Drive GIS masses ship gisH=9.1 — body planes on probed GIS siblings ~8.6–9.4 agree with GIS, not these OSM rings' denser ~11–12 m bands",
+      "osm": "seven unnamed rings shipH=9 area≈627–863; Nominatim Nobel Drive / Lebon Drive apartments",
+      "apple": "Apple /tmp/gauntlet-r2c2-p3/apple/nobel-lebon-cluster.jpg z16 + osm267.jpg osm268.jpg osm269.jpg osm270.jpg osm272.jpg osm273.jpg z18–19 — finished Nobel/Lebon multi-storey roofs + courtyard pools today; no crane",
+      "probe": "soft-under class filter (shipH=9, gap≤2, dP75≥2.5, denseMode≥10) hits 267/268/269/270/272; 271/273 are soft siblings on the same strip; /tmp/gauntlet-r2c2-p3/probe.json"
+    },
+    "severity": "high",
+    "suspected_class": "Residual of the pass-2 Lebon Colony 9→~12 under-guess class — same corridor, denser body above the area default.",
+    "epoch_risk": "Low for existence. Stepped hist (dense ~10–11 vs roofOf ~13–14) means judge should prefer p75/dense mid over unguarded roofOf, same as 251–256. Nominatim pitch hit on 273 is a neighbour amenity, not the ring identity (Apple shows residential roofs)."
+  },
+  {
+    "id": "osm-267-underheight",
+    "entity": "unnamed osm:267 (3833 Nobel Drive apartment pad)",
+    "where": {"x": 1676.1, "z": 1190},
+    "claim": "OSM area guess ships h=9 (src=osm); not in OSM_UNNAMED_VERIFIED.",
+    "observed": "Fresh full-depth EPT (1,783 pts): roofOf=14.3, p50=11.8, p75=12.6, p98=14.3, gap=1.7, bodyTight=true, massOk=true, dense 11 m bin 35.4% ±1=59.9%. Shipping 9 is −5.3 m under roofOf / −3.6 under p75. Soft-under PASS. Nominatim → 3833 Nobel Drive.",
+    "evidence": {
+      "lidar": "osm:267 1783 pts roofOf=14.3 p50=11.8 p75=12.6 p98=14.3 gap=1.7 dense11=35.4%±59.9 bodyTight massOk; lidar.osmHeights[267] absent",
+      "gis": null,
+      "osm": "index 267 unnamed h=9 area≈698; Nominatim → 3833 Nobel Drive",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c2-p3/apple/osm267.jpg z19 at 32.867238,-117.223272 (2564 kB, centerRGB=113,115,114 ent=7.68) — finished multi-storey roofs + pool fabric today",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Exemplar of the Nobel/Lebon 9→~12 residual under-tag class.",
+    "epoch_risk": "Low — standing pre-2014 apartment fabric on Apple and LiDAR."
+  },
+  {
+    "id": "osm-269-underheight",
+    "entity": "unnamed osm:269 (3833 Nobel Drive neighbour pad)",
+    "where": {"x": 1710.3, "z": 1199.6},
+    "claim": "OSM area guess ships h=9 (src=osm); not in OSM_UNNAMED_VERIFIED.",
+    "observed": "Fresh full-depth EPT (1,659 pts): roofOf=14.1, p50=11.2, p75=12.2, p98=14.1, gap=2.0, bodyTight=true, massOk=true, dense 11 m bin 41% ±1=71.5%. Shipping 9 is −5.1 m under roofOf / −3.2 under p75. Soft-under PASS. Nominatim → 3833 Nobel Drive.",
+    "evidence": {
+      "lidar": "osm:269 1659 pts roofOf=14.1 p50=11.2 p75=12.2 p98=14.1 gap=2.0 dense11=41%±71.5 bodyTight massOk; lidar.osmHeights[269] absent",
+      "gis": null,
+      "osm": "index 269 unnamed h=9 area≈664; Nominatim → 3833 Nobel Drive",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c2-p3/apple/osm269.jpg z19 at 32.867151,-117.222906 (2486 kB) — finished residential roofs beside osm:268 today",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Same Nobel/Lebon 9 residual class.",
+    "epoch_risk": "Low — not a date conflict."
+  },
+  {
+    "id": "lebon-south-1390-class",
+    "entity": "unnamed OSM pads osm:1390/1391/1392/1393/1394 (3425 Lebon Drive south apartment connectors)",
+    "where": {"x": 1675, "z": 1300},
+    "claim": "All five still ship src=osm area-guess h=9. None in osmHeights / OSM_UNNAMED_VERIFIED. Unprobed before this pass.",
+    "observed": "Fresh full-depth EPT: shared ~11–12 m body under the 9 m guess. Soft-under (gap≤2, dP75≥2.5, denseMode≥10): 1390 1963pts roofOf=13.4 p50=11.3 p75=11.7 dense11=37.5%; 1391 1861/13.7/11.3/12.0 dense11=43.9%; 1393 1535/13.7/11.2/12.0 dense11=45.5%. Soft sibling 1392 (1672pts roofOf=15.2 p75=12.4 gap=2.8 dense11=41.5% — stepped, prefer p75). Soft sibling 1394 (1463pts roofOf=12.2 p75=10.5 dense9=44.6% — milder Δ). Nominatim all → 3425 Lebon Drive apartments. Apple lebon-south-cluster + osm1390–1393 — finished multi-storey terracotta/grey apartment roofs standing today.",
+    "evidence": {
+      "lidar": "1390:1963pts roofOf=13.4 p75=11.7; 1391:1861/13.7/12.0; 1392:1672/15.2/12.4 gap=2.8; 1393:1535/13.7/12.0; 1394:1463/12.2/10.5; osmHeights absent all five",
+      "gis": null,
+      "osm": "five unnamed rings shipH=9 area≈544–721; Nominatim → apartments, 3425 Lebon Drive",
+      "apple": "Apple /tmp/gauntlet-r2c2-p3/apple/lebon-south-cluster.jpg z16 + osm1390.jpg osm1391.jpg osm1392.jpg osm1393.jpg z19 — finished Lebon Colony south multi-storey roofs today; no crane",
+      "probe": "first full-depth sample of these indices; /tmp/gauntlet-r2c2-p3/probe.json"
+    },
+    "severity": "high",
+    "suspected_class": "Continuation of the Lebon Colony 9→~12 under-guess class south of the pass-2 251–256 admissions.",
+    "epoch_risk": "Low for existence. 1392's gap 2.8 is massing complexity inside one ring — admit via p75≈12.4, not unguarded roofOf 15.2."
+  },
+  {
+    "id": "osm-1391-underheight",
+    "entity": "unnamed osm:1391 (3425 Lebon Drive south connector)",
+    "where": {"x": 1639.8, "z": 1308.7},
+    "claim": "OSM area guess ships h=9 (src=osm); not in OSM_UNNAMED_VERIFIED.",
+    "observed": "Fresh full-depth EPT (1,861 pts): roofOf=13.7, p50=11.3, p75=12.0, p98=13.7, gap=1.7, bodyTight=true, massOk=true, dense 11 m bin 43.9% ±1=68.6%. Shipping 9 is −4.7 m under roofOf / −3.0 under p75. Soft-under PASS. Nominatim → 3425 Lebon Drive apartments.",
+    "evidence": {
+      "lidar": "osm:1391 1861 pts roofOf=13.7 p50=11.3 p75=12.0 p98=13.7 gap=1.7 dense11=43.9%±68.6 bodyTight massOk; lidar.osmHeights[1391] absent",
+      "gis": null,
+      "osm": "index 1391 unnamed h=9 area≈671; Nominatim → apartments, 3425 Lebon Drive",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c2-p3/apple/osm1391.jpg z19 at 32.866164,-117.223660 (2647 kB) — finished apartment roofs today",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Exemplar of the Lebon south 1390 under-tag class.",
+    "epoch_risk": "Low — standing pre-2014 fabric on Apple and LiDAR."
+  },
+  {
+    "id": "osm-1367-overheight",
+    "entity": "unnamed osm:1367 (3299 Holiday Court / Sheraton-strip pad)",
+    "where": {"x": 887.3, "z": 840.6},
+    "claim": "OSM area guess ships h=9 (src=osm); not in OSM_UNNAMED_VERIFIED. Sibling strip of pass-1 admissions 1365/1366.",
+    "observed": "Fresh full-depth EPT (1,676 pts): roofOf=5.4 (guarded), p50=5.3, p75=5.4, p98=12.1, gap=6.8, guard=true, bodyTight=false, massOk=true, dense 5 m bin 81.9% ±1=82.3%. Shipping 9 is +3.6 m over the guarded one-storey plane. Same canopy/HVAC shelf shape as admitted osm:1365 (guarded p75 5.1). Nominatim → 3299 Holiday Court house. Apple osm1367.jpg z19 — finished low commercial/hospitality roofs + pool/palms on the Sheraton strip west of I-5; no crane.",
+    "evidence": {
+      "lidar": "osm:1367 1676 pts roofOf=5.4 p50=5.3 p75=5.4 p98=12.1 gap=6.8 guard dense5=81.9%±82.3; lidar.osmHeights[1367] absent; siblings 1365/1366 already in osmHeights at 5.1/5.2",
+      "gis": null,
+      "osm": "index 1367 unnamed h=9 area≈638 verts=4; Nominatim → 3299 Holiday Court",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c2-p3/apple/osm1367.jpg z19 at 32.870398,-117.231709 (2765 kB, centerRGB=86,89,85 ent=7.22) — finished low Sheraton-strip roofs + courtyard pool today",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Unnamed OSM area-guess over a canopy-guarded one-storey plane — Sheraton-strip sibling of admitted 1365/1366 (Asante thin-shelf family).",
+    "epoch_risk": "Low — Apple shows finished low hospitality fabric. The 5 vs 12 p98 split is body vs canopy/HVAC shelf, not a rebuild. Admit guarded p75≈5.4, not p98."
+  },
+  {
+    "id": "osm-479-oob-zero-lidar",
+    "entity": "unnamed osm:479 (One Miramar / LJVD east fringe ring past terrain x_max)",
+    "where": {"x": 1843.8, "z": 810.6},
+    "claim": "OSM area guess ships h=9 (src=osm). Not in OSM_UNNAMED_VERIFIED / POST_2014_OSM_RINGS.",
+    "observed": "Fresh EPT: 0 pts. Centroid x=1843.8 sits past terrain x_max=1842 (x0=-1197, cols=1014, cell=3); groundAt(centroid)=null. Same survey-edge class as Regents 233/245/246/248 and Vaughan/Ritter. Nominatim reverse → La Jolla Village Drive parking amenity. Apple osm479.jpg z19 — finished multi-storey terracotta apartment roofs + tennis courts + pool standing today along LJVD / One Miramar; no crane. A solid 9 m prism ships with no laser plane and no per-vertex ground.",
+    "evidence": {
+      "lidar": "osm:479 0 pts; terrain x_max=1842; groundAt null at centroid; lidar.osmHeights[479] absent",
+      "gis": null,
+      "osm": "index 479 unnamed h=9 area≈586 verts=22; Nominatim → LJVD parking amenity neighbourhood (ring itself is a building footprint on Apple)",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c2-p3/apple/osm479.jpg z19 at 32.870669,-117.221478 (2481 kB, centerRGB=119,114,109 ent=7.46) — finished One Miramar terracotta terrace roofs + courts/pool today",
+      "probe": "rendered: yes — assembleMasses emits src=osm h=9"
+    },
+    "severity": "high",
+    "suspected_class": "Survey/terrain grid truncation at the eastern One Miramar edge — height invented (9 m guess) with zero 2014 returns and null groundAt (Regents / Vaughan apron class).",
+    "epoch_risk": "HIGH for any height admit from zero returns — do not invent a roofOf. Existence is Apple today (multi-storey terraces, not empty parking); the open question is whether a 9 m box should ship at all until the survey box expands, or the ring is withheld."
+  },
+  {
+    "id": "osm-457-overheight",
+    "entity": "unnamed osm:457 (Whole Foods / CVS block commercial pad)",
+    "where": {"x": 987.3, "z": 990.2},
+    "claim": "OSM area guess ships h=9 (src=osm); not in OSM_UNNAMED_VERIFIED. Neighbours Chick-fil-A / CVS / Whole Foods / osm:81 already ship lidar heights.",
+    "observed": "Fresh full-depth EPT (1,299 pts): roofOf=7.1, p50=5.9, p75=6.2, p98=7.1, gap=0.9, bodyTight=true, massOk=true, dense 5 m bin 60% ±1=95.4%. Shipping 9 is +2.8 m over p75 / +1.9 over roofOf. Cleaner than a thin-shelf (gap 0.9) but denser body sits in the 5–6 m band while the guess is a full storey high. Nominatim → CVS Pharmacy / Villa La Jolla Drive commercial. Apple osm457.jpg z19 — finished bright-white retail roofs with HVAC west of Blue Line; packed parking; no crane.",
+    "evidence": {
+      "lidar": "osm:457 1299 pts roofOf=7.1 p50=5.9 p75=6.2 p98=7.1 gap=0.9 dense5=60%±95.4 bodyTight massOk; lidar.osmHeights[457] absent; neighbours Chick-fil-A roofOf≈6.7 ships 6.8, CVS 7.1/7.0, Whole Foods 7.8/7.3, osm:81 already at 7.7",
+      "gis": null,
+      "osm": "index 457 unnamed h=9 area≈561 verts=4; Nominatim → CVS Pharmacy, 8831 Villa La Jolla Drive",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c2-p3/apple/osm457.jpg z19 at 32.869045,-117.230639 (2343 kB, centerRGB=135,136,135 ent=7.64) — finished white retail roofs today",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Unnamed commercial over-guess beside already-admitted Whole Foods / CVS / osm:81 planes — same retail strip, still on the 9 m default.",
+    "epoch_risk": "Low — commercial pad present in both 2014 and Apple today. Judge whether p75≈6.2 or roofOf 7.1 is the honest admit (neighbours ship ~7)."
+  },
+  {
+    "id": "unnamed-guess-residual",
+    "entity": "60 unnamed OSM rings still shipping area-guesses in r2c2 after pass-1/2 admissions",
+    "where": {"x": 1400, "z": 1000},
+    "claim": "Shard has 165 buildings (9 named). Pass-1/2 admitted 1366/1365/285/81/287/286/1356/1355 + LJVD terrace + Lebon 251–256 + 310/336/277/700/1358. assembleMasses still extrudes 60 unnamed OSM rings at tag/area guess with no lidar.osmHeights. Flag F (large unverified: area≥800 or h≥12): 32.",
+    "observed": "Enumerate after HEAD admissions: osmIn=165, C unnamed=60, Flag F=32, unnamedVerifiedSize=441 campus-wide. Fresh 75-target full-depth EPT (60 still-guess + 9 named + 6 GIS) produced one strict PASS (306), a Nobel/Lebon residual class, a new Lebon-south 1390 class, Sheraton-strip 1367 overheight, and OOB 479. Named landmarks re-checked: Chick-fil-A roofOf=6.7 ships 6.8; CVS 7.1/7.0; Whole Foods 7.8/7.3; Sheraton 9.9/10.7; One Miramar GIS 13.0/13.2 — within noise. Prior withholds re-confirmed unchanged: Hyatt HAND_AUDITED null→16 (11026 pts bimodal), Temple multilevel (roofOf guarded 15.4 / p98 30.7 vs ship 21.6), Medical thin-shelf near-miss (dense8=83.5% gap=2.4), Regents 233/245/246/248 OOB, osm:42 multimodal, osm:704/705 stepped, osm:257/258 dense≈guess, osm:294/695 thin-shelf, osm:83 helipad composite. GIS Mesa canopy still rides roofOf≈20 over p50≈6.4; Lebon/Regents gisH=9.1 agrees with probed planes ~8.6–9.8 where in-grid. No markings in-shard.",
+    "evidence": {
+      "lidar": "probe artifacts /tmp/gauntlet-r2c2-p3/probe.json (75 targets); strict PASSes = {306}",
+      "gis": "36 GIS masses in box — Mesa canopy / Lebon-Regents hostless class unchanged from pass-2",
+      "osm": "60 unnamed still src=osm; 9 named track prior lidar.heights except Hyatt null→16",
+      "apple": "18 currency snaps under /tmp/gauntlet-r2c2-p3/apple/",
+      "probe": "do not blanket-admit remaining 60; per-ring Apple+EPT remains the shape"
+    },
+    "severity": "low",
+    "suspected_class": "Class hole: remaining unverified unnamed OSM height guesses east of I-5 — fix via per-ring OSM_UNNAMED_VERIFIED admissions, not a blanket number.",
+    "epoch_risk": "Per-ring — most residential/commercial roofs here agree Apple-vs-2014 on existence. Do not admit all 60 without Apple+EPT each. osm:479 is survey-edge zero; Hyatt/Temple/helipad remain parts handoffs."
+  }
+]

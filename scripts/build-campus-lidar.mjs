@@ -45,6 +45,14 @@ const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..
 const IN = path.join(REPO_ROOT, "docs/data/campus-3d.json");
 const OUT = path.join(REPO_ROOT, "docs/data/campus-lidar.json");
 const CHECK = process.argv.includes("--check");
+/* --verify rebuilds everything and compares against the shipped file instead of
+   writing it. It exists because for most of this project's life the two could
+   drift apart in silence: `--check` validates SHAPE (counts, ranges), so a
+   height that no builder produces still passed it. Thirty-one values had
+   diverged by 2026-08-05 — up to 3.8 m, one of them a whole storey of mechanical
+   shelf counted as building — and every gate stayed green the entire time.
+   A measured campus that cannot be re-measured is just a campus of assertions. */
+const VERIFY = process.argv.includes("--verify");
 
 const require = createRequire(path.join(REPO_ROOT, "package.json"));
 
@@ -1753,6 +1761,60 @@ async function build() {
   console.log(`  tree prune: ${pruned.dropped.length} dropped against today's zones`);
   const trees = pruned.kept.map(([x, z, h, r]) => ({ x, z, h, r }));
 
+  /* ------------------------------------------------------- measured overrides
+     The thin-shelf cut is a threshold, and a threshold cannot see a photograph.
+     Several roofs sit close enough to the cut that whether it fires is decided
+     by evidence the laser does not carry — whether Apple shows real HVAC plant
+     up there, or bare roof with a survey artefact above it. Agents adjudicated
+     those cases one at a time and were RIGHT to; the mistake was recording the
+     verdict by hand-editing this builder's OUTPUT, so the shipped file drifted
+     away from the code that claims to generate it and no gate could see the gap.
+     Thirty-one values had diverged by 2026-08-05, up to 3.8 m.
+
+     A judgement the measurement cannot make is legitimate. It just has to be
+     DECLARED — here, with its evidence — so it survives a rebuild, shows up in
+     review, and can be argued with. An override with no reason is a bug. */
+  const MEASURED_OVERRIDES = {
+    heights: {
+      "Union Bank": [8, "79.9% of returns in the 5-6 m band sits UNDER the 85% thin-shelf cut, gap 2.7 — an IGPP/Perlman near-miss. Apple shows HVAC plant on the finished roof, so pasting the dense 5.3 body would flatten a real shelf. Judged r2c0 pass-3."],
+    },
+    massHeights: {
+      "m:1069,-637": [6.5, "CSC Building D. GIS claims 4.3; the roofOf shelf is a near-miss the cut catches but Apple shows standing plant. Judged r0c1 pass-2."],
+      "m:1078,-476": [6.5, "CES. Same near-miss class as CSC-D, same verdict — keeps its roofOf. Judged r0c2 pass-2."],
+    },
+    osmHeights: {
+      453: [19.9, "Hand-verified standing unchanged on Apple (2026-08-04) with a TARGETED EPT probe returning 19.9. The full campus build resolves 16.2 for the same ring off the same LiDAR — a 3.7 m probe-vs-build disagreement that is NOT rounding and is NOT yet explained. Pinned to the probe because the probe looked at this roof specifically; flagged as the open question in gauntlet-loop/REAUDIT.md."],
+      518: [8.5, "Boardwalk/Villa La Jolla connector, hand-verified on Apple 2026-08-04. Build resolves 9.2. Same probe-vs-build class as osm:453, smaller gap."],
+      657: [11.2, "Hand-verified plane, 2026-08-04. Build resolves 10.9. Same class."],
+      1147: [6.5, "Hand-verified plane, 2026-08-04. Build resolves 6.2. Same class."],
+      /* The Boardwalk / Villa La Jolla connector strip (518-534) was verified as
+         one event on 2026-08-04 — full-depth EPT re-derive, point counts matched,
+         Apple confirming finished tan gabled roofs. The build disagrees with that
+         probe on five of the nine. The split below is by SIZE, not by building:
+         >=0.2 m is a genuine probe-vs-build disagreement and is declared here;
+         0.1 m is a rim-median rounding knife edge (519, 530) where the plane did
+         not move and the reproducible value wins. */
+      526: [8.9, "Connector strip, hand-verified 2026-08-04. Build resolves 9.1."],
+      532: [8.5, "Connector strip, hand-verified 2026-08-04. Build resolves 8.7."],
+      534: [8.7, "Connector strip, hand-verified 2026-08-04. Build resolves 9.0."],
+      522: [8.8, "Boardwalk/Villa La Jolla apartment connector, hand-verified on Apple 2026-08-04 with its siblings 518/519/524/526 on the same ~8.5 m connector plane. Build resolves 10.6 — the only one of the set the build pushes UP, which is why it reads as probe-vs-build rather than a real step."],
+      1373: [9.3, "Villas Mallorca / La Jolla Scenic pad: 5,567 pts, clean p98 9.3 by targeted probe (replacing a 12 m guess). Build resolves 8.8. Same probe-vs-build class as osm:453/657."],
+    },
+  };
+
+  const applied = [];
+  for (const [table, entries] of Object.entries(MEASURED_OVERRIDES)) {
+    const target = { heights, massHeights, osmHeights }[table];
+    for (const [key, [value, reason]] of Object.entries(entries)) {
+      if (!reason) throw new Error(`override ${table}[${key}] has no reason — refusing to ship a bare number`);
+      const measured = target[key];
+      if (measured === value) continue; // the rule caught up; the override is dead weight
+      applied.push(`${table}[${key}] ${measured ?? "—"} -> ${value}`);
+      target[key] = value;
+    }
+  }
+  if (applied.length) console.log(`  ${applied.length} declared override(s): ${applied.join(", ")}`);
+
   const out = {
     _: "Generated by scripts/build-campus-lidar.mjs from USGS 3DEP LiDAR (CA_SanDiegoQL2_2014, public domain). Do not hand-edit.",
     area: AREA,
@@ -1774,6 +1836,8 @@ async function build() {
       Math.round(t.r * 10) / 10,
     ]),
   };
+
+  if (VERIFY) return verifyAgainstShipped(out);
 
   writeFileSync(OUT, JSON.stringify(out));
   const kb = Math.round(readFileSync(OUT).length / 1024);
@@ -1894,6 +1958,68 @@ function check() {
     `campus-lidar.json OK — ${Object.keys(d.heights).length} measured heights, ` +
     `${d.trees.length} trees, terrain ${d.terrain.cols}×${d.terrain.rows}`
   );
+}
+
+/* Heights are compared with ZERO tolerance: they are the product, a declared
+   override is the only legitimate way for one to differ from its measurement,
+   and an override lives in the builder where review can see it.
+
+   Terrain and trees carry a bounded allowance, and that is a real weakness
+   stated plainly rather than hidden. Two of 935,922 terrain cells and six of
+   10,683 trees move between consecutive runs of identical code — 0.1 m and
+   sub-metre respectively, invisible on the campus but genuinely unexplained
+   (a tie-break in the hole-fill dilation and the canopy clustering, most
+   likely). The allowance is sized to that observed instability and no larger,
+   so real drift still fails. Fixing the cause would let it go to zero. */
+const VERIFY_TERRAIN_CELLS = 20;   // observed 2
+const VERIFY_TREE_DELTA = 30;      // observed 6
+
+function verifyAgainstShipped(fresh) {
+  if (!existsSync(OUT)) { console.error(`verify: ${OUT} does not exist — nothing to compare`); process.exit(1); }
+  const shipped = JSON.parse(readFileSync(OUT, "utf8"));
+  const problems = [];
+
+  for (const table of ["heights", "massHeights", "partHeights", "osmHeights"]) {
+    const a = shipped[table] ?? {}, b = fresh[table] ?? {};
+    const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+    const diffs = [];
+    for (const k of keys) {
+      const va = Array.isArray(a[k]) ? a[k][0] : a[k];
+      const vb = Array.isArray(b[k]) ? b[k][0] : b[k];
+      if (va !== vb) diffs.push(`${k}: shipped ${va ?? "absent"} vs rebuild ${vb ?? "absent"}`);
+    }
+    if (diffs.length) {
+      problems.push(`${table}: ${diffs.length} value(s) the builder does not produce`);
+      for (const d of diffs.slice(0, 12)) problems.push(`    ${d}`);
+      if (diffs.length > 12) problems.push(`    … and ${diffs.length - 12} more`);
+    }
+  }
+
+  const tShip = shipped.terrain?.z ?? [], tFresh = fresh.terrain?.z ?? [];
+  if (tShip.length !== tFresh.length) problems.push(`terrain grid resized: ${tShip.length} -> ${tFresh.length}`);
+  else {
+    let n = 0, worst = 0;
+    for (let i = 0; i < tShip.length; i++) if (tShip[i] !== tFresh[i]) { n++; worst = Math.max(worst, Math.abs(tShip[i] - tFresh[i])); }
+    if (n > VERIFY_TERRAIN_CELLS) problems.push(`terrain: ${n} cells differ (allowance ${VERIFY_TERRAIN_CELLS}), worst ${(worst / 10).toFixed(1)} m`);
+    else if (n) console.log(`  terrain: ${n} cell(s) differ by ${(worst / 10).toFixed(1)} m — within the known-instability allowance`);
+  }
+
+  const dTrees = Math.abs((shipped.trees?.length ?? 0) - fresh.trees.length);
+  const shipSet = new Set((shipped.trees ?? []).map((t) => t.join(",")));
+  const moved = fresh.trees.filter((t) => !shipSet.has(t.join(","))).length;
+  if (dTrees > VERIFY_TREE_DELTA || moved > VERIFY_TREE_DELTA) {
+    problems.push(`trees: ${shipped.trees?.length} -> ${fresh.trees.length}, ${moved} moved (allowance ${VERIFY_TREE_DELTA})`);
+  } else if (moved) console.log(`  trees: ${moved} moved sub-metre — within the known-instability allowance`);
+
+  if (problems.length) {
+    console.error(`\ncampus-lidar.json does NOT reproduce from this builder:\n`);
+    for (const p of problems) console.error(`  ${p}`);
+    console.error(`\nEither rebuild it (npm run build:lidar), or — if a value is a judgement the`);
+    console.error(`measurement cannot make — declare it in MEASURED_OVERRIDES with its evidence.`);
+    console.error(`Hand-editing the JSON is what let 31 values drift silently before 2026-08-05.\n`);
+    process.exit(1);
+  }
+  console.log(`campus-lidar.json reproduces: ${Object.keys(fresh.heights).length} named, ${Object.keys(fresh.massHeights).length} massing, ${Object.keys(fresh.osmHeights).length} osm heights identical`);
 }
 
 if (CHECK) check();

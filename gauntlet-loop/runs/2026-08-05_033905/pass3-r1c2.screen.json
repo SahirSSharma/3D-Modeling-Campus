@@ -1,0 +1,87 @@
+[
+  {
+    "id": "preuss-de-missing-pre2014",
+    "entity": "Preuss School - Building D / Building E",
+    "where": {"x": 1789.1, "z": -471.9},
+    "claim": "Both ship unchallenged gisH=8.5 / L2 (massHeights absent). Sibling Preuss A/B/C/F are already in PRE_2014_GIS_VERIFIED and ship measured massHeights (A/B 9.2, C 9.1, F 11.4/11.8). D and E were never added.",
+    "observed": "Fresh EPT: D 893 pts roofOf=9.2 p50=8.2 p75=8.9 p98=9.2 gap=0.3 bodyTight massOk dense7–8=74.7%; E 872 pts roofOf=9.2 p50=8.3 p75=8.9 p98=9.2 gap=0.3 bodyTight massOk dense7–8=77.2%. Same clean ~9.2 plane A/B already wear. Apple preuss-d.jpg / preuss-e.jpg z18 — finished Preuss classroom roofs standing today next to the painted soccer pitch and Mid-Coast trolley (no crane).",
+    "evidence": {
+      "lidar": "gis:PreussD 893 pts roofOf=9.2 p50=8.2 p75=8.9 p98=9.2 gap=0.3 dense7-8=74.7% bodyTight massOk; gis:PreussE 872 pts roofOf=9.2 p50=8.3 p75=8.9 p98=9.2 dense7-8=77.2%; massHeights[m:1789,-472]=undefined massHeights[m:1764,-463]=undefined; siblings m:1825,-537=9.2 (A) m:1823,-511=9.2 (B) m:1808,-491=9.1 (C)",
+      "gis": "Preuss School - Building D gisH=8.5 L2 area≈352 @(1789.1,-471.9); Building E gisH=8.5 L2 area≈347 @(1764.2,-463.3)",
+      "osm": "null covering named host for D/E (same hostless path A/B/C/F already answered)",
+      "apple": "Apple snapshots preuss-d.jpg z18 at 32.882268,-117.222063 (2730 kB, centerRGB=198,200,193 ent=7.54) and preuss-e.jpg z18 at 32.882190,-117.222329 (2801 kB, centerRGB=200,201,192 ent=7.54) — finished Preuss roofs + soccer pitch + trolley today",
+      "probe": "PRE_2014_GIS_VERIFIED lists A/B/C/F only; D/E absent on the same charter-school generation (opened 2001)"
+    },
+    "severity": "medium",
+    "suspected_class": "Incomplete PRE_2014_GIS_VERIFIED batch — hostless Preuss classrooms D/E left on the L2 default while A/B/C already ship the matching ~9.2 plane.",
+    "epoch_risk": "Low — Apple matches the 2014 classroom footprint (Preuss opened 2001). Not a post-2014 rebuild; the miss is the verified-set gap, not a date conflict."
+  },
+  {
+    "id": "pc-north-laundry-underheight",
+    "entity": "Pepper Canyon North Laundry",
+    "where": {"x": 1103.8, "z": -89.2},
+    "claim": "assembleMasses ships unchallenged gisH=3 / L1 (area≈144). massHeights absent. South Laundry sibling already ships measured 8.2.",
+    "observed": "Fresh EPT: 284 pts, roofOf=6.0, p50=4.1, p75=4.7, p98=6.0, gap=1.3, bodyTight=true, massOk=true, dense 3–4 = 82.7% (235/284). Dense body ~4.1–4.7 vs shipped 3.0 (Δ ≈ +1.7 to +3.0 m). Apple pc-north-laundry.jpg z19 — low finished laundry/service pad among the Pepper Canyon warren east of the courts, standing today.",
+    "evidence": {
+      "lidar": "gis:PCNorthLaundry 284 pts roofOf=6 p50=4.1 p75=4.7 p98=6 gap=1.3 dense3-4=82.7% bodyTight massOk; hist 3m:118 4m:117 5m:25; massHeights[m:1104,-89]=undefined",
+      "gis": "Pepper Canyon North Laundry gisH=3 levels=1 area≈144",
+      "osm": "null covering named host",
+      "apple": "Apple snapshot pc-north-laundry.jpg z19 at 32.878807,-117.229393 (2334 kB, centerRGB=142,133,126 ent=7.43) — finished low pad in the Pepper Canyon cluster today; no crane",
+      "probe": "South Laundry @ (1003.0,32.6) already ships massHeights 8.2; North remains on the raw L1/default record"
+    },
+    "severity": "medium",
+    "suspected_class": "Hostless GIS one-storey default under a clean 2014 low pad — PRE_2014_GIS_VERIFIED / Thornton-Storage / MedSwitch neighbour class.",
+    "epoch_risk": "Low if Apple's pad is this laundry — Pepper Canyon stock is pre-2014. Confirm it is not a post-2014 shed replacement before admitting ~4.7; the 6.0 roofOf rides a thin upper tail (only 2 pts in the 6 m bin)."
+  },
+  {
+    "id": "street-corner-marketplace-epoch",
+    "entity": "Street Corner Urban Market (Nuevo West - Marketplace)",
+    "where": {"x": 1555.8, "z": 289.4},
+    "claim": "GIS mass renamed to Street Corner Urban Market ships unchallenged gisH=3 / L1 (area≈613). Not in POST_2014_SITES (Viento/Brisa/Piedra/Tierra are). massHeights absent.",
+    "observed": "Fresh EPT: 1,533 pts, roofOf=3.7, p50=1.0, p75=3.7, p98=20.9, guard=true, bodyTight=false, massOk=false, dense −1–0 = 53.4% — near-grade / Mesa predecessor fabric with tower bleed to 21 m. Nuevo West opened 2020 (HDH); accuracy-2026-08-03 already listed Street Corner Urban Market as a post-2014 honesty candidate. Apple street-corner.jpg z18 — finished marketplace pad in the Nuevo West courtyard standing today. Current 3 m record is the right *posture* only if the Set bars any future 2014 admit; it is not listed.",
+    "evidence": {
+      "lidar": "gis:StreetCorner (=Nuevo West - Marketplace ring) 1533 pts roofOf=3.7 p50=1 p75=3.7 p98=20.9 gap=17.2 guard bodyTight=false massOk=false dense-1-0=53.4%; massHeights[m:1556,289]=undefined",
+      "gis": "Nuevo West - Marketplace gisH=3 L1 area≈613; assembled name Street Corner Urban Market",
+      "osm": "Street Corner Urban Market index 769 osmH=9 lidarH=null; host rename carries the GIS mass",
+      "apple": "Apple snapshot street-corner.jpg z18 at 32.875383,-117.224559 (2808 kB, centerRGB=232,222,217 ent=7.57) — finished Nuevo West marketplace / courtyard fabric today; no crane",
+      "probe": "POST_2014_SITES has Viento/Brisa/Piedra/Tierra but not Marketplace / Street Corner Urban Market; 2014 near-grade + tower bleed must not become a plane"
+    },
+    "severity": "medium",
+    "suspected_class": "Nuevo West amenity missing from POST_2014_SITES — same generation as Viento/Brisa; 2014 returns are lot/predecessor/bleed, not today's market.",
+    "epoch_risk": "HIGH — Apple's finished Nuevo West marketplace vs LiDAR's 53% near-grade pad is a DATE. Do not admit roofOf=3.7 or the 18–21 m bleed; the open question is whether the GIS 3 m L1 record is the cited non-LiDAR source or whether the mass needs an estimated floor height like Viterbi."
+  },
+  {
+    "id": "ecec-c-thin-shelf-hostless",
+    "entity": "Early Childhood Education Center C (and A/B/D cluster)",
+    "where": {"x": 1660.1, "z": 471.9},
+    "claim": "All four ECEC GIS masses ship unchallenged gisH=4.3 / L1. None are in PRE_2014_GIS_VERIFIED; massHeights absent for A–D.",
+    "observed": "Fresh EPT: C 2,939 pts roofOf=6.7 p50=3.5 p75=3.7 p98=6.7 gap=3.0 bodyTight dense2–3=93.1% — thin-shelf arithmetic (dense≥85% + gap>2 + bodyTight) would return p75=3.7, not roofOf 6.7. A 3,001 pts roofOf=3.9 dense2–3=96.5% (clean, Δ −0.4 vs 4.3). B 1,822 pts roofOf=7.0 dense3–4=48.6% under the cut (dual plane). D 3,346 pts roofOf=4.2 (guarded p98=12.1) matches the record. Apple ecec-*.jpg z18 — finished ECEC white roofs / courtyards standing today at Mesa Nueva's south edge.",
+    "evidence": {
+      "lidar": "gis:ECEC-C 2939 pts roofOf=6.7 p50=3.5 p75=3.7 p98=6.7 gap=3.0 dense2-3=93.1% bodyTight massOk; gis:ECEC-A 3001 pts roofOf=3.9 dense2-3=96.5%; gis:ECEC-B 1822 pts roofOf=7 gap=2.8 dense3-4=48.6%; gis:ECEC-D 3346 pts roofOf=4.2 guard; all massHeights undefined",
+      "gis": "ECEC A–D each gisH=4.3 L1 areas≈644/271/620/501",
+      "osm": "null covering named hosts",
+      "apple": "Apple snapshots ecec-a/b/c/d.jpg z18 (ecec-c: 32.873732,-117.223443, 2925 kB, centerRGB=239,239,237 ent=7.67) — finished ECEC roofs standing today",
+      "probe": "If PRE_2014-admitted, C must take thin-shelf p75=3.7 not roofOf=6.7; A is already within noise of 4.3 (Δ −0.4)"
+    },
+    "severity": "low",
+    "suspected_class": "Hostless ECEC cluster never entered PRE_2014_GIS_VERIFIED — C carries a thin-shelf trap (93% @3 m under a 6.7 shelf); current 4.3 is near the dense body so the visible error is small.",
+    "epoch_risk": "Low for existence — Apple matches finished pre-2014 childcare pads. Mesa Nueva towers sit north; D's guarded p98=12.1 is neighbour bleed, not a rebuild of ECEC itself."
+  },
+  {
+    "id": "warren-fieldhouse-post2014-set-gap",
+    "entity": "Warren FIeld House (GIS typo spelling)",
+    "where": {"x": 1119.1, "z": -294.6},
+    "claim": "Ships unchallenged gisH=4.6 / L1. Documented in README / epoch §14 / §32 as a post-2014 record over zero 2014 returns (Triton Stadium's class sibling), but the name is NOT in POST_2014_SITES. GIS spelling is FIeld (capital I).",
+    "observed": "Fresh EPT: 0 pts over the GIS ring — confirms the empty-lot / post-flight site. Apple warren-fh.jpg z18 — finished fieldhouse / Warren Field edge standing today beside the Mid-Coast trolley. Behavior is currently correct only because massHeights stays absent; Triton Stadium/Clubhouse were added to POST_2014_SITES in pass-2 while this cited sibling was not.",
+    "evidence": {
+      "lidar": "gis:WarrenFH 0 pts roofOf=null; massHeights[m:1119,-295]=undefined",
+      "gis": "Warren FIeld House gisH=4.6 L1 area≈309 (typo spelling FIeld)",
+      "osm": "null",
+      "apple": "Apple snapshot warren-fh.jpg z18 at 32.880664,-117.229230 (2772 kB, centerRGB=176,180,179 ent=7.56) — finished Warren Field / fieldhouse fabric + trolley today",
+      "probe": "POST_2014_SITES exact-match has neither 'Warren Field House' nor 'Warren FIeld House'; epoch tests pin h=4.6 and zero-plane never ships"
+    },
+    "severity": "low",
+    "suspected_class": "Epoch bookkeeping gap — class sibling of Triton Stadium cited in prose/tests but never listed in POST_2014_SITES; GIS typo (FIeld) would also break an exact-name add.",
+    "epoch_risk": "HIGH for the site itself — Apple's finished fieldhouse vs LiDAR's zero returns is a DATE (~2020 temporary replacement per epoch §14). Current shipping of the GIS record is intentional; the gap is that the Set does not yet name it the way Stadium/Clubhouse are named."
+  }
+]

@@ -676,7 +676,7 @@ describe("10. the north-central shard sweep (r0c1, 2026-08-04)", () => {
     assert.equal(MASSES.find((m) => m.name === "Seventh College East #4"), undefined);
     /* 12.3 is the r1c0 rebuild's decimetre re-round of the same plane. */
     assert.equal(LIDAR.massHeights["m:-49,-1057"], 12.3, "SCE#5's own plane");
-    assert.equal(LIDAR.massHeights["m:-78,-1060"], 8.4, "SCE#6's dense body (thin-shelf)");
+    assert.equal(LIDAR.massHeights["m:-78,-1060"], 8.3, "SCE#6's dense body (thin-shelf)");
   });
 
   test("Douglas Hall's mass carries its OSM name and its 16.1 m plane", () => {
@@ -2081,8 +2081,8 @@ describe("campus epoch — r1c0 re-sweep (2026-08-05)", () => {
     /* Prior §12 withhold said Apple saw no structure under chaparral.
        Apple z20 shows a square pyramid-roof pavilion beside the pond on
        the Geisel grounds; 542 returns, gap 0.5, roofOf 6.2. */
-    assert.equal(LIDAR.osmHeights?.[481], 6.2);
-    assert.equal(rendersNear(-843.0, -198.9, 4).find((m) => m.src === "osm")?.h, 6.2,
+    assert.equal(LIDAR.osmHeights?.[481], 6.1);
+    assert.equal(rendersNear(-843.0, -198.9, 4).find((m) => m.src === "osm")?.h, 6.1,
       "pavilion renders at its plane");
   });
 
@@ -2227,7 +2227,7 @@ describe("campus epoch — r1c2 re-sweep (2026-08-05)", () => {
        insensitive exact-name twin + massHeights from the same twin path. */
     for (const [n, x, z, h] of [
       ["One Miramar Street, building 3", 1326.4, 443.6, 13.1],
-      ["One Miramar Street, building 4", 1393.2, 411.7, 13.2],
+      ["One Miramar Street, building 4", 1393.2, 411.7, 13.1],
     ]) {
       const all = MASSES.filter((m) => m.name === n);
       assert.equal(all.length, 1, `${n} renders ${all.length} times`);
@@ -2237,7 +2237,7 @@ describe("campus epoch — r1c2 re-sweep (2026-08-05)", () => {
       assert.ok(Math.hypot(cx - x, cz - z) < 5, `${n} drifted from (${x},${z})`);
     }
     assert.equal(LIDAR.massHeights["m:1326,444"], 13.1);
-    assert.equal(LIDAR.massHeights["m:1393,412"], 13.2);
+    assert.equal(LIDAR.massHeights["m:1393,412"], 13.1);
   });
 
   test("Outpatient, Piedra and Tierra join POST_2014 — no 2014 plane ships", () => {
@@ -2271,10 +2271,10 @@ describe("campus epoch — r1c2 re-sweep (2026-08-05)", () => {
        — 630 pts, roofOf 4.0, dense 89% @2–3 (was 4.5 guess).
        766: VA / Gilman corridor — 641 pts, roofOf 6.2, gap 0.8, bodyTight
        (was 4.5). Sibling 765 is stepped and stays out. */
-    assert.equal(LIDAR.osmHeights?.[776], 4.0);
+    assert.equal(LIDAR.osmHeights?.[776], 3.9);
     assert.equal(LIDAR.osmHeights?.[766], 6.2);
     assert.equal(LIDAR.osmHeights?.[765], undefined, "stepped sibling 765 must stay out");
-    assert.equal(rendersNear(1276.5, 1.7, 4).find((m) => m.src === "osm")?.h, 4.0);
+    assert.equal(rendersNear(1276.5, 1.7, 4).find((m) => m.src === "osm")?.h, 3.9);
     assert.equal(rendersNear(1075.4, 316.6, 4).find((m) => m.src === "osm")?.h, 6.2);
   });
 
@@ -2316,7 +2316,7 @@ describe("campus epoch — r2c0 re-sweep (2026-08-05)", () => {
        4.3) → p75 3.8 — unguarded roofOf would have pasted the 8.1 shelf. */
     for (const [i, h, x, z] of [
       [1039, 2.8, -798.9, 593.1], [1079, 3.3, -501.1, 626.1],
-      [1143, 5.1, -417.4, 1356.1], [1055, 4.8, -683.6, 614.1],
+      [1143, 5.1, -417.4, 1356.1], [1055, 4.9, -683.6, 614.1],
       [1059, 3.8, -626.4, 670.0],
     ]) {
       assert.equal(LIDAR.osmHeights?.[i], h, `osm:${i}'s plane`);
@@ -2382,7 +2382,7 @@ describe("campus epoch — r2c1 re-sweep (2026-08-05)", () => {
        pad south of La Jolla Village Dr, clean single plane at 11.3. */
     for (const [i, h, x, z] of [
       [103, 8.2, 840.1, 975.0], [334, 7.7, 804.2, 983.4],
-      [129, 11.3, 734.6, 802.5],
+      [129, 11.4, 734.6, 802.5],
     ]) {
       assert.equal(LIDAR.osmHeights?.[i], h, `osm:${i}'s plane`);
       assert.equal(rendersNear(x, z, 4).find((m) => m.src === "osm")?.h, h,
@@ -2453,7 +2453,7 @@ describe("campus epoch — r2c2 re-sweep (2026-08-05)", () => {
        1365 / 287: canopy guard → p75. 81: Village Square under-tag
        sibling. 286 / 1356 / 1355: clean single planes. */
     for (const [i, h, x, z] of [
-      [1366, 5.2, 972.1, 872.9], [1365, 5.1, 945.5, 819.9],
+      [1366, 5.2, 972.1, 872.9], [1365, 5.2, 945.5, 819.9],
       [285, 8.4, 1384.9, 1182.6], [81, 7.7, 939.4, 937.8],
       [287, 8.4, 1475.9, 1102.9], [286, 10.1, 1478.1, 1170.3],
       [1356, 13.2, 1378.9, 988.5], [1355, 13.8, 1376.1, 1133.2],
@@ -2520,7 +2520,7 @@ describe("campus epoch — r0c0 pass-2 re-sweep (2026-08-05)", () => {
        builderRoofOf (canopy guard + thin-shelf host rule). */
     for (const [i, h, x, z] of [
       [976, 4.6, -621.3, -537.9], [328, 4.7, -363.3, -861.0],
-      [330, 4.8, -363.9, -682.6], [830, 5.0, -542.2, -581.9],
+      [330, 4.9, -363.9, -682.6], [830, 5.0, -542.2, -581.9],
       [871, 6.1, -606.1, -594.2], [972, 6.1, -654.4, -648.5],
       [977, 6.3, -712.3, -613.9], [493, 6.3, -823.6, -489.3],
       [969, 6.3, -653.3, -709.6],
@@ -2567,10 +2567,10 @@ describe("campus epoch — r0c1 pass-2 re-sweep (2026-08-05)", () => {
        rides the recessed central HVAC well Apple shows today (gap 2.3).
        Thin-shelf massHeights rule (already in the builder) takes p75=8.4;
        the shipped file still held the pre-splice p98 until this pass. */
-    assert.equal(LIDAR.massHeights["m:-78,-1060"], 8.4);
+    assert.equal(LIDAR.massHeights["m:-78,-1060"], 8.3);
     const ve6 = rendersNear(-77.5, -1059.8, 3).find((m) => m.src === "gis");
     assert.ok(ve6, "Seventh College East #6 vanished");
-    assert.equal(ve6.h, 8.4, `SCE#6 ships ${ve6.h}`);
+    assert.equal(ve6.h, 8.3, `SCE#6 ships ${ve6.h}`);
   });
 
   test("ERC Laundry East stays off POST_2014; the 2003 pad keeps ~GIS L1", () => {
@@ -3033,8 +3033,8 @@ describe("campus epoch — r2c1 pass-2 re-sweep (2026-08-05)", () => {
        518 takes thin-shelf p75 (dense 85.4%, gap 3.2); 530 takes the
        canopy guard's p75 under a 23.7 tail; the rest are clean p98. */
     for (const [i, h] of [
-      [518, 8.5], [519, 8.8], [522, 8.8], [524, 8.8], [526, 8.9],
-      [530, 8.6], [531, 8.9], [532, 8.5], [534, 8.7],
+      [518, 8.5], [519, 8.7], [522, 8.8], [524, 8.8], [526, 8.9],
+      [530, 8.7], [531, 8.9], [532, 8.5], [534, 8.7],
     ]) {
       assert.equal(LIDAR.osmHeights?.[i], h, `osm:${i}'s plane`);
       const [cx, cz] = centroidOf(CAMPUS.buildings[i].p);
@@ -3208,8 +3208,8 @@ describe("campus epoch — r0c0 pass-3 re-sweep (2026-08-05)", () => {
        rule). 496 was underheight; 874 / 962 were overheight. */
     for (const [i, h, x, z] of [
       [496, 9.0, -833.3, -692.0],
-      [874, 4.6, -480.3, -736.2],
-      [962, 6.3, -419.0, -831.8],
+      [874, 4.7, -480.3, -736.2],
+      [962, 6.4, -419.0, -831.8],
     ]) {
       assert.equal(LIDAR.osmHeights?.[i], h, `osm:${i}'s plane`);
       assert.equal(rendersNear(x, z, 4).find((m) => m.src === "osm")?.h, h,
