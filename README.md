@@ -580,6 +580,19 @@ a shelf. Qualcomm AA terrain apron — height 24.3 is correct; most vertices cla
 `z0=−1383`, a survey-box coverage handoff. Roof-anchor at osm:502 (−2.7) — same cross-shard
 renderer class. Preuss pitch — painted on Apple, unfitted; better absent than wrong.
 
+**The east-campus pass-2 (2026-08-05, r0c2).** Same shard, second decide pass. Every
+candidate re-derived from the screener's full-depth EPT (point counts taken as the
+re-measurement) and Apple snapshots before judgement.
+
+| Entity | Was shipping | Now ships | Why |
+|---|---|---|---|
+| Campus Services Complex - Building C | 6.8 m (`massHeights` p98) | **4.8 m** | 90 % of 2,025 returns in a 4–5 m band matching GIS L1=4.3; p98 rode 98 points in the 6 m bin (gap 2.1). Thin-shelf rule already in the builder — the shipped file still held the pre-splice p98 (sibling of Building H / VE6). |
+
+Rejected, each re-measured: CSC Building D — gap exactly 2.0 under the >2 cut (Medical /
+Union Bank near-miss family); roofOf 6.5 stands, cut not retuned to ≥2. XIMED — dense 68 %
+under the 85 % cut; 41.3 plant shelf is real HVAC Apple shows today. Roof-anchor osm:502
+(Δ −2.7) and Qualcomm AA terrain apron — prior handoffs unchanged.
+
 **The Muir / La Jolla Farms re-sweep (2026-08-05, r1c0).** West campus — Tenaya, Tuolumne,
 Keeling, HDH, Geisel House, LJF estates. Every candidate re-derived from the screener's
 full-depth EPT (point counts taken as the re-measurement); thin-shelf arithmetic and Apple

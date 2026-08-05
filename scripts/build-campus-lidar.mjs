@@ -1390,11 +1390,12 @@ async function build() {
 
      Thin-shelf under the 5 m guard: same denseBandFraction / gap > 2 /
      bodyTight cut as host roofOf (Asante Meeting Rooms, CSC Building H,
-     Seventh College East #6 — dense 88% @8–9 matching GIS L2, p98 rides
-     the central mechanical well Apple shows today). Otterson (74%),
+     CSC Building C, Seventh College East #6 — dense ≥88% matching GIS,
+     p98 rides a thin mechanical / shelf Apple shows today). Otterson (74%),
      Copley (79%), and Marshall Residence Hall N (82%) stay on p98 —
-     real upper volumes / near-misses under the 85% floor. Transit
-     Operations Trailer (gap 0.9) stays on p98 — noise, not a shelf. */
+     real upper volumes / near-misses under the 85% floor. CSC Building D
+     (gap exactly 2.0) and Transit Operations Trailer (gap 0.9) stay on
+     p98 — under the >2 cut. */
   const massHeights = {};
   for (const t of massTargets) {
     if (t.roofs.length < 25) continue;

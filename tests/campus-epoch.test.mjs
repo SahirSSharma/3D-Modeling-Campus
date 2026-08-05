@@ -142,6 +142,13 @@
  *      Laundry East stays off POST_2014 (2003 ERC fabric; 2.6 ≈ GIS
  *      L1), Marshall Res N / Pangea keep roofOf under the cut / open-
  *      deck, and the roof-anchor class stays a renderer handoff.
+ *  29. The r0c2 pass-2 re-sweep's measurements hold: CSC Building C
+ *      sheds its thin 6.8 m shelf for the dense 4.8 m body (rule
+ *      already in massHeights; file was stale — sibling of H / VE6),
+ *      CSC Building D stays on roofOf 6.5 (gap exactly 2.0 under the
+ *      >2 cut), XIMED keeps its 41.3 plant shelf (dense 68%), and the
+ *      roof-anchor / QAA apron residuals stay renderer / survey
+ *      handoffs.
  */
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
@@ -790,18 +797,21 @@ describe("11. the east-campus shard sweep (r0c2, 2026-08-04)", () => {
 
   test("the hand-verified east-campus GIS records measure their own planes", () => {
     /* PRE_2014_GIS_VERIFIED (r0c2): hostless rings whose build dates are
-       documented pre-flight. The far misses: CSC shops at GIS 4.3 vs
-       planes 6.5-6.9, the hostless Fleet Services row 4.3 vs 5.7, Preuss
+       documented pre-flight. The far misses: CSC Building D at GIS 4.3
+       vs plane 6.5 (gap exactly 2.0 — near-miss under the thin-shelf
+       cut; see §29), the hostless Fleet Services row 4.3 vs 5.7, Preuss
        Building F 8.5 vs 11.4-11.7, and the substation control building
-       8.5 vs 5.3 (the record's default two storeys, measured one). */
-    /* Greenhouse 2, CSC C, Preuss C and Preuss F carry the r1c0 rebuild's
+       8.5 vs 5.3 (the record's default two storeys, measured one).
+       CSC Building C's thin shelf was spliced to its dense 4.8 body in
+       §29 (same rule that took Building H). */
+    /* Greenhouse 2, Preuss C and Preuss F carry the r1c0 rebuild's
        decimetre re-round of the same planes. */
     const PLANES = {
       "m:1049,-830": [5, "BFS Greenhouse 1"],
       "m:1066,-830": [5, "BFS Greenhouse 2"],
       "m:1067,-852": [5.3, "BFS Greenhouse 3"],
       "m:1082,-802": [5, "BFS Frog House"],
-      "m:1070,-561": [6.8, "CSC Building C — GIS said 4.3"],
+      "m:1070,-561": [4.8, "CSC Building C — dense body (thin-shelf)"],
       "m:1069,-637": [6.5, "CSC Building D — GIS said 4.3"],
       "m:1723,-573": [5.3, "East Campus Substation — GIS said 8.5"],
       "m:1137,-594": [5.7, "Fleet Services south row — GIS said 4.3"],
@@ -2554,5 +2564,68 @@ describe("campus epoch — r0c1 pass-2 re-sweep (2026-08-05)", () => {
     );
     assert.ok(pangea, "Pangea Parking vanished");
     assert.equal(pangea.h, 5.7, `Pangea ships ${pangea.h}`);
+  });
+});
+
+describe("campus epoch — r0c2 pass-2 re-sweep (2026-08-05)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("CSC Building C sheds its thin 6.8 m shelf", () => {
+    /* 2,025 returns, 89.9% in a 4–5 m band matching GIS L1=4.3; p98 6.9
+       rides 98 points in the 6 m bin (gap 2.1). Thin-shelf massHeights
+       rule (already in the builder; same cut that took Building H and
+       VE6) takes p75=4.8; the shipped file still held the pre-rule p98
+       until this pass. Apple shows the finished low CSC shop pad today. */
+    assert.equal(LIDAR.massHeights["m:1070,-561"], 4.8);
+    const c = rendersNear(1069.7, -560.5, 3).find((m) => m.src === "gis");
+    assert.ok(c, "CSC Building C vanished");
+    assert.equal(c.h, 4.8, `CSC Building C ships ${c.h}`);
+  });
+
+  test("CSC Building D keeps its roofOf near-miss shelf", () => {
+    /* Sibling of C/H: 2,004 returns, dense 92.1% in 4–5 m, bodyTight,
+       but gap exactly 2.0 — under the >2 thin-shelf cut (Medical /
+       Union Bank / UC Cyclery near-miss family). Do not retune to ≥2
+       for one yard; the cut stands. Apple shows finished low pad with
+       mechanical units — the 6.5 plane is the residual. */
+    assert.equal(LIDAR.massHeights["m:1069,-637"], 6.5);
+    const d = rendersNear(1069.3, -636.8, 3).find((m) => m.src === "gis");
+    assert.ok(d, "CSC Building D vanished");
+    assert.equal(d.h, 6.5, `CSC Building D ships ${d.h}`);
+  });
+
+  test("XIMED keeps its plant/upper shelf over the mid deck", () => {
+    /* 8,903 returns, dense 68% in 37–38 m under a 41.3 p98 (gap 3.9) —
+       well under the 85% thin-shelf cut (Otterson / Copley / Sanford
+       mechanical family). Apple shows rooftop HVAC on the finished
+       multi-wing medical complex; pasting 37.4 would flatten a real
+       upper volume. */
+    assert.equal(LIDAR.heights["XIMED Building"], 41.3);
+    const x = rendersNear(1388.8, -544.8, 5).find(
+      (m) => m.src === "osm" && /XIMED/i.test(m.name || ""),
+    );
+    assert.ok(x, "XIMED vanished");
+    assert.equal(x.h, 41.3, `XIMED ships ${x.h}`);
+  });
+
+  test("Qualcomm AA height and osm:502 roof-anchor stay as prior pins", () => {
+    /* Reconfirm §20: QAA height 24.3 is correct (apron is a survey-box
+       handoff); osm:502 still past the 2 m roof-anchor gate (Δ −2.7) —
+       renderer class, not a height bug. */
+    assert.equal(LIDAR.heights["Qualcomm AA"], 24.3);
+    assert.equal(LIDAR.osmHeights?.[502], 34);
+    const qaa = rendersNear(1712.0, -1408.4).find((m) => m.src === "osm");
+    assert.equal(qaa?.h, 24.3, `QAA ships ${qaa?.h}`);
+    const tower = rendersNear(1572.3, -681.7).find((m) => m.src === "osm");
+    assert.equal(tower?.h, 34, `osm:502 ships ${tower?.h}`);
   });
 });

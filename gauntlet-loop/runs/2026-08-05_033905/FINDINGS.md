@@ -710,3 +710,65 @@ answer the laser can give; inventing GIS 8.5 from a photo would be the defect.
 - **Thin-shelf rule campus-wide**: next full `build:lidar` applies it to every
   mass. This pass spliced the one in-shard stale hit (`m:-78,-1060`) after
   re-deriving it; Asante / CSC H already matched.
+
+---
+
+# FINDINGS — run `2026-08-05_033905` · shard r0c2 (pass 2)
+
+Pass 2 of the east-campus shard (hospital district / CSC yard / Preuss /
+Qualcomm AA). Screen: 5 candidates (0 high / 4 medium / 1 low). Judged by
+`cursor-grok-4.5-high`.
+
+Every candidate in `pass2-r0c2.screen.json` was re-derived before judgement
+against the screener's full-depth EPT (`/tmp/gauntlet-r0c2-pass2/probe.json` —
+38 targets; point counts taken as the re-measurement: CSCC 2,025 / CSCD 2,004 /
+XIMED 8,903 / QAA 30,780 / osm:502 17,637), Apple snapshots in
+`/tmp/gauntlet-r0c2-pass2/apple/` (copied to `.cache/gauntlet-r0c2-p2/evidence/`),
+and thin-shelf arithmetic re-computed per sample from each mass's histogram.
+
+### Fixed — heights (class rule already in builder; file was stale)
+
+| Entity | Was shipping | Now ships | Source | Test |
+|---|---|---|---|---|
+| Campus Services Complex - Building C (`csc-c-thin-shelf`) | 6.8 m massHeights p98 | **4.8 m** | Thin-shelf massHeights rule (body tight + gap > 2 + dense ≥85% → p75). Re-sample: 2,025 pts, dense 89.9% in 4–5 m matching GIS L1=4.3; p98 6.9 rides 98 pts in the 6 m bin (gap 2.1). | epoch §29 |
+
+Sibling of Building H (pass-1 splice) and VE6 (pass-2 r0c1 splice) — same rule,
+same stale-file root cause.
+
+### Rejected candidates (each re-measured before rejection; do not re-find these)
+
+- **`csc-d-near-shelf`** — REJECTED. Dense 92.1% in 4–5 m, bodyTight, but gap
+  exactly 2.0 — under the >2 thin-shelf cut (Medical / Union Bank / UC Cyclery
+  near-miss family). Do not retune the cut to ≥2 for one yard. roofOf 6.5
+  stands. Pinned in §29.
+- **`ximed-plant-shelf`** — REJECTED. Dense 68.0% in 37–38 m under a 41.3 p98
+  (gap 3.9) — well under the 85% cut (Otterson / Copley / Sanford mechanical
+  family). Apple shows rooftop HVAC on the finished multi-wing complex;
+  pasting 37.4 would flatten a real upper volume. Host 41.3 stands. Pinned
+  in §29.
+- **`roof-anchor-502`** — REJECTED as in-scope fix; RE-LOGGED as handoff.
+  Grade audit still finds osm:502 at Δ=−2.7 (centroid ground 101.7 vs
+  rim-median 104.4). Bases per-vertex safe. Renderer change
+  (`roofY = rimMedian + h`) is cross-shard — prior FINDINGS unchanged.
+- **`qaa-terrain-apron`** — REJECTED as in-scope height bug; RE-LOGGED as
+  handoff. Height 24.3 is correct (HAND_AUDITED; EPT reconfirm 30,780 pts).
+  Grade audit: gCent=null (centroid south of z0=−1383), 27/34 verts clamp
+  to the apron — survey-box coverage, same AREA-edge family. Expanding the
+  terrain grid is a rebuild call.
+
+### Withheld (better absent than wrong)
+
+None new this pass. CSC D's near-miss residual is a measured plane under the
+standing cut, not a gap to invent past.
+
+### Handoffs / observations
+
+- **Terrain apron at Qualcomm AA**: still needs the terrain grid (or a local
+  apron sample) past `z0=−1383` so per-vertex ground covers the full ring —
+  height already correct.
+- **Roof-anchor class**: osm:502 (−2.7) still joins r0c1's list; dedicated
+  renderer pass.
+- **Thin-shelf rule campus-wide**: next full `build:lidar` applies it to every
+  mass. This pass spliced the one in-shard stale hit (`m:1070,-561`) after
+  re-deriving it; Asante / CSC H / VE6 already matched. CSC D (gap = 2.0)
+  stays a near-miss under the cut — do not widen to ≥2.

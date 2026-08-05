@@ -1,0 +1,87 @@
+[
+  {
+    "id": "csc-c-thin-shelf",
+    "entity": "Campus Services Complex - Building C",
+    "where": {"x": 1069.7, "z": -560.5},
+    "claim": "assembleMasses ships h=6.8 via massHeights[m:1070,-561] over gisH=4.3 / L1. PRE_2014_GIS_VERIFIED + epoch § pin that 6.8 as the measured plane (\"CSC shops at GIS 4.3 vs planes 6.5-6.9\"). Sibling Building H was spliced to 4.8 under the thin-shelf rule; this key still holds the pre-rule p98.",
+    "observed": "Fresh EPT of the GIS ring: 2,025 pts, roofOf=6.9, p50=4.6, p75=4.8, p98=6.9, gap=2.1, guard=false, bodyTight=true, massOk=true. Histogram: 4 m:1612 + 5 m:209 = 1,821/2,025 (89.9%) in the 4–5 m band; 6 m bin only 98. Dense body matches GIS L1=4.3; shipped 6.8 rides a thin ~2.1 m shelf. Thin-shelf arithmetic (gap>2 + dense≥85% + bodyTight → p75) — the same cut that took CSC H to 4.8 and VE6 to 8.4 — would admit p75=4.8.",
+    "evidence": {
+      "lidar": "gis:CSCC 2025 pts roofOf=6.9 p50=4.6 p75=4.8 p98=6.9 gap=2.1 dense=89.9%@4 bodyTight massOk; hist 4m:1612 5m:209 6m:98; massHeights[m:1070,-561]=6.8",
+      "gis": "Campus Services Complex - Building C gisH=4.3 levels=1 area≈832; in PRE_2014_GIS_VERIFIED (CSC yard, 1980s)",
+      "osm": "no OSM way named Building C; sibling Building H massHeights now 4.8 after pass-1 splice",
+      "apple": "Apple snapshot csc-c.jpg z19 at 32.883069,-117.229758 (2580 kB) — finished low CSC shop pad among the service-yard / fleet cluster today; light-grey flat roof, no crane; centerRGB≈231,231,231 ent=7.15",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Thin-shelf massHeights still holding p98 after the class rule landed via per-key splices (AsanteMeet / CSC H / VE6) but before a full build:lidar — dense body already agrees with GIS L1; epoch § still pins the old 6.8.",
+    "epoch_risk": "Low for existence — Apple shows a finished pre-2014 CSC shop today, and the 2014 body plane is tight at ~4.6–4.8. The 6.8 vs 4.8 split is assignment (shelf vs body), not a rebuild. Note: current epoch test pins 6.8, so any fix must update that pin."
+  },
+  {
+    "id": "csc-d-near-shelf",
+    "entity": "Campus Services Complex - Building D",
+    "where": {"x": 1069.3, "z": -636.8},
+    "claim": "assembleMasses ships h=6.5 via massHeights[m:1069,-637] over gisH=4.3 / L1. PRE_2014_GIS_VERIFIED + epoch § pin 6.5 as the measured plane alongside Building C.",
+    "observed": "Fresh EPT: 2,004 pts, roofOf=6.5, p50=4.3, p75=4.5, p98=6.5, gap=2.0, guard=false, bodyTight=true. Histogram: 4 m:1724 + 5 m:121 = 1,845/2,004 (92.1%) in the 4–5 m band; 6 m bin 98. Dense body matches GIS L1; shipped 6.5 is +2.0 m over p75. Gap lands exactly on the thin-shelf cut (rule is gap > 2, not ≥) — a full rebuild would still ship p98=6.5. Near-miss sibling of CSC C / H.",
+    "evidence": {
+      "lidar": "gis:CSCD 2004 pts roofOf=6.5 p50=4.3 p75=4.5 p98=6.5 gap=2.0 dense=92.1%@4 bodyTight; hist 4m:1724 5m:121 6m:98; massHeights[m:1069,-637]=6.5",
+      "gis": "Campus Services Complex - Building D gisH=4.3 levels=1 area≈829; in PRE_2014_GIS_VERIFIED",
+      "osm": "no OSM way named Building D",
+      "apple": "Apple snapshot csc-d.jpg z19 at 32.883759,-117.229762 (2556 kB) — finished low CSC shop pad in the same service yard today; light roof with mechanical units, no crane; centerRGB≈245,245,245 ent=7.87",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Near-miss thin-shelf (gap exactly 2.0 under a >2 cut) over a 92%-dense one-storey body — same CSC-yard family as Building C/H; judgment call whether the cut should be ≥2 or the 6 m shelf is real plant.",
+    "epoch_risk": "Low — finished pre-2014 CSC pad on today's Apple. Not a date conflict; the residual is whether a 2.0 m gap over a GIS-matching body is shelf noise or a real upper volume."
+  },
+  {
+    "id": "roof-anchor-502",
+    "entity": "unnamed OSM building index 502 (Scripps Memorial east tower)",
+    "where": {"x": 1572.3, "z": -681.7},
+    "claim": "Renderer sets roofY = ground(centroid) + h while surveyed h = roof − median(rim ground). Ships h=34 via osmHeights[502]. Prior r0c2 passes logged this mass past the 2 m roof-anchor gate and handed the class off.",
+    "observed": "Re-ran grade audit over all in-box rendered masses: osm:502 still past the 2 m gate — centroid ground 101.7 vs rim-median 104.4, delta=−2.7 m, footprint span 3.8 m, h=34. Fresh EPT still matches the shipped plane (17,637 pts, roofOf=34, p50=30.3, p75=30.4). Only other |delta|>2 in-box was the QAA null-centroid artifact. Bases remain per-vertex safe.",
+    "evidence": {
+      "lidar": "grade audit: osm:502 delta=−2.7 span=3.8 h=34; EPT osm:502 17637 pts roofOf=34 p50=30.3 p75=30.4 bodyTight; osmHeights[502]=34",
+      "gis": "null",
+      "osm": "unnamed way index 502 — Scripps east tower",
+      "apple": "null — currency already confirmed pass 1 (east-tower-502.jpg); this is a renderer anchor definition, not a currency question",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Cross-shard roof-anchor render class (centroid ground vs rim-median definition of h) — still open since the first r0c2 handoff; joins r0c1's Hopkins / Canyon Vista / Cuzco / VE4 / VW2 list.",
+    "epoch_risk": "None — geometry definition mismatch inside one epoch, not a source-date conflict."
+  },
+  {
+    "id": "qaa-terrain-apron",
+    "entity": "Qualcomm AA",
+    "where": {"x": 1712.0, "z": -1408.4},
+    "claim": "Height ships correctly at 24.3 m (HAND_AUDITED). Terrain grid ends at z0=−1383; the building is planted via campus-terrain.js edge clamp / apron. Prior r0c2 rejected this as an in-scope height bug and re-logged it as a survey-box handoff.",
+    "observed": "Of 34 footprint vertices, only 7 have an in-grid ground sample (northern edge at ~90.7–92.5 m datum); 27 vertices including the centroid fall south of z0=−1383 and return null before clamp. Extrusion therefore uses apron-clamped edge heights for most of the ring — flat planting at the north-edge elevation rather than per-vertex grade across the full footprint. Fresh EPT still matches height (30,780 pts, roofOf=24.3).",
+    "evidence": {
+      "lidar": "osm:QAA 30780 pts roofOf=24.3 p50=20.3 p75=21.6 p98=24.3 bodyTight massOk (height reconfirmed); terrain grid z0=−1383 cell=3; 7/34 verts in-grid, 27/34 null before clamp",
+      "gis": "null — Qualcomm AA is OSM-only in this shard",
+      "osm": "Qualcomm AA way, shipped h=24.3 via HAND_AUDITED",
+      "apple": "Apple snapshot qaa.jpg z17 at 32.890734,-117.222888 (3250 kB) — finished Qualcomm AA standing today; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Survey/terrain grid truncation at the shard edge — height correct; ground sampling still clamps most vertices to the apron; Voigt-grade per-vertex rule cannot apply until the grid covers the ring.",
+    "epoch_risk": "None for the height number (2014 roof agrees with today's Apple footprint). The planting issue is a coverage hole inside one epoch, not a source-date conflict."
+  },
+  {
+    "id": "ximed-plant-shelf",
+    "entity": "XIMED Building",
+    "where": {"x": 1388.8, "z": -544.8},
+    "claim": "assembleMasses ships h=41.3 via lidar.heights['XIMED Building']=41.3 over osmH=30. Named OSM / lidar path; not a massHeights key.",
+    "observed": "Fresh EPT: 8,903 pts, roofOf=41.3, p50=37.3, p75=37.4, p98=41.3, gap=3.9, guard=false, bodyTight=true. Histogram: 37 m:5470 + 38 m:586 = 6,056/8,903 (68.0%) in the 37–38 m band; also stepped lower wings (32 m:792, 24 m:265, 16 m:226, 8 m:201). Dense 2 m band 68% — well under the 85% thin-shelf cut. Shipped 41.3 rides a +3.9 m plant/upper shelf over a dense ~37.4 m deck. Otterson / Copley / Marsh-Res-N family (near-miss, not auto-caught).",
+    "evidence": {
+      "lidar": "osm:XIMED 8903 pts roofOf=41.3 p50=37.3 p75=37.4 p98=41.3 gap=3.9 dense=68.0%@37 bodyTight; hist 37m:5470 32m:792 38m:586 41m:272; lidar.heights host=41.3",
+      "gis": "null — no GIS mass named XIMED in this shard",
+      "osm": "XIMED Building way index 344 osmH=30 lidarH=41.3",
+      "apple": "Apple snapshot ximed.jpg z17 at 32.882929,-117.226343 (3236 kB) — finished multi-wing medical complex standing today with rooftop HVAC; no crane",
+      "probe": null
+    },
+    "severity": "low",
+    "suspected_class": "Plant/upper shelf over a dense mid-deck under the 85% thin-shelf cut — Otterson / Copley / Sanford-mechanical family; pasting 37.4 would flatten a real HVAC volume Apple shows on the finished roof.",
+    "epoch_risk": "Low for existence — Apple matches a finished pre-2014 medical tower. The 41.3 vs ~37.4 split is shelf vs deck inside one epoch, not a post-2014 rebuild."
+  }
+]
