@@ -990,3 +990,86 @@ UCSD Tritons / Turner (ground broken 2014-09-25; grandstand + clubhouse 2015).
   widen to ≥2. Next full `build:lidar` applies PRE_2014 / POST_2014 edits
   campus-wide; this pass spliced the two in-shard massHeights hits after
   re-deriving them.
+
+---
+
+# FINDINGS — run `2026-08-05_033905` · shard r2c0 (pass 2)
+
+Pass 2 of the Scripps / La Jolla Shores shard (pier to Discovery Way / Shores
+residential / Eighth fringe). Screen: 10 candidates (3 high / 6 medium / 1 low).
+Judged by `cursor-grok-4.5-high`.
+
+Every candidate in `pass2-r2c0.screen.json` was re-derived before judgement against
+the screener's full-depth EPT (`/tmp/gauntlet-r2c0-p2/probe.json` — copied to
+`.cache/gauntlet-r2c0-p2/judge/`; point counts taken as the re-measurement:
+osm:1097 441 / gis:Keck2_south 588 / gis:Keck2_north 627 / osm:1147 960 /
+gis:Hubbs 5,109 / osm:1062 463 / gis:Eckart 6,379 / osm:1345/1144/1146/1160 0),
+Apple snapshots in `/tmp/gauntlet-r2c0-p2/apple/` (copied to
+`.cache/gauntlet-r2c0-p2/evidence/`), and Keck2 rimBase vs centroid arithmetic
+re-computed per GIS ring vertex from the terrain grid.
+
+### Fixed — heights (class admission, not a one-row patch)
+
+| Entity | Was shipping | Now ships | Source | Test |
+|---|---|---|---|---|
+| osm:1097 (`osm-1097-underheight`) | 4.5 m area guess | **7.6** | `OSM_UNNAMED_VERIFIED`: 441 pts, clean p98 7.6 (dense 80.7% @7, gap 0.1); Nominatim 9535 Poole Street; Apple finished house | epoch §33 |
+| osm:1147 (`osm-1147-overheight`) | 9 m area guess | **6.5** | `OSM_UNNAMED_VERIFIED`: 960 pts, clean p98 6.5 (dense ±1 95.8% @4–6, gap 0.5); sibling of 1141/1143; Apple finished shore-colony roof | epoch §33 |
+
+### Withheld (better absent than wrong)
+
+- **osm:1062 (`osm-1062-underheight`)**: body sits above the 4.5 guess (p50 5.8 /
+  p75 6.6 / roofOf 7.7) but dense only 31.5% (±1 64.8%) — no single dominant
+  plane to admit. Keep the guess rather than invent 7.7. Pinned as EXCLUDED
+  from osmHeights.
+
+### Rejected candidates (each re-measured before rejection; do not re-find these)
+
+- **`keck2-south-overheight`** — REJECTED. Probe "11.8 over roofOf 8.9" compares
+  rimBase height to a centroid-ground relative. South ring: gCent 71.8 /
+  rimBase 68.9 (grade span 4.3 m); absolute roof ≈80.7. North sibling: gCent
+  69.4 / rimBase 70.7 → ships 10 from the same absolute plane. massHeights
+  11.8 is the builder's correct rimBase answer, not an overshoot. Residual is
+  the roof-anchor / grade-span renderer class already handed off. Pinned in §33.
+- **`osm-1345-zero-lidar-eighth`** — REJECTED. Already in `POST_2014_OSM_RINGS`
+  (§16); declared 4.5 guess stands for the Eighth courtyard pavilion. Apple
+  finished neighbourhood is a DATE confirming the pavilion exists, not a
+  reason to invent a 2014 plane or to skip the declared one-storey guess.
+  Re-pinned in §33.
+- **`hubbs-dense-body-near-shelf`** — REJECTED. Dense 80.2% under the 85%
+  thin-shelf cut (IGPP 2000 / Perlman near-miss family); Apple shows the
+  central mechanical well. Pasting the dense 8.2 deck flattens a real upper
+  volume. massHeights 12.3 stands. Pinned in §33.
+- **`vaughan-ritter-terrain-oob`** — REJECTED as a height bug; RE-LOGGED as
+  handoff. Heights are the audited full-ring planes (Vaughan 14.9 / Ritter
+  14.6, §15). Grade audit: most vertices past terrain z_max=1386 (nulls
+  36/49 and 19/26) — QAA / AREA-edge apron class. Expanding the survey box
+  is a rebuild call.
+- **`shore-colony-zero-lidar`** — REJECTED as a height admit; RE-LOGGED as
+  handoff. osm:1144 / 1146 / 1160 centroids past z_max → 0 EPT pts via
+  groundAt-null. Apple shows standing houses in the corridor; existence is
+  real, but no 2014 plane resolves. Keep the 4.5 guesses. Same survey-box
+  handoff as Vaughan / Ritter.
+- **`eckart-bluff-grade-span`** — REJECTED as a height bug. Footprint grade
+  span 15.2 m; shipped 11.3 near the guarded body. Residual is per-vertex
+  grade continuity (Voigt class), not a storey miss. Pinned via existing
+  massHeights 11.3.
+- **`unnamed-guess-remaining`** — REJECTED as scoped, same verdict as every
+  other shard: the mechanism exists and this pass used it for two admissions
+  and one explicit withhold; remaining ~110 in-shard unnamed guesses need
+  per-ring Apple + EPT, not a blanket admit. Strict one-plane filter
+  (body ≤2, gap ≤2, dense ≥50 or ±1 ≥85, |Δ|≥2) found only 1097 and 1147.
+
+### Handoffs / observations
+
+- **Terrain / survey-box south edge**: Vaughan / Ritter / Eelgrass / osm:1144 /
+  1146 / 1160 all sit at or past z_max=1386. Heights (where a full-ring EPT
+  previously resolved them) are correct; planting clamps to the apron.
+  Expanding `AREA` / the terrain grid is a rebuild call — same QAA family.
+- **Roof-anchor / grade-span**: Keck2 south (rimBase−gCent = −2.9) and Eckart
+  (span 15.2) join the renderer handoff list. Do not "fix" massHeights by
+  switching the measurement base to centroid.
+- **Thin-shelf cut**: Hubbs at 80.2% stays a near-miss under 85% — do not
+  lower the floor. A parts split for the mechanical well would let both
+  planes ship.
+- **Remaining unnamed guesses in-box**: still ~110+ after this pass's two
+  admissions. Batch Apple+EPT verification remains the right shape.

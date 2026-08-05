@@ -751,6 +751,35 @@ const OSM_UNNAMED_VERIFIED = new Set([
             "building." Keep the 4.5 m guess.
        513: already withheld pass 1 (bodyTight=false coastal-scrub mix). */
   976, 328, 330, 830, 871, 972, 977, 493, 969,
+  /* r2c0 pass-2 re-sweep 2026-08-05 — two more Shores / shore-colony
+     unnamed pads after pass-1's 1039/1079/1143/1055/1059 admissions.
+     Independent full-depth EPT (point counts matched the screener
+     exactly); Apple currency confirmed finished roofs, no crane:
+       1097: 441 returns, clean p98 7.6 (p50 7.4 / p75 7.5, dense 80.7%
+             in the 7 m bin, gap 0.1) — was 4.5 under-guess at 9535
+             Poole Street (Nominatim). Sibling of Village Square
+             under-tags (103 / 334).
+       1147: 960 returns, clean p98 6.5 (p50 5.4 / p75 6.0, dense ±1
+             95.8% in 4–6 m, gap 0.5) — was 9 over-guess at 2715
+             Bordeaux Avenue; sibling of already-admitted 1141 / 1143.
+     Deliberately NOT admitted this pass:
+       1062: multimodal (dense 31.5% @5, ±1 64.8%); body sits above the
+             4.5 guess but no single dominant plane — keep the guess.
+       Keck OAR 2 south: probe "overheight" is rimBase vs centroid on a
+             4.3 m grade (rim 68.9 / cent 71.8) — massHeights 11.8 is
+             the builder's own answer for absolute roof ≈80.7; north
+             sibling ships 10 from the same absolute plane. Not a miss.
+       Hubbs: dense 80.2% under the 85% thin-shelf cut (IGPP 2000 /
+             Perlman near-miss); mechanical well on today's Apple.
+             massHeights 12.3 stands.
+       osm:1345: already POST_2014_OSM_RINGS; declared 4.5 guess stands
+             (Eighth courtyard pavilion, §16).
+       1144 / 1146 / 1160: centroids past terrain z_max=1386 (0 EPT pts
+             via groundAt-null); Vaughan / Ritter apron class — expand
+             the survey box before any admit.
+       Vaughan / Ritter / Eckart: heights already measured; residuals
+             are terrain-apron / roof-anchor renderer handoffs. */
+  1097, 1147,
 ]);
 
 /* Hand-audited stats where the automatic roofOf() percentile choice is

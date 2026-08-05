@@ -703,6 +703,26 @@ thin-shelf cut (Perlman / McGill near-miss); massHeights 11.3 stands. NOAA dual 
 hostless GIS pads — L2=6.1 already matches the dense ~5.6 body; canopy neighbours stay
 `massOk=false` so roofOf 17 never auto-admits.
 
+**The Scripps / Shores pass-2 re-sweep (2026-08-05, r2c0).** Fresh screen of 10 candidates
+(3 high / 6 medium / 1 low). Every height re-derived from the screener's full-depth EPT
+(point counts matched exactly: 441 / 588 / 960 / 5,109 / …); Apple currency re-checked
+per site; Keck2 rimBase vs centroid arithmetic re-computed on the GIS rings.
+
+| Entity | Was shipping | Now ships | Why |
+|---|---|---|---|
+| Poole Street house (unnamed, osm:1097) | 4.5 m area guess | **7.6 m** | Clean single plane (441 returns, dense 80.7% in the 7 m bin, gap 0.1); Nominatim 9535 Poole Street. |
+| Bordeaux Avenue house (unnamed, osm:1147) | 9 m area guess | **6.5 m** | Clean 4–6 m band (960 returns, dense ±1 95.8%); sibling of already-admitted 1141 / 1143. |
+
+Rejected / withheld, each re-measured: Keck OAR Building 2 south — probe "overheight" is
+rimBase (68.9) vs centroid (71.8) on a 4.3 m grade; both wings share absolute roof ≈80.7
+and massHeights 11.8 / 10 stand. Hubbs Hall — dense 80.2% under the 85% thin-shelf cut
+(IGPP 2000 near-miss); mechanical well on today's Apple; 12.3 stands. osm:1062 —
+multimodal (dense 31.5%); guess stands. osm:1345 — already `POST_2014_OSM_RINGS`;
+declared 4.5 stands. Shore-colony 1144 / 1146 / 1160 and Vaughan / Ritter — terrain
+apron past z_max=1386; heights (where measured) correct, survey-box handoff. Eckart —
+15.2 m grade span already past the Voigt per-vertex rule in spirit; height near the
+guarded body.
+
 **The theatre-district / Village Square re-sweep (2026-08-05, r2c1).** Fresh screen of 9
 candidates (3 high / 5 medium / 1 low). Every height re-derived from an independent
 full-depth EPT (point counts matched the screener's 1,757 / 1,362 / 2,134 / … exactly);

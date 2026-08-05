@@ -2905,3 +2905,78 @@ describe("campus epoch — r1c2 pass-2 re-sweep (2026-08-05)", () => {
     assert.equal(rendersNear(1505.4, -226.3, 6)[0]?.h, 12.8, "CPP East left its post-2014 record");
   });
 });
+
+describe("campus epoch — r2c0 pass-2 re-sweep (2026-08-05)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("Poole Street and Bordeaux Avenue unnamed pads ship their measured planes", () => {
+    /* Independent full-depth EPT re-sample matched the screener's point
+       counts exactly (441 / 960). Each stands finished on today's Apple
+       (no crane). 1097: textbook single 7 m plane under a 4.5 guess
+       (Nominatim 9535 Poole Street). 1147: clean 4–6 m band (dense ±1
+       95.8%) under a 9 m guess (2715 Bordeaux) — sibling of 1141 / 1143. */
+    for (const [i, h, x, z] of [
+      [1097, 7.6, -292.5, 530.2], [1147, 6.5, -369.8, 1363.0],
+    ]) {
+      assert.equal(LIDAR.osmHeights?.[i], h, `osm:${i}'s plane`);
+      assert.equal(rendersNear(x, z, 4).find((m) => m.src === "osm")?.h, h,
+        `osm:${i} renders at its plane`);
+    }
+  });
+
+  test("multimodal Shores pad and Eighth pavilion keep their declared guesses", () => {
+    /* 1062: dense only 31.5% in the 5 m bin (±1 64.8%); body sits above
+       the 4.5 guess but no single dominant plane to admit. 1345: already
+       POST_2014_OSM_RINGS (Eighth courtyard pavilion) — no 2014 number
+       may ship; declared 4.5 stands (§16). */
+    assert.equal(LIDAR.osmHeights?.[1062], undefined, "a multimodal smear shipped for osm:1062");
+    assert.equal(LIDAR.osmHeights?.[1345], undefined, "a 2014 number shipped for osm:1345");
+    assert.equal(rendersNear(-583.3, 693.3, 4).find((m) => m.src === "osm")?.h, 4.5,
+      "the multimodal Shores pad keeps its declared guess");
+    assert.equal(rendersNear(-178.0, 585.6, 4).find((m) => m.src === "osm")?.h, 4.5,
+      "the Eighth pavilion keeps its declared guess");
+  });
+
+  test("Keck OAR 2 south and Hubbs keep rimBase / roofOf under the cut", () => {
+    /* Keck2 south: probe "11.8 over roofOf 8.9" is rimBase (68.9) vs
+       centroid ground (71.8) on a 4.3 m grade — both wings share absolute
+       roof ≈80.7; north ships 10 from rimBase 70.7. Not an overheight.
+       Hubbs: dense 80.2% under the 85% thin-shelf cut (IGPP 2000 /
+       Perlman near-miss); Apple shows the central mechanical well.
+       Pasting the dense 8.2 deck would flatten a real upper volume. */
+    assert.equal(LIDAR.massHeights["m:-867,931"], 11.8, "Keck2 south keeps rimBase height");
+    assert.equal(LIDAR.massHeights["m:-867,948"], 10, "Keck2 north keeps its plane");
+    assert.equal(rendersNear(-867.3, 930.5).find((m) => m.src === "gis")?.h, 11.8);
+    assert.equal(rendersNear(-867.0, 948.0).find((m) => m.src === "gis")?.h, 10);
+    assert.equal(LIDAR.massHeights["m:-1137,1171"], 12.3, "Hubbs keeps roofOf");
+    assert.equal(rendersNear(-1137.4, 1171.1).find((m) => m.src === "gis")?.h, 12.3);
+  });
+
+  test("shore-colony pads past z_max keep guesses; Vaughan / Ritter heights stand", () => {
+    /* 1144 / 1146 / 1160: centroids south of terrain z_max=1386 →
+       groundAt null / 0 EPT pts in the centroid-based probe. Existence
+       today is real (Apple corridor), but no 2014 plane resolves — keep
+       the 4.5 guesses rather than invent. Vaughan / Ritter heights are
+       the audited full-ring planes (§15); the residual is the terrain
+       apron (most vertices OOB) — survey-box handoff, not a height bug. */
+    for (const i of [1144, 1146, 1160]) {
+      assert.equal(LIDAR.osmHeights?.[i], undefined, `a plane shipped for oob osm:${i}`);
+    }
+    assert.equal(rendersNear(-428.5, 1387.7, 4).find((m) => m.src === "osm")?.h, 4.5);
+    assert.equal(rendersNear(-339.5, 1387.1, 4).find((m) => m.src === "osm")?.h, 4.5);
+    assert.equal(rendersNear(-225.7, 1389.0, 4).find((m) => m.src === "osm")?.h, 4.5);
+    assert.equal(LIDAR.heights["Vaughan Hall"], 14.9);
+    assert.equal(LIDAR.heights["Ritter Hall"], 14.6);
+    assert.equal(rendersNear(-1101.9, 1402.4, 4).find((m) => m.src === "osm")?.h, 14.9);
+    assert.equal(rendersNear(-1150.1, 1402.0, 4).find((m) => m.src === "osm")?.h, 14.6);
+  });
+});
