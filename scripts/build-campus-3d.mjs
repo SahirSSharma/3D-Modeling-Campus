@@ -182,6 +182,13 @@ const KNOWN_HEIGHTS = {
      ~6.5 m (p98 lands in the overhanging eucalyptus, so the tag-free area
      guess of 16 m was more than double the real building). */
   "Ida and Cecil Green Faculty Club": 7,
+  /* The one building whose footprint pokes past build-campus-lidar.mjs's
+     survey box, so the standard pipeline never measures it and the area
+     guess (20 m) stood. A targeted re-sample of the same 2014 EPT
+     (r0c2 sweep, 2026-08-04: 30,780 returns, p75 21.6, p98 24.3 — one
+     plane, no canopy) puts the roof at 24.3 m. Apple confirms the
+     building stands unchanged on its 2014 footprint. */
+  "Qualcomm AA": 24.3,
 };
 
 /* THE ESTIMATED TABLE — post-2014 buildings with no measurable height.
@@ -360,6 +367,13 @@ const SEEDED_PLACES = {
   /* Its ring's centroid, kept as a place after building=no dropped the ring:
      the venue is real even though the slab was not. */
   "Epstein Family Amphitheater": { x: 743, z: -131.6 },
+  /* r0c2 sweep (2026-08-04): the two east-campus anchors everyone actually
+     navigates by. Both names live on OSM SITE ways (amenity areas), not on
+     any building footprint — every hospital building is an unnamed ring —
+     so neither survived the buildings/paths name pass. Coordinates are the
+     site ways' centroids (way/26103742, way/159384334). */
+  "Scripps Memorial Hospital La Jolla": { x: 1466.1, z: -713.5 },
+  "The Preuss School": { x: 1791.6, z: -480.3 },
 };
 
 /** Stitch a multipolygon relation's outer members into closed rings (already

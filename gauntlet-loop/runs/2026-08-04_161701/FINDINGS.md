@@ -247,3 +247,156 @@ rendered-roof probes (page, __campusWalk.probe): Earth N 11.6, Lounge 4.7, Earth
 ```
 
 Not deployed, not pushed — per the run's hard prohibitions. Local commit only.
+
+## Pass 1, shard r0c2 (lat 32.882391..32.891316, lng −117.231752..−117.220569 — 62 buildings, 18 named)
+
+East campus: Campus Point and the Science Research Park, the Scripps Memorial / Prebys hospital
+campus, the CSC service yard, the Biology Field Station, the Preuss School, Qualcomm AA/BB.
+The defining fact of the shard: almost nothing here carries an OSM name — 44 of 62 buildings are
+nameless rings — so almost nothing could key `lidar.heights`, and the area guess stood
+unchallenged nearly everywhere. The fix at scale is the `osmHeights` per-index mechanism r0c1
+introduced for two hand cases: every unnamed ring was re-sampled against the same EPT
+(`.cache/gauntlet-r0c2/probe-out.txt`, 63 targets), checked against a fresh Apple snapshot for
+currency (15 sites, footprint overlays), and — where verified standing-unchanged since the 2014
+flight — given its measured plane.
+
+### Fixed — heights, unnamed OSM rings (targeted EPT re-samples replicating the build pipeline exactly)
+
+31 rings enter `OSM_UNNAMED_VERIFIED` / `lidar.osmHeights` (§11 of `tests/campus-epoch.test.mjs`
+pins every value):
+
+| Ring | Was (guess) | Plane | Returns | What it is |
+|---|---|---|---|---|
+| osm:502 | 22.8 | **34.0** | 17,637 | Scripps Memorial east tower |
+| osm:506 | 16 | **46.9** | 27,500 | Prebys Cardiovascular Institute — see epoch call below |
+| osm:0 | 12 | **31.3** | 13,850 | Campus Point tower, seven storeys guessed at three |
+| osm:63 | 12 | **22.8** | 11,431 | NE-corner offices — stepped, guard takes the p75 main plane under a 27.9 core |
+| osm:453 | 12 | **19.9** | 4,762 | hospital central plant |
+| osm:119 | 12 | **19.1** | 4,290 | PV-roof office |
+| osm:204 | 12 | **15.2** | 9,411 | Science Research Park office |
+| osm:186 | 12 | **13.7** | 4,413 | PV-roof office |
+| osm:55 | 16 | **12.4** | 23,021 | XiMED annex block |
+| osm:781 | 12 | **12.1** | 2,475 | Campus Point office |
+| osm:507 | 8.4 | **11.0** | 6,130 | hospital wing |
+| osm:509 | 12 | **10.9** | 6,943 | canyon-edge wing |
+| osm:505 | 9 | **10.0** | 1,221 | hospital wing |
+| osm:113 | 16 | **9.3** | 20,190 | low broad block guessed tall |
+| osm:132 | 12 | **9.4** | 13,288 | NW-corner building |
+| osm:501 | 8.4 | **8.3** | 2,344 | wing under crown at 33 — tree-guard takes p75, agrees with the guess |
+| osm:504 | 9 | **6.3** | 1,169 | low wing |
+| osm:510 | 12 | **6.5** | 3,125 | service block guessed double |
+| osm:931–943 | 4.5–9 | **3.8–8.7** | 157–7,370 | the hospital-district carports and PV canopies — OSM's area heuristic reads a long canopy as a two-storey building |
+
+### Fixed — heights, GIS records (PRE_2014_GIS_VERIFIED extended east; twelve names)
+
+Hostless rings, build dates documented pre-flight, Apple confirms 2014 footprints. §11 pins all:
+
+| Mass | GIS | Plane | What moved |
+|---|---|---|---|
+| CSC Building C / D | 4.3 | **6.9 / 6.5** | the shops were half their height |
+| Fleet Services (hostless south row) | 4.3 | **5.7** | the north row already answered through its OSM host (10.1, ships) |
+| East Campus Substation | 8.5 | **5.3** | the record's default two storeys for a one-storey switchyard control building |
+| Preuss A / B / C | 8.5 | **9.2** each | |
+| Preuss F (both rings) | 8.5 | **11.7 / 11.4** | the double-height gym hall, three metres over its record |
+| BFS Greenhouse 1 / 2 / 3 | 4.3 | **5.0 / 4.9 / 5.3** | GIS rings span what OSM maps as PAIRS of houses; centroids fall in the gap, so host containment never saw them |
+| BFS Frog House | 4.3 | **5.0** | |
+
+### Fixed — heights, the survey-box clip
+
+**Qualcomm AA 20 → 24.3 m.** Its footprint pokes past `build-campus-lidar.mjs`'s AREA box, so
+the standard pipeline never measures it (`lidar.heights` has no entry) and the area guess stood.
+Targeted re-sample of the same EPT: 30,780 returns, p98 24.3, one plane, no canopy.
+`KNOWN_HEIGHTS` carries it with the citation — the Tenaya Hall precedent.
+
+### Fixed — epoch
+
+- **Prebys (osm:506) is a measurement, and the reasoning is written down.** Topped out mid-2013,
+  opened March 2015: at the flight the structure and roof were COMPLETE, interiors unfinished.
+  27,500 returns, p75 45.5 → p98 46.9 — a tight finished plane, not the scatter a rising frame
+  returns (contrast ACTRI, genuinely mid-build at 28.6, excluded by r0c1's predecessor sweep).
+  The 2014 roof is today's roof. Pinned with its reasoning in §11.
+- **The unnamed-host part hole is closed.** `partHeights` guarded named hosts via
+  `POST_2014_SITES` but shipped unnamed hosts' parts unexamined: Anderson Medical Pavilion
+  (osm:835, opened 2016) carried a 4.1 m "part roof" that was 2014 slab-and-staging returns.
+  Parts of unnamed hosts now require the same per-index verification as their slabs
+  (`OSM_UNNAMED_VERIFIED` in `build-campus-lidar.mjs`); 835/0 is gone, 506/0 (47.3, host
+  verified) stays, 503/0 goes with its withheld host (below). §11 pins all three.
+- **osm:772 / osm:508 stay unmeasured** — Prebys north pad and a canopy the flight saw as bare
+  ground (p50 0.8 m / 0.4 m). Post-2014 finishes; epoch rule, no exceptions.
+- **Demolition at (1416, −1299).** Apple (2026-08-04): roof torn open, excavators on the slab —
+  the unnamed 1980s service building is coming down for the Alexandria Campus Point buildout.
+  RIMAC Annex rule, but the ring has no name for `skipOsm`, so `campus-massing.js` skips it by
+  footprint ANCHOR (`skipOsmAnchors`) — nothing extrudes; the ring and its 2014 relief stay for
+  the day something measurable stands. §11 pins the empty site.
+
+### Fixed — wayfinding
+
+"Scripps Memorial Hospital La Jolla" and "The Preuss School" exist in OSM only as SITE ways
+wrapping unnamed buildings, so neither name ever survived the buildings/paths name pass and the
+east campus had no anchors. Both seeded at their site ways' centroids (way/26103742 at
+(1466.1, −713.5), way/159384334 at (1791.6, −480.3)) in `SEEDED_PLACES`. §11 pins both.
+
+### Withheld — documented, not invented
+
+| Entity | Why |
+|---|---|
+| Main Scripps complex (osm:503, renders 20 m guess) | stepped 1960s-2000s chain, NO single plane exists: p75 9.5 under towers at 32.2 — the automatic rule would flatten it to 9.5, worse than the guess. Needs per-wing rings nobody has drawn. Its whole-ring part (32.4) withheld with it. §11 pins the withhold. |
+| osm:780 (shed under full eucalyptus) | 67 returns, p50 10 m over a one-storey structure — the laser cannot see this roof. |
+| osm:944 (carport stub) | 8 returns — below the 25-return trust floor. |
+| Preuss Fabrication Lab | crown top to bottom (p50 12.4 over a one-storey shop); the mass rule would ship 17.5. Its 4.6 m GIS record stands. |
+| Jerboa (4.8 vs 4.3), EMF 2 (4.0 vs 4.3), Preuss modulars (4.4/4.6 vs 4.3) | deltas ≤0.5 m — survey noise on small rings; records left unchallenged (same rule as r0c1's Info Center). |
+| Preuss OSM rings 49/50/54/101, BFS osm:782, CSC osm:449 | GIS-covered (suppressed at render); measured planes logged in probe-out.txt but not shipped — a value that never renders is noise in the data. |
+
+### Measured, not changed — the roof-anchor class (two more data points)
+
+Grade audit over all 71 rendered in-shard masses (`.cache/gauntlet-r0c2/grade-audit.mjs`):
+one mass past the 2 m gate — the 34 m east tower (osm:502) renders **−2.66 m** off its surveyed
+roof elevation (centroid ground in a hole-filled interior), and osm:509 sits at +1.90 on its
+canyon edge. Bases per-vertex safe everywhere. Same class r0c1 logged (Hopkins +3.17); still a
+cross-shard renderer pass, still not smuggled into a shard splice.
+
+### Apple — currency confirmed at 15 sites
+
+csc-cluster, bfs-cluster (greenhouses + field plots current), scripps-garages (B, C, XIMED),
+hospital-south/mid/north (every ring stands; Prebys and Anderson match their footprints),
+carports-east, ne-offices, qualcomm-bb, campus-point-n, ne-corner, qualcomm-aa, preuss, and the
+two single-ring checks. Two epoch hits: the (1416, −1299) demolition (fixed above) and active
+unmapped construction north of Campus Point Court (Alexandria buildout — not in OSM yet, nothing
+to fix until OSM maps it; noted for a future pass). No colour was sampled off Apple pixels, so
+no registration fit was owed; the r0c0 constraint stands (per-site fits only, offset varies
+1.25–1.77 m by site). **H1 status unchanged:** the campus-wide script still needs the per-site
+registration prerequisite; shard-level qualitative evidence again H1-consistent — every
+unchanged building's Apple footprint matches its OSM ring by overlay inspection, and the
+re-sampled 2014 planes agree with what stands today (the shard's biggest "disagreements" were
+all guesses, not changes).
+
+### Handoffs to other shards
+
+- Roof-anchor render class: r0c2 adds osm:502 (−2.66) and osm:509 (+1.90) to r0c1's four; the
+  dedicated pass now has six measured cases across two shards.
+- Union-outline class members named by r0c1 (Mandell Weiss Forum, 64 Degrees, Birch Aquarium,
+  Biomedical Sciences, Mandeville Center) — all outside r0c2, all still open for their shards.
+- Campus Point / Alexandria construction: when OSM maps the new buildings, they are
+  POST_2014_SITES candidates on arrival (the flight predates them by a decade).
+
+### Verification (real output)
+
+```
+npm test:  tests 352 / suites 40 / pass 352 / fail 0   (baseline before splice: 328/328)
+npm run check:
+  campus-3d.json OK — 1395 buildings (390 named), 3878 paths (22587 points), 662 surfaces (72 plazas)
+  campus-lidar.json OK — 293 measured heights, 7275 trees, terrain 1014×923
+  campus-boundary.json OK — 1 ring(s), 244 points; textures OK — 87 chunks, 31.1 MB, source google
+  ok: 4335 ground, 505 massing, 507x462 terrain
+  campus-colleges.json OK — 8 colleges, 128 buildings affiliated
+eye-level probes (real page, __campusWalk.probe, 33 sites): every changed mass renders exactly
+  its pinned value (osm:502 34.0, Prebys 46.9, Campus Point tower 31.3, QAA 24.3, CSC 6.9/6.5,
+  Fleet 5.7, substation 5.3, greenhouses 4.9–5.3, Preuss 9.2–11.7, carports 3.8–8.7);
+  demolition site (1416,−1299) renders null; osm:503 renders its documented 20 m guess.
+  Known roof-anchor class visible at osm:502 (−2.7 vs surveyed elevation) and osm:509 (+1.9) —
+  logged above, cross-shard.
+screenshots: .cache/gauntlet-r0c2/shots/ (hospital towers, Prebys, Campus Point tower, QAA,
+  carports, CSC yard, BFS greenhouses, Preuss, substation, empty demolition site)
+```
+
+Not deployed, not pushed — per the run's hard prohibitions. Local commit only.

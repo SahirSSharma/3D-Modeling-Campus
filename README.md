@@ -233,6 +233,46 @@ within their declared gates; Marshall Upper Apartments' townhomes keep the unive
 their p98s read eucalyptus tails (up to 10.3 m) that stay under the canopy guard's 5 m firing
 threshold, and the GIS figure matches the measured plane's body.
 
+**The east-campus shard sweep (2026-08-04, r0c2).** Campus Point, the Scripps Memorial /
+Prebys hospital campus, the CSC service yard, the Biology Field Station and the Preuss School —
+the corner of the survey where almost nothing carries an OSM name, which means almost nothing
+could key `lidar.heights` and nearly every building wore its area guess unchallenged. The
+`osmHeights` index mechanism r0c1 introduced for two hand cases is what this shard actually
+needed at scale: 31 more unnamed rings verified standing-unchanged on Apple (2026-08-04) and
+re-sampled against the same EPT:
+
+| Building | Shipped | Measured | Why it was wrong |
+|---|---|---|---|
+| Scripps Memorial east tower (unnamed) | 22.8 m (area guess) | **34.0 m** | nameless, so the guess stood. 17,637 returns, one plane at p98. |
+| Prebys Cardiovascular Institute (unnamed) | 16 m (area guess) | **46.9 m** | an epoch CALL, not just a lookup: Prebys topped out mid-2013 and opened March 2015, so the 2014 flight measured the complete structure — 27,500 returns, p75 45.5 to p98 46.9 is a finished plane, not formwork scatter (contrast ACTRI, caught genuinely mid-build at 28.6 and excluded). The tallest fix the gauntlet has made. |
+| Campus Point tower (unnamed) | 12 m (area guess) | **31.3 m** | a seven-storey office guessed at three floors. Its neighbours moved with it: 22.8, 19.1, 15.2, 13.7, 12.1 m planes over guesses of 12. |
+| Hospital-district carports (13 rings) | 4.5–9 m guesses | **3.8–8.7 m** | OSM's area heuristic reads a long PV canopy as a two-storey building. |
+| Qualcomm AA | 20 m (area guess) | **24.3 m** | the one building whose footprint pokes past the LiDAR survey box, so the standard pipeline never measures it; a targeted re-sample of the same EPT (30,780 returns) feeds `KNOWN_HEIGHTS` — the Tenaya precedent. |
+| CSC shops C/D, hostless Fleet row | 4.3 m (GIS records) | **6.9 / 6.5 / 5.7 m** | `PRE_2014_GIS_VERIFIED` extended east: twelve more hostless records with documented pre-flight build dates now answer the epoch question by date and get challenged like everything else. |
+| Preuss School A/B/C/F | 8.5 m (GIS default) | **9.2 / 9.2 / 9.2 / 11.7 m** | same class; the double-height gym hall was three metres taller than its record. The East Campus Substation ran the other way — 8.5 m record, 5.3 m building. |
+| BFS greenhouses + Frog House | 4.3 m (GIS) | **4.9–5.3 m** | the GIS greenhouse rings span what OSM maps as PAIRS of houses, so their centroids fall in the gap between the named rings and host containment could never see them. |
+
+The sweep also closed an epoch hole in the PART pipeline: `partHeights` guarded named hosts
+(`POST_2014_SITES`) but let an unnamed host's parts through unexamined, which is how the
+Anderson Medical Pavilion — opened 2016, a construction site at the flight — shipped a 4.1 m
+"roof" that was really slab-and-staging returns. Unnamed hosts' parts now answer through the
+same per-index verification their slabs use, and Anderson ships nothing. The main Scripps
+complex is the documented WITHHOLD of the shard: a stepped 1960s-2000s chain whose returns have
+no single plane anywhere (p75 9.5 m under towers at 32), so the automatic rule would flatten it
+to 9.5 — worse than its 20 m guess. It keeps the guess, stated as one, until someone measures it
+per wing. Better a declared estimate than a false measurement.
+
+One demolition: Apple shows the unnamed 1980s service building south of Campus Point Court with
+its roof torn open and excavators on the slab — mid-demolition for the Alexandria buildout. The
+RIMAC Annex rule applies, but the ring has no name for `skipOsm`, so the renderer skips it by
+footprint anchor instead; nothing extrudes, the ring stays for the day something measurable
+stands. And two wayfinding anchors nobody could navigate without — "Scripps Memorial Hospital
+La Jolla" and "The Preuss School" — existed only as OSM *site* ways wrapping unnamed buildings,
+so neither ever survived the name pass; both are now seeded at their site ways' centroids.
+The roof-anchor render class r0c1 quantified gets two more data points here (the 34 m tower
+renders 2.7 m below its surveyed elevation over a hole-filled interior; a canyon-edge wing
+1.9 m above) — still logged for the dedicated cross-shard pass, still not smuggled in.
+
 ### The colours, measured off footage
 
 Satellite imagery sees roofs and ground; it cannot see a wall, a tree trunk, or the sky. For

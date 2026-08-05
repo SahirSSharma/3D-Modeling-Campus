@@ -146,6 +146,33 @@ const PRE_2014_GIS_VERIFIED = new Set([
   "Robinson Building 1 - Administration",  // 1990 (GPS school complex)
   "Robinson Building 3 - Library",         // 1990 (GPS school complex)
   "Outback Adventures",                    // 1990s surf shack, standing today
+  /* r0c2 sweep (2026-08-04). East-campus service and school sites whose GIS
+     rings have neither a named-OSM host nor an exact name twin. Build dates
+     from the university's own record; Apple (2026-08-04) confirms each
+     stands on its 2014 footprint. The GIS greenhouse rings span what OSM
+     maps as PAIRS of houses, so their centroids fall in the gap between the
+     named rings — host containment can't see them. Far misses: the CSC
+     shops (GIS 4.3 m, planes 6.5-6.9), the hostless Fleet Services row
+     (4.3, plane 5.7), Preuss Building F (8.5, planes 11.4-11.7), and the
+     East Campus Substation control building (8.5, plane 5.3 — the record's
+     default two storeys for a one-storey switchyard building). NOT added,
+     each verified and left unchallenged: Jerboa (Δ0.5 at the noise line,
+     153 returns), EMF 2 (Δ0.3), both Preuss modulars (Δ≤0.3), and the
+     Preuss Fabrication Lab, whose returns are eucalyptus crown top to
+     bottom (p50 12.4 over a one-storey shop) — its 4.6 m record stands
+     because the laser cannot see the roof. */
+  "Biology Field Station - Greenhouse 1",  // field station stock, pre-2014
+  "Biology Field Station - Greenhouse 2",
+  "Biology Field Station - Greenhouse 3",
+  "Biology Field Station - Frog House",
+  "Campus Services Complex - Building C",  // CSC yard, 1980s
+  "Campus Services Complex - Building D",
+  "Fleet Services",                        // the hostless south row; the north row answers through its OSM host
+  "East Campus Substation",                // 2010, serves the hospital district
+  "Preuss School - Building A",            // charter school, opened 2001
+  "Preuss School - Building B",
+  "Preuss School - Building C",
+  "Preuss School - Building F",            // both F rings: gym hall and stage house
 ]);
 
 /* A facilities record that models a building as a whole-footprint ring PLUS
@@ -170,8 +197,38 @@ const MEASURE_MINUS_CONTAINED = {
    post-2014 rebuild its predecessor's roof. Each entry cites what it is.
    786: The Village East community building (2008-11 buildout; OSM guessed
         9 m, the plane is 12.3). 893: the kiosk east of RIMAC's service
-        court, standing on current Apple (OSM 4.5, plane 4.3). */
-const OSM_UNNAMED_VERIFIED = new Set([786, 893]);
+        court, standing on current Apple (OSM 4.5, plane 4.3).
+   r0c2 sweep (2026-08-04) — east campus, where almost nothing is named in
+   OSM and every ring wore an area-based guess. Apple confirms each stands
+   on its 2014 footprint; the fixes below replace guesses that were up to
+   19 m off. Verified and deliberately NOT here: 503 (the main Scripps
+   Memorial complex — a stepped slab whose returns have no single plane:
+   p75 9.5 under towers at 32; roofOf would flatten it to 9.5, worse than
+   the 20 m guess it has), 772/835 (Prebys north wing, Anderson Pavilion —
+   post-2014 finishes; the flight saw foundations), 780 (a shed under
+   full eucalyptus crown, 67 returns, p50 10 for a one-storey structure),
+   944 (8 returns — below the trust floor), 508 (a canopy the flight saw
+   as bare ground, 0.4 m — post-2014).
+     Campus Point offices: 0 (31.3; guessed 12), 63 (stepped — the guard
+        takes the 22.8 main plane under a 27.9 core; guessed 12),
+        113 (9.3), 119 (19.1), 132 (9.4), 186 (13.7), 204 (15.2).
+     Scripps Memorial campus, all standing pre-2014: 453 (central plant,
+        19.9), 501 (8.3 — crown at 33 over the wing, guard takes p75),
+        502 (the east tower: 34.0; OSM guessed 22.8), 504 (6.3),
+        505 (10.0), 507 (11.0), 509 (10.9), 510 (6.5).
+     506: Prebys Cardiovascular Institute — topped out mid-2013, opened
+        2015. The flight measured the COMPLETE structure: 27,500 returns,
+        p75 45.5 to p98 46.9 is one tight finished plane, not formwork
+        scatter. The 2014 roof is today's roof; OSM guessed 16.
+     55: the XiMED annex block (12.4). 781: campus point office (12.1).
+     931-943: the hospital-district carports and PV canopies — OSM
+        guessed 4.5-9 m box heights for what measure 3.8-8.7. */
+const OSM_UNNAMED_VERIFIED = new Set([
+  786, 893,
+  0, 55, 63, 113, 119, 132, 186, 204, 453, 501, 502, 504, 505, 506, 507,
+  509, 510, 781, 931, 932, 933, 934, 935, 936, 937, 938, 939, 940, 941,
+  942, 943,
+]);
 
 /* Hand-audited stats where the automatic roofOf() percentile choice is
    demonstrably wrong for a PRE-2014 building (verified against a targeted
@@ -600,6 +657,12 @@ async function build() {
     if (t.isHost || t.isMass || t.roofs.length < 12) continue;
     const hostName = campus.buildings[t.bi]?.n;
     if (hostName && POST_2014_SITES.has(hostName)) continue; // same epoch rule
+    /* An UNNAMED host has no name to look up in POST_2014_SITES, so its
+       parts answer the epoch question the way its slab does: through the
+       per-index verification. Without this, Anderson Medical Pavilion
+       (unnamed osm:835, opened 2016) shipped a 4.1 m part — the 2014
+       flight's return off a construction site, worn as a finished roof. */
+    if (!hostName && !OSM_UNNAMED_VERIFIED.has(t.bi)) continue;
     const base = baseByBuilding.get(t.bi) ?? rimBase(t.ring);
     if (base === null) continue;
     const h = Math.round((roofOf(t.roofs) - base) * 10) / 10;

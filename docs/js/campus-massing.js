@@ -294,9 +294,20 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
      rebuild Apple shows as bare decks and a tower crane (2026-08-04) — no
      source resolves the rising frame, so the site stays unbuilt. */
   const skipOsm = new Set(["Geisel Library", "Alianza", "Umoja", "RIMAC Annex"]);
+  /* Demolition sites whose OSM ring has NO name to key skipOsm skip by
+     footprint anchor instead, the same convention the build scripts use
+     for phantom rings. (1416, -1299): the Campus Point service building
+     Apple shows mid-demolition — roof torn open, excavators on the slab
+     (r0c2 sweep, 2026-08-04). The 2014 building is going; nothing about
+     its replacement resolves to gate. Better absent than wrong. */
+  const skipOsmAnchors = [[1416, -1299]];
   const gisCentroids = covered.map((r) => centroidOf(r));
   campus.buildings.forEach((b, i) => {
     if (b.n && skipOsm.has(b.n)) return;
+    if (!b.n) {
+      const [cx, cz] = centroidOf(b.p);
+      if (skipOsmAnchors.some(([ax, az]) => Math.hypot(cx - ax, cz - az) < 12)) return;
+    }
     const nameCarried = !b.n || gisCentroids.some(([x, z]) => inRing(x, z, b.p));
     const fac = arcgis?.buildings?.[b.n];
     /* Unnamed rings have no name to key lidar.heights; lidar.osmHeights

@@ -32,6 +32,12 @@
  *      low pavilion measures without its tower, the hand-verified GIS-only
  *      and unnamed-OSM planes ship, and the demolished RIMAC Annex site
  *      renders nothing while its rebuild is a bare frame.
+ *  11. The r0c2 sweep's measurements hold: the verified unnamed east-campus
+ *      rings ship their planes and the epoch withholds stay withheld (the
+ *      post-2014 hospital wings, the stepped Scripps complex, the canopy-
+ *      blind sheds), the hand-verified GIS records measure their own rings,
+ *      Qualcomm AA ships its re-sampled roof, the Campus Point demolition
+ *      site renders nothing, and the two east-campus site anchors stand.
  */
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
@@ -557,5 +563,153 @@ describe("10. the north-central shard sweep (r0c1, 2026-08-04)", () => {
     const umoja = MASSES.filter((m) => m.name === "Umoja");
     assert.ok(alianza.length >= 2, `Alianza wings: ${alianza.length}`);
     assert.ok(umoja.length >= 3, `Umoja wings: ${umoja.length}`);
+  });
+});
+
+describe("11. the east-campus shard sweep (r0c2, 2026-08-04)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("the verified unnamed east-campus rings each ship their measured plane", () => {
+    /* Almost nothing east of Campus Point Drive is named in OSM, so every
+       ring wore an area guess. Each index below is hand-verified standing
+       unchanged on Apple (2026-08-04) and carries its targeted-EPT plane
+       (probe: same roofOf/rimBase as the build). The worst guesses: the
+       31.3 m Campus Point tower guessed at 12, the hospital's 34 m east
+       tower at 22.8, and 9 m two-storey boxes for 4 m carports. */
+    const PLANES = {
+      0: 31.3, 55: 12.4, 63: 22.8, 113: 9.3, 119: 19.1, 132: 9.4,
+      186: 13.7, 204: 15.2, 453: 19.9, 501: 8.3, 502: 34, 504: 6.3,
+      505: 10, 507: 11, 509: 10.9, 510: 6.5, 781: 12.1,
+      931: 6.1, 932: 6, 933: 8.7, 934: 5.7, 935: 3.8, 936: 4.1,
+      937: 3.9, 938: 4.1, 939: 6.8, 940: 7.4, 941: 4.7, 942: 6.2,
+      943: 5.7,
+    };
+    for (const [bi, h] of Object.entries(PLANES)) {
+      assert.equal(LIDAR.osmHeights?.[bi], h, `osmHeights[${bi}]`);
+      const [cx, cz] = centroidOf(CAMPUS.buildings[bi].p);
+      const m = rendersNear(cx, cz).find((m) => m.src === "osm");
+      assert.ok(m, `osm:${bi} vanished`);
+      assert.equal(m.h, h, `osm:${bi} renders ${m.h}, plane is ${h}`);
+    }
+  });
+
+  test("Prebys measures because the flight saw its FINISHED structure", () => {
+    /* Prebys Cardiovascular Institute (unnamed osm:506) topped out
+       mid-2013 and opened March 2015: at the 2014 flight the structure
+       and roof were complete, only interiors remained. 27,500 returns,
+       p75 45.5 to p98 46.9 — one tight finished plane, not formwork
+       scatter. The 2014 roof IS today's roof; OSM guessed 16 m. */
+    assert.equal(LIDAR.osmHeights?.["506"], 46.9);
+    assert.equal(LIDAR.partHeights?.["506/0"], 47.3, "its dormant part measurement");
+  });
+
+  test("post-2014 hospital construction stays unmeasured — the epoch rule", () => {
+    /* 772 (Prebys north wing pad) and 835 (Anderson Medical Pavilion,
+       opened 2016) were construction sites in 2014: their returns are
+       slab and staging, not roofs (772: p50 0.8 m). 508 is a canopy the
+       flight saw as bare ground (0.4 m). None may wear a 2014 number. */
+    for (const bi of ["772", "835", "508"]) {
+      assert.equal(LIDAR.osmHeights?.[bi], undefined, `osmHeights[${bi}] violates the epoch rule`);
+    }
+    assert.equal(LIDAR.partHeights?.["835/0"], undefined,
+      "Anderson's 4.1 m construction-site return shipped as a part again");
+  });
+
+  test("the main Scripps complex keeps its guess — no single plane exists", () => {
+    /* osm:503 is the stepped 1960s-2000s hospital chain: p75 9.5 under
+       towers at 32 — roofOf would flatten it to 9.5, WORSE than the 20 m
+       guess. Withheld from OSM_UNNAMED_VERIFIED, and its whole-ring part
+       measurement is withheld with it (same no-single-plane reason). */
+    assert.equal(LIDAR.osmHeights?.["503"], undefined);
+    assert.equal(LIDAR.partHeights?.["503/0"], undefined);
+    const [cx, cz] = centroidOf(CAMPUS.buildings[503].p);
+    const m = rendersNear(cx, cz).find((m) => m.src === "osm");
+    assert.ok(m, "the hospital vanished");
+    assert.equal(m.h, 20, `renders ${m.h} — the documented guess`);
+  });
+
+  test("canopy-blind and return-starved rings keep their guesses", () => {
+    /* 780: a shed under full eucalyptus crown — 67 returns, p50 10 m for
+       a one-storey structure; the laser cannot see this roof. 944: eight
+       returns, below the 25-return trust floor. Better a guess than a
+       tree's height. */
+    assert.equal(LIDAR.osmHeights?.["780"], undefined);
+    assert.equal(LIDAR.osmHeights?.["944"], undefined);
+  });
+
+  test("the hand-verified east-campus GIS records measure their own planes", () => {
+    /* PRE_2014_GIS_VERIFIED (r0c2): hostless rings whose build dates are
+       documented pre-flight. The far misses: CSC shops at GIS 4.3 vs
+       planes 6.5-6.9, the hostless Fleet Services row 4.3 vs 5.7, Preuss
+       Building F 8.5 vs 11.4-11.7, and the substation control building
+       8.5 vs 5.3 (the record's default two storeys, measured one). */
+    const PLANES = {
+      "m:1049,-830": [5, "BFS Greenhouse 1"],
+      "m:1066,-830": [4.9, "BFS Greenhouse 2"],
+      "m:1067,-852": [5.3, "BFS Greenhouse 3"],
+      "m:1082,-802": [5, "BFS Frog House"],
+      "m:1070,-561": [6.9, "CSC Building C — GIS said 4.3"],
+      "m:1069,-637": [6.5, "CSC Building D — GIS said 4.3"],
+      "m:1723,-573": [5.3, "East Campus Substation — GIS said 8.5"],
+      "m:1137,-594": [5.7, "Fleet Services south row — GIS said 4.3"],
+      "m:1825,-537": [9.2, "Preuss Building A"],
+      "m:1823,-511": [9.2, "Preuss Building B"],
+      "m:1808,-491": [9.2, "Preuss Building C"],
+      "m:1786,-549": [11.7, "Preuss Building F — GIS said 8.5"],
+      "m:1751,-510": [11.4, "Preuss Building F stage house — GIS said 8.5"],
+    };
+    for (const [key, [h, why]] of Object.entries(PLANES)) {
+      assert.equal(LIDAR.massHeights[key], h, `${why} — massHeights[${key}]`);
+    }
+    /* The Preuss Fabrication Lab is NOT challenged: its returns are
+       eucalyptus crown top to bottom (p50 12.4 over a one-storey shop).
+       The 4.6 m GIS record stands because the laser cannot see the roof. */
+    assert.equal(LIDAR.massHeights["m:1788,-607"], undefined);
+  });
+
+  test("Qualcomm AA — the building the survey box clips — ships its re-sampled roof", () => {
+    /* Its footprint pokes past build-campus-lidar.mjs's AREA box, so the
+       standard pipeline never measures it and the 20 m area guess stood.
+       Targeted re-sample of the same EPT: 30,780 returns, p98 24.3, one
+       plane. KNOWN_HEIGHTS carries it (the Tenaya precedent). */
+    const qaa = CAMPUS.buildings.find((b) => b.n === "Qualcomm AA");
+    assert.ok(qaa, "Qualcomm AA left the dataset");
+    assert.equal(qaa.h, 24.3);
+    assert.equal(tallest("Qualcomm AA"), 24.3, "renders its measured height");
+  });
+
+  test("the Campus Point demolition site renders nothing", () => {
+    /* Apple (2026-08-04): the unnamed 1980s service building at
+       (1416, -1299) has its roof torn open with excavators on the slab —
+       mid-demolition for the Alexandria buildout. The ring stays in the
+       data for the day something measurable stands; nothing extrudes.
+       RIMAC Annex precedent, anchored by centroid because the ring has
+       no name for skipOsm. */
+    assert.equal(rendersNear(1416, -1299, 10).length, 0,
+      "something extrudes on the demolition site");
+    assert.equal(LIDAR.osmHeights?.["171"], undefined,
+      "the demolished building's 2014 plane shipped");
+  });
+
+  test("the east-campus wayfinding anchors exist where their site ways put them", () => {
+    /* Neither name lives on any building footprint — every hospital
+       building is an unnamed ring, and Preuss is six lettered buildings —
+       so neither survived the name pass. Seeded at the OSM site ways'
+       centroids (way/26103742, way/159384334). */
+    const h = CAMPUS.places["Scripps Memorial Hospital La Jolla"];
+    assert.ok(h, "the hospital anchor is missing");
+    assert.ok(Math.hypot(h.x - 1466.1, h.z - -713.5) < 1, `anchor at (${h.x}, ${h.z})`);
+    const s = CAMPUS.places["The Preuss School"];
+    assert.ok(s, "the school anchor is missing");
+    assert.ok(Math.hypot(s.x - 1791.6, s.z - -480.3) < 1, `anchor at (${s.x}, ${s.z})`);
   });
 });
