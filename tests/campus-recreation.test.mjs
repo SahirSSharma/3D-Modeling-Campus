@@ -2,9 +2,12 @@
 //
 // placeRecreation() is pure, so these run the exact placement the renderer
 // uses. The counts here are what the aerial references actually carry —
-// SIX tennis courts (two green, four blue, pixel-scanned rather than
-// eyeballed) and TWO sand nets on one centred row — so a future refit of
-// campus-markings.json that loses or duplicates a court fails here.
+// FOUR tennis courts (the blue east pad; the red west pad's two were
+// repainted as pickleball after the registered imagery — Apple 2026-08-04,
+// r1c0 sweep — and its stale tennis lines are removed until an Apple
+// registration passes gate) and TWO sand nets on one centred row — so a
+// future refit of campus-markings.json that loses or duplicates a court
+// fails here.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -37,7 +40,7 @@ const inQuad = (x, z, q) => {
 };
 
 test("the families are the counts the aerials carry", () => {
-  assert.equal(r.tennisNets.length, 6, "six Muir tennis courts, six nets");
+  assert.equal(r.tennisNets.length, 4, "four Muir tennis courts (east pad), four nets");
   assert.equal(r.hoops.length, 8, "two full courts: four end hoops, four cross-court");
   assert.equal(r.courtLights.length, 6, "three columns of light poles, two rows deep");
   assert.equal(r.volleyNets.length, 2, "the sand carries one centred row of two nets");

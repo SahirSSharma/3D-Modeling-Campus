@@ -273,6 +273,34 @@ The roof-anchor render class r0c1 quantified gets two more data points here (the
 renders 2.7 m below its surveyed elevation over a hole-filled interior; a canyon-edge wing
 1.9 m above) — still logged for the dedicated cross-shard pass, still not smuggled in.
 
+**The west shard sweep (2026-08-04, r1c0).** La Jolla Farms and Muir's residential edge — the
+shard where 131 of 140 buildings are nameless private estates, and where rebuilding the heights
+file exposed a one-character pipeline bug. The survey-box test in `build-campus-lidar.mjs` read
+`bb.maxy > BOX.maxy` where `bb.miny` was meant, rejecting any footprint that *pokes past* the
+north edge instead of footprints lying entirely beyond it. The committed data predated the
+Overpass refresh that moved the affected rings, so the bug was latent: the next rebuild would
+have silently dropped Torrey Pines Center South's 12.2 m measurement, and Qualcomm AA had
+already needed a `KNOWN_HEIGHTS` workaround because of it. One character fixed, both measure —
+and QAA's box-clipped automatic measurement (23.3 m, a truncated footprint) is superseded by its
+audited full-ring re-sample:
+
+| Building | Shipped | Measured | Why it was wrong |
+|---|---|---|---|
+| La Jolla Farms estates (95 unnamed rings) | 4.5–9 m (area guesses) | **3.1–9.6 m** | the guess ran BOTH directions: one-storey ranch houses guessed at 9 m (osm:319 measures 4.4), two-storey townhouse rows guessed at 4.5 (osm:721–727 measure 7.8–7.9). Each re-sampled from the EPT, shipped only where the roof reads as ONE plane, each checked standing on its 2014 footprint in an Apple closeup. 25 more rings measured but sit under crowns — their guesses stand, stated as guesses. |
+| Extended Studies cottages F/G/X/Z/E | 4.3 m (GIS record) | **3.2–3.9 m** | hostless masses with no OSM rings at all, so nothing ever challenged the record. Five more (A–D, L) stay at 4.3: the eucalyptus rows over them defeat every percentile guard, and the record matches what the laser glimpses of the roof body. |
+| Tuolumne Apartments | one 17.3 m outline | **nine houses, 9.3–16.2 m** | the whole-complex OSM ring extruded through its nine facility masses — the Marshall/Alianza union-outline class, suppressed the same way. T House North's centroid falls in a notch OUTSIDE the concave ring, so host containment had never measured it: 13.0 m vs 12.2 of record. |
+| Spanos Athletic Performance Center | 15.8 m (the rebuild's LiDAR read) | **4.4 m** | an epoch trap: TWO buildings share the OSM name. The Performance Center broke ground June 2015 — the 11–16 m smear over its footprint is the eucalyptus row cleared for it, not a roof. The audited 4.4 is the 1988 Training Facility's plane; both render from their own GIS masses at 4.3. |
+| Muir west tennis pad | two tennis courts | **removed** | Apple (2026-08-04) shows the pad repainted for pickleball; the registered Google chunks carry the previous paint generation. The new lines can't ship until an Apple registration passes gate — better absent than stale. The east pad's four courts still fit (0.23 m, 54 %). |
+
+The H1 spot-check ran clean here: independent re-samples of the shard's named, unchanged
+buildings agree with the build's own measurements within 0.2 m on every clean plane (Tioga
+35.8/35.7, Keeling North 34.4/34.4, HDH Admin 19.8/19.8, Audrey Geisel 6.3/6.4) — the 2014
+survey still describes today's campus wherever nothing changed, which is exactly the claim the
+epoch rule stands on. A grade audit over all 146 rendered masses on the bluff found zero past
+the 2 m roof-anchor gate. The documented withhold: osm:481, a ring under unbroken chaparral on
+the canyon rim — Apple sees no structure and the sparse returns could be brush, so it ships
+nothing rather than a guess dressed as a measurement.
+
 ### The colours, measured off footage
 
 Satellite imagery sees roofs and ground; it cannot see a wall, a tree trunk, or the sky. For

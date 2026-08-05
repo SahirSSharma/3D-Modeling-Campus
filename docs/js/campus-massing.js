@@ -292,8 +292,17 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
      solid block no one measured, so the wings render and the outline does
      not. The RIMAC Annex ring outlines the 2014 building demolished for a
      rebuild Apple shows as bare decks and a tower crane (2026-08-04) — no
-     source resolves the rising frame, so the site stays unbuilt. */
-  const skipOsm = new Set(["Geisel Library", "Alianza", "Umoja", "RIMAC Annex"]);
+     source resolves the rising frame, so the site stays unbuilt.
+     Tuolumne Apartments is the same outline problem as Alianza/Umoja
+     (r1c0 sweep, 2026-08-04): one concave OSM ring around the whole 2003
+     complex, extruded at a whole-ring 17.3 m through nine facilities
+     masses that measure 9.3-16.2 individually — the T-house wings rendered
+     twice, once at their own plane and once inside a block 4 m taller.
+     The masses render; the outline does not. */
+  const skipOsm = new Set([
+    "Geisel Library", "Alianza", "Umoja", "RIMAC Annex",
+    "Tuolumne Apartments",
+  ]);
   /* Demolition sites whose OSM ring has NO name to key skipOsm skip by
      footprint anchor instead, the same convention the build scripts use
      for phantom rings. (1416, -1299): the Campus Point service building

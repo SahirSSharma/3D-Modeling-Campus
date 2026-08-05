@@ -7,3 +7,6 @@
 
 | pass | shard | started | exit | duration | log |
 |---|---|---|---|---|---|
+| 1 | r0c0 | 16:17:01 | 0 | 52m59s | `pass1-r0c0.log` |
+| 1 | r0c1 | 17:10:00 | 0 | 53m36s | `pass1-r0c1.log` |
+| 1 | r0c2 | 18:03:36 | 0 | 50m38s | `pass1-r0c2.log` |

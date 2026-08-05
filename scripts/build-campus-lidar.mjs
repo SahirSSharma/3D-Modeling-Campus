@@ -173,6 +173,27 @@ const PRE_2014_GIS_VERIFIED = new Set([
   "Preuss School - Building B",
   "Preuss School - Building C",
   "Preuss School - Building F",            // both F rings: gym hall and stage house
+  /* r1c0 sweep (2026-08-04). The Extended Studies cottage rows off North
+     Torrey Pines have no OSM rings at all, so every mass stood unchallenged
+     at the record's uniform 4.3 m. The 2014 flight sees each roof as a
+     one-storey plane 0.4-1.1 m off that default (F 3.2, G 3.5, X 3.9,
+     Z 3.3, E 3.3 — bodies tight to 0.1 m), and Apple (2026-08-04) shows
+     the same cottages standing on the same footprints. NOT added, each
+     probed and left unchallenged: Buildings A, B, C, D and L, whose returns
+     are eucalyptus crown over the roof (Building A: p50 3.2 under a p75 of
+     8.2 — the discriminator would ship the tree). The laser cannot see
+     those five roofs; the record's 4.3 stands. */
+  "Extended Studies and Public Programs - Building F",
+  "Extended Studies and Public Programs - Building G",
+  "Extended Studies and Public Programs - Building X",
+  "Extended Studies and Public Programs - Building Z",
+  "Extended Studies and Public Programs - Building E",
+  /* Tuolumne's ninth mass (2003 complex): its centroid falls in the notch
+     outside the complex's concave OSM ring, so host containment misses it
+     and 12.2 m of GIS record stood for a 13.0 m measured plane (1,947
+     returns, p75 11.8 to p98 13.0). T House East answers through its own
+     ring; this one has none. */
+  "Tuolumne Apartments - T House North",
 ]);
 
 /* A facilities record that models a building as a whole-footprint ring PLUS
@@ -222,12 +243,47 @@ const MEASURE_MINUS_CONTAINED = {
         scatter. The 2014 roof is today's roof; OSM guessed 16.
      55: the XiMED annex block (12.4). 781: campus point office (12.1).
      931-943: the hospital-district carports and PV canopies — OSM
-        guessed 4.5-9 m box heights for what measure 3.8-8.7. */
+        guessed 4.5-9 m box heights for what measure 3.8-8.7.
+   r1c0 sweep (2026-08-04) — La Jolla Farms, west of the campus proper,
+   where no ring is named and every house wore an area-based guess. Every
+   index below was re-sampled from the EPT and shipped only when its roof
+   read as ONE plane (no-guard spread p98-p75 <= 2 m, or a guarded body
+   tight to p75-p50 <= 2 m), then checked against an Apple closeup
+   (2026-08-04) showing the structure standing on its 2014 footprint.
+   Guesses ran both directions: one-storey ranch houses guessed at 9 m
+   (319: plane 4.4; 906: 3.6; 979: 4.2; 1009: 3.5) and two-storey
+   townhouses guessed at 4.5 (725-727: planes 7.7-7.9; 1088-1095:
+   6.2-8.8; 913: 8.9).
+     177, 777: the two unnamed sheds inside the Extended Studies rows
+        (planes 4.6, 3.3).
+     319-321: the Blackgold Rd estates (planes 4.3-4.4, all guessed 9).
+     486-491: the bluff compounds over Blacks Beach (planes 2-8.8).
+     721-757: the Blackhorse Farms townhouse rows (planes 7.4-8.8).
+     829, 831, 885: mid-farms estates (7.6, 8.2, 9.1).
+     902-916: La Jolla Farms Rd south houses (planes 3.6-9.6).
+     979-1031: the main estate grid (planes 3.1-8.9).
+     1088-1095: the south-edge cluster (planes 6.2-8.8).
+     1386-1388: the estancia cottages by the tennis courts (4.5-7.9).
+   Verified and deliberately NOT here: 481 (its ring sits under unbroken
+   chaparral on the canyon rim — Apple cannot see a structure and the
+   laser plane could be brush; no source resolves it, the guess stands),
+   and 25 crown-smeared rings (322, 480, 485, 832, 903-904, 907, 909-910,
+   982, 986, 996-997, 999, 1002, 1007-1008, 1013, 1017, 1022-1024, 1028,
+   1089, 1094) whose spreads put p98 in a tree and whose bodies are too
+   loose to trust p75 — their OSM guesses stand, stated as guesses. */
 const OSM_UNNAMED_VERIFIED = new Set([
   786, 893,
   0, 55, 63, 113, 119, 132, 186, 204, 453, 501, 502, 504, 505, 506, 507,
   509, 510, 781, 931, 932, 933, 934, 935, 936, 937, 938, 939, 940, 941,
   942, 943,
+  177, 319, 320, 321, 486, 487, 488, 489, 490, 491, 721, 722, 723, 725,
+  726, 727, 728, 730, 731, 732, 733, 734, 735, 739, 740, 741, 742, 748,
+  749, 750, 751, 752, 755, 756, 757, 777, 829, 831, 885, 902, 905, 906,
+  908, 911, 912, 913, 914, 915, 916, 979, 980, 981, 983, 984, 987, 988,
+  989, 990, 991, 992, 993, 994, 995, 998, 1000, 1001, 1003, 1004, 1005,
+  1006, 1009, 1010, 1011, 1012, 1014, 1015, 1016, 1018, 1019, 1020, 1021,
+  1025, 1026, 1027, 1029, 1030, 1031, 1088, 1090, 1091, 1092, 1095, 1386,
+  1387, 1388,
 ]);
 
 /* Hand-audited stats where the automatic roofOf() percentile choice is
@@ -245,6 +301,22 @@ const OSM_UNNAMED_VERIFIED = new Set([
      eucalyptus grove; more than a quarter of its returns are crown, so the
      tree-guard's p75 (12.8) is still in the tree. The roof is the dense p50
      band at 4.6 m, and the university GIS agrees (4.3 m, one level).
+   - Spanos Athletic Performance Center (r1c0 sweep, 2026-08-04): TWO
+     buildings share this OSM name — the 1988 Alex G. Spanos Training
+     Facility (south ring, a real 2014 plane: 3,329 returns, p50 4.3 to
+     p75 4.4) and the Performance Center itself, which broke ground in
+     JUNE 2015 (university record) — the flight predates it, and the
+     11-16 m smear over its footprint is the eucalyptus row cleared for
+     it, dense enough that no percentile guard can see through it. The
+     audited 4.4 is the 1988 building's roof; both structures actually
+     render from their own correctly-named GIS masses (4.3 m each), which
+     this entry also bars from adopting the eucalyptus number.
+   - Qualcomm AA (r1c0 sweep, 2026-08-04): its ring crosses the survey
+     AREA's north edge, so the automatic path measures a TRUNCATED
+     footprint (23.3 off the interior returns). The full-ring re-sample
+     of the same EPT (r0c2, 30,780 returns, one plane) reads 24.3 —
+     matching KNOWN_HEIGHTS in build-campus-3d.mjs. A clipped footprint
+     is a different quantity, not a worse sample of the same one.
    A null here means "measured, but not trustworthy: emit nothing". */
 const HAND_AUDITED = {
   "Tenaya Hall": 27.6,
@@ -252,6 +324,8 @@ const HAND_AUDITED = {
   "Ida and Cecil Green Faculty Club": 6.5,
   "Stewart Commons Annex": null,
   "Stage Room at the Pub": 4.6,
+  "Spanos Athletic Performance Center": 4.4,
+  "Qualcomm AA": 24.3,
 };
 
 const R = 6378137;
@@ -427,7 +501,16 @@ async function build() {
       minx: Math.min(...xs), maxx: Math.max(...xs),
       miny: Math.min(...ys), maxy: Math.max(...ys),
     };
-    if (bb.maxx < BOX.minx || bb.minx > BOX.maxx || bb.maxy < BOX.miny || bb.maxy > BOX.maxy) return null;
+    /* Disjoint test, all four sides. The north clause read `bb.maxy >
+       BOX.maxy` from 2026-08-03 until the r1c0 sweep caught it — that
+       rejects any ring POKING past the north edge instead of rings lying
+       entirely beyond it, and it is why Torrey Pines Center South (whose
+       OSM ring reaches 22 m past AREA.north) silently lost its 12.2 m
+       measurement on every rebuild after the 2026-08-04 Overpass refresh
+       moved its ring, and why Qualcomm AA needed a KNOWN_HEIGHTS
+       workaround instead of measuring like everything else. A ring that
+       overlaps the box measures from the returns inside it. */
+    if (bb.maxx < BOX.minx || bb.minx > BOX.maxx || bb.maxy < BOX.miny || bb.miny > BOX.maxy) return null;
     const t = { key, name, ring, bb, roofs: [] };
     targets.push(t);
     return t;

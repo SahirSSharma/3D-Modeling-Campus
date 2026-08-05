@@ -1179,11 +1179,15 @@ tennisCourts("northview-tennis-south", "Northview Tennis (south bank)", [
   { cx: -14.1, cz: -1317.0, theta: 1.528 },
 ]);
 
-// Muir courts, west of Main Gym: red pad (2 courts) + blue pad (4 courts).
-// West pad paint reads faint on the red acrylic (43% baseline, overlay-
-// verified on the paint); floor = 0.75 x baseline.
-tennisRow("muir-tennis-west", "Muir Tennis (west pad)",
-  { cx: -195.15, cz: 16, theta: 0, count: 2, spacing: 19.3, minCover: 0.32 });
+// Muir courts, west of Main Gym: red pad + blue pad (4 courts).
+// WEST PAD REMOVED (r1c0 sweep, 2026-08-04): Apple shows the red pad
+// repainted as a bank of pickleball courts — the two tennis courts the
+// registered Google chunks carry are the PREVIOUS paint generation (the
+// same class of find as the Muir turf's epoch notes; Apple is the
+// authority on what is painted today). The new pickleball lines cannot
+// ship yet: colour/line fitting stays on the registered chunks, which
+// predate the repaint, and Apple pixels stay unsampled until its 1.25 m
+// georegistration offset passes gate. Better absent than stale.
 tennisRow("muir-tennis-east", "Muir Tennis (east pad)",
   { cx: -140, cz: 16, theta: 0, count: 4, spacing: 17.7 });
 
@@ -1201,10 +1205,11 @@ basketball("warren-basketball", "Warren basketball court",
 
 // Skipped, and knowingly: Warren's lone tennis court (the bright pad edge
 // out-scores its faded lines and every fit slid off the paint), the
-// Canyonview pickleball pads, the Muir turf's lacrosse overlay and lettering,
-// the RIMAC softball diamond, the track's throw-sector lines, and the older
-// painted generation in RIMAC's east column and the ghosts under Warren.
-// Better absent than invented.
+// Canyonview pickleball pads, the Muir west pad's new pickleball paint
+// (repainted after the registered imagery; see the note above), the Muir
+// turf's lacrosse overlay and lettering, the RIMAC softball diamond, the
+// track's throw-sector lines, and the older painted generation in RIMAC's
+// east column and the ghosts under Warren. Better absent than invented.
 
 /* ------------------------------------------------------------------- main */
 

@@ -406,3 +406,141 @@ screenshots: .cache/gauntlet-r0c2/shots/ (hospital towers, Prebys, Campus Point 
 ```
 
 Not deployed, not pushed — per the run's hard prohibitions. Local commit only.
+
+## Pass 1, shard r1c0 (lat 32.873467..32.882391, lng −117.254117..−117.242934 — 140 buildings, 9 named)
+
+The west shard: Muir's residential east edge (Tioga, Tenaya, the Keeling towers, HDH Admin), the
+Tuolumne apartment complex, the Extended Studies cottage rows, Audrey Geisel University House —
+and, for the bulk of the area, La Jolla Farms, a private estate district where 131 of 140
+buildings carry no OSM name and every height was an area guess. The shard's defining find is
+none of those: rebuilding `campus-lidar.json` produced DIFFERENT answers than the committed
+file, and the diff led to a one-character pipeline bug that had been silently discarding
+measurements since the 2026-08-04 Overpass refresh.
+
+### Fixed — the pipeline: the disjoint-test regression (cross-shard)
+
+`build-campus-lidar.mjs`'s survey-box test read `bb.maxy < BOX.miny || bb.maxy > BOX.maxy` —
+the second clause rejects any ring POKING past the north edge instead of rings lying entirely
+beyond it (`bb.miny` was meant). The committed data predated the Overpass refresh, so the bug
+was LATENT: rebuild with the refreshed rings and Torrey Pines Center South — whose ring now
+reaches 22 m past `AREA.north` — silently lost its 12.2 m measurement, and Qualcomm AA never
+measured at all (its r0c2 `KNOWN_HEIGHTS` entry was compensating for this exact bug). Fixed the
+character. TPCS re-measures **12.2** from the 31,730-return ring's in-box portion (one plane;
+its GIS mass 11.5 — the ring excludes the stair crown). QAA's box-CLIPPED ring measures a
+TRUNCATED footprint (23.3), so `HAND_AUDITED` carries the full-ring re-sample (**24.3**) with
+the reasoning. §12 of `tests/campus-epoch.test.mjs` pins all three.
+
+### Fixed — heights, unnamed OSM rings (La Jolla Farms, 95 measured planes)
+
+Every ring in the estate district was re-sampled against the same EPT the build reads
+(`.cache/gauntlet-r1c0/probe-out.txt`, 129 targets), decided by an explicit spread rule
+(`decide.mjs` — ship only where p50/p75/p98 read as ONE roof plane), and checked standing on
+its 2014 footprint in Apple closeups (contact sheets over 96 crops). 95 rings enter
+`OSM_UNNAMED_VERIFIED` / `lidar.osmHeights`; §12 pins every value. The guesses ran BOTH
+directions — the area heuristic reads one-storey ranch houses as two storeys (osm:319 guessed
+9, measures **4.4**; 906 → **3.7**; 1009 → **3.4**) and two-storey townhouse rows as one
+(osm:721–727 guessed 4.5, measure **7.8–7.9**). Largest: the bluff estates osm:915 **9.6**,
+885 **9.1**, 911 **9.0**.
+
+### Fixed — heights, GIS records (PRE_2014_GIS_VERIFIED, six masses)
+
+Hostless masses (no OSM rings at all), unchallenged at the record's uniform defaults. Five
+Extended Studies cottages ship measured planes — Building F **3.2**, G **3.5**, X **3.9**,
+Z **3.4**, E **3.3** against a 4.3 record; five more (A, B, C, D, L) sit under the eucalyptus
+rows (Building A: p50 3.2 under a p75 of 8.2 — no percentile guard reaches the roof), so the
+record stands for them. Tuolumne T House North's centroid falls in a notch OUTSIDE the concave
+complex ring, so host containment never measured it: **13.0** vs 12.2 of record. §12 pins all.
+
+### Fixed — rendering (the Tuolumne outline)
+
+The whole-complex OSM ring extruded at a whole-ring 17.3 m through nine facility masses
+measuring 9.3–16.2 individually — the union-outline class r0c1 named (Alianza/Umoja), fixed the
+same way: `skipOsm` in `campus-massing.js`. The nine houses render at their own planes; §12
+asserts the outline stays down and counts the nine.
+
+### Fixed — epoch (the Spanos APC)
+
+Two buildings share the OSM name "Spanos Athletic Performance Center." The Performance Center
+broke ground in JUNE 2015 — after the flight — and the 11–16 m smear over its footprint is the
+eucalyptus row cleared for it, dense enough that no percentile guard sees through. The 1988
+Alex G. Spanos Training Facility south of it is a real 2014 plane (3,329 returns, p50 4.3).
+`HAND_AUDITED` ships the 1988 roof (**4.4**) under the shared name and bars both GIS masses
+from adopting the crown; each renders at its own record (4.3 m, one level). §12 pins the
+height, the two masses, and the absence of the eucalyptus number.
+
+### Fixed — markings currency (the Muir west pad)
+
+Apple (2026-08-04) shows the west red pad repainted as PICKLEBALL; the two tennis courts the
+registered Google chunks carry are the previous paint generation. `muir-tennis-west` removed
+from `build-campus-markings.mjs` (tennisNets 6 → 4, `campus-recreation.test.mjs` updated). The
+new pickleball lines cannot ship until an Apple registration passes gate (r0c0 rule: per-site
+fits only) — better absent than stale. The east pad's four courts still fit (0.23 m, 54%) and
+its centroid falls in r1c1. §12 pins the west pad's absence and the east pad's presence.
+
+### Withheld — documented, not invented
+
+| Entity | Why |
+|---|---|
+| osm:481 | ring sits under unbroken chaparral on the canyon rim — Apple sees no structure, and the sparse 2014 returns could be brush; no source resolves it |
+| 25 crowned La Jolla Farms rings (322, 480, 485, 832, 903–910, 982, 986, 996–1002 odd, 1007–1028 sparse, 1089, 1094) | measured, but the spread puts p98 in a tree with bodies too loose to trust p75 (986: p50 3.7 under a p98 of 8.9) — the OSM guesses stand, stated as guesses; §12 asserts none ships |
+| UNEX Buildings A, B, C, D, L | eucalyptus rows over one-storey cottages; the 4.3 record stands (see above) |
+
+### Measured, not changed
+
+- **H1 spot-check (named, unchanged since 2014):** independent EPT re-samples vs the build's own
+  measurements — Tioga **35.8** (re-sample 35.7), Keeling North Tower **34.4** (34.4), Keeling
+  West Bar **18.2** (18.2), Keeling South Tower **29.2**, HDH Admin **19.8** (19.8), Audrey
+  Geisel University House **6.3** (6.4). Agreement ≤0.2 m on every clean plane; pinned in §12. Shard-level evidence again
+  H1-consistent: every unchanged building's Apple footprint matches its OSM ring by overlay,
+  and the biggest "disagreements" in the shard were all guesses, not changes.
+- **Grade audit** (`.cache/gauntlet-r1c0/grade-audit.mjs`, 146 rendered masses over the bluff
+  district): **zero** past the 2 m roof-anchor gate (worst +1.80 m, an unnamed 8 m house at
+  (−447, 56)); bases per-vertex safe everywhere. r1c0 adds NOTHING to the cross-shard
+  roof-anchor class — r0c1's four and r0c2's two stand alone.
+- **Kaleidoscope and Tapestry** stay `POST_2014_SITES` (Theatre District, post-flight): zero
+  LiDAR, records stand, Apple confirms both towers standing. Correct as found.
+- **855 in-shard 2014 trees**, 3.5–30 m, p95 19.4 — the tallest (30 m eucalyptus) shorter than
+  Tioga Hall beside it. No oversized or clipped trees.
+- **12 place anchors** verified in place; 0 markings remain in-shard (see west pad), 0
+  furniture/landmark placements in bounds.
+- **Out-of-shard decimetre re-rounds:** the rebuild moved 14 values ±0.1–0.3 m elsewhere on
+  campus (float-summation order in the concurrent EPT reader; 6 `osmHeights`, 8 `massHeights`).
+  §9–11 pins updated to what the build actually produces, each annotated at the assertion.
+
+### Apple — currency confirmed at 12 sites
+
+muir-named (Tioga/Tuolumne/Tenaya), ntplln (Kaleidoscope/Tapestry), unex, keeling,
+geisel-house, ljf-nw, ljf-west, ljf-mid, ljf-central, ljf-south, ljf-stip, spanos (custom
+snapshot for the APC call). Footprint overlays on all; two epoch hits, both fixed above (the
+Muir repaint, the Spanos APC) and one withhold (osm:481). No colour was sampled off Apple
+pixels, so no registration fit was owed; the r0c0 per-site constraint stands.
+
+### Handoffs to other shards
+
+- muir-tennis-east straddles the shard edge with centroid in r1c1 — untouched here, still fits.
+- The Muir pickleball lines: an unmodelled painted facility awaiting an Apple registration fit
+  (same class as r0c2's Preuss pitch).
+- The disjoint-test fix is global: any shard whose rings cross the AREA box re-measures on next
+  rebuild. r0c2's QAA `KNOWN_HEIGHTS` entry is now redundant with `HAND_AUDITED` (both 24.3).
+- Roof-anchor render class: still six cases, all r0c1/r0c2 — a renderer pass, not a shard splice.
+
+### Verification (real output)
+
+```
+npm test:  tests 360 / suites 41 / pass 360 / fail 0   (baseline before splice: 352/352)
+npm run check:
+  campus-3d.json OK — 1395 buildings (390 named), 3878 paths (22587 points), 662 surfaces (72 plazas)
+  campus-lidar.json OK — 294 measured heights, 7276 trees, terrain 1014×923
+  campus-boundary.json OK — 1 ring(s), 244 points; textures OK — 87 chunks, 31.1 MB, source google
+  ok: 4335 ground, 505 massing, 507x462 terrain
+  campus-colleges.json OK — 8 colleges, 128 buildings affiliated
+eye-level probes (real page, __campusWalk.probe, 15 sites): every changed entity renders its
+  pinned value (Tuolumne houses 9.3–15.9 with T House North 13.0, UNEX F/Z 3.2/3.4 with A at
+  its 4.3 record, LJF samples 3.4–8.2, both Spanos buildings ≤4.4, TPCS 12.2/11.5, Tioga 35.8,
+  Keeling North 34.2).
+screenshots: .cache/gauntlet-r1c0/shots/ (Tuolumne houses, UNEX cottage row, LJF townhouse row,
+  LJF estates, Muir west pad with no tennis paint and the blue east courts beyond, Keeling
+  towers, both Spanos buildings, TPCS)
+```
+
+Not deployed, not pushed — per the run's hard prohibitions. Local commit only.

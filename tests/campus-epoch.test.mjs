@@ -38,6 +38,14 @@
  *      blind sheds), the hand-verified GIS records measure their own rings,
  *      Qualcomm AA ships its re-sampled roof, the Campus Point demolition
  *      site renders nothing, and the two east-campus site anchors stand.
+ *  12. The r1c0 sweep's measurements hold: the verified La Jolla Farms
+ *      rings ship their planes while the canopy-blind ones keep their
+ *      guesses, the Extended Studies cottages measure past their uniform
+ *      records, Tuolumne renders as nine measured houses instead of one
+ *      17 m outline, the 2015 Spanos APC never wears the eucalyptus the
+ *      flight saw on its site, rings poking past the survey box measure
+ *      again (the disjoint-test regression), and the Muir west pad
+ *      carries no tennis paint Apple shows repainted as pickleball.
  */
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
@@ -378,12 +386,15 @@ describe("9. the north-west shard sweep (r0c0, 2026-08-04)", () => {
     /* Masses whose centroid sits OUTSIDE their OSM footprint had no host,
        so their GIS facility value stood unchallenged campus-wide. The
        fallback keys the epoch guard off the identical OSM name instead.
-       Values from the 2026-08-04 targeted EPT re-sample. */
+       Values from the 2026-08-04 targeted EPT re-sample; a few carry the
+       r1c0 rebuild's decimetre re-round of the same roof (the terrain
+       fold's ground means land on a 0.05 m knife edge in a few cells and
+       round differently across environments — same plane, same points). */
     const PLANES = {
       "m:-28,-982": [26.1, "Wells Fargo Hall — GIS said 22.6"],
       "m:665,-123": [11.9, "Visual Arts Facility Building 2 — GIS said 10.4"],
       "m:-89,-131": [14.8, "Mandler Hall — GIS said 13.4"],
-      "m:99,201": [3, "Bonner Hall annex — GIS said 3.0, now measured"],
+      "m:99,201": [3.1, "Bonner Hall annex — GIS said 3.0, now measured"],
       "m:538,-290": [12.9, "Center for Memory and Recording Research"],
       "m:-172,-727": [4.2, "ERC Laundry South — GIS said 3.0"],
       "m:517,-85": [22.7, "Student Services Center — GIS said 21.9"],
@@ -483,7 +494,8 @@ describe("10. the north-central shard sweep (r0c1, 2026-08-04)", () => {
     assert.equal(ve4.h, 12.1);
     assert.equal(ve5.h, 12.4);
     assert.equal(MASSES.find((m) => m.name === "Seventh College East #4"), undefined);
-    assert.equal(LIDAR.massHeights["m:-49,-1057"], 12.2, "SCE#5's own plane");
+    /* 12.3 is the r1c0 rebuild's decimetre re-round of the same plane. */
+    assert.equal(LIDAR.massHeights["m:-49,-1057"], 12.3, "SCE#5's own plane");
     assert.equal(LIDAR.massHeights["m:-78,-1060"], 10.7, "SCE#6's own plane");
   });
 
@@ -514,12 +526,14 @@ describe("10. the north-central shard sweep (r0c1, 2026-08-04)", () => {
     /* No named-OSM host and no OSM name twin — PRE_2014_GIS_VERIFIED lets
        the 2014 survey challenge these records because their build dates
        are documented pre-flight. Two were far off: SDSC East (GIS 17.1,
-       plane 23.2) and Social Sciences (GIS 17.1, plane 21.0). */
+       plane 23.2) and Social Sciences (GIS 17.1, plane 21.0). ERC Admin
+       North and Robinson 1 carry the r1c0 rebuild's decimetre re-round
+       of the same planes. */
     const PLANES = {
       "m:78,-656": [21, "Social Sciences Building (1995) — GIS said 17.1"],
       "m:171,-705": [23.2, "SDSC East Expansion (2009) — GIS said 17.1"],
-      "m:-91,-908": [4.8, "ERC Administration North (2004)"],
-      "m:16,-730": [10.4, "Robinson Building 1 (1990)"],
+      "m:-91,-908": [4.7, "ERC Administration North (2004)"],
+      "m:16,-730": [10.3, "Robinson Building 1 (1990)"],
       "m:7,-669": [7.5, "Robinson Building 3 (1990) — stepped, p75"],
       "m:74,-1256": [2.5, "Outback Adventures surf shack"],
     };
@@ -585,12 +599,15 @@ describe("11. the east-campus shard sweep (r0c2, 2026-08-04)", () => {
        (probe: same roofOf/rimBase as the build). The worst guesses: the
        31.3 m Campus Point tower guessed at 12, the hospital's 34 m east
        tower at 22.8, and 9 m two-storey boxes for 4 m carports. */
+    /* 55, 204, 501, 781, 932, 940 carry the r1c0 rebuild's decimetre
+       re-round of the same roofs (rim medians land on rounding knife
+       edges; the planes did not move). */
     const PLANES = {
-      0: 31.3, 55: 12.4, 63: 22.8, 113: 9.3, 119: 19.1, 132: 9.4,
-      186: 13.7, 204: 15.2, 453: 19.9, 501: 8.3, 502: 34, 504: 6.3,
-      505: 10, 507: 11, 509: 10.9, 510: 6.5, 781: 12.1,
-      931: 6.1, 932: 6, 933: 8.7, 934: 5.7, 935: 3.8, 936: 4.1,
-      937: 3.9, 938: 4.1, 939: 6.8, 940: 7.4, 941: 4.7, 942: 6.2,
+      0: 31.3, 55: 12.5, 63: 22.8, 113: 9.3, 119: 19.1, 132: 9.4,
+      186: 13.7, 204: 15.4, 453: 19.9, 501: 8.4, 502: 34, 504: 6.3,
+      505: 10, 507: 11, 509: 10.9, 510: 6.5, 781: 12.4,
+      931: 6.1, 932: 6.1, 933: 8.7, 934: 5.7, 935: 3.8, 936: 4.1,
+      937: 3.9, 938: 4.1, 939: 6.8, 940: 7.5, 941: 4.7, 942: 6.2,
       943: 5.7,
     };
     for (const [bi, h] of Object.entries(PLANES)) {
@@ -652,19 +669,21 @@ describe("11. the east-campus shard sweep (r0c2, 2026-08-04)", () => {
        planes 6.5-6.9, the hostless Fleet Services row 4.3 vs 5.7, Preuss
        Building F 8.5 vs 11.4-11.7, and the substation control building
        8.5 vs 5.3 (the record's default two storeys, measured one). */
+    /* Greenhouse 2, CSC C, Preuss C and Preuss F carry the r1c0 rebuild's
+       decimetre re-round of the same planes. */
     const PLANES = {
       "m:1049,-830": [5, "BFS Greenhouse 1"],
-      "m:1066,-830": [4.9, "BFS Greenhouse 2"],
+      "m:1066,-830": [5, "BFS Greenhouse 2"],
       "m:1067,-852": [5.3, "BFS Greenhouse 3"],
       "m:1082,-802": [5, "BFS Frog House"],
-      "m:1070,-561": [6.9, "CSC Building C — GIS said 4.3"],
+      "m:1070,-561": [6.8, "CSC Building C — GIS said 4.3"],
       "m:1069,-637": [6.5, "CSC Building D — GIS said 4.3"],
       "m:1723,-573": [5.3, "East Campus Substation — GIS said 8.5"],
       "m:1137,-594": [5.7, "Fleet Services south row — GIS said 4.3"],
       "m:1825,-537": [9.2, "Preuss Building A"],
       "m:1823,-511": [9.2, "Preuss Building B"],
-      "m:1808,-491": [9.2, "Preuss Building C"],
-      "m:1786,-549": [11.7, "Preuss Building F — GIS said 8.5"],
+      "m:1808,-491": [9.1, "Preuss Building C"],
+      "m:1786,-549": [11.8, "Preuss Building F — GIS said 8.5"],
       "m:1751,-510": [11.4, "Preuss Building F stage house — GIS said 8.5"],
     };
     for (const [key, [h, why]] of Object.entries(PLANES)) {
@@ -711,5 +730,166 @@ describe("11. the east-campus shard sweep (r0c2, 2026-08-04)", () => {
     const s = CAMPUS.places["The Preuss School"];
     assert.ok(s, "the school anchor is missing");
     assert.ok(Math.hypot(s.x - 1791.6, s.z - -480.3) < 1, `anchor at (${s.x}, ${s.z})`);
+  });
+});
+
+describe("12. the west shard sweep (r1c0, 2026-08-04)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("the verified La Jolla Farms rings each ship their measured plane", () => {
+    /* Nothing west of the campus proper is named in OSM, so every estate,
+       townhouse and cottage wore an area guess. Each index below was
+       re-sampled from the EPT, shipped only where the roof read as ONE
+       plane, and checked standing on its 2014 footprint in an Apple
+       closeup (2026-08-04). Guesses ran both directions: 9 m for
+       one-storey ranch houses (319 measures 4.4, 906 3.7, 1009 3.4) and
+       4.5 m for two-storey townhouses (725-727 measure 7.8-7.9). */
+    const PLANES = {
+      177: 4.5, 319: 4.4, 320: 4.4, 321: 4.4, 486: 2, 487: 7.2, 488: 8.8, 489: 6,
+      490: 4.4, 491: 4.4, 721: 7.8, 722: 7.8, 723: 7.9, 725: 7.8, 726: 7.9, 727: 7.8,
+      728: 8, 730: 8.3, 731: 8.4, 732: 7.8, 733: 8.7, 734: 7.3, 735: 8.8, 739: 8.1,
+      740: 8.4, 741: 8.1, 742: 8.6, 748: 8.1, 749: 8.4, 750: 8.5, 751: 8.2, 752: 8.2,
+      755: 8, 756: 8.6, 757: 8.1, 777: 3.3, 829: 7.6, 831: 8.1, 885: 9.1, 902: 4,
+      905: 4.5, 906: 3.7, 908: 4.6, 911: 9, 912: 8.4, 913: 8.8, 914: 7.1, 915: 9.6,
+      916: 4.3, 979: 4.2, 980: 4.8, 981: 4.9, 983: 8.6, 984: 3.7, 987: 8.2, 988: 5.2,
+      989: 4.4, 990: 4.5, 991: 7.7, 992: 4.2, 993: 8.2, 994: 5.2, 995: 8.8, 998: 4.2,
+      1000: 5.7, 1001: 8, 1003: 8.7, 1004: 7.6, 1005: 8.6, 1006: 8.6, 1009: 3.4, 1010: 8,
+      1011: 7.4, 1012: 3.4, 1014: 3.8, 1015: 4.9, 1016: 4.5, 1018: 4.4, 1019: 7.5, 1020: 5.2,
+      1021: 8.7, 1025: 3.4, 1026: 3.1, 1027: 4.5, 1029: 3.9, 1030: 3.4, 1031: 4.1, 1088: 8.8,
+      1090: 7.9, 1091: 7.9, 1092: 6.1, 1095: 8.5, 1386: 5.3, 1387: 4.5, 1388: 8,
+    };
+    for (const [bi, h] of Object.entries(PLANES)) {
+      assert.equal(LIDAR.osmHeights?.[bi], h, `osmHeights[${bi}]`);
+    }
+  });
+
+  test("the canopy-blind and hidden La Jolla Farms rings keep their guesses", () => {
+    /* 481's ring sits under unbroken chaparral on the canyon rim — Apple
+       cannot see a structure there and the sparse 2014 returns could be
+       brush; no source resolves it. The rest measured, but their spreads
+       put p98 in a tree with bodies too loose to trust p75 (986: p50 3.7
+       under a p98 of 8.9). The OSM guesses stand, stated as guesses. */
+    for (const bi of [481, 322, 480, 485, 832, 903, 904, 907, 909, 910,
+      982, 986, 996, 997, 999, 1002, 1007, 1008, 1013, 1017, 1022, 1023,
+      1024, 1028, 1089, 1094]) {
+      assert.equal(LIDAR.osmHeights?.[bi], undefined, `osmHeights[${bi}] shipped a plane no one trusts`);
+    }
+  });
+
+  test("the Extended Studies cottages measure their planes; the crowned five keep the record", () => {
+    /* Hostless GIS masses (no OSM rings at all) stood unchallenged at the
+       record's uniform 4.3 m. Five roofs read as one-storey planes 0.4-1.1
+       off that; five more sit under the eucalyptus rows (Building A: p50
+       3.2 under a p75 of 8.2) where no percentile guard reaches the roof,
+       so the record stands for them. */
+    const PLANES = {
+      "m:-201,-423": [3.2, "Building F"],
+      "m:-217,-474": [3.5, "Building G"],
+      "m:-223,-381": [3.9, "Building X"],
+      "m:-206,-369": [3.4, "Building Z"],
+      "m:-179,-443": [3.3, "Building E"],
+    };
+    for (const [key, [h, why]] of Object.entries(PLANES)) {
+      assert.equal(LIDAR.massHeights[key], h, `${why} — massHeights[${key}]`);
+    }
+    for (const [key, why] of [
+      ["m:-206,-395", "Building A"], ["m:-180,-416", "Building C"],
+      ["m:-198,-468", "Building D"], ["m:-173,-478", "Building L"],
+      ["m:-220,-436", "Building B"],
+    ]) {
+      assert.equal(LIDAR.massHeights[key], undefined, `${why} shipped its eucalyptus`);
+    }
+  });
+
+  test("Tuolumne renders as its nine measured houses, not a 17 m outline", () => {
+    /* The whole-complex OSM ring extruded at a whole-ring 17.3 m through
+       nine facilities masses measuring 9.3-16.2 individually — the same
+       outline problem as Alianza/Umoja, fixed the same way (skipOsm).
+       T House North's centroid falls in a notch outside the concave
+       complex ring, so host containment missed it and 12.2 m of record
+       stood for a 13.0 m plane — PRE_2014_GIS_VERIFIED answers its epoch
+       now (the complex is 2003). */
+    assert.equal(MASSES.find((m) => m.src === "osm" && m.name === "Tuolumne Apartments"), undefined,
+      "the whole-complex outline extrudes again");
+    assert.equal(LIDAR.massHeights["m:-172,-33"], 13, "T House North's own plane");
+    const tuolumne = MASSES.filter((m) => m.src === "gis" && /Tuolumne/.test(m.name || ""));
+    assert.equal(tuolumne.length, 9, `nine Tuolumne masses, got ${tuolumne.length}`);
+    const thn = rendersNear(-172, -33).find((m) => m.src === "gis");
+    assert.ok(thn && thn.h === 13, `T House North renders ${thn?.h}, plane is 13`);
+  });
+
+  test("the 2015 Spanos APC never wears the eucalyptus; the 1988 building keeps its plane", () => {
+    /* Two buildings share one OSM name. The Performance Center broke
+       ground in June 2015 — after the flight — and the 11-16 m smear over
+       its footprint is the eucalyptus row cleared for it. The 1988
+       Training Facility south of it is a real 2014 plane (3,329 returns,
+       p50 4.3). HAND_AUDITED ships the 1988 roof under the shared name
+       and bars both GIS masses from adopting the crown; each renders at
+       its own record (4.3 m, one level). */
+    assert.equal(LIDAR.heights["Spanos Athletic Performance Center"], 4.4);
+    assert.equal(LIDAR.massHeights["m:61,-1355"], undefined, "the APC shipped its eucalyptus");
+    assert.equal(LIDAR.massHeights["m:65,-1308"], undefined, "the audited host's mass re-measured");
+    for (const [x, z, what] of [[61, -1355, "Performance Center"], [65, -1308, "Training Facility"]]) {
+      const m = rendersNear(x, z).find((m) => m.src === "gis");
+      assert.ok(m, `the Spanos ${what} vanished`);
+      assert.ok(m.h <= 4.4, `the Spanos ${what} renders ${m.h} — taller than its record`);
+    }
+  });
+
+  test("rings that poke past the survey box still measure — the disjoint-test regression", () => {
+    /* The box test rejected any ring POKING past the north edge instead
+       of rings entirely beyond it (bb.maxy where bb.miny was meant), so
+       Torrey Pines Center South — whose OSM ring reaches 22 m past
+       AREA.north — silently lost its 12.2 m measurement on any rebuild
+       after the 2026-08-04 Overpass refresh moved its ring, and Qualcomm
+       AA needed a KNOWN_HEIGHTS workaround. TPCS measures from the
+       returns inside the box (31,730 in the full ring, one plane at
+       12.2); QAA's box-clipped ring measures a TRUNCATED footprint, so
+       HAND_AUDITED carries its full-ring re-sample instead. */
+    assert.equal(LIDAR.heights["Torrey Pines Center South"], 12.2);
+    assert.equal(LIDAR.massHeights["m:-188,-1361"], 11.5, "TPCS's own mass plane");
+    assert.equal(LIDAR.heights["Qualcomm AA"], 24.3, "the audited full-ring plane");
+  });
+
+  test("H1 spot-check: LiDAR and the shipped world agree where nothing changed", () => {
+    /* Independent re-samples of the same EPT over the shard's named
+       buildings, against the build's own OSM-ring measurements (their
+       GIS masses render 0.2-0.4 different off their own slightly
+       different rings — both are the same roof). Agreement within
+       0.2 m on every clean plane is the epoch hypothesis doing its
+       job. */
+    const AGREE = {
+      "Tioga Hall": 35.8,                        // re-sample 35.7
+      "Keeling Apartments North Tower": 34.4,    // re-sample 34.4
+      "Keeling Apartments West Bar": 18.2,       // re-sample 18.2
+      "Keeling Apartments South Tower": 29.2,
+      "Housing Dining and Hospitality Administration Building": 19.8, // re-sample 19.8
+      "Audrey Geisel University House": 6.3,     // re-sample 6.4
+    };
+    for (const [n, h] of Object.entries(AGREE)) {
+      assert.equal(LIDAR.heights[n], h, `heights[${n}]`);
+    }
+  });
+
+  test("the Muir west pad carries no stale tennis paint", () => {
+    /* Apple (2026-08-04) shows the red pad repainted as pickleball; the
+       two tennis courts the registered chunks carry are the previous
+       generation. The new lines cannot ship until an Apple registration
+       passes gate — better absent than stale. The east pad's four courts
+       still fit (0.23 m, 54%). */
+    const MARKINGS = read("docs/data/campus-markings.json");
+    assert.equal(MARKINGS.facilities.find((f) => f.id === "muir-tennis-west"), undefined,
+      "the repainted pad still carries tennis lines");
+    const east = MARKINGS.facilities.find((f) => f.id === "muir-tennis-east");
+    assert.ok(east, "the east pad lost its courts");
   });
 });
