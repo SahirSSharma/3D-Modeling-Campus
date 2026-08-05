@@ -165,6 +165,12 @@
  *      arcgis); the Villa La Jolla parking ring (osm:438) and Revelle
  *      Anchor artwork ring (osm:1127) render nothing; Mandeville's
  *      host 20.9 / VAF-3 double / roof-anchor class stay as judged.
+ *  36. The r0c1 pass-3 re-sweep's measurements hold: Geneva Hall's OSM
+ *      union outline yields to its West/East GIS wings (wing-prefix
+ *      outline rule — same courtyard-fill class as Alianza/Umoja, but
+ *      detected by ≥2 GIS names that start with the OSM name), and the
+ *      Student Center A outline yields the same way; each wing keeps
+ *      its own massHeights plane.
  */
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
@@ -3203,5 +3209,64 @@ describe("campus epoch — r0c0 pass-3 re-sweep (2026-08-05)", () => {
     assert.equal(LIDAR.osmHeights?.[513], undefined, "a 2014 number shipped for osm:513");
     assert.equal(rendersNear(-768.4, -877.3, 4).find((m) => m.src === "osm")?.h, 9,
       "the contaminated pad keeps its declared guess");
+  });
+});
+
+describe("campus epoch — r0c1 pass-3 wing-prefix outlines (2026-08-05)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("Geneva Hall renders as its two measured wings, not a courtyard-filling outline", () => {
+    /* OSM "Geneva Hall" is a union outline around Geneva Hall West and
+       East (ERC pair). ringCoveredBy's ≥0.85 area floor leaves it alone
+       because the plaza between the wings keeps interior coverage ~0.70
+       — nameCarried is true (both GIS centroids sit inside), so the
+       outline extruded at 11.7 m through open ground Apple shows as
+       finished plaza/planting today. Wing-prefix rule: ≥2 GIS masses
+       whose names start with "Geneva Hall " have centroids inside →
+       skip the outline. Fresh EPT: West 2,681 pts roofOf≈13.5 ship
+       13.7; East 2,871 pts roofOf=11.7 ship 11.7. Epoch risk low —
+       Apple shows both wings finished, LiDAR planes match. */
+    assert.equal(
+      MASSES.find((m) => m.src === "osm" && m.name === "Geneva Hall"),
+      undefined,
+      "the Geneva Hall union outline extrudes again",
+    );
+    const west = rendersNear(-88.1, -838.5, 4).find((m) => m.src === "gis");
+    const east = rendersNear(-71.5, -840.7, 4).find((m) => m.src === "gis");
+    assert.ok(west, "Geneva Hall West vanished");
+    assert.ok(east, "Geneva Hall East vanished");
+    assert.equal(west.h, 13.7, `West renders ${west.h}, plane is 13.7`);
+    assert.equal(east.h, 11.7, `East renders ${east.h}, plane is 11.7`);
+    assert.equal(LIDAR.massHeights["m:-88,-839"], 13.7);
+    assert.equal(LIDAR.massHeights["m:-72,-841"], 11.7);
+  });
+
+  test("Student Center's A-wing outline yields to its measured buildings", () => {
+    /* Same wing-prefix class as Geneva: OSM "Student Center" samples
+       ~0.69 under the A-building GIS rings (courtyard ~663 m²), so
+       ringCoveredBy never fires, and the outline extruded at the
+       measured 8.6 m host plane through the plazas between Buildings
+       A/C/F/H/ES. The facilities masses already ARE those buildings. */
+    assert.equal(
+      MASSES.find((m) => m.src === "osm" && m.name === "Student Center"),
+      undefined,
+      "the Student Center union outline extrudes again",
+    );
+    const wings = MASSES.filter((m) => m.src === "gis" && /^Student Center/.test(m.name || ""));
+    assert.ok(wings.length >= 5, `Student Center GIS wings: ${wings.length}`);
+    /* A named wing still carries its own massHeights plane — suppression
+       must not paste the old OSM 8.6 onto every A-building. */
+    const buildingA = rendersNear(79.1, 68.3, 4).find((m) => m.src === "gis");
+    assert.ok(buildingA, "Student Center Building A vanished");
+    assert.equal(buildingA.h, 10.6, `Building A renders ${buildingA.h}, plane is 10.6`);
   });
 });

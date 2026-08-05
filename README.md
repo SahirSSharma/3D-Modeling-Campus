@@ -851,6 +851,20 @@ putting green / canopy), not a clear tall roof. Do not invent a 6.8 m plane; the
 stands. osm:513's coastal-scrub withhold still stands. Class-hole rejected as scoped —
 remaining unnamed guesses need per-ring Apple + EPT, not a blanket admit.
 
+**The north-campus pass-3 re-sweep (2026-08-05, r0c1).** One high candidate: Geneva Hall's
+OSM union outline still extruded at 11.7 m through the plaza between Geneva Hall West and
+East. `ringCoveredBy`'s ≥0.85 area floor is deliberately above courtyard cases — interior
+coverage measured ~0.70 — so suppression never fired even though both GIS wing centroids
+sit inside the ring (nameCarried). Apple shows the finished ERC pair with open ground
+between the wings today; fresh EPT matches the shipped planes (West 2,681 pts → 13.7;
+East 2,871 pts → 11.7). Same Alianza/Umoja courtyard-fill class, but those two need
+`skipOsm` because their GIS names are "RWNLLN …", not a prefix of the OSM name.
+
+| Entity | Was shipping | Now ships | Why |
+|---|---|---|---|
+| Geneva Hall | OSM 11.7 m outline **and** GIS West 13.7 / East 11.7 | **West 13.7 + East 11.7 only** | Wing-prefix outline rule in `assembleMasses`: ≥2 GIS masses whose names start with the OSM name have centroids inside → skip the outline. No hand list of halls. |
+| Student Center | OSM 8.6 m outline through A-wing plazas **and** the GIS A-buildings | **GIS A/B wings only** | Same rule — coverage ~0.69 under Buildings A/C/F/H/ES; ~663 m² of courtyard was extruding solid. Each wing keeps its own massHeights plane. |
+
 ### The colours, measured off footage
 
 Satellite imagery sees roofs and ground; it cannot see a wall, a tree trunk, or the sky. For

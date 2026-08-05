@@ -1,0 +1,19 @@
+[
+  {
+    "id": "geneva-outline-double",
+    "entity": "Geneva Hall",
+    "where": {"x": -76.9, "z": -841.1},
+    "claim": "assembleMasses still ships src=osm Geneva Hall h=11.7 (area≈1316) alongside GIS Geneva Hall West h=13.7 (area≈486) and Geneva Hall East h=11.7 (area≈507). Not in skipOsm (Alianza/Umoja/Tuolumne/RIMAC Annex are).",
+    "observed": "Both GIS wing centroids sit inside the OSM ring; OSM centroid (−76.9,−841.1) sits in the gap between wings (in neither GIS ring). OSM verts inside GIS: 5/11 (not >50%). Interior sample coverage 219/285 = 0.768 under the named 0.85 ringCoveredBy bar — so nameCarried=true but suppression never fires. Courtyard/gap ≈1316−992 = 324 m² would extrude solid at 11.7 m through air Apple shows as plaza/planting between the two finished wings. Fresh EPT: West 2,681 pts roofOf≈13.5 ship 13.7; East 2,871 pts roofOf=11.7 ship 11.7.",
+    "evidence": {
+      "lidar": "gis:GenevaWest 2681 pts roofOf≈13.5; gis:GenevaEast 2871 pts roofOf=11.7; OSM ring escapes ringCoveredBy (centroid miss, verts 5/11, area frac 0.768 < 0.85)",
+      "gis": "Geneva Hall West gisH=12.2 massH→13.7; Geneva Hall East gisH=12.2 massH→11.7",
+      "osm": "Geneva Hall way h=11.7 lidarH=11.7 area≈1316 @(-76.9,-841.1); nameCarried via GIS centroids inside ring; not in skipOsm",
+      "apple": "Apple snapshots geneva.jpg / geneva-w.jpg / geneva-e.jpg z18–19 at 32.885607,-117.242023 — finished ERC pair standing today with open ground between the wings; no crane; centerRGB on east wing ≈186,186,184",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "OSM union outline over GIS wings escapes ringCoveredBy when the courtyard keeps area coverage under 0.85 (Alianza/Umoja/Tuolumne class — those three needed skipOsm; Geneva was missed)",
+    "epoch_risk": "Low — Apple shows both wings finished today, and 2014 LiDAR planes match the shipped GIS heights. This is a double-geometry / courtyard-fill failure, not a date conflict."
+  }
+]

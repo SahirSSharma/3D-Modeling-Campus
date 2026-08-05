@@ -1288,3 +1288,46 @@ Nominatim reverse from the screener's `nominatim.out`, and the shipped data.
   lower the cut. p98 6.3 stands.
 - **Extended Studies H/J/K/M/N**: prior handoff unchanged — Δ≤0.9 vs GIS
   records, under the Δ≥3 bar.
+
+---
+
+# FINDINGS — run `2026-08-05_033905` · shard r0c1 (pass 3)
+
+Pass 3 of the north-campus shard (Warren / Rady / ERC / RIMAC / Marshall Upper).
+Screen: 1 candidate (high). Judged by `cursor-grok-4.5-high`.
+
+Every claim in `pass3-r0c1.screen.json` was re-derived before judgement:
+`assembleMasses` output for Geneva + GIS/OSM rings, ringCoveredBy interior
+coverage re-sampled (330 interior cells, 230 covered → **0.697** under the
+named 0.85 bar; centroid miss; verts 5/11), screener's full-depth EPT in
+`/tmp/gauntlet-r0c1-pass3/probe.out` (Geneva West 2,681 pts roofOf≈13.5 ship
+13.7; East 2,871 pts roofOf=11.7 ship 11.7 — counts match), and Apple
+snapshots `geneva.jpg` / `geneva-w.jpg` / `geneva-e.jpg` copied to
+`.cache/gauntlet-r0c1-p3/evidence/`. Campus-wide wing-prefix scan listed
+every sibling the new rule would touch.
+
+### Fixed — outline class (not a one-name skipOsm patch)
+
+| Entity | Was shipping | Now ships | Source | Test |
+|---|---|---|---|---|
+| Geneva Hall (`geneva-outline-double`) | OSM 11.7 m union outline **and** GIS West 13.7 / East 11.7 | **West 13.7 + East 11.7 only** | Wing-prefix outline rule in `assembleMasses`: ≥2 GIS masses whose names start with the OSM name have centroids inside the ring → skip the outline. Courtyard kept coverage at 0.70 so `ringCoveredBy` never fired. Apple: finished ERC pair with open ground between wings today. | epoch §36 |
+| Student Center (class sibling, same rule) | OSM 8.6 m outline through A-wing plazas **and** GIS A-buildings | **GIS wings only** | Same detector — coverage ~0.69, ~663 m² of courtyard was extruding solid. Each wing keeps its own massHeights plane (Building A 10.6 stands). | epoch §36 |
+
+Alianza / Umoja stay in the hand `skipOsm` set: their GIS names are
+`RWNLLN …`, not a prefix of the OSM name, so the detector cannot see them.
+Tuolumne is already caught by both paths (redundant).
+
+### Rejected candidates
+
+None — the single screen candidate was accepted as a class hit.
+
+### Handoffs / observations
+
+- **Wing-prefix class already clean elsewhere**: Institute of the Americas /
+  Price Center / Tamarack / Jacobs Bed Tower / Mesa Verde / Medical Teaching
+  were already suppressed by verts / `ringCoveredBy` / parts; the new rule is
+  a no-op for them and a pin for the two that escaped.
+- **Roof-anchor / grade-span renderer handoff** (Hopkins Parking, Canyon
+  Vista, etc.) unchanged — not in this screen.
+- **Unnamed area-guess residual** in-box: not screened this pass (screen
+  returned one high outline candidate only).

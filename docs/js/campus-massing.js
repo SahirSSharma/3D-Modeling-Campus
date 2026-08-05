@@ -320,11 +320,30 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
      complex, extruded at a whole-ring 17.3 m through nine facilities
      masses that measure 9.3-16.2 individually — the T-house wings rendered
      twice, once at their own plane and once inside a block 4 m taller.
-     The masses render; the outline does not. */
+     The masses render; the outline does not.
+
+     WING-PREFIX OUTLINES (r0c1 pass-3, 2026-08-05). ringCoveredBy's ≥0.85
+     area floor is deliberately above courtyard cases so a ring whose
+     covering masses do not carry its name is not deleted — but when the
+     facilities inventory already traces the wings under compound names
+     that START WITH the OSM name ("Geneva Hall West"/"East", "Student
+     Center A - Building C", "Mesa Verde Hall North"/"South"), the outline
+     is the same Alianza/Umoja hull: nameCarried is true (wing centroids
+     sit inside), coverage lands ~0.69–0.77 under the courtyard, and the
+     outline extrudes solid air Apple shows as plaza/planting. Detect that
+     class by counting ≥2 GIS wing centroids inside the ring whose names
+     are the OSM name plus a space/" - " suffix — no hand list of halls.
+     Alianza/Umoja stay in skipOsm: their GIS names are "RWNLLN …", not
+     a prefix of the OSM name, so the detector cannot see them. */
   const skipOsm = new Set([
     "Geisel Library", "Alianza", "Umoja", "RIMAC Annex",
     "Tuolumne Apartments",
   ]);
+  const isWingPrefix = (gisName, osmName) => {
+    const g = gisName.toLowerCase();
+    const o = osmName.toLowerCase();
+    return g.startsWith(`${o} `) || g.startsWith(`${o} - `) || g.startsWith(`${o}-`);
+  };
   /* Demolition sites whose OSM ring has NO name to key skipOsm skip by
      footprint anchor instead, the same convention the build scripts use
      for phantom rings. (1416, -1299): the Campus Point service building
@@ -393,6 +412,22 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
   });
   campus.buildings.forEach((b, i) => {
     if (b.n && skipOsm.has(b.n)) return;
+    /* Wing-prefix outline: ≥2 facilities masses whose names are the OSM
+       name plus a directional/compound suffix already stand inside this
+       ring — the outline is their hull, not a building. Geneva Hall's
+       West/East pair and the Student Center A wings are the exemplars;
+       ringCoveredBy leaves them alone because the courtyard keeps area
+       coverage under 0.85. */
+    if (b.n) {
+      let wings = 0;
+      for (let gi = 0; gi < gis.length; gi++) {
+        const gn = gis[gi].n;
+        if (!gn || !isWingPrefix(gn, b.n)) continue;
+        if (inRing(gisCentroids[gi][0], gisCentroids[gi][1], b.p)) wings++;
+        if (wings >= 2) break;
+      }
+      if (wings >= 2) return;
+    }
     if (!b.n) {
       const [cx, cz] = centroidOf(b.p);
       if (skipOsmAnchors.some(([ax, az]) => Math.hypot(cx - ax, cz - az) < 12)) return;
