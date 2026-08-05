@@ -1,0 +1,155 @@
+[
+  {
+    "id": "osm-331-overheight",
+    "entity": "unnamed OSM building index 331",
+    "where": {"x": -394.4, "z": -652.7},
+    "claim": "assembleMasses ships src=osm area-guess h=12 (area≈1601 m²). Not in lidar.osmHeights / OSM_UNNAMED_VERIFIED / POST_2014_OSM_RINGS.",
+    "observed": "Fresh EPT of the OSM ring: 11,034 non-ground returns, roofOf=5.3, p50=5.1, p75=5.3, p98=14.1, guard=true, bodyTight=true, massOk=true. Histogram mode is the 5 m bin (4,894/11,034) with 4 m next (3,795) — dense band ~4–5 m. Δ = +6.7 m (~2 storeys) vs shipped guess. Flat grade (spread 0.1 m).",
+    "evidence": {
+      "lidar": "osm:331 11034 pts roofOf=5.3 p50=5.1 p75=5.3 p98=14.1 guard bodyTight massOk; hist mode 5 m (4894) + 4 m (3795); lidar.osmHeights[331]=undefined",
+      "gis": "no GIS mass centroid covering this ring; nearest named masses are ERC/Estancia-adjacent halls >150 m east",
+      "osm": "unnamed way index 331, campus-3d h=12, area≈1601 m², centroid (−394.4,−652.7)",
+      "apple": "Apple snapshot osm331b.jpg z19 at 32.883903,-117.245419 — finished low residential/hospitality pad with terracotta roofs and landscaping present today; no crane",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Unnamed OSM area-guess still shipping while a clean guarded 2014 plane (~5 m) never entered osmHeights — same class as prior-shard unnamed overheights.",
+    "epoch_risk": "Low for existence — Apple shows a finished building on this footprint today. The 12 vs 5 split is guess vs plane, not a missing post-2014 rebuild (flight already sees a tight low roof)."
+  },
+  {
+    "id": "osm-149-overheight",
+    "entity": "unnamed OSM building index 149",
+    "where": {"x": -582.6, "z": -1098.0},
+    "claim": "assembleMasses ships src=osm area-guess h=12 (area≈1236 m²). Not in lidar.osmHeights / OSM_UNNAMED_VERIFIED.",
+    "observed": "Fresh EPT: 2,973 pts, roofOf=5.6, p50=4.9, p75=5.0, p98=5.6, guard=false, bodyTight=true, massOk=true. Histogram mode 4 m (1,922/2,973). Δ = +6.4 m vs shipped guess. Grade spread 3.6 m across the ring.",
+    "evidence": {
+      "lidar": "osm:149 2973 pts roofOf=5.6 p50=4.9 p75=5.0 p98=5.6 bodyTight massOk; hist mode 4 m (1922); osmHeights[149]=undefined",
+      "gis": "no covering GIS mass within ~80 m of this centroid",
+      "osm": "unnamed way index 149, h=12, area≈1236 m², centroid (−582.6,−1098)",
+      "apple": "Apple snapshot osm149b.jpg z19 at 32.887930,-117.247432 — finished light-grey flat-roof service/utility cluster with mechanical plant and fenced yard; standing today west of the Sanford lawn",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Unnamed OSM area-guess vs tight 2014 one-storey plane — class hole shared with osm 331/974/513.",
+    "epoch_risk": "Low — Apple confirms a low service building on this pad today; LiDAR plane is tight (p98−p75=0.6 m), not canopy or a predecessor lot."
+  },
+  {
+    "id": "osm-974-overheight",
+    "entity": "unnamed OSM building index 974",
+    "where": {"x": -453.8, "z": -668.8},
+    "claim": "assembleMasses ships src=osm area-guess h=9 (area≈902 m²). Not in lidar.osmHeights / OSM_UNNAMED_VERIFIED.",
+    "observed": "Fresh EPT: 5,368 pts, roofOf=3.8, p50=3.4, p75=3.8, p98=8.9, guard=true, bodyTight=true, massOk=true. Histogram mode 3 m (3,470/5,368). Δ = +5.2 m vs shipped guess.",
+    "evidence": {
+      "lidar": "osm:974 5368 pts roofOf=3.8 p50=3.4 p75=3.8 p98=8.9 guard bodyTight massOk; hist mode 3 m (3470); osmHeights[974]=undefined",
+      "gis": "null — no GIS mass at this centroid",
+      "osm": "unnamed way index 974, h=9, area≈902 m², centroid (−453.8,−668.8)",
+      "apple": "Apple snapshot osm974.jpg z19 at 32.884048,-117.246054 — finished low structure with grey/tan pitched roof among Estancia-adjacent landscaping and tennis/putting amenities; present today",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Unnamed OSM area-guess; dense 3 m band vs 9 m guess — same class as osm 331/149.",
+    "epoch_risk": "Low for existence. Guarded p98=8.9 is a tall tail (trees/neighbours), not evidence the body grew a storey after 2014."
+  },
+  {
+    "id": "osm-513-overheight",
+    "entity": "unnamed OSM building index 513",
+    "where": {"x": -768.4, "z": -877.3},
+    "claim": "assembleMasses ships src=osm area-guess h=9 (area≈862 m²). Not in lidar.osmHeights / OSM_UNNAMED_VERIFIED.",
+    "observed": "Fresh EPT: 4,022 pts, roofOf=4.6, p50=0.2, p75=3.1, p98=4.6, guard=false, bodyTight=false, massOk=true. Δ = +4.4 m vs shipped guess. Histogram peaks at 0 m (1,540) and 3 m (1,070) — low/deck-like return mix, not a clean 9 m body.",
+    "evidence": {
+      "lidar": "osm:513 4022 pts roofOf=4.6 p50=0.2 p75=3.1 p98=4.6 bodyTight=false massOk; hist 0 m:1540 3 m:1070; osmHeights[513]=undefined",
+      "gis": "null — no GIS mass at this centroid",
+      "osm": "unnamed way index 513, h=9, area≈862 m², centroid (−768.4,−877.3)",
+      "apple": "Apple snapshot osm513.jpg z19 at 32.885934,-117.249419 — finished low pad/structure present in the coastal-scrub fringe west of North Torrey Pines Rd; no crane",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Unnamed OSM area-guess on a low/contaminated 2014 return set — guess is ~one storey above any plausible body plane.",
+    "epoch_risk": "Possible secondary — p50≈0 could mean a deck/slab the flight saw open, with a later low building; Apple still shows a low finished pad, not a 9 m block. Do not keep the 9 m guess either way."
+  },
+  {
+    "id": "osm-1372-overheight",
+    "entity": "unnamed OSM building index 1372",
+    "where": {"x": -840.9, "z": -763.5},
+    "claim": "assembleMasses ships src=osm area-guess h=12 (area≈1412 m²). Not in lidar.osmHeights / OSM_UNNAMED_VERIFIED.",
+    "observed": "Fresh EPT: 6,791 pts, roofOf=7.3, p50=4.3, p75=5.8, p98=7.3, guard=false, bodyTight=true, massOk=true. Δ = +4.7 m vs shipped guess. Grade spread 5.0 m across the ring (sloped coastal site).",
+    "evidence": {
+      "lidar": "osm:1372 6791 pts roofOf=7.3 p50=4.3 p75=5.8 p98=7.3 bodyTight massOk; osmHeights[1372]=undefined",
+      "gis": "null",
+      "osm": "unnamed way index 1372, h=12, area≈1412 m², centroid (−840.9,−763.5)",
+      "apple": "Apple snapshot osm1372.jpg / osm1372b.jpg z18–19 at 32.884905,-117.250195 — finished coastal structure present today among scrub/estate lots",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Unnamed OSM area-guess; measurable ~1–1.5 storey over the 2014 plane, less eye-level-obvious than the 6 m+ deltas.",
+    "epoch_risk": "Low-to-moderate — slope + mixed p50/p75 could hide a stepped roof; Apple shows the footprint occupied. Still a guess-vs-plane disagreement, not a confirmed rebuild."
+  },
+  {
+    "id": "osm-878-overheight",
+    "entity": "unnamed OSM building index 878",
+    "where": {"x": -284.2, "z": -942.4},
+    "claim": "assembleMasses ships src=osm area-guess h=9 (area≈889 m²). Not in lidar.osmHeights / OSM_UNNAMED_VERIFIED.",
+    "observed": "Fresh EPT: 2,048 pts, roofOf=5.9, p50=5.5, p75=5.7, p98=5.9, guard=false, bodyTight=true, massOk=true. Histogram mode 5 m (1,987/2,048). Δ = +3.1 m vs shipped guess. (One noise max=902 ignored by percentiles.)",
+    "evidence": {
+      "lidar": "osm:878 2048 pts roofOf=5.9 p50=5.5 p75=5.7 p98=5.9 bodyTight massOk; hist mode 5 m (1987); osmHeights[878]=undefined",
+      "gis": "null — nearest GIS is ERC Pump House / Africa Hall cluster further east",
+      "osm": "unnamed way index 878, h=9, area≈889 m², centroid (−284.2,−942.4)",
+      "apple": "Apple snapshot osm878.jpg z19 at 32.886523,-117.244240 — finished low pad west of ERC halls; present today",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Unnamed OSM area-guess; tight ~6 m plane vs 9 m guess.",
+    "epoch_risk": "None material — Apple and LiDAR agree a low building sits here; the disagreement is the area-guess magnitude."
+  },
+  {
+    "id": "marshall-res-v-unchallenged",
+    "entity": "Marshall Residence Hall V",
+    "where": {"x": -183.2, "z": -549.2},
+    "claim": "GIS mass ships unchallenged h=9.1 (gisH=9.1 / L3). No massHeights key. Not in PRE_2014_GIS_VERIFIED. Host rename does not apply (no OSM name 'Marshall Residence Hall V').",
+    "observed": "Fresh EPT of the GIS ring: 3,317 pts, roofOf=6.8, p50=6.7, p75=6.8, p98=14.8, guard=true, bodyTight=true, massOk=true. Histogram mode 6 m (2,461/3,317). Shipped 9.1 is +2.3 m above the guarded plane (~⅔ storey). Sibling U ships 9.1 against a stepped/contaminated ring (p50=6.1 p75=9.2 bodyTight=false); T ships 6.1 matching its dense 6 m band.",
+    "evidence": {
+      "lidar": "gis:MarshResV 3317 pts roofOf=6.8 p50=6.7 p75=6.8 p98=14.8 guard bodyTight massOk; hist mode 6 m; massHeights[m:-183,-549]=undefined; gis:MarshResU 1017 pts roofOf=9.9 p50=6.1 p75=9.2 bodyTight=false; gis:MarshResT 509 pts roofOf=10.3 p50=6.0 p75=6.1 (dense matches ship 6.1)",
+      "gis": "Marshall Residence Hall V gisH=9.1 levels=3 area≈380; U gisH=9.1 L3; T gisH=6.1 L2 — none in PRE_2014_GIS_VERIFIED",
+      "osm": "no OSM way named Marshall Residence Hall V; Marshall Lower Apartments outline at (−171.6,−610.4) is suppressed under Q/R/S masses",
+      "apple": "Apple snapshot marshall-res-tuv.jpg z18 at 32.883001,-117.243339 — finished Marshall residential cluster standing; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Hostless GIS mass left unchallenged (PRE_2014_GIS_VERIFIED / massHeights hole) — same family as Spiess/Black Apartments on prior shards; V's guarded plane undercuts the L3 record.",
+    "epoch_risk": "Low — Apple matches the 2014 footprint. Not a date conflict; the 6.8 m plane is this building's body, with a tall canopy/neighbour tail to p98=14.8."
+  },
+  {
+    "id": "sanford-mechanical-overheight",
+    "entity": "Sanford Consortium for Regenerative Medicine (main GIS mass)",
+    "where": {"x": -266.6, "z": -1272.2},
+    "claim": "GIS main mass ships h=24.5 via massHeights (gisH=17.1 / L4). A second GIS mass of the same name at (−232.1,−1257.9) ships h=6.2 via massHeights on a 128 m² ring (same gisH=17.1 / L4).",
+    "observed": "Fresh EPT main ring: 11,116 pts, roofOf=24.6, p50=19.8, p75=19.9, p98=24.6, guard=false (p98−p75=4.7 just under the 5 m guard), bodyTight=true, massOk=true. Histogram mode is the 19 m bin (3,587/11,116); 22–24 m bins are the mechanical well (533+503+424). Shipping 24.5 tracks mechanical, ~4.7 m above the dense roof deck. Sliver ring: 462 pts, roofOf=6.2 clean — massHeights correctly keeps 6.2 despite the shared L4 record.",
+    "evidence": {
+      "lidar": "gis:Sanford#0 11116 pts roofOf=24.6 p50=19.8 p75=19.9 p98=24.6 bodyTight massOk; hist mode 19 m (3587); massHeights m:-267,-1272=24.5; gis:Sanford#1 462 pts roofOf=6.2; osm:Sanford 10903 pts roofOf=24.6; lidar.heights['Sanford Consortium…']=24.5",
+      "gis": "two masses both named Sanford Consortium for Regenerative Medicine, both gisH=17.1 levels=4; areas ≈4152 and ≈128",
+      "osm": "Sanford Consortium for Regenerative Medicine way suppressed under GIS; osm tag h=12, lidar.heights host=24.5",
+      "apple": "Apple snapshots sanford.jpg / sanford-close.jpg / sanford-sliver.jpg z17–19 at 32.889504,-117.244056 — finished white research block with a deep central mechanical well; low annex/secondary volume to the east; standing today, no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Mechanical-plant roofOf admitted because guard threshold is 5 m and the well sits at 4.7 m above the dense deck — massHeights pastes penthouse onto the L4 body; GIS levels also disagree with both the 20 m deck and the 6.2 m annex.",
+    "epoch_risk": "Low for existence — Sanford predates/stands in 2014 and Apple shows it finished. The 24.5 vs ~20 vs GIS 17.1 split is measurement/assignment (mechanical vs deck vs record), not a rebuild."
+  },
+  {
+    "id": "unnamed-guess-class-hole",
+    "entity": "unnamed OSM buildings still shipping area-guesses in shard r0c0",
+    "where": {"x": -500.0, "z": -800.0},
+    "claim": "Of 103 OSM buildings in-box, 87 are unnamed; assembleMasses still renders 81 of them from campus-3d area-guess heights (no lidar.osmHeights). 57 of those have area ≥400 m².",
+    "observed": "Targeted EPT of the 30 largest unnamed guesses found 7 with |ship − roofOf| ≥ 3 m (indices 331,149,974,1372,513,483,878 — plus several at 2.7 m). Named landmarks in-box (ERC halls, Village West/Seventh College West #4–6, Salk both wings, Estancia, Middle Earth, Marshall Lower Q/R/S) largely track massHeights / osmHeights within ~1 m after assembleMasses. The residual error mass in this shard is the unnamed-guess set.",
+    "evidence": {
+      "lidar": "probe.json 30 unnamed targets; 7 with |Δ|≥3; shard trees 1007 (2 ≥28 m at coastal bluff −1036/−1049 — not attached to a named overheight claim here)",
+      "gis": "24 GIS masses in-box; named ERC/Village/Marshall Lower/Sanford/Torrey generally have massHeights; MarshRes T/U/V and Ext Studies H/J/K/M/N lack massHeights",
+      "osm": "enumerate: C_unnamedGuessShipping=81; F_unverifiedGuess=18 (tall/large subset)",
+      "apple": "spot checks on the worst deltas (osm331b/149b/974/513/878/1372b) all show finished structures today — guesses are magnitude errors, not phantom footprints",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Shard-wide unnamed OSM area-guess coverage hole — OSM_UNNAMED_VERIFIED never admitted these rings, so assembleMasses keeps campus-3d.h.",
+    "epoch_risk": "Per-ring: most look pre-2014 occupied on both Apple and LiDAR. A minority (e.g. osm 513's near-ground p50) could be deck/rebuild edge cases — judge per sample, do not blanket-apply the 2014 plane as 'today' without the Apple check already done on the highs."
+  }
+]

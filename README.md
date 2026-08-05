@@ -511,6 +511,27 @@ can carry the lower terraces and the spires in one extrusion). Belmont Village's
 wing already measures correctly at 9.1 — the taller complex rings are unnamed, which is an
 identity coverage question, not a height bug on this ring.
 
+**The NW-campus re-sweep (2026-08-05, r0c0).** Estancia / Sanford / Marshall Residence / coastal
+fringe — a second pass after the first r0c0 sweep closed the named-landmark holes. Residual
+error mass was the unnamed area-guess set. Every candidate re-derived from a full-depth targeted
+EPT re-sample before judgement.
+
+| Entity | Was shipping | Now ships | Why |
+|---|---|---|---|
+| Estancia-adjacent pad (unnamed, osm:331) | 12 m (area guess) | **5.3 m** | 11,034 returns, 79 % in a 4–5 m band; guarded plane against a two-storey overguess. |
+| Sanford-lawn service cluster (unnamed, osm:149) | 12 m (area guess) | **5.6 m** | 90 % of 2,973 returns in a 4–5 m band — one tight storey. |
+| Estancia amenity roof (unnamed, osm:974) | 9 m (area guess) | **3.7 m** | 65 % in the 3 m bin; guarded. (Targeted probe 3.8; build tiling.) |
+| Coastal graded structure (unnamed, osm:1372) | 12 m (area guess) | **7.3 m** | 73 % in a 3–6 m band on a sloped site. |
+| ERC-west low pad (unnamed, osm:878) | 9 m (area guess) | **5.9 m** | 97 % in the 5 m bin. |
+| Coastal-fringe structure (unnamed, osm:483) | 12 m (area guess) | **8.3 m** | body-tight plane from the class-hole sample. |
+| Marshall Residence Hall V | 9.1 m (GIS L3, unchallenged) | **6.8 m** | hostless letter-name; `PRE_2014_GIS_VERIFIED` lets the 1960s housing answer — mode 6 m at 74 %, guarded p75. |
+
+The withheld: osm:513's coastal-scrub pad — Apple shows a finished low structure today, but the
+2014 returns mix near-ground / deck (p50 0.2, body not tight); the 9 m guess stands. Rejected:
+Sanford's lab-bar "mechanical overheight" — the dense 19 m deck and the 22–24 m central plant
+are both real on today's Apple; without a parts split, trading the pinned 24.5 for the deck
+would paste the other way. Pavilion stays 6.2.
+
 ### The colours, measured off footage
 
 Satellite imagery sees roofs and ground; it cannot see a wall, a tree trunk, or the sky. For

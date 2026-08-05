@@ -298,7 +298,14 @@ const PRE_2014_GIS_VERIFIED = new Set([
      2014 footprint today. Record 8.5 — two "storeys" for single-storey
      trailers; the plane is 3.8.
      Stuart Collection Storage: the campus-services shed (university
-     building 91, in the CSC yard's generation). Record 8.5, plane 4.3. */
+     building 91, in the CSC yard's generation). Record 8.5, plane 4.3.
+   r0c0 re-sweep (2026-08-05). Marshall Residence Hall V: 1960s Marshall
+     College housing, still occupied on today's Apple. No OSM way carries
+     this letter-name, so the L3 record (9.1) stood unchallenged while the
+     flight reads one tight 6–7 m plane (3,317 returns, mode 6 m at 74%,
+     guarded p75 6.8 — the p98 tail to 14.8 is neighbour canopy). Sibling
+     T already ships 6.1 matching its dense band; U is stepped
+     (bodyTight=false) and stays with its record. */
   "Matthews Apartments B",
   "Matthews Apartments D",
   "Matthews Apartments E",
@@ -306,6 +313,7 @@ const PRE_2014_GIS_VERIFIED = new Set([
   "East Campus Utilities Plant",
   "9435 Modular Offices",
   "Stuart Collection Storage",
+  "Marshall Residence Hall V",
 ]);
 
 /* A facilities record that models a building as a whole-footprint ring PLUS
@@ -527,7 +535,32 @@ const MEASURE_MINUS_CONTAINED_HOSTS = {
         near 12-13 m already matches the 12 m guess; roofOf 22.6 rides
         the crowns to 68 m. No admission without a dense-band hand
         audit, and the guess already agrees with the body.
-     785: post-2014 garage — see POST_2014_OSM_RINGS. */
+     785: post-2014 garage — see POST_2014_OSM_RINGS.
+   r0c0 re-sweep (2026-08-05) — NW campus / Estancia / coastal fringe.
+   Each admission re-sampled full-depth and standing unchanged on today's
+   Apple; every ring read as ONE plane (no-guard p98-p75 <= 2 m, or a
+   guarded body tight to p75-p50 <= 2 m):
+     331: Estancia-adjacent low residential / hospitality pad (11,034
+        returns, 79% in a 4–5 m band, guarded roofOf 5.3): plane against
+        a 12 m area guess.
+     149: light-grey flat-roof service / utility cluster west of the
+        Sanford lawn (2,973 returns, 90% in a 4–5 m band, roofOf 5.6):
+        plane against a 12 m guess.
+     974: low pitched-roof amenity structure among Estancia landscaping
+        (5,368 returns, 65% in the 3 m bin, guarded roofOf 3.8): plane
+        against a 9 m guess.
+     1372: coastal structure on a graded site west of North Torrey Pines
+        (6,791 returns, 73% in a 3–6 m band, roofOf 7.3): plane against
+        a 12 m guess.
+     878: low pad west of the ERC halls (2,048 returns, 97% in the 5 m
+        bin, roofOf 5.9): plane against a 9 m guess.
+     483: coastal-fringe structure (2,771 returns, body tight, roofOf
+        8.3): plane against a 12 m guess — from the class-hole sample.
+   Verified and deliberately NOT admitted:
+     513: coastal-scrub pad west of North Torrey Pines — returns mix
+        near-ground / deck (p50 0.2, hist peaks at 0 m and 3 m;
+        bodyTight=false). Apple shows a finished low pad today, but the
+        2014 sample is not a clean body plane; the 9 m guess stands. */
 const OSM_UNNAMED_VERIFIED = new Set([
   786, 893,
   93, 77, 333, 335,
@@ -546,6 +579,7 @@ const OSM_UNNAMED_VERIFIED = new Set([
   764, 775,
   403, 1036, 1048, 1053, 1073, 1141, 1145,
   95, 198, 337, 288, 305, 51, 62,
+  331, 149, 974, 1372, 878, 483,
 ]);
 
 /* Hand-audited stats where the automatic roofOf() percentile choice is

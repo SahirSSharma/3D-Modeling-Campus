@@ -1710,3 +1710,69 @@ describe("17. the r2c2 judge pass (2026-08-05)", () => {
       "Belmont's short-wing plane must not silently change");
   });
 });
+
+describe("campus epoch — r0c0 re-sweep (2026-08-05)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("the verified NW unnamed rings ship their planes", () => {
+    /* Each re-sampled full-depth and standing unchanged on today's
+       Apple; every ring read as one plane. Numbers are the build's own
+       tiling (targeted re-sample agreed within 0.1 m — 974's probe
+       read 3.8, tiling 3.7). */
+    for (const [i, h, x, z] of [
+      [331, 5.3, -394.4, -652.7], [149, 5.6, -582.6, -1098.0],
+      [974, 3.7, -453.8, -668.8], [1372, 7.3, -840.9, -763.5],
+      [878, 5.9, -284.2, -942.4], [483, 8.3, -948.6, -639.1],
+    ]) {
+      assert.equal(LIDAR.osmHeights?.[i], h, `osm:${i}'s plane`);
+      assert.equal(rendersNear(x, z, 4).find((m) => m.src === "osm")?.h, h,
+        `osm:${i} renders at its plane`);
+    }
+  });
+
+  test("the contaminated coastal pad keeps its declared guess", () => {
+    /* osm:513: Apple shows a finished low pad in the coastal-scrub fringe,
+       but the 2014 returns mix near-ground / deck (p50 0.2, hist peaks at
+       0 m and 3 m; bodyTight=false). No clean body plane; the 9 m guess
+       stands. */
+    assert.equal(LIDAR.osmHeights?.[513], undefined, "a 2014 number shipped for osm:513");
+    assert.equal(rendersNear(-768.4, -877.3, 4).find((m) => m.src === "osm")?.h, 9,
+      "the contaminated pad keeps its declared guess");
+  });
+
+  test("Marshall Residence Hall V ships its guarded 6.8 m plane", () => {
+    /* Hostless L3 record (9.1) stood unchallenged — no OSM way carries the
+       letter-name. PRE_2014_GIS_VERIFIED lets the 1960s Marshall housing
+       answer the epoch question: 3,317 returns, mode 6 m at 74%, guarded
+       p75 6.8. Sibling U stays stepped/withheld; T already matched at 6.1. */
+    assert.equal(LIDAR.massHeights["m:-183,-549"], 6.8);
+    assert.equal(LIDAR.massHeights["m:-202,-554"], undefined,
+      "U's stepped returns must not ship a plane");
+    const v = MASSES.find((m) => m.name === "Marshall Residence Hall V" && m.src === "gis");
+    assert.ok(v, "Marshall Residence Hall V vanished");
+    assert.equal(v.h, 6.8, `Marshall Res V ships ${v.h}`);
+  });
+
+  test("Sanford's lab bar keeps 24.5 and the pavilion keeps 6.2", () => {
+    /* Re-sweep candidate sanford-mechanical-overheight rejected: the
+       dense 19 m deck and the 22–24 m mechanical well are both real
+       (Apple shows the deep central plant). Without a parts split,
+       roofOf's p98 of 24.5 is the standing pipeline answer — trading it
+       for the deck would paste the other way. Prior §9 pin stands. */
+    assert.equal(LIDAR.massHeights["m:-267,-1272"], 24.5);
+    assert.equal(LIDAR.massHeights["m:-232,-1258"], 6.2);
+    assert.equal(LIDAR.heights["Sanford Consortium for Regenerative Medicine"], 24.5);
+    const sanford = MASSES.filter((m) => m.name === "Sanford Consortium for Regenerative Medicine" && m.src === "gis")
+      .map((m) => m.h).sort((a, b) => a - b);
+    assert.deepEqual(sanford, [6.2, 24.5], `Sanford ships ${sanford}`);
+  });
+});
