@@ -222,7 +222,12 @@ const centroidOf = (ring) => {
  *  the only ring that knows what the building is called. Identity comes
  *  from OSM and is not disposable, so the area test yields unless some
  *  covering mass will carry the name; the centroid and vertex-majority
- *  tests keep their existing behaviour. */
+ *  tests keep their existing behaviour. A mass also counts as carrying
+ *  the name when it wears EXACTLY that name within 150 m (the LiDAR
+ *  build's twin rule): the Student Services Center's facilities ring is
+ *  drawn offset enough that its centroid misses the OSM ring, but it IS
+ *  the building and says so — without this, SSC and CMRR each rendered
+ *  twice. */
 const ringCoveredBy = (ring, coveredRings, nameCarried = true) => {
   const inAny = (x, z) => coveredRings.some((r) => inRing(x, z, r));
   const [cx, cz] = centroidOf(ring);
@@ -308,16 +313,42 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
      for phantom rings. (1416, -1299): the Campus Point service building
      Apple shows mid-demolition — roof torn open, excavators on the slab
      (r0c2 sweep, 2026-08-04). The 2014 building is going; nothing about
-     its replacement resolves to gate. Better absent than wrong. */
-  const skipOsmAnchors = [[1416, -1299]];
+     its replacement resolves to gate. Better absent than wrong.
+     (545.3, 48.3) and (374.4, -88.3) (r1c1 judge sweep, 2026-08-04): two
+     one-storey buildings the 2014 flight measured as clean planes (4.9
+     and 5.0 m) that are simply gone. The first is a Triton Center
+     predecessor — bare graded dirt on the registered chunk, a staging
+     pad with trailers on today's Apple, the new frames rising beside it
+     in Street View 2025-02. The second razed for the dig south of the
+     Chancellor's Complex — staging on the chunk, a flat pad on Apple.
+     Their rings survive in OSM and wore 12 and 9 m area guesses; a ring
+     whose building was demolished renders nothing, whatever OSM says. */
+  const skipOsmAnchors = [[1416, -1299], [545.3, 48.3], [374.4, -88.3]];
   const gisCentroids = covered.map((r) => centroidOf(r));
+  const gisNameCentroids = new Map();
+  gis.forEach((m, i) => {
+    if (!m.n) return;
+    if (!gisNameCentroids.has(m.n)) gisNameCentroids.set(m.n, []);
+    gisNameCentroids.get(m.n).push(gisCentroids[i]);
+  });
   campus.buildings.forEach((b, i) => {
     if (b.n && skipOsm.has(b.n)) return;
     if (!b.n) {
       const [cx, cz] = centroidOf(b.p);
       if (skipOsmAnchors.some(([ax, az]) => Math.hypot(cx - ax, cz - az) < 12)) return;
     }
-    const nameCarried = !b.n || gisCentroids.some(([x, z]) => inRing(x, z, b.p));
+    /* A name is carried when a mass centroid stands inside the ring — or
+       when a mass wearing EXACTLY this name stands within 150 m, the same
+       twin rule the LiDAR build uses to key epoch guards. The facilities
+       ring for the Student Services Center is drawn offset enough that
+       its centroid misses the OSM ring (CMRR too), so the name test
+       failed, the ≥0.85 area test never ran, and both rendered twice —
+       the OSM copy extruded through the massing that already IS the
+       building and already SAYS its name. */
+    const [bcx, bcz] = centroidOf(b.p);
+    const nameCarried = !b.n ||
+      gisCentroids.some(([x, z]) => inRing(x, z, b.p)) ||
+      (gisNameCentroids.get(b.n) || []).some(([x, z]) => Math.hypot(x - bcx, z - bcz) < 150);
     const fac = arcgis?.buildings?.[b.n];
     /* Unnamed rings have no name to key lidar.heights; lidar.osmHeights
        carries the hand-verified ones by index (partHeights' own coupling). */
@@ -328,14 +359,24 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
     const parts = (b.parts || [])
       .map((part, pi) => ({ part, pi }))
       .filter(({ part, pi }) => lidar.partHeights?.[`${i}/${pi}`] || part.h);
-    if (parts.length >= 2) {
+    if ((b.parts || []).length >= 2 && parts.length >= 1) {
       /* Suppression is per PART here — the parts are what renders. Rya and
          Vela's outer-ring centroids fall in the paseo between the towers, but
          every part-box sits ON the university's PCW massing and must yield.
          lidarDone: a part's height IS its own measurement (or its own OSM
          tag) — reconciling it against the whole building's number pasted the
          VA Medical Center tower's 33.7 m onto all five of its low pavilions
-         (measured 6.6-27.4 m). Steps have to step. */
+         (measured 6.6-27.4 m). Steps have to step.
+         The gate reads the RAW part count (r1c1 judge sweep, 2026-08-04):
+         Vela is modelled as two parts, but only the tower box carries a
+         height — the podium part is untagged and, being post-2014, has no
+         partHeights entry — and counting the FILTERED list flipped the
+         whole building onto the outline path: a 19 m slab through the
+         paseo and both towers the PCW massing already renders. A
+         part-modelled building renders as parts; its outline is a hull,
+         not a building. Only when NO part survives (Tapestry, Catalyst,
+         Kaleidoscope — post-2014, nothing tagged) does the outline remain
+         the sole geometry there is, and the fallback below keeps it. */
       for (const { part, pi } of parts) {
         if (ringCoveredBy(part.p, covered, nameCarried)) continue;
         masses.push({

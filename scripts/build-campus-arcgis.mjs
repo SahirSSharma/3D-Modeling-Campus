@@ -181,9 +181,17 @@ const UNDER_RECONSTRUCTION = [
    name the mass had no host, so its 18.3 m GIS record stood unchallenged
    (its own 2014 roof plane: 16.1 m) and the "Douglas Hall" label was
    orphaned. Renaming lets the LiDAR build key the epoch guard and the
-   measurement off the OSM name, and the label ride the mass. */
+   measurement off the OSM name, and the label ride the mass.
+   "Black Apartments" is the same failure two hundred metres north-west
+   (r1c1 judge sweep, 2026-08-04): OSM calls the U-shaped block over
+   Canyonview "Black Hall", the mass's centroid lands in its own
+   courtyard so no host was ever found, and the 18.3 m record shipped
+   against a measured 16.1 m plane (5,446 returns, p98 16.1) — while the
+   OSM ring, suppressed by coverage, took the "Black Hall" name down
+   with it. */
 const MASS_RENAMES = [
   { n: "Douglas Apartments", near: [769, -589], to: "Douglas Hall" },
+  { n: "Black Apartments", near: [790, -451], to: "Black Hall" },
 ];
 
 const massCorrection = (list, name, cx, cz) =>

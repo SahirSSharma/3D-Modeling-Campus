@@ -46,6 +46,14 @@
  *      flight saw on its site, rings poking past the survey box measure
  *      again (the disjoint-test regression), and the Muir west pad
  *      carries no tennis paint Apple shows repainted as pickleball.
+ *  13. The r1c1 judge pass's measurements hold: SSC and CMRR render once
+ *      (the exact-name twin carries the name, so the covered OSM copies
+ *      yield), the Vela outline renders as parts instead of a 19 m slab,
+ *      the two demolished pads render nothing, Black Hall wears its OSM
+ *      name and 2014 plane, Solis Hall sheds the eucalyptus p75, the
+ *      TES tank and VA plant ship their planes while the post-2014 VA
+ *      garage keeps its declared guess, and the stepped Jacobs complex
+ *      keeps the verified state a screener proposed to "fix".
  */
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
@@ -891,5 +899,146 @@ describe("12. the west shard sweep (r1c0, 2026-08-04)", () => {
       "the repainted pad still carries tennis lines");
     const east = MARKINGS.facilities.find((f) => f.id === "muir-tennis-east");
     assert.ok(east, "the east pad lost its courts");
+  });
+});
+
+describe("13. the r1c1 judge pass (2026-08-04)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 5) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("SSC and CMRR render exactly once — the exact-name twin carries the name", () => {
+    /* Both facilities rings are drawn offset enough that their centroids
+       miss the OSM rings, so the old name test failed, the ≥0.85 area
+       test never ran, and each building rendered twice: the OSM copy
+       extruded through massing that already IS the building and already
+       SAYS its name (SSC samples 0.93 covered, CMRR 0.99). The twin rule
+       — a mass wearing EXACTLY the OSM name within 150 m carries it —
+       lets the area test see them. */
+    for (const [n, h] of [
+      ["Student Services Center", 22.7],
+      ["Center for Memory and Recording Research", 12.9],
+    ]) {
+      const all = MASSES.filter((m) => m.name === n);
+      assert.equal(all.length, 1, `${n} renders ${all.length} times`);
+      assert.equal(all[0].src, "gis", `${n} renders from ${all[0].src}`);
+      assert.equal(all[0].h, h, `${n} renders ${all[0].h}, plane is ${h}`);
+    }
+  });
+
+  test("the twin rule never deletes an identity it cannot carry", () => {
+    /* Cala's covering masses stand centroid-outside its ring with no
+       exact-name twin taking over; VAF Building 3's exact-name twin is
+       within 150 m but covers NONE of the OSM ring (a position
+       disagreement logged in FINDINGS, not fixed blind). Both must keep
+       rendering — suppression without a name carrier deletes the only
+       ring that knows what the building is called. */
+    for (const n of ["Cala", "Visual Arts Facility - Building 3"]) {
+      assert.ok(MASSES.some((m) => m.src === "osm" && m.name === n), `${n} vanished`);
+    }
+  });
+
+  test("Vela renders as its university masses, never as a 19 m outline slab", () => {
+    /* Vela is modelled in OSM as two building:parts, but only the tower
+       box carries a height — so counting the FILTERED parts flipped the
+       whole building onto the outline path: a 19 m slab through the
+       paseo and both towers the PCW massing already renders. The gate
+       reads the RAW part count now; the covered tower part yields to
+       the 70.1 m / 23-level GIS mass under it. Buildings whose parts
+       ALL dropped (Tapestry, Catalyst, Kaleidoscope) keep the outline —
+       with nothing else to render, the hull is all there is. */
+    assert.equal(MASSES.find((m) => m.src === "osm" && m.name === "Vela" &&
+      Math.hypot(centroidOf(m.rings[0])[0] - 799.3, centroidOf(m.rings[0])[1] - 67.3) < 40), undefined,
+      "the Vela outline extrudes again");
+    const tower = rendersNear(809, 97).find((m) => m.src === "gis");
+    assert.ok(tower && tower.h === 70.1, `the Vela tower renders ${tower?.h}, the record is 70.1`);
+    for (const n of ["Tapestry", "Catalyst", "Kaleidoscope"]) {
+      assert.ok(MASSES.some((m) => m.src === "osm" && m.name === n), `${n}'s outline fallback vanished`);
+    }
+  });
+
+  test("the two demolished pads render nothing", () => {
+    /* Two one-storey buildings the 2014 flight measured as clean planes
+       (4.9 and 5.0 m) are gone: the Triton Center predecessor at
+       (545.3, 48.3) — bare dirt on the registered chunk, a staging pad
+       with trailers on Apple, the new frames rising beside it in Street
+       View 2025-02 — and the pad at (374.4, -88.3), razed for the dig
+       south of the Chancellor's Complex. Their OSM rings survive and
+       wore 12 and 9 m area guesses. Better absent than wrong. */
+    for (const [x, z] of [[545.3, 48.3], [374.4, -88.3]]) {
+      const there = rendersNear(x, z, 10);
+      assert.equal(there.length, 0,
+        `a demolished building renders at (${x},${z}): ${there.map((m) => m.name ?? "unnamed")}`);
+    }
+  });
+
+  test("Black Hall wears its OSM name and its 2014 plane", () => {
+    /* The inventory calls the mass "Black Apartments" and its centroid
+       lands in its own courtyard, so no host was ever found: the 18.3 m
+       record stood unchallenged while the suppressed OSM ring took the
+       "Black Hall" name down with it — Douglas Apartments all over
+       again, fixed by the same rename. Both the OSM ring and the GIS
+       ring measure the same plane: 16.1 m (p98, no guard). */
+    assert.equal(LIDAR.heights["Black Hall"], 16.1);
+    assert.equal(LIDAR.massHeights["m:790,-451"], 16.1, "the mass measures its own ring");
+    const rendered = MASSES.filter((m) => m.name === "Black Hall");
+    assert.equal(rendered.length, 1, `Black Hall renders ${rendered.length} times`);
+    assert.equal(rendered[0].h, 16.1, `Black Hall renders ${rendered[0].h}`);
+    assert.equal(MASSES.find((m) => /Black Apartments/.test(m.name || "")), undefined,
+      "the inventory name still renders somewhere");
+  });
+
+  test("Solis Hall sheds the eucalyptus and keeps its dense-band roof", () => {
+    /* The lecture hall's east edge sits under the eucalyptus stand both
+       epochs show pressed against it; 62% of its returns lie in a dense
+       5-6.5 m band and the rest run up the crowns to 24.8, so the
+       tree-guard's p75 (14.9) was still in canopy — the Stage Room
+       failure — and the host-level reconcile smeared it onto the GIS
+       mass too. The roof is the band's p50: 6.4 m (GIS eave 4.3, one
+       level). */
+    assert.equal(LIDAR.heights["Solis Hall"], 6.4);
+    const rendered = MASSES.filter((m) => m.name === "Solis Hall");
+    assert.equal(rendered.length, 1, `Solis renders ${rendered.length} times`);
+    assert.equal(rendered[0].h, 6.4, `Solis renders ${rendered[0].h}, the audited roof is 6.4`);
+  });
+
+  test("the TES tank and the VA plant ship their planes; the VA garage keeps its guess", () => {
+    /* Three unnamed rings, three different answers. 224 is the Central
+       Utilities Plant's thermal storage tank — one plane, p50 26.4 to
+       p98 27.0, standing identically in both epochs; its area guess was
+       9 m, an 18 m miss. 826 is the white plant block at the VA — p50 6.3
+       to max 6.5, the tightest plane in the batch. 438 is the VA parking
+       structure: Apple shows a finished multi-deck garage, but the 2014
+       returns read p50 2.4 m — a surface lot. It postdates the flight,
+       so no 2014 number may ship and the stated 20 m guess stands. */
+    assert.equal(LIDAR.osmHeights?.[224], 27, "the tank's plane");
+    assert.equal(LIDAR.osmHeights?.[826], 6.4, "the VA plant's plane");
+    assert.equal(LIDAR.osmHeights?.[438], undefined, "the garage shipped a 2014 number it cannot have");
+    assert.equal(rendersNear(195.8, 483.3).find((m) => m.src === "osm")?.h, 27);
+    assert.equal(rendersNear(832.9, 357.7).find((m) => m.src === "osm")?.h, 6.4);
+    assert.equal(rendersNear(840.9, 452.2, 12).find((m) => m.src === "osm")?.h, 20);
+  });
+
+  test("the stepped complexes keep their verified state — rejected candidates stay rejected", () => {
+    /* A screener proposed dropping Jacobs Hall to its p50 (20.8). The
+       complex is genuinely stepped — 20 m wings under a 34-39 m cruciform
+       core that extends past the tower's own GIS ring, so even the
+       minus-tower re-sample has no single plane (p50 20.7, p75 25.3,
+       p98 34.5). The Urey rule holds: the mass emits nothing and the
+       host answers (33.2, the guarded p75); the tower mass measures its
+       own 39.8. HSS is the same shape done right: tower 36.7, low wing
+       at its 8.5 m record. */
+    assert.equal(LIDAR.heights["Jacobs Hall"], 33.2);
+    assert.equal(LIDAR.massHeights["m:553,-418"], 39.8, "the Jacobs tower's own plane");
+    assert.equal(LIDAR.massHeights["m:-48,-34"], 36.7, "the HSS tower's own plane");
+    const hssLow = rendersNear(-43, -56).find((m) => m.src === "gis" && m.h === 8.5);
+    assert.ok(hssLow, "the HSS low wing left its record");
   });
 });

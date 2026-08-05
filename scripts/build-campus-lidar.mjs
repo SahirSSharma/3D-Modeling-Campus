@@ -270,7 +270,25 @@ const MEASURE_MINUS_CONTAINED = {
    and 25 crown-smeared rings (322, 480, 485, 832, 903-904, 907, 909-910,
    982, 986, 996-997, 999, 1002, 1007-1008, 1013, 1017, 1022-1024, 1028,
    1089, 1094) whose spreads put p98 in a tree and whose bodies are too
-   loose to trust p75 — their OSM guesses stand, stated as guesses. */
+   loose to trust p75 — their OSM guesses stand, stated as guesses.
+   r1c1 judge sweep (2026-08-04) — two utility structures wearing area
+   guesses, each standing identically on the registered chunk and on
+   today's Apple:
+     224: the Central Utilities Plant's thermal storage tank — the round
+        white tank beside the cooling-tower rows. 3,104 returns read one
+        plane, p50 26.4 to p98 27.0 (roofOf 27.0); the area guess was 9.
+        An 18 m miss on an unchanged structure — the largest measured
+        height error this shard has produced.
+     826: the white plant block between the VA hospital and its garage;
+        1,061 returns, p50 6.3 to max 6.5, the tightest plane in the
+        batch (roofOf 6.4; guessed 9).
+   Verified and deliberately NOT here: 438, the VA parking structure.
+   Apple shows a finished multi-deck garage with cars on the top deck;
+   the 2014 returns read p50 2.4 m — a surface lot with scattered tall
+   objects. The garage postdates the flight, so no 2014 number may ship
+   and the ring keeps its stated area guess of 20, in family with a
+   five-deck garage. (The Google chunk over this footprint is censored —
+   federal facility — so Apple is the only current view of it.) */
 const OSM_UNNAMED_VERIFIED = new Set([
   786, 893,
   0, 55, 63, 113, 119, 132, 186, 204, 453, 501, 502, 504, 505, 506, 507,
@@ -284,6 +302,7 @@ const OSM_UNNAMED_VERIFIED = new Set([
   1006, 1009, 1010, 1011, 1012, 1014, 1015, 1016, 1018, 1019, 1020, 1021,
   1025, 1026, 1027, 1029, 1030, 1031, 1088, 1090, 1091, 1092, 1095, 1386,
   1387, 1388,
+  224, 826,
 ]);
 
 /* Hand-audited stats where the automatic roofOf() percentile choice is
@@ -317,6 +336,14 @@ const OSM_UNNAMED_VERIFIED = new Set([
      of the same EPT (r0c2, 30,780 returns, one plane) reads 24.3 —
      matching KNOWN_HEIGHTS in build-campus-3d.mjs. A clipped footprint
      is a different quantity, not a worse sample of the same one.
+   - Solis Hall (r1c1 judge sweep, 2026-08-04): the lecture hall's east
+     edge sits under the eucalyptus stand that both the registered chunk
+     and today's Apple show pressed against it. Its returns split 62%
+     into a dense 5-6.5 m band and the rest up the crowns to 24.8, so
+     the tree-guard's p75 (14.9) is still in canopy — the Stage Room
+     failure exactly, and it smeared onto the GIS mass through the
+     host-level reconcile. The roof is the dense band's p50, 6.4 m, and
+     the university GIS roughly agrees (4.3 m eave, one level).
    A null here means "measured, but not trustworthy: emit nothing". */
 const HAND_AUDITED = {
   "Tenaya Hall": 27.6,
@@ -326,6 +353,7 @@ const HAND_AUDITED = {
   "Stage Room at the Pub": 4.6,
   "Spanos Athletic Performance Center": 4.4,
   "Qualcomm AA": 24.3,
+  "Solis Hall": 6.4,
 };
 
 const R = 6378137;

@@ -1,0 +1,242 @@
+[
+  {
+    "id": "jacobs-main-host-bleed",
+    "entity": "Jacobs Hall (main GIS wing)",
+    "where": {
+      "x": 556.9,
+      "z": -396.7
+    },
+    "claim": "assembleMasses ships h=33.2 m on the 4503 m² GIS wing (GIS record 17.1 m / 4 levels). No massHeights entry; height comes from host reconcile against lidar.heights['Jacobs Hall']=33.2.",
+    "observed": "Targeted EPT re-sample of the GIS ring (33,862 non-ground returns): p50=20.8, p75=33.0, p98=39.0, roofOf=33.0, guard=true, bodyTight=false → massEligible=false under the build's own plane-coherence rule. The separate Jacobs Hall Tower mass at (553.2,-418.4) measures cleanly roofOf=39.8 (9,129 pts, massOk) and already ships 39.8 via massHeights. The main wing's p50≈20.8 m is ~1 storey above GIS 17.1; shipping 33.2 pastes the stepped/host plane onto the L4 wing.",
+    "evidence": {
+      "lidar": "gis:jacobs-main 33862 pts roofOf=33.0 p50=20.8 p75=33 p98=39 guard bodyTight=false massOk=false; gis:jacobs-tower 9129 pts roofOf=39.8 massOk=true; host:Jacobs Hall 32745 pts roofOf=33.2",
+      "gis": "Jacobs Hall mass gisH=17.1 levels=4 area≈4503 m²; tower mass gisH=29.9 levels=7 area≈1320 m²",
+      "osm": "Jacobs Hall way bbox x 504..605 z -459..-368; lidar.heights['Jacobs Hall']=33.2",
+      "apple": "Apple snapshot /tmp/.../jacobs-main.jpg z18 at 32.88159,-117.23524 — finished multi-wing engineering complex with flat roofs and mechanical plant; no demolition/crane",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Host-bleed onto a massHeights-ineligible stepped wing: when massOk=false the build correctly withholds massHeights, then reconcile() still pastes lidar.heights[host] onto the GIS wing.",
+    "epoch_risk": "Low for existence — Apple shows Jacobs standing. The 33 vs 17/21 m split is a measurement/assignment issue across two volumes of one pre-2014 building, not a date conflict."
+  },
+  {
+    "id": "unnamed-224-tall-plant",
+    "entity": "unnamed OSM building index 224",
+    "where": {
+      "x": 195.8,
+      "z": 483.3
+    },
+    "claim": "Ships as OSM area-guess h=9 m (still rendering; not in lidar.osmHeights / OSM_UNNAMED_VERIFIED).",
+    "observed": "EPT re-sample: 3,104 returns, roofOf=27.0, p50=26.4, p75=26.6, p98=27.0, guard=false, bodyTight=true, massOk=true. Δ = +18 m vs shipped guess. Nearest named GIS is Central Utilities Building at (185.8,392.9) shipping 13.7 m — a different footprint ~90 m north.",
+    "evidence": {
+      "lidar": "osm:224 3104 pts roofOf=27.0 p50=26.4 p75=26.6 p98=27.0 massOk=true",
+      "gis": "no covering GIS mass within ~50 m; Central Utilities Building h=13.7 at (186,393)",
+      "osm": "unnamed building way, campus-3d index 224, h=9, area≈558 m²",
+      "apple": "Apple snapshot unnamed-224.jpg z18 at 32.87363,-117.23910 — industrial plant with large circular cooling fans and tank (central-utilities district); structure present today",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Unnamed OSM area-guess with a clean 2014 roof plane never admitted to lidar.osmHeights (unguardable without existence×plane verification).",
+    "epoch_risk": "Low — Apple confirms an industrial plant on this footprint today; LiDAR plane is tight (p98−p75=0.4 m), so this is not canopy or a predecessor lot."
+  },
+  {
+    "id": "unnamed-438-va-deck",
+    "entity": "unnamed OSM building index 438",
+    "where": {
+      "x": 840.9,
+      "z": 452.2
+    },
+    "claim": "Ships as OSM area-guess h=20 m (still rendering; area≈7240 m²).",
+    "observed": "EPT re-sample: 14,113 returns, roofOf=4.0, p50=2.4, p75=4.0, p98=21.6, guard=true, bodyTight=true, massOk=true. Shipped guess is 16 m above the guarded plane. Apple nadir shows a multi-level parking garage with cars on the top deck at this site.",
+    "evidence": {
+      "lidar": "osm:438 14113 pts roofOf=4.0 p50=2.4 p75=4.0 p98=21.6 guard bodyTight=true massOk=true",
+      "gis": "no GIS mass centroid within ~80 m of this ring",
+      "osm": "unnamed building way index 438, h=20, area≈7240 m²",
+      "apple": "Apple snapshot unnamed-438-va.jpg z18 at 32.87391,-117.23220 — multi-level parking structure with cars on roof deck, fleet lot to the south; finished, no crane",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Unnamed OSM guess vs 2014 plane, with Apple showing a tall parking structure — either a post-2014 garage (LiDAR saw the old lot) or a mis-scaled guess on a pre-2014 deck.",
+    "epoch_risk": "HIGH — Apple's multi-level garage vs LiDAR's 4 m guarded plane is exactly the signature of a post-2014 structure (or a mid-build 2014 frame). Do not ship the 4 m plane as the garage height without an epoch check; do not keep the 20 m guess either without a source."
+  },
+  {
+    "id": "ssc-double-render",
+    "entity": "Student Services Center",
+    "where": {
+      "x": 520,
+      "z": -87.1
+    },
+    "claim": "Both GIS mass (h=22.7 via massHeights) and OSM ring (h=22.7) assemble and render.",
+    "observed": "OSM interior grid coverage by GIS massing = 213/229 = 0.930 (≥0.85 area threshold), but nameCarried=false because no GIS centroid falls inside the OSM ring — so ringCoveredBy yields and the OSM copy survives. GIS mass is already named 'Student Services Center' in arcgis.massing. Near-duplicate footprints (centroids 3 m apart) → coincident-plane / z-fight risk.",
+    "evidence": {
+      "lidar": "gis SSC massHeights path ships 22.7; EPT of GIS ring 14466 pts roofOf=22.7",
+      "gis": "Student Services Center gisH=17.1 → massH/ship 22.7 at (517.4,-85.4)",
+      "osm": "Student Services Center ring still assembled src=osm h=22.7 at (520.0,-87.1); nameCarried=false",
+      "apple": "Apple snapshot ssc.jpg z18 — single finished building present",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "nameCarried guard blocks area-suppression even when GIS already carries the exact OSM name — same class as CMRR below.",
+    "epoch_risk": "None for existence. This is a duplicate-geometry problem, not a date conflict."
+  },
+  {
+    "id": "cmrr-double-render",
+    "entity": "Center for Memory and Recording Research",
+    "where": {
+      "x": 537.5,
+      "z": -293
+    },
+    "claim": "Both GIS mass (h=12.9) and OSM ring (h=12.9) assemble and render.",
+    "observed": "OSM interior coverage by GIS = 346/349 = 0.991, nameCarried=false (GIS centroid outside OSM ring). Bboxes nearly identical. GIS already named correctly.",
+    "evidence": {
+      "lidar": "EPT gis:cmrr 13867 pts roofOf=12.9; matches shipped h",
+      "gis": "CMRR mass at (537.5,-290.0) h=12.9",
+      "osm": "CMRR ring at (537.5,-293.0) still src=osm; coverage 0.991 nameCarried=false",
+      "apple": null,
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Same nameCarried-vs-exact-GIS-name double-render class as Student Services Center.",
+    "epoch_risk": "None — heights agree; issue is duplicate extrusion."
+  },
+  {
+    "id": "black-apts-unchallenged",
+    "entity": "Black Apartments / Black Hall",
+    "where": {
+      "x": 789.7,
+      "z": -450.8
+    },
+    "claim": "GIS mass 'Black Apartments' ships unchallenged gisH=18.3 m. OSM 'Black Hall' (lidar.heights=16.1) is suppressed and does not appear in assembleMasses.",
+    "observed": "EPT of GIS ring: 5,446 pts, roofOf=16.1, p50=8.4, p75=13.4, p98=16.1, massOk=true — but no massHeights key near m:790,-451. GIS centroid is NOT inside Black Hall OSM ring (and vice versa) despite centroids 0.7 m apart, so host rename never fires and PRE_2014_GIS_VERIFIED does not list 'Black Apartments'. Black Hall OSM is vertex-majority-covered (0.583) and dropped. Label that ships is the facilities name, not 'Black Hall'.",
+    "evidence": {
+      "lidar": "gis:black-apts 5446 pts roofOf=16.1 massOk=true; host:Black Hall 4971 pts roofOf=16.1; massHeights[m:790,-451]=undefined",
+      "gis": "Black Apartments gisH=18.3 levels=6",
+      "osm": "Black Hall h=22.8 lidar.heights=16.1 @ (790.0,-451.4) — suppressed, not in assembled masses",
+      "apple": "Apple snapshot black-apts.jpg z18 at 32.88208,-117.23275 — residential warren complex standing",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Hostless GIS mass (centroid misses named OSM ring) left unchallenged — same class PRE_2014_GIS_VERIFIED was invented to catch; plus OSM name lost to suppression.",
+    "epoch_risk": "Low — Apple shows the Warren residential complex standing on the 2014 footprint. Δ=2.2 m is a measurement gap, not a rebuild."
+  },
+  {
+    "id": "hss-tower-vs-wing-identity",
+    "entity": "Humanities & Social Sciences / Humanities and Social Sciences",
+    "where": {
+      "x": -45.9,
+      "z": -27.4
+    },
+    "claim": "Place/OSM name 'Humanities & Social Sciences' attaches to a 36.7 m tower mass; a separate GIS mass 'Humanities and Social Sciences' at (-42.9,-56.4) ships 8.5 m / 2 levels.",
+    "observed": "EPT: hss-tall (HSS Tower) 1,970 pts roofOf=36.7 massOk; hss-low 13,689 pts p50=8.6 p75=15 p98=36.2 guard bodyTight=false massOk=false — low mass correctly ships GIS 8.5 (p50 agrees). OSM HSS ring is a 4-vertex box that contains only the tower centroid, not the 2-storey building. Label at the tower may mis-identify the low HSS building.",
+    "evidence": {
+      "lidar": "gis:hss-tall roofOf=36.7; gis:hss-low p50=8.6 massOk=false (tower contamination in p98); lidar.heights['Humanities & Social Sciences']=36.7",
+      "gis": "Humanities and Social Sciences gisH=8.5 L2; HSS Tower / Humanities & Social Sciences gisH=29.9 L7 → ship 36.7",
+      "osm": "Humanities & Social Sciences 4-vertex ring centroid (-45.9,-27.4) — tower only",
+      "apple": "Apple snapshot hss-pair.jpg z18 — both the low academic block and taller tower volumes present",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "OSM name on a tower sliver while the real named hall is a separate GIS mass — identity/label split, heights themselves are coherent.",
+    "epoch_risk": "Low — both volumes appear pre-2014 and present on Apple. Not a date conflict."
+  },
+  {
+    "id": "unnamed-1351-near-triton",
+    "entity": "unnamed OSM building index 1351",
+    "where": {
+      "x": 545.3,
+      "z": 48.3
+    },
+    "claim": "Ships as OSM area-guess h=12 m (still rendering; area≈2045 m²).",
+    "observed": "EPT: 12,068 pts, roofOf=4.9, p50=4.8, p75=4.9, p98=16.0, guard=true, bodyTight=true, massOk=true. Δ = −7.1 m vs guess. Site sits ~55 m from The Strauss and ~63 m from Student Success Building — both in UNDER_CONSTRUCTION / POST_2014_SITES.",
+    "evidence": {
+      "lidar": "osm:1351 12068 pts roofOf=4.9 p50=4.8 p75=4.9 p98=16 guard bodyTight=true massOk=true",
+      "gis": "no close GIS host; nearest named post-2014 are The Strauss / Student Success Building",
+      "osm": "unnamed index 1351 h=12 area≈2045",
+      "apple": "Apple snapshot triton-unnamed-1351.jpg z18 at 32.87757,-117.23537 — University Center / Triton Center edge with parking, trailers/modular units visible in frame",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Unnamed guess adjacent to an under-construction district — LiDAR plane may be the pre-rebuild lot.",
+    "epoch_risk": "HIGH — Triton Center is UNDER_CONSTRUCTION in the build tables. A clean 4.9 m 2014 plane next to Strauss/Success is likely a DATE (old lot / early pad), not a safe height to ship for whatever Apple shows today."
+  },
+  {
+    "id": "vela-pcw-outline",
+    "entity": "Vela (Pepper Canyon West OSM outline, index 949)",
+    "where": {
+      "x": 799.3,
+      "z": 67.3
+    },
+    "claim": "OSM outer ring still assembles as src=osm h=19 m alongside multiple GIS Vela/PCWest masses (including a 70.1 m / 23-level tower).",
+    "observed": "Parts filter keeps only part0 (h=77 tag) so parts.length after filter is 1 — falls through to whole-ring path. Coverage of outline by GIS masses = 0.772 (<0.85), centroid not in GIS, nameCarried=true via PCWest centroids → outline not suppressed. Classic courtyard-outline extrusion through a multi-tower complex (Alianza/Umoja/Tuolumne class).",
+    "evidence": {
+      "lidar": "POST_2014_SITES contains Vela — no lidar.heights / partHeights; GIS tower ships 70.1 from facilities levels",
+      "gis": "multiple PCWest/Vela masses 3–70.1 m inside/near the outline",
+      "osm": "Vela index 949 h=19, 2 parts (part0 h=77, part1 untagged); outer ring still rendered",
+      "apple": "Apple snapshot vela-pcw.jpg z17 at 32.87739,-117.23265 — finished Pepper Canyon West towers standing",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "POST_2014 outline double-render when parts filter collapses to <2 and area coverage is under 0.85 — Alianza-class courtyard slab.",
+    "epoch_risk": "Existence is fine (Apple shows finished towers). Height 19 m on the outline is an OSM guess/tag, not LiDAR; the real towers are GIS floor-counts. Risk is geometric (courtyard fill), not a wrong epoch height on the towers themselves."
+  },
+  {
+    "id": "solis-host-reconcile-stepped",
+    "entity": "Solis Hall",
+    "where": {
+      "x": 147.1,
+      "z": -325.5
+    },
+    "claim": "Ships h=14.9 m via host reconcile (GIS 4.3 m / 1 level → lidar.heights['Solis Hall']=14.9). No massHeights.",
+    "observed": "EPT of GIS ring: 4,133 pts, p50=6.5, p75=14.8, p98=23.0, roofOf=14.8, guard=true, bodyTight=false → massOk=false. Same stepped signature the prior r1c1 pass noted and left standing after eye-level. Re-measured identical numbers.",
+    "evidence": {
+      "lidar": "gis:solis 4133 pts roofOf=14.8 p50=6.5 p75=14.8 p98=23 massOk=false; host:Solis Hall roofOf=14.9",
+      "gis": "Solis Hall gisH=4.3 levels=1",
+      "osm": "Solis Hall osm.h=10; lidar.heights=14.9",
+      "apple": "Apple snapshot solis.jpg z18 — lecture-hall volume present with surrounding canopy",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Stepped / multi-plane roof where host reconcile ships p75-like 14.9 while mass plane is ineligible and GIS says 1 storey — needs judge call, not auto-fix.",
+    "epoch_risk": "Low for existence. Possible misread of a tall lecture box vs a low wing+canopy; not a post-2014 rebuild (Solis is long-standing)."
+  },
+  {
+    "id": "unnamed-56-chancellors",
+    "entity": "unnamed OSM building index 56",
+    "where": {
+      "x": 374.4,
+      "z": -88.3
+    },
+    "claim": "Ships as OSM area-guess h=9 m (still rendering; area≈898 m²).",
+    "observed": "EPT: 2,301 pts, roofOf=5.0, p50=3.2, p75=5.0, p98=19.3, guard=true, bodyTight=true, massOk=true. Δ = −4 m vs guess. ~40 m from Chancellor's Complex.",
+    "evidence": {
+      "lidar": "osm:56 2301 pts roofOf=5.0 massOk=true",
+      "gis": "no covering GIS mass nearby",
+      "osm": "unnamed index 56 h=9 area≈898",
+      "apple": null,
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Unnamed OSM area-guess with a measurable 2014 plane not in OSM_UNNAMED_VERIFIED.",
+    "epoch_risk": "Moderate — p98=19.3 under guard could be adjacent canopy/taller neighbour; body plane at 5 m looks like a 1-storey structure. Confirm on Apple before treating as a safe ship."
+  },
+  {
+    "id": "unnamed-826-va-annex",
+    "entity": "unnamed OSM building index 826",
+    "where": {
+      "x": 832.9,
+      "z": 357.7
+    },
+    "claim": "Ships as OSM area-guess h=9 m.",
+    "observed": "EPT: 1,061 pts, roofOf=6.4, p50=6.3, p75=6.4, p98=6.4, massOk=true. Δ = −2.6 m. Near VA Medical Center.",
+    "evidence": {
+      "lidar": "osm:826 1061 pts roofOf=6.4 clean plane",
+      "gis": null,
+      "osm": "unnamed index 826 h=9 area≈446",
+      "apple": null,
+      "probe": null
+    },
+    "severity": "low",
+    "suspected_class": "Unnamed OSM guess slightly high vs a clean low plane — same unguardable unnamed class, small delta.",
+    "epoch_risk": "Low if Apple shows a 1–2 storey annex on this footprint; VA campus has post-2014 additions so a quick currency check is still warranted."
+  }
+]

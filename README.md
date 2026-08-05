@@ -301,6 +301,37 @@ the 2 m roof-anchor gate. The documented withhold: osm:481, a ring under unbroke
 the canyon rim — Apple sees no structure and the sparse returns could be brush, so it ships
 nothing rather than a guess dressed as a measurement.
 
+**The academic-core judge pass (2026-08-04, r1c1).** Warren Mall to the VA hospital, the
+shard a screening agent had already swept; every candidate was re-derived from the EPT and
+the imagery before anything changed, and a third of them turned out to be dates or working
+behaviour rather than errors. What was actually wrong:
+
+| Building | Shipped | Measured | Why it was wrong |
+|---|---|---|---|
+| Central Utilities thermal storage tank (unnamed) | 9 m (area guess) | **27.0 m** | the round tank beside the cooling-tower rows, identical in both epochs; 3,104 returns, one plane p50 26.4 to p98 27.0. An 18 m miss — the shard's largest. |
+| VA plant block (unnamed) | 9 m (area guess) | **6.4 m** | 1,061 returns, p50 6.3 to max 6.5 — the tightest plane in the batch. |
+| Solis Hall | 14.9 m (LiDAR p75) | **6.4 m** | the Stage Room failure again: the eucalyptus stand over its east edge puts 38 % of returns in crown, so the tree-guard's p75 is still canopy — and the host-level reconcile smeared it onto the GIS mass. The roof is the dense band's p50; hand-audited like the Pub. |
+| Black Hall | 18.3 m GIS record, name lost | **16.1 m, named** | the Douglas Apartments failure again: the inventory says "Black Apartments", the mass centroid lands in its own courtyard so no host ever challenged the record, and the suppressed OSM ring took the "Black Hall" name with it. One `MASS_RENAMES` entry restores host, label and challenge. |
+| Student Services Center | rendered **twice** | once, 22.7 m | its facilities ring is drawn offset enough that no mass centroid lands in the OSM ring, so the name test failed and the ≥0.85 area test never ran — the OSM copy extruded through massing that already IS the building (0.93 covered). The name test now honours an exact-name mass within 150 m, the LiDAR build's own twin rule. |
+| Center for Memory and Recording Research | rendered **twice** | once, 12.9 m | same class, 0.99 covered. Campus-wide sweep: SSC and CMRR are the only two flips. |
+| Vela | 19 m outline slab through the towers | **parts only** | Vela is two OSM building:parts but only the tower box carries a height, and the parts gate counted the FILTERED list — one survivor flipped the building onto the whole-outline path. The gate reads the raw count now; the covered tower part yields to the 70.1 m PCW mass and the paseo stays open. Tapestry/Catalyst/Kaleidoscope (no surviving parts at all) keep their outline fallback. |
+| Triton Center predecessor (unnamed, osm:1351) | 12 m phantom | **removed** | demolished: bare dirt on the registered chunk, a staging pad with trailers on Apple, the new frames rising beside it in Street View 2025-02. The 2014 flight measured a real 4.9 m building; that building is gone. |
+| Pad south of the Chancellor's Complex (unnamed, osm:56) | 9 m phantom | **removed** | same demolition class — staging on the chunk, razed flat on Apple. Both skip by footprint anchor, the Campus Point convention. |
+
+The rejections matter as much as the fixes. Jacobs Hall's 33.2 m stays: the screener proposed
+its p50 (20.8), but the complex is genuinely stepped — 20 m wings under a 34–39 m cruciform
+core that extends past the tower's own GIS ring, so even a minus-tower re-sample has no single
+plane (p50 20.7 / p75 25.3 / p98 34.5) and the Urey rule holds (the mass emits nothing, the
+host answers, the tower measures its own 39.8). HSS's "identity split" is reality — a 36.7 m
+tower and an 8.5 m wing, each at its own plane. And the VA parking structure keeps its declared
+20 m guess: Apple shows a finished multi-deck garage with cars on the top deck, but the 2014
+returns read p50 2.4 m — a surface lot. The garage postdates the flight, so there is no 2014
+number to ship, and the Google chunk over the footprint is censored (federal facility), so
+Apple is the only current view of it. One position disagreement is logged rather than fixed:
+the OSM ring and the exact-name GIS mass for Visual Arts Facility - Building 3 stand within
+150 m of each other with zero footprint overlap — somebody is wrong about where Building 3 is,
+and neither source resolves which yet.
+
 ### The colours, measured off footage
 
 Satellite imagery sees roofs and ground; it cannot see a wall, a tree trunk, or the sky. For
