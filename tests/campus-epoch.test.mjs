@@ -3979,3 +3979,56 @@ describe("campus epoch — r1c1 re-sweep 165434 (2026-08-05)", () => {
     );
   });
 });
+
+describe("campus epoch — r1c2 re-sweep (2026-08-05_165434)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("Mobile PET/CT Scanner stays absent; Campus Point East keeps post-2014", () => {
+    /* Independent full-depth EPT (/tmp/gauntlet-r1c2-judge/reprobe.json):
+       Mobile PET/CT — 108 pts, every return in the −1 m bin, explainRoof
+       rule=p98 → −0.6. Apple: temporary trailers/tents in the Sulpizio /
+       Altman courtyard, not a solid clinic. NO_SOLID_ROOF (Foodworx Dining
+       Room class). Sibling Mobile CT keeps L1=3 (360 pts, half a real
+       2.1 m trailer plane — not the same clear empty pad).
+       Campus Point East — 20,177 pts, thin-shelf → 6.6 (dense 96.2% @6 m
+       mid-build deck). Apple shows the finished multi-level garage today.
+       POST_2014_SITES "Campus Point Parking Structure" keeps GIS 12.8;
+       do not "fix" it down to the 2014 plane. West sibling already
+       measured at 14.4. */
+    assert.equal(
+      MASSES.filter((m) => /Mobile PET\/CT/i.test(m.name || "")).length, 0,
+      "Mobile PET/CT Scanner extrudes again");
+    assert.equal(
+      rendersNear(1325.0, -43.7).find((m) => m.name === "Mobile CT")?.h, 3,
+      "Mobile CT sibling must keep its L1");
+    const cpe = rendersNear(1505.4, -226.3).find((m) =>
+      /Campus Point Parking/i.test(m.name || ""));
+    assert.ok(cpe, "Campus Point Parking Structure East vanished");
+    assert.equal(cpe.h, 12.8, "East must keep the post-2014 GIS record");
+    assert.equal(LIDAR.massHeights["m:1505,-226"], undefined,
+      "a 2014 mid-build plane shipped for Campus Point East");
+  });
+
+  test("osm:365 Mesa Central neighbour stays on its guess; LiDAR barred", () => {
+    /* Independent EPT: 1,591 pts, rim coverage 0.13 (survey-box edge),
+       explainRoof canopy-guard → 25.1 (p50 17.9 / p75 25.1 / p98 31.5,
+       dense 0.343, spread 6.39) — Mesa Nueva tower bleed into a pre-2014
+       Mesa Central pad. Hist mode is 5–6 m (the real L2 body GIS siblings
+       9240/9242 ship as 6.1), but statistics cannot pick it and inventing
+       6.1 from a neighbour is not a measurement. OSM_WITHHELD; area guess
+       8.4 stands. Apple: finished low Mesa fabric today, no crane. */
+    assert.equal(LIDAR.osmHeights?.[365], undefined,
+      "tower-bleed canopy-guard shipped for osm:365");
+    const rendered = rendersNear(1858.1, 445.3, 4).find((m) => m.src === "osm");
+    assert.equal(rendered?.h, 8.4, "osm:365 must keep its declared guess");
+  });
+});

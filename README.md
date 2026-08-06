@@ -711,6 +711,22 @@ Rejected / withheld: Pepper Canyon North Laundry (dense 82.7% under the 85% cut;
 rides a 2-pt tail) and ECEC A–D (Δ ≤0.6 vs the L1 record on the dense body). Leave both
 unchallenged.
 
+**The health-campus / Pepper Canyon re-sweep (2026-08-05_165434, r1c2).** Screen of 4
+candidates (2 medium / 2 low). Every claim re-derived from an independent full-depth EPT
+(`/tmp/gauntlet-r1c2-judge/reprobe.json`; point counts matched the screener exactly —
+1,591 / 20,177 / 108).
+
+| Entity | Was shipping | Now ships | Why |
+|---|---|---|---|
+| Mobile PET/CT Scanner | 4.3 m GIS L1 solid box | **removed** | 108 returns, every one near grade (`explainRoof` p98 → −0.6); Apple shows temporary trailers/tents in the Sulpizio courtyard, not a clinic. `NO_SOLID_ROOF` (Foodworx Dining Room class). |
+
+Rejected / withheld, each re-measured: osm:365 Mesa Central neighbour — Mesa Nueva tower
+bleed (rim 0.13, canopy-guard would invent 25.1); hist mode is the real 5–6 m L2 body but
+statistics cannot pick it, so `OSM_WITHHELD` and the 8.4 guess stand. Campus Point Parking
+Structure East — 2014 thin-shelf 6.6 is a mid-build deck; Apple's finished garage keeps the
+post-2014 GIS 12.8 (`POST_2014_SITES`). Pepper Canyon / Foodworx tennis + pickleball — still
+painted on Apple, still unfitted until registration residual ≤ 0.6 m.
+
 Rejected / withheld, each re-measured: Campus Emergency Services and CSC Building A — dense
 bodies ~4.5 under massHeights 6.5, but gaps 2.0 / 1.7 sit under the >2 thin-shelf cut
 (CSC-D near-miss family); do not retune. Administration Building — gap 1.4 under the cut;

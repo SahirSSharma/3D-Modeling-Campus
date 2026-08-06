@@ -357,3 +357,92 @@ Regency → r2c2 remain). ICW no longer appears on the invented-height list.
 ### Verification
 
 See final message for `npm test` / `npm run check` paste.
+
+---
+
+# FINDINGS — run `2026-08-05_165434` · shard r1c2 (re-sweep)
+
+Pass 1 re-sweep of the health-campus / Pepper Canyon / Mesa Central fringe
+shard. Screen: 4 candidates (2 medium / 2 low). Judged by
+`cursor-grok-4.5-high` (own screen — Fable budget nearly spent; no
+high-severity findings). When unsure, withheld rather than invented.
+
+Every candidate in `pass1-r1c2.screen.json` was re-derived before judgement
+with an independent full-depth targeted EPT re-sample
+(`/tmp/gauntlet-r1c2-judge/reprobe.json`) using `scripts/lib/roof-measure.mjs`
+`explainRoof` with the builder's vertex-only rimBase. Point counts matched
+the screener exactly (osm:365 1,591 / Campus Point East 20,177 / Mobile
+PET/CT 108 / Mesa 9240 1,641 / 9242 1,455 / Mobile CT 360 / Campus Point
+West 12,626). Apple snapshots from `/tmp/gauntlet-r1c2-165434/apple/`
+reviewed for currency only (no colour sampling).
+
+### Fixed
+
+| Entity | Was shipping | Now ships | Source | Test |
+|---|---|---|---|---|
+| Mobile PET/CT Scanner (`mobile-petct-near-grade`) | 4.3 m GIS L1 solid box | **removed** | `NO_SOLID_ROOF` in `build-campus-arcgis.mjs`: 108 pts, every return in the −1 m bin, `explainRoof` rule=p98 → −0.6 (`why='no guard fired; p98 is the roof'`). Apple `mobile-petct.jpg` z19: temporary white gabled trailers/tents and a van in the Sulpizio / Altman courtyard — not a solid clinic. Foodworx Dining Room class. | epoch r1c2 165434 |
+
+### Withheld (better absent than wrong)
+
+- **`osm-365-mesa-area-guess` (osm:365)**: Independent EPT matches screener
+  (1,591 pts, rim=0.13, `explainRoof` canopy-guard → **25.1**, p50 17.9 /
+  p75 25.1 / p98 31.5, dense 0.343, spread 6.39,
+  `why='p98-p75 = 6.4 m > 5 — crown overhang, take the roof plane'`).
+  Hist mode is 5–6 m (377+168) — the real Mesa Central L2 body GIS
+  siblings 9240/9242 ship as 6.1 — under Mesa Nueva tower bleed (18–31 m
+  bins). Apple: finished low Mesa fabric today, no crane. Gate correctly
+  refuses (rim + spread). Inventing 6.1 from a neighbour is not a
+  measurement of this ring; admitting canopy-guard 25.1 would invent a
+  mid-rise from neighbour towers. Added to `OSM_WITHHELD`. Area guess
+  8.4 stands. Pinned `osmHeights[365]` undefined and render at 8.4.
+
+### Rejected candidates (each re-measured; do not re-find these)
+
+- **`campus-point-east-2014-midbuild`** — REJECTED as a height bug.
+  Independent EPT: 20,177 pts, rim=1.00, gradeSpread 9.1 m,
+  `explainRoof` thin-shelf → **6.6** (p50 6.5 / p75 6.6 / p98 8.6,
+  dense 0.962, spread 2.04,
+  `why='body tight (p75-p50 = 0.1), shelf 2.0 m above it, 96.2% in a 2 m band — plant, not building'`).
+  Hist 6m:18,908 (94%). Apple: finished multi-level garage with cars on
+  the top deck today. This is a DATE — East went up with Jacobs Medical
+  Center; the 2014 flight sees a mid-build / lower-deck plane.
+  `POST_2014_SITES` "Campus Point Parking Structure" correctly keeps GIS
+  12.8. Do not "fix" it down to 6.6. West sibling already measured at
+  14.4. Pinned massHeights absent + render 12.8.
+
+- **`pepper-canyon-courts-still-unmarked`** — REJECTED as in-scope fix;
+  RE-LOGGED as handoff. `campus-markings.json` still has zero facilities
+  whose centroids fall inside this shard; string search
+  pepper|foodworx|pickle → false. Apple `pc-courts.jpg` / `foodworx.jpg`
+  z19 still show one reddish-brown tennis court and a 2×2 blue/grey
+  pickleball cluster north/east of Foodworx today. Same open handoff as
+  prior r1c2 passes and Muir west pickleball: painted surfaces exist;
+  colour sampling stays off unregistered Apple pixels (campus offset
+  1.25 m > 0.6 m gate). Better absent than wrong until a fitted
+  registration residual clears gate.
+
+### Named OSM-tag buildings (readiness work-list)
+
+None of the three named buildings still on invented heights sit inside
+this shard (Hubbs Hall → r2c0, Hyatt Regency → r2c2; International
+Center West was closed by r1c1 this run). No action.
+
+### Handoffs / observations
+
+- **Pepper Canyon / Foodworx courts**: persistent open handoff — Apple
+  registration residual must clear 0.6 m before paint ships. Do not
+  sample unregistered Apple pixels.
+- **Mobile CT sibling** (`m:1325,-44`): 360 pts, hist 2m:179 / −1m:176,
+  ships L1=3 over a real 2.1 m trailer plane — NOT the same clear empty
+  pad as PET. Left standing; revisit only with Apple evidence the pad
+  is empty today.
+- **osm:367**: same Mesa tower-bleed class as 365, but already
+  suppressed under GIS Mesa 9240 (renders as 6.1) — no live extrusion
+  of the 8.4 guess. No action.
+- **280 stepped unnamed rings**: this shard's screen raised none of the
+  multi-plane worklist as actionable (tower-bleed / epoch / paint
+  handoff). Campus-wide class remains the highest-value residual.
+
+### Verification
+
+See final message for `npm test` / `npm run check` paste.

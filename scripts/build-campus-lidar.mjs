@@ -660,6 +660,10 @@ const MEASURE_MINUS_CONTAINED_HOSTS = {
    reverse a human judgement is not a gate, it is a race. */
 const OSM_WITHHELD = new Set([
   39, 42, 83, 171, 216, 233, 245, 246, 248, 289, 294, 322,
+  365, /* Mesa Central neighbour @1858,445 — Mesa Nueva tower bleed;
+          rim 0.13, canopy-guard would admit 25.1 off neighbour towers;
+          hist mode is the real 5–6 m L2 body but statistics cannot pick
+          it. Guess 8.4 stands; do not invent 6.1 from a GIS sibling. */
   438, 441, 465, 479, 480, 485, 497, 503, 513, 520, 656, 658,
   661, 695, 707, 708, 718, 762, 765, 769, 780, 785, 805, 806,
   825, 827, 828, 832, 833, 834, 892, 904, 907, 909, 910, 944, 975,

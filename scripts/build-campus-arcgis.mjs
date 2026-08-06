@@ -198,14 +198,21 @@ const UNDER_RECONSTRUCTION = [
 ];
 
 /* GIS rings that name a "building" where Apple and the 2014 flight agree
-   nothing solid stands — open-air dining, patio, canopy-over-grade.
-   Extruding the storey default invents a box. Better absent than wrong.
+   nothing solid stands — open-air dining, patio, canopy-over-grade,
+   mobile-unit pads. Extruding the storey default invents a box. Better
+   absent than wrong.
    r1c2 re-sweep (2026-08-05): Foodworx Dining Room — 1,077 returns, 93%
    in −1..0 m (near grade), roofOf 3.7 is a thin shelf over empty air;
    Apple shows umbrellas / outdoor seating south of the real Foodworx
-   gable (which already ships its measured 7.8 m). */
+   gable (which already ships its measured 7.8 m).
+   r1c2 re-sweep 2026-08-05_165434: Mobile PET/CT Scanner — 108 returns,
+   every one in the −1 m bin (explainRoof rule=p98 → −0.6); Apple shows
+   temporary white gabled trailers/tents and a van in the Sulpizio /
+   Altman courtyard, not a solid clinic. Sibling Mobile CT keeps its
+   L1=3 for now (360 pts, half a real 2.1 m trailer plane). */
 const NO_SOLID_ROOF = [
   { n: "Foodworx Dining Room", near: [1001.5, -109.3] },
+  { n: "Mobile PET/CT Scanner", near: [1351.4, -42.2] },
 ];
 
 /* NESTED PLAZA PADS (r1c1 pass-2, 2026-08-05). The facilities extrusion
