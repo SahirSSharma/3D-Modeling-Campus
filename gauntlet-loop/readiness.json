@@ -1,5 +1,5 @@
 {
-  "at": "2026-08-06T00:41:50.412Z",
+  "at": "2026-08-06T01:38:14.995Z",
   "head": null,
   "ready": false,
   "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)",
@@ -7,7 +7,7 @@
     {
       "ok": false,
       "label": "named buildings on a guess",
-      "observed": "3 of 322",
+      "observed": "2 of 322",
       "gate": "<= 0"
     },
     {
@@ -37,7 +37,7 @@
     {
       "ok": true,
       "label": "slowest eye-level frame rate",
-      "observed": "120.2 fps",
+      "observed": "120.1 fps",
       "gate": ">= 30"
     },
     {
@@ -57,11 +57,6 @@
       "i": 76,
       "n": "Hyatt Regency La Jolla at Aventine",
       "h": 16
-    },
-    {
-      "i": 167,
-      "n": "International Center West",
-      "h": 8.3
     }
   ]
 }

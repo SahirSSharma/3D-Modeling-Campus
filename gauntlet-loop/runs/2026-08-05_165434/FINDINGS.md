@@ -279,3 +279,81 @@ Center West → r1c1). No action.
 ### Verification
 
 See final message for `npm test` / `npm run check` paste.
+
+---
+
+# FINDINGS — run `2026-08-05_165434` · shard r1c1 (re-sweep)
+
+Pass 1 re-sweep of the academic-core shard (Student Center / Bonner / VAF /
+Powell-Focht / York / Mandeville). Screen: 4 candidates (1 high / 3 medium).
+Judged by `cursor-grok-4.5-high`. Also worked the readiness named-guess entry
+owned by this shard: International Center West (osm:167).
+
+Every candidate in `pass1-r1c1.screen.json` was re-derived before judgement
+with an independent full-depth targeted EPT re-sample
+(`/tmp/gauntlet-r1c1-judge/reprobe.json`) using `scripts/lib/roof-measure.mjs`
+`explainRoof` with the builder's vertex-only rimBase. Point counts matched
+the screener where it had probed the same rings (VAF3-GIS 2,060 / Bonner
+8,800 / Powell-Focht 15,276). Apple snapshots from
+`/tmp/gauntlet-r1c1-165434/apple/` reviewed for currency only (no colour
+sampling). Note: the screener's own `probe.mjs` still carries a hand-written
+two-rule `roofOf` (no thin-shelf, no base) — its screen JSON claimed
+`explainRoof`, which this judge re-ran for real.
+
+### Fixed — class + name-level sync
+
+| Entity | Was shipping | Now ships | Source | Test |
+|---|---|---|---|---|
+| Student Center A - Building G (`m:122,118`) | 8.5 GIS L2 (no massHeights) | **10.4** | Centroid outside OSM "Student Center" host → `PRE_2014_GIS_VERIFIED`. Targeted EPT: 749 pts, rule=canopy-guard → 10.3 (p50 10.1 / p75 10.3 / p98 24.0, dense 0.776, bodyTight); campus rebuild 10.4. Apple: finished white roof under eucalyptus. Sibling C/ES/A/H/F already measure through the host. | epoch r1c1 165434 |
+| Student Center A - Building EN (`m:148,52`) | 8.5 GIS L2 (same hostless class) | **8.9** | Same admit. 521 pts, rule=p98 → 8.9 (dense 0.956). | epoch r1c1 165434 |
+| International Center West (name) | `heights` 6.7; rendered GIS mass 8.2 → readiness "guess" | **`heights` 8.2** | Host-ring canopy-guard p75=6.7 is courtyard/low-wing contamination (hist 6m:3200/4406). Covering GIS mass `m:225,82` (Student Center B → host-renamed ICW) measures canopy-guard p75 8.2 (4,920 pts, bodyTight) matching L2=8.5. `MEASURED_OVERRIDES` syncs the label to the rendered plane. | epoch r1c1 165434 |
+
+Root cause for G/EN: GIS masses whose centroids miss the OSM neighbourhood
+outline never enter `massTargets`, so the L2 storey default stands forever.
+Same `PRE_2014_GIS_VERIFIED` class as Preuss D/E, CSC hostless, Extended
+Studies cottages. NOT added: Student Center Pub (4,482 pts, canopy-guard
+body NOT tight — stepped; builder correctly skips; Stage Room HAND_AUDITED
+4.6 answers the OSM name).
+
+### Rejected candidates (each re-measured; do not re-find these)
+
+- **`bonner-upper-shelf`** — REJECTED. Independent EPT: 8,800 pts,
+  rule=p98 → **19.2** = shipped. Dense 0.757 under the 85% thin-shelf cut;
+  bodyTight but gap is plant. Apple: long central grilled plant/skylight
+  strip on the white roof. Pasting 15.5 would flatten the plant — same
+  McGill / Literature / HDH near-miss family. Epoch pin at 19.2 stands.
+
+- **`powell-focht-upper-shelf`** — REJECTED. Independent EPT: 15,276 pts,
+  rule=p98 → **23.1** = shipped. Dense 0.683, spread 3.82; body not
+  thin-shelf-tight. Apple: courtyard hall with dark solar arrays on
+  south/east wings — upper volume is real. Same HDH bimodal / Preuss-F
+  dual-plane class: one ring wraps both decks; upper plane is the honest
+  extrusion. Do not drop to p50 18.5.
+
+- **`vaf3-position-double`** — REJECTED as actionable / WITHHELD as
+  identity. Two co-named footprints, zero overlap, both standing today
+  (Apple), both clean one-storey planes (GIS 11.5 / OSM-render 11.7).
+  This is university numbering vs OSM identity — not a date, not a height
+  bug. Needs Sahir or a facilities map before either vanishes. Persistent
+  open handoff from prior r1c1 passes; do not invent which is Building 3.
+
+### Named OSM-tag buildings (readiness work-list)
+
+International Center West was this shard's entry. After the name-level
+sync, readiness named-guesses dropped **3 → 2** (Hubbs Hall → r2c0, Hyatt
+Regency → r2c2 remain). ICW no longer appears on the invented-height list.
+
+### Handoffs / observations
+
+- **Screener probe.mjs still retypes roofOf.** The screen JSON cited
+  `explainRoof`; the script on disk is the two-rule hand copy. Judges
+  must re-import from `scripts/lib/roof-measure.mjs` — never trust a
+  screener number that came from a local `roofOf`.
+- **VAF-3 identity** remains the standing open question for this shard.
+- **280 stepped unnamed rings**: Pub is an in-box exemplar of the class
+  the multi-plane module measured as continuous/canopy, not discrete
+  decks — leave unbuilt.
+
+### Verification
+
+See final message for `npm test` / `npm run check` paste.

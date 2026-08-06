@@ -1007,6 +1007,26 @@ teleport / search named Building H as "Environmental Management Facility".
 Pure swaps (Meteor/Galathea) stay put — the post-rename mass is the footprint OSM already
 marked. The Dean's Residence pin, outside this shard, lands on its house by the same rule.
 
+**The academic-core re-sweep (2026-08-05_165434, r1c1).** Screen of 4 candidates (1 high /
+3 medium) plus the readiness named-guess work-list entry for this shard (International
+Center West). Every claim re-derived from an independent full-depth EPT with `explainRoof`
+and the builder's vertex rimBase (`/tmp/gauntlet-r1c1-judge/reprobe.json`; point counts:
+SC-G 749 / SC-EN 521 / SC-B 4,920 / osm:167 4,406 / Bonner 8,800 / Powell-Focht 15,276 /
+VAF3-GIS 2,060 / VAF3-OSM 473).
+
+| Entity | Was shipping | Now ships | Why |
+|---|---|---|---|
+| Student Center A - Building G | 8.5 m GIS L2 (no `massHeights`) | **10.4 m** | Centroid outside OSM "Student Center" host → `PRE_2014_GIS_VERIFIED`. Canopy-guard p75 on a tight 9–10 m body (targeted EPT 10.3; campus rebuild 10.4); Apple eucalyptus crown matches the p98=24 tail. |
+| Student Center A - Building EN | 8.5 m GIS L2 (same hostless class) | **8.9 m** | Same admit; one-plane p98 (dense 0.956). Sibling C/ES/A/H/F already measured through the host. |
+| International Center West (name) | `heights` 6.7 / rendered mass 8.2 → readiness "guess" | **`heights` 8.2** | Host-ring canopy-guard p75=6.7 is courtyard/low-wing contamination of an oversized OSM outline; covering GIS mass `m:225,82` measures and ships 8.2 (L2=8.5). Override syncs the label to the rendered plane. |
+
+Rejected, each re-measured: Bonner Hall (dense 0.757 under the 85% cut; Apple plant strip is
+the 19.2 shelf — do not paste 15.5). Powell-Focht (dense 0.683; Apple solar + courtyard
+volumes — 23.1 upper plane stands). VAF-3 GIS/OSM co-named double (coverage 0; both roofs
+real and standing today; needs Sahir / facilities map for identity — not a height bug).
+Student Center Pub stays skipped (stepped under canopy; Stage Room HAND_AUDITED answers the
+OSM name).
+
 ### The colours, measured off footage
 
 Satellite imagery sees roofs and ground; it cannot see a wall, a tree trunk, or the sky. For

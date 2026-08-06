@@ -386,6 +386,23 @@ const PRE_2014_GIS_VERIFIED = new Set([
      Substation in the same PRE_2014 hostless class. */
   "Thornton Supplemental Storage",
   "Medical Center Switching Station",
+  /* r1c1 re-sweep (2026-08-05_165434). Student Center A wings whose
+     centroids fall outside the OSM "Student Center" union outline
+     (osm:340 @ 99,77), so host containment never fires and the L2
+     storey default (8.5) stood. Independent full-depth EPT with
+     explainRoof + vertex rimBase:
+     Building G — 749 pts, rule=canopy-guard → 10.3 (p50 10.1 / p75
+     10.3 / p98 24.0, dense 0.776, bodyTight); campus rebuild ships
+     10.4 (0.1 m tiling). Eucalyptus crown overhang matches Apple
+     (sc-g.jpg). Building EN — 521 pts,
+     rule=p98 → 8.9 (p50 7.9 / p75 8.0 / p98 8.9, dense 0.956).
+     Sibling C/ES/A/H/F already measure through the host. NOT added:
+     Student Center Pub (4,482 pts, canopy-guard body NOT tight —
+     stepped; builder correctly skips; Stage Room HAND_AUDITED 4.6
+     answers the OSM name). Student Center is pre-2014 fabric; Apple
+     shows finished white roofs with orange courtyard umbrellas today. */
+  "Student Center A - Building G",
+  "Student Center A - Building EN",
 ]);
 
 /* A facilities record that models a building as a whole-footprint ring PLUS
@@ -1858,6 +1875,16 @@ async function build() {
   const MEASURED_OVERRIDES = {
     heights: {
       "Union Bank": [8, "79.9% of returns in the 5-6 m band sits UNDER the 85% thin-shelf cut, gap 2.7 — an IGPP/Perlman near-miss. Apple shows HVAC plant on the finished roof, so pasting the dense 5.3 body would flatten a real shelf. Judged r2c0 pass-3."],
+      /* r1c1 165434: OSM host ring's canopy-guard lands on the dense 6 m
+         body (p75 6.7, hist 6m:3200/4406) because the outline wraps a
+         lower wing / courtyard spill. The GIS mass that actually renders
+         (Student Center B → host-renamed International Center West,
+         m:225,82) measures canopy-guard p75 8.2 on the same EPT (4,920
+         pts, bodyTight) and matches GIS L2=8.5. Readiness then scored
+         the name as a guess: the probe hits the 8.2 mass, heights[ICW]
+         =6.7 misses the 0.35 m slack, OSM tag 8.4 hits. The rendered
+         plane is the mass — sync the name-level entry to it. */
+      "International Center West": [8.2, "Host ring canopy-guard p75=6.7 is courtyard/low-wing contamination of an oversized OSM outline; covering GIS mass m:225,82 measures and ships 8.2 (L2=8.5). Readiness named-guess cleared by matching the rendered plane. Judged r1c1 165434."],
     },
     massHeights: {
       /* WITHDRAWN 2026-08-05 (r0c2 165434): CSC Building D (m:1069,-637)

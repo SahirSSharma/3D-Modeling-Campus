@@ -195,6 +195,12 @@
  *      rounded "gap=2.0" miss). CSC-A (gap 1.68), Fleet north (gap
  *      1.75), Preuss F dual-wing, roof-anchor osm:502/509 (closed by
  *      roofElevation), and QAA terrain apron stay as judged.
+ *  43. The r1c1 re-sweep 2026-08-05_165434's measurements hold: hostless
+ *      Student Center A wings G/EN ship their measured planes via
+ *      PRE_2014_GIS_VERIFIED (10.4 / 8.9); International Center West's
+ *      name-level height syncs to the covering GIS mass (8.2); Bonner
+ *      19.2 and Powell-Focht 23.1 keep their upper planes; VAF-3
+ *      GIS/OSM identity double stays open.
  */
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
@@ -3916,5 +3922,60 @@ describe("campus epoch — r0c2 re-sweep 2026-08-05_165434", () => {
     assert.equal(LIDAR.heights["Qualcomm AA"], 24.3);
     const qaa = rendersNear(1712.0, -1408.4, 5).find((m) => m.src === "osm");
     assert.equal(qaa?.h, 24.3);
+  });
+});
+
+describe("campus epoch — r1c1 re-sweep 165434 (2026-08-05)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("hostless Student Center A wings G and EN ship their measured planes", () => {
+    /* Centroids fall outside OSM "Student Center" (osm:340), so host
+       containment never fired and L2=8.5 stood. PRE_2014_GIS_VERIFIED
+       admits the epoch; independent EPT: G canopy-guard 10.3, EN p98
+       8.9. Pub stays skipped (stepped body). */
+    assert.equal(LIDAR.massHeights["m:122,118"], 10.4,
+      "Building G — canopy-guarded roof plane");
+    assert.equal(LIDAR.massHeights["m:148,52"], 8.9,
+      "Building EN — one-plane roof");
+    assert.equal(rendersNear(121.8, 117.7).find((m) => /Building G/i.test(m.name || ""))?.h, 10.4);
+    assert.equal(rendersNear(147.8, 52.1).find((m) => /Building EN/i.test(m.name || ""))?.h, 8.9);
+    /* Pub: stepped under canopy — builder skips; GIS L1 record stands. */
+    assert.equal(LIDAR.massHeights["m:161,103"], undefined,
+      "Student Center Pub must not get a pasted plane");
+  });
+
+  test("International Center West name-level height matches the rendered GIS mass", () => {
+    /* OSM host canopy-guard p75=6.7 is courtyard contamination; covering
+       mass m:225,82 ships 8.2. Override syncs heights[name] so readiness
+       stops scoring the label as an OSM-tag guess. */
+    assert.equal(LIDAR.massHeights["m:225,82"], 8.2);
+    assert.equal(LIDAR.heights["International Center West"], 8.2);
+    const icw = MASSES.find((m) => m.name === "International Center West" && m.src === "gis");
+    assert.ok(icw, "International Center West GIS mass vanished");
+    assert.equal(icw.h, 8.2);
+  });
+
+  test("Bonner and Powell-Focht keep their measured upper planes", () => {
+    /* Independent EPT: Bonner 8,800 pts rule=p98 → 19.2 (dense 0.757 under
+       the 85% thin-shelf cut; Apple plant strip is the shelf). Powell-
+       Focht 15,276 pts rule=p98 → 23.1 (dense 0.683; Apple solar +
+       courtyard volumes). Same HDH/McGill near-miss family — do not paste
+       the dense body. */
+    assert.equal(LIDAR.massHeights["m:80,205"], 19.2);
+    assert.equal(LIDAR.massHeights["m:628,-418"], 23.1);
+    assert.equal(rendersNear(79.5, 205.1).find((m) => m.name === "Bonner Hall")?.h, 19.2);
+    assert.equal(
+      rendersNear(627.6, -418.2).find((m) => /Powell-Focht/i.test(m.name || ""))?.h,
+      23.1,
+    );
   });
 });
