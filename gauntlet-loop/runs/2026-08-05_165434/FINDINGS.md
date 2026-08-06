@@ -207,3 +207,75 @@ stays. Builder comment that pinned "CSC Building D gap exactly 2.0" updated.
 ### Verification
 
 See final message for `npm test` / `npm run check` paste.
+
+---
+
+# FINDINGS — run `2026-08-05_165434` · shard r1c0 (re-sweep)
+
+Pass 1 re-sweep of the Muir west / Torrey Pines / Keeling / HDH / Geisel
+House shard. Screen: 1 candidate (1 medium). Judged by `cursor-grok-4.5-high`
+(own screen — Fable budget nearly spent; no high-severity findings).
+
+Every candidate in `pass1-r1c0.screen.json` was re-derived before judgement
+with an independent full-depth targeted EPT re-sample
+(`/tmp/gauntlet-r1c0-judge/reprobe.json`; point counts matched the screener
+exactly — GIS HDH 8,259 / OSM host 8,475). Measurement via
+`scripts/lib/roof-measure.mjs` `explainRoof` with BOTH the builder's
+vertex-only rim and the screener's dense-edge rim side by side. Apple
+snapshot `/tmp/gauntlet-r1c0-165434/apple/hdh.jpg` reviewed for currency
+only (no colour sampling).
+
+### Fixed
+
+None. Shipped planes already match measured roofOf.
+
+### Rejected candidates (each re-measured; do not re-find these)
+
+- **`hdh-bimodal-planes`** — REJECTED. Independent EPT of the GIS ring
+  (`m:-175,382`): 8,259 pts, gradeSpread 1.0 m.
+  - vertex rimBase 125.5 → `explainRoof` rule=p98, hRel=**19.338**
+    (p50 15.141 / p75 17.848 / p98 19.338, dense 0.579, spread 1.490).
+    Ship `massHeights=19.4`, Δ = **+0.062 m**.
+  - dense-edge rimBase 125.2 → hRel=19.638 (matches screener 19.6);
+    same rule, same class.
+  - Thin-shelf did **not** fire: body not tight (p75−p50 ≈ 2.7 > 2) and
+    dense 58–61% << 85%. Why: `'no guard fired; p98 is the roof'`.
+  - OSM host ring: 8,475 pts, vertex hRel=**19.823** ≈ shipped
+    `heights['Housing Dining and Hospitality Administration Building']=19.8`
+    (Δ −0.023). Epoch pin at 19.8 stands.
+  - Histogram is genuinely bimodal (≈15 m majority deck vs ≈18–19 m
+    upper shelf). GIS L4=17.1 and the OSM tag h=15.6 sit with the lower
+    band — those are not LiDAR roof measurements.
+  - Apple z19 (`hdh.jpg`): finished pre-2014 admin with a multi-level
+    flat roof and a central grey metal-grate / trellis over rooftop
+    plant today. The upper volume is real; dropping to p50 15.4 would
+    erase it. Epoch risk is low (existence agreed across Apple / OSM /
+    GIS; the split is two decks of one building, not a post-2014
+    rebuild).
+  - Same class as this run's rejected `cvr-bimodal-planes` (r0c1) and
+    `preuss-f-dual-plane` (r0c2): one ring wraps both decks; upper
+    plane is the honest extrusion. Do not compromise to GIS 17.1 or
+    invent a parts split from a height pass.
+
+### Named OSM-tag buildings (readiness work-list)
+
+None of the three named buildings still on invented heights sit inside
+this shard (Hubbs Hall → r2c0, Hyatt Regency → r2c2, International
+Center West → r1c1). No action.
+
+### Handoffs / observations
+
+- **Bimodal admin / dining class is closed for this site.** HDH Admin
+  ships its measured upper plane; the 15 m deck is the majority of
+  returns but not the roof the extrusion should wear. A future parts
+  split (lower office deck vs plant / trellis volume) would be a
+  mapping pass, not a height pass — leave massHeights 19.4 alone until
+  then.
+- **280 stepped unnamed rings**: this shard's screen raised none of
+  them as candidates (no high/medium unnamed underheight). The
+  campus-wide class remains the highest-value residual; not in scope
+  for a one-candidate reject pass.
+
+### Verification
+
+See final message for `npm test` / `npm run check` paste.
