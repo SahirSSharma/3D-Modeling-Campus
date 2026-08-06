@@ -294,7 +294,10 @@ ${rows.join("\n")}`;
     }
   }
 } finally {
-  await browser.close();
-  server.close();
+  try {
+    await browser.close();
+  } finally {
+    server.close();
+  }
 }
 process.exit(exitCode);
