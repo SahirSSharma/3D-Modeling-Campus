@@ -58,11 +58,22 @@ function lookToYawDeg(look) {
 const PLAN_PITCH = -1.3;     // rad — steep near-vertical, short of -PI/2 to dodge gimbal issues
 const OBLIQUE_PITCH = -0.25; // rad — shallow
 
-/* Ground-span targets, degrees framed by scripts/apple-flyover.mjs's own
-   `--area` capture. Not guesses: the "plan" pass used the file's default
-   SPAN ("0.0007"), the "oblique" pass used its explicit override
-   (`passes` array literal, AREA branch, `span: "0.00038"`). Converted to
-   metres via docs/data/campus-3d.json origin.mPerDegLat below. */
+/* FALLBACK ground spans only — the degrees scripts/apple-flyover.mjs ASKED
+   Maps.app for (the "plan" pass used its default SPAN "0.0007", the "oblique"
+   pass its explicit `span: "0.00038"` override). They are not what Maps
+   delivered. Measured against Apple's own scale bar, every single one of the
+   72 Eighth College frames disagreed, by 1.8x to 17x, and inconsistently
+   within a pass — 136m to 289m across the plan frames alone. Maps clamps and
+   re-fits the requested span, and tilting moves the view distance again on
+   top of that, so the request is a hint and never a measurement.
+
+   This is the third time on this capture rig that trusting the REQUEST over
+   the ON-SCREEN READING produced a silently wrong result (the first was
+   captioning frames by requested heading instead of the compass rose; the
+   second was assuming the menu zoom took at low pitch). So the scale bar in
+   the frame is the ground truth here and these constants are used only when
+   it cannot be read — recorded as spanSource:"requested-span-fallback" in
+   compare.json so a fallback frame is never mistaken for a measured one. */
 const PLAN_SPAN_DEG = 0.0007;
 const OBLIQUE_SPAN_DEG = 0.00038;
 
@@ -93,10 +104,11 @@ function pitchForPass(pass) {
  * NOT a vertical-extent one — vertical extent is undefined once part of the
  * frame points above the horizon, which happens at the oblique pass's
  * shallow pitch. */
-function cameraForPass(pass, aspect) {
+function cameraForPass(pass, aspect, measuredGroundSpanM) {
   const pitch = pitchForPass(pass);
   const spanDeg = spanDegForPass(pass);
-  const targetGroundSpanM = spanDeg * origin.mPerDegLat;
+  const spanSource = measuredGroundSpanM ? "apple-scale-bar" : "requested-span-fallback";
+  const targetGroundSpanM = measuredGroundSpanM ?? spanDeg * origin.mPerDegLat;
   const downAngleRad = -pitch;
   const vFovRad = (VFOV_DEG * Math.PI) / 180;
   const hFovRad = 2 * Math.atan(Math.tan(vFovRad / 2) * aspect);
@@ -105,7 +117,7 @@ function cameraForPass(pass, aspect) {
      hover/aspect, should equal targetGroundSpanM by construction. */
   const renderGroundWidthM = 2 * (hover / Math.sin(downAngleRad)) * Math.tan(hFovRad / 2);
   return {
-    hover, pitch, spanDeg, targetGroundSpanM, renderGroundWidthM,
+    hover, pitch, spanDeg, spanSource, targetGroundSpanM, renderGroundWidthM,
     vFovDeg: VFOV_DEG, hFovDeg: (hFovRad * 180) / Math.PI,
   };
 }
@@ -237,8 +249,22 @@ async function renderOne(frameName, outDir) {
   const appleMeta = await sharp(applePath).metadata();
   await page.setViewportSize({ width: appleMeta.width, height: appleMeta.height });
   const aspect = appleMeta.width / appleMeta.height;
-  const { hover, pitch, spanDeg, targetGroundSpanM, renderGroundWidthM, vFovDeg, hFovDeg } =
-    cameraForPass(entry.pass, aspect);
+
+  /* Read Apple's own scale bar BEFORE solving the camera — it is the target,
+     not a post-hoc check on one. metresPerPixel x full image width is the
+     right ground span because Maps draws its chrome (title bar, controls
+     column, compass) as translucent overlays ON the map, so the map really
+     does run full-bleed to every edge of the capture. */
+  const appleScaleBarRaw = await appleScaleBarFor(applePath);
+  if (!appleScaleBarRaw.found) {
+    console.error(
+      `  ! WARNING [${frameName}]: Apple scale bar unreadable — falling back to the ` +
+      `REQUESTED span for this pass, which measurement has shown is wrong by 1.8x-17x. ` +
+      `Treat this frame's framing as unverified.`,
+    );
+  }
+  const { hover, pitch, spanDeg, spanSource, targetGroundSpanM, renderGroundWidthM, vFovDeg, hFovDeg } =
+    cameraForPass(entry.pass, aspect, appleScaleBarRaw.found ? appleScaleBarRaw.groundWidthM : null);
 
   await page.evaluate(
     ({ x, z, hover, yaw, pitch }) => window.__campusWalk.fly(x, z, hover, yaw, pitch),
@@ -264,28 +290,20 @@ async function renderOne(frameName, outDir) {
     .png()
     .toFile(sidebySidePath);
 
-  const appleScaleBarRaw = await appleScaleBarFor(applePath);
-  let appleScaleBar;
-  if (!appleScaleBarRaw.found) {
-    appleScaleBar = { found: false };
-  } else {
-    const matchesTarget =
-      Math.abs(appleScaleBarRaw.groundWidthM - targetGroundSpanM) / targetGroundSpanM <= 0.1;
-    appleScaleBar = {
-      found: true,
-      feetPerTick: appleScaleBarRaw.feetPerTick,
-      metresPerPixel: appleScaleBarRaw.metresPerPixel,
-      groundWidthM: appleScaleBarRaw.groundWidthM,
-      matchesTarget,
-    };
-    if (!matchesTarget) {
-      console.error(
-        `  ! WARNING [${frameName}]: Apple scale-bar ground width ` +
-        `${appleScaleBarRaw.groundWidthM.toFixed(1)}m disagrees with targetGroundSpanM ` +
-        `${targetGroundSpanM.toFixed(1)}m by more than 10%`,
-      );
-    }
-  }
+  /* Now that the bar DRIVES the camera, the surviving check is the opposite
+     one: how far the requested span was from the truth, kept per frame so the
+     size of Maps's re-fit stays visible instead of being quietly absorbed. */
+  const requestedGroundSpanM = spanDeg * origin.mPerDegLat;
+  const appleScaleBar = appleScaleBarRaw.found
+    ? {
+        found: true,
+        feetPerTick: appleScaleBarRaw.feetPerTick,
+        metresPerPixel: appleScaleBarRaw.metresPerPixel,
+        groundWidthM: appleScaleBarRaw.groundWidthM,
+        requestedGroundSpanM,
+        requestErrorRatio: appleScaleBarRaw.groundWidthM / requestedGroundSpanM,
+      }
+    : { found: false, requestedGroundSpanM };
 
   const compare = {
     frame: frameName,
@@ -297,6 +315,7 @@ async function renderOne(frameName, outDir) {
     camera: { x, z, hover, pitch, altitude: hover },
     fov: { vDeg: vFovDeg, hDeg: hFovDeg },
     spanDeg,
+    spanSource,
     targetGroundSpanM,
     renderGroundWidthM,
     appleScaleBar,
