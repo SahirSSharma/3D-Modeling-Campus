@@ -221,3 +221,46 @@ measured went 249 → 280 on that change alone.
   say so plainly without citing readiness; if it does not, withdraw it.
 - Hand overrides went 3 → 1 earlier today because two of them were reversing the
   shared measurement rule. Adding them back to satisfy an audit undoes that.
+
+
+## The Marshall Lower Apartments cluster — LOOKED AT, and the answer is WITHHOLD
+
+Six of the nine on-campus rings a photograph was supposed to settle turned out to
+be one cluster on Scholars Drive North, at Thurgood Marshall College:
+`osm:17, 131, 140, 188, 882, 884`. They were pulled as Apple satellite at z19 and
+z20 on 2026-08-05 and looked at, which is what this list was for.
+
+**What the imagery shows:** low-rise flat-roofed apartment blocks, one to two
+storeys, under mature eucalyptus whose crowns physically overhang the roofs.
+The buildings cast short shadows; the trees around them cast long ones.
+
+**What that means for their numbers.** Their `roofOf` values are 5.4 / 11.1 /
+7.6 / 11.8 / 11.5 / 9.8 m — up to three storeys for buildings the imagery shows
+are one or two. The density figures say the same thing without the picture:
+
+```
+osm:131  dense 0.428      osm:140  dense 0.586
+osm:17   dense 0.439      osm:882  dense 0.451
+osm:188  dense 0.798      osm:884  dense 0.662
+```
+
+Fewer than half the returns fall in any 2 m band on four of the six. No roof
+plane dominates because the cloud is roof AND crown together — and the canopy
+guard never fires, because the crowns sit close above the roofs rather than the
+5 m the guard needs.
+
+**So these are CLOSED questions, not open ones.** The 2014 flight cannot separate
+these roofs from the trees over them, and admitting any of them at `roofOf`
+would stand an 11 m block where a one-storey apartment is. That is the canopy
+failure that produced a 23.5 m Student Center, arriving by a different door.
+
+**Do not admit them. Do not "resolve" them with a storey count either** — a
+photograph fixes identity, and identity here is "low-rise under canopy", which
+is a reason to withhold rather than a height to ship. If anyone believes one of
+these should ship, the evidence has to be a source that sees the eave: a Street
+View frame, or a facade photograph where storeys are countable. Nadir imagery
+and 2014 LiDAR both fail on exactly the same axis.
+
+The general lesson, worth carrying to every remaining ring: **a spread rejection
+is not a promise that something is measurable.** Sometimes it is the point cloud
+telling you the truth — that there is no plane there to find.
