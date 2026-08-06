@@ -517,3 +517,62 @@ touching the height or widening slack. Hyatt Regency remains for r2c2.
 ### Verification
 
 See final message for `npm test` / `npm run check` paste.
+
+---
+
+# FINDINGS — run `2026-08-05_165434` · shard r2c1 (re-sweep)
+
+Pass 1 re-sweep of the SE-campus shard (Villa La Jolla strip, Evening Way /
+Gilman apartments, Villas Mallorca, Theatre District / CRS fringe, Rita /
+Caminito Abrazo). Screen: 12 candidates (5 high / 5 medium / 2 low). Judged
+by `cursor-grok-4.5-high`.
+
+Every candidate in `pass1-r2c1.screen.json` was re-derived before judgement
+with an independent full-depth targeted EPT re-sample
+(`/tmp/gauntlet-r2c1-judge/reprobe.json`; point counts matched the screener
+exactly — Union Bank 588 / UC Cyclery 726 / 580 769 / 584 703 / 615 732 /
+665 1,642 / 664 853 / 787 4,726 / 609 913 / 634 2,083). Measurement via
+`scripts/lib/roof-measure.mjs` `explainRoof` with builder vertex rimBase.
+Apple ring-snapshots (`scripts/ring-snapshot.mjs`) for identity / canopy.
+
+### Fixed — class (thin-shelf override reversal)
+
+| Entity | Was | Now | Source | Test |
+|---|---|---|---|---|
+| Union Bank | 8 via `MEASURED_OVERRIDES` → p98 | **5.3** | Independent EPT: `explainRoof` rule=thin-shelf, hRel=5.3 (p50 5.2 / p75 5.3 / p98 8.0, dense **89.1%**, gap 2.7; hist 5m:470 of 588, only 9 pts at 8 m). Prior override claimed dense 79.9% under the 85% cut; with rimBase the cut clears. Apple HVAC is evidence FOR the thin-shelf body — same class as CSC D/CES (r0c2). Override withdrawn. | epoch r2c1 165434 |
+
+### Fixed — heights (unnamed soft near-strict)
+
+| Entity | Was shipping | Now ships | Source | Test |
+|---|---|---|---|---|
+| Evening Way / Gilman (osm:580 / 584 / 615) | 4.5 m shed | **8.3 / 8.4 / 8.1 m** | Soft near-strict (spr 1.5–1.7 over the 1.2 gate, bodyTight). Apple ring overlays: finished gabled apartment roofs, **no canopy**. Same strip as already-admitted 600 / 601 @ 8.6 / 8.5. Build rimBase tiling (targeted probe sat 8.4 / 8.3 / 8.2). | epoch r2c1 165434 |
+| Villas Mallorca (osm:665) | 4.5 m shed | **10.1 m** | spr 1.26 barely over the gate; roofOf tracks the ~9–10 m plane already shipped for villa-east 632–651. Apple: finished Mediterranean tile roof. | epoch r2c1 165434 |
+
+### Withheld (better absent than wrong)
+
+- **`osm-664-canopy-pad` (osm:664)**: 853 pts, rule=canopy-guard → 16.1 over a near-grade 2–3 m body (hist 2m:239 / 3m:198). Apple ring overlay: real one-storey terracotta **pool house** beside the pool; crown bleed invents ~3 storeys. `OSM_WITHHELD`; guess 4.5 still renders and is nearer the truth.
+- **`osm-787-canopy-smear` (osm:787)**: 4,726 pts, dense 20%, canopy-guard → 16.3. Apple ring overlay: corrugated shed physically overhung by grove crowns. `OSM_WITHHELD`. Ring sits under Revelle 12KV GIS coverage so it does not extrude as OSM — withholding keeps the gate from admitting crown.
+
+### Rejected candidates (each re-measured; do not re-find these)
+
+- **`evening-gilman-4.5-underheight-class` (multiplane subset)** — REJECTED for paste. 609 / 585 / 610 / 607 / 616: spr 4.3–5.0, dense 0.56–0.67; unguarded roofOf 11–12 pastes an upper/canopy shelf over a 5–7 m body. Soft near-strict trio above absorbed the only rings whose plane cleared imagery. Guess 4.5 stands on the multiplanes.
+- **`osm-609-underheight`** — REJECTED as exemplar of the multiplane subset above. Do not paste 12.3.
+- **`villa-mallorca-residual` (634 / 666)** — REJECTED for paste. Dense body ~8–9 m matches the villa-east strip, but roofOf 13.5 / 11.3 rides a sparse shelf (dense under the 85% thin-shelf cut). Admitting via `OSM_UNNAMED_VERIFIED` would paste the shelf; no hand override that reverses the shared rule. Guess 4.5 stands until a parts split. (665 admitted separately as near-gate.)
+- **`caminito-abrazo-underheight`** — REJECTED. Multimodal low-dense (0.32–0.53); imagery cannot pick one plane. Guess stands.
+- **`osm-92-holiday-court`** — REJECTED. Area guess 8.4 already tracks dense body (p75 8.9); roofOf 13.4 is shelf triage, not underheight.
+- **`osm-678-underheight`** — REJECTED. Guess 9 tracks dense body (p75 10.3); same shelf-triage class.
+- **`osm-1245-multiplane`** — REJECTED. Trimodal dense 29%; no plane. Guess stands.
+- **`rita-roof-anchor`** — REJECTED as height bug. Fresh roofOf = shipped massHeights 26.8. Grade span 3.6 m / roof-anchor Δ is terrain geometry handoff, not a height miss.
+- **`crs-grade-span`** — REJECTED as height bug. Fresh roofOf = shipped 17.5. Grade span 4.6 m on GIS ring is prior handoff. Satellite Utility Plant next door stays POST_2014 (do not replace GIS 12.8 with 2014 plane 4.2).
+- **UC Cyclery** — not a screen candidate but re-checked as Union Bank sibling: gap 1.5 under the cut; roofOf 6.8 stands.
+
+### Handoffs / observations
+
+- **Union Bank class**: third thin-shelf override reversal today (after CSC D/CES). Prior "near-miss under 85%" claims need rimBase re-derivation before an override that keeps p98 is believed — Apple plant is not evidence against the body.
+- **634 / 666**: highest-value residual in-box — dense body matches measured neighbours, but unguarded roofOf pastes. A future parts split or a declared dense-body override (with Apple short-shadow evidence) could retire the 4.5 underheight without inventing the shelf.
+- **Gilman multiplane 609-family**: same 280 stepped-roof class campus-wide; imagery shows 2-storey gabled apartments under some canopy — Marshall lesson applies (photograph fixes identity, not a height to ship from nadir + contaminated cloud).
+- **Rita / CRS grade spans**: per-vertex draping eye-level check remains a terrain handoff, not this pass's height work.
+
+### Verification
+
+See final message for `npm test` / `npm run check` paste.

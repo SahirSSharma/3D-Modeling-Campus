@@ -207,6 +207,12 @@
  *      named-guess was a census false positive on GPU drift); Poole /
  *      Shores multiplane withholds 1032 / 1108 / 1066 stay off osmHeights;
  *      Vaughan / Ritter terrain apron and residual multiplanes stay handoff.
+ *  45. The r2c1 re-sweep 2026-08-05_165434's measurements hold: Union
+ *      Bank sheds its thin 8 m shelf for the dense 5.3 m body (dense
+ *      89.1% clears the cut; MEASURED_OVERRIDES withdrew — CSC D class);
+ *      Evening Way / Gilman soft near-strict 580 / 584 / 615 and Villas
+ *      Mallorca 665 ship their planes; pool-house 664 and CRS-fringe
+ *      787 stay withheld (canopy paste); UC Cyclery 6.8 stands.
  */
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
@@ -2435,16 +2441,18 @@ describe("campus epoch — r2c1 re-sweep (2026-08-05)", () => {
       "osm:708 keeps its declared guess");
   });
 
-  test("Union Bank and UC Cyclery keep their roofOf shelves", () => {
-    /* Same Villa La Jolla commercial strip. Union Bank: dense 79.9% in
-       5–6 m under the 85% thin-shelf cut, gap 2.7 — IGPP / Perlman near-
-       miss; Apple shows HVAC on the finished roof, so pasting the dense
-       5.3 body would flatten a real plant shelf. UC Cyclery: gap 1.5
-       under the 2 m cut entirely; dense body 5.2 under a 6.8 roofOf is
-       plant noise, not a thin shelf. Both stand. */
-    assert.equal(LIDAR.heights["Union Bank"], 8);
+  test("Union Bank sheds its thin shelf; UC Cyclery keeps roofOf", () => {
+    /* Same Villa La Jolla commercial strip. Union Bank: WITHDRAWN
+       MEASURED_OVERRIDES (r2c1 165434). Independent EPT with rimBase:
+       explainRoof rule=thin-shelf → 5.3 (p50 5.2 / p75 5.3 / p98 8.0,
+       dense 89.1%, gap 2.7; hist 5m:470 of 588, only 9 pts at 8 m).
+       Prior "dense 79.9% under the cut" was a base misread; Apple HVAC
+       is evidence FOR the thin-shelf body (CSC D/CES class), not against
+       it. UC Cyclery: gap 1.5 under the 2 m cut entirely; dense body 5.2
+       under a 6.8 roofOf is plant noise, not a thin shelf. Stands. */
+    assert.equal(LIDAR.heights["Union Bank"], 5.3);
     assert.equal(LIDAR.heights["UC Cyclery"], 6.8);
-    assert.equal(rendersNear(777.2, 1173.1).find((m) => m.name === "Union Bank")?.h, 8);
+    assert.equal(rendersNear(777.2, 1173.1).find((m) => m.name === "Union Bank")?.h, 5.3);
     assert.equal(rendersNear(795.9, 1169.8).find((m) => m.name === "UC Cyclery")?.h, 6.8);
   });
 
@@ -3665,6 +3673,74 @@ describe("campus epoch — r2c1 pass-3 Villa La Jolla / Residence Inn residual (
       assert.equal(rendersNear(cx, cz, 4).find((r) => r.src === "osm")?.h, h,
         `osm:${i} renders at its plane`);
     }
+  });
+});
+
+describe("campus epoch — r2c1 re-sweep 2026-08-05_165434 (Evening Way / Union Bank)", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("Union Bank sheds the thin shelf the override reversed", () => {
+    /* Independent full-depth EPT matched the screener (588 pts).
+       explainRoof rule=thin-shelf → 5.3 (p50 5.2 / p75 5.3 / p98 8.0,
+       dense 89.1%, gap 2.7; hist 5m:470 of 588). Prior MEASURED_OVERRIDES
+       pinned p98=8 on a "dense 79.9% under the cut" claim — with vertex
+       rimBase the cut clears. Apple HVAC is evidence FOR the body
+       (CSC D/CES class). UC Cyclery gap 1.5 under the cut; 6.8 stands. */
+    assert.equal(LIDAR.heights["Union Bank"], 5.3);
+    assert.equal(LIDAR.heights["UC Cyclery"], 6.8);
+    assert.equal(rendersNear(777.2, 1173.1).find((m) => m.name === "Union Bank")?.h, 5.3);
+    assert.equal(rendersNear(795.9, 1169.8).find((m) => m.name === "UC Cyclery")?.h, 6.8);
+  });
+
+  test("Evening Way / Gilman soft near-strict pads ship their planes", () => {
+    /* Independent EPT matched screener (769 / 703 / 732). spr 1.5–1.7
+       over the 1.2 gate, bodyTight, clear gabled roofs on Apple ring
+       overlays (no canopy). Same strip as already-admitted 600 / 601
+       @ 8.6 / 8.5. Was 4.5 shed. */
+    for (const [i, h] of [[580, 8.3], [584, 8.4], [615, 8.1]]) {
+      assert.equal(LIDAR.osmHeights?.[i], h, `osm:${i}'s plane`);
+      const [cx, cz] = centroidOf(CAMPUS.buildings[i].p);
+      assert.equal(rendersNear(cx, cz, 4).find((r) => r.src === "osm")?.h, h,
+        `osm:${i} renders at its plane`);
+    }
+  });
+
+  test("Villas Mallorca near-gate residual ships beside villa-east strip", () => {
+    /* osm:665: 1,642 pts, spr 1.26 barely over the gate, roofOf 10.1
+       tracks the ~9–10 m plane already shipped for 632–651. Apple ring
+       overlay: finished Mediterranean tile roof. Was 4.5 shed. */
+    assert.equal(LIDAR.osmHeights?.[665], 10.1, "osm:665's plane");
+    const [cx, cz] = centroidOf(CAMPUS.buildings[665].p);
+    assert.equal(rendersNear(cx, cz, 4).find((r) => r.src === "osm")?.h, 10.1,
+      "osm:665 renders at its plane");
+  });
+
+  test("canopy pool-house and CRS-fringe stay withheld", () => {
+    /* osm:664: canopy-guard 16.1 over near-grade 2–3 m body; Apple shows
+       a one-storey terracotta pool house — crown paste invents storeys.
+       Guess 4.5 still renders. osm:787: dense 20%, canopy-guard 16.3;
+       the unnamed ring sits under Revelle 12KV GIS coverage so it does
+       not extrude as OSM — witholding keeps the gate from admitting
+       crown as a plane. Multiplane Gilman 609 / 585 / 610 / 607 / 616
+       and villa residual 634 / 666 stay on their 4.5 guesses (unguarded
+       roofOf would paste shelves). */
+    assert.equal(LIDAR.osmHeights?.[664], undefined, "canopy pool-house shipped");
+    assert.equal(LIDAR.osmHeights?.[787], undefined, "CRS-fringe canopy shipped");
+    assert.equal(LIDAR.osmHeights?.[609], undefined, "Gilman multiplane shipped");
+    assert.equal(LIDAR.osmHeights?.[634], undefined, "villa shelf paste shipped");
+    assert.equal(rendersNear(512.4, 1299.9, 4).find((m) => m.src === "osm")?.h, 4.5,
+      "osm:664 keeps its declared guess");
+    assert.equal(rendersNear(378.7, 1151.9, 4).find((m) => m.src === "osm")?.h, 4.5,
+      "osm:609 keeps its declared guess");
   });
 });
 

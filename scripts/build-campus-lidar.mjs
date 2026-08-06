@@ -669,6 +669,16 @@ const OSM_WITHHELD = new Set([
   817, /* Birch Aquarium service apron @-900,1278 — near-grade pad
           (688 pts, rule=p98 → 2.6, hist body at 0–1 m). skipOsmAnchors
           removes the 4.5 m box; never admit 2.6 as a building. */
+  664, /* Villas Mallorca pool house @512,1300 — 101 m² terracotta
+          annex; canopy-guard returns 16.1 over a near-grade 2–3 m body
+          (853 pts, hist 2m:239 / 3m:198). Apple ring overlay: real
+          one-storey pool house beside the pool; crown bleed invents
+          ~3 storeys. Guess 4.5 stands nearer the truth. r2c1 165434. */
+  787, /* Theatre District Drive / CRS-fringe @236,517 — 432 m² ring
+          over a corrugated shed whose roof is physically overhung by
+          grove crowns (4,726 pts, dense 20%, canopy-guard 16.3). Apple
+          ring overlay: finished shed under canopy, not a clean hall.
+          Guess 9 stands; do not paste crown. r2c1 165434. */
   825, 827, 828, 832, 833, 834, 892, 904, 907, 909, 910, 944, 975,
   982, 986, 996, 997, 999, 1002, 1007, 1008, 1013, 1017, 1022, 1023,
   1024, 1032, /* 9530 La Jolla Shores — canopy-guard 3.8 over near-grade
@@ -804,9 +814,10 @@ const OSM_UNNAMED_VERIFIED = new Set([
             HVAC shelf (gap 1.5 under the 2 m thin-shelf cut). Not a miss.
        708: multimodal (dense 29.7% @5, hist spread 0–7); no clean body
             plane — keep the 4.8 guess rather than invent 7.2.
-       Union Bank / UC Cyclery (named hosts): thin-shelf near-misses —
-            dense 79.9% / gap 2.7 and gap 1.5 under the cut; Apple shows
-            HVAC on both finished strip roofs. Keep roofOf 8 / 6.8. */
+       Union Bank / UC Cyclery (named hosts): earlier pass kept both as
+            thin-shelf near-misses. Union Bank re-swept r2c1 165434 —
+            dense 89.1% clears the cut; override withdrawn → 5.3.
+            UC Cyclery gap 1.5 under the cut; roofOf 6.8 stands. */
   103, 334, 129,
   /* r2c2 re-sweep 2026-08-05 — Sheraton strip / Whole Foods pad / Temple
      corridor / Aventine-south courtyard blocks. Independent full-depth
@@ -1096,6 +1107,37 @@ const OSM_UNNAMED_VERIFIED = new Set([
   600, 601,
   553, 554, 555, 560, 561, 562,
   1239, 1305,
+  /* r2c1 re-sweep 2026-08-05 (165434) — Evening Way / Gilman soft near-
+     strict residual + Villas Mallorca near-gate sibling after pass-3's
+     600/601 and villa-east 632–651 admissions. Independent full-depth
+     EPT (point counts matched the screener exactly: 769 / 703 / 732 /
+     1642); Apple ring-snapshots confirm finished gabled apartment /
+     Mediterranean roofs standing today, no crane. Heights are the
+     build's own rimBase tiling (explainRoof rule=p98):
+       Evening Way / Gilman soft near-strict (was 4.5 shed; spr 1.5–1.7
+       over the 1.2 gate, bodyTight, clear roofs — NOT canopy):
+         580: 8.3 (769 pts; Nominatim 3103 Evening Way)
+         584: 8.4 (703 pts; Nominatim 3155 Evening Way)
+         615: 8.1 (732 pts; Nominatim 8795 Gilman Drive)
+         Same strip as already-admitted 600 / 601 @ 8.6 / 8.5.
+       Villas Mallorca residual near the villa-east strip (was 4.5;
+       spr 1.26 barely over the gate, roofOf tracks the ~9–10 m plane
+       already shipped for 632–651):
+         665: 10.1 (1642 pts; Nominatim Villas Mallorca)
+     Deliberately NOT admitted this pass:
+       609 / 585 / 610 / 607 / 616: multiplane (spr 4.3–5.0, dense
+             0.56–0.67); unguarded roofOf 11–12 pastes an upper /
+             canopy shelf over a 5–7 m body. Guess 4.5 stands.
+       634 / 666: dense body ~8–9 m matches the villa-east strip, but
+             roofOf 13.5 / 11.3 rides a sparse shelf (dense under the
+             85% thin-shelf cut). Admitting via VERIFIED would paste
+             the shelf; no hand override that reverses the shared
+             rule. Guess 4.5 stands until a parts split.
+       92 / 678: area guess already tracks the dense body (|Δ| ≤0.5
+             of p75); shelf triage, not underheight.
+       Caminito Abrazo 1212–1223 / osm:1245: multimodal low-dense;
+             imagery cannot pick one plane. Guess stands. */
+  580, 584, 615, 665,
   /* r2c2 pass-3 re-sweep 2026-08-05 — University Center Lane / Nobel-Lebon
      residual / Lebon-south / Sheraton-strip sibling / Whole Foods pad after
      pass-2's LJVD terrace + Lebon 251–256 admissions. Independent full-depth
@@ -1888,7 +1930,16 @@ async function build() {
      review, and can be argued with. An override with no reason is a bug. */
   const MEASURED_OVERRIDES = {
     heights: {
-      "Union Bank": [8, "79.9% of returns in the 5-6 m band sits UNDER the 85% thin-shelf cut, gap 2.7 — an IGPP/Perlman near-miss. Apple shows HVAC plant on the finished roof, so pasting the dense 5.3 body would flatten a real shelf. Judged r2c0 pass-3."],
+      /* WITHDRAWN 2026-08-05 (r2c1 165434): Union Bank was pinned to
+         p98=8 on the claim that dense 79.9% sat under the 85% thin-shelf
+         cut and that Apple HVAC justified keeping the shelf. Independent
+         full-depth EPT with explainRoof (vertex rimBase) shows dense
+         89.1% / gap 2.7 / bodyTight — the shared thin-shelf rule already
+         fires and returns p75 5.3 (hist 5m:470 of 588; only 9 pts in the
+         8 m bin). Apple confirming plant is evidence FOR the thin-shelf
+         body, not against it — same class as CSC D/CES withdrawals
+         (r0c2) and siblings C/H. The prior "near-miss" was a base /
+         density misread; the override was reversing the shared rule. */
       /* r1c1 165434: OSM host ring's canopy-guard lands on the dense 6 m
          body (p75 6.7, hist 6m:3200/4406) because the outline wraps a
          lower wing / courtyard spill. The GIS mass that actually renders

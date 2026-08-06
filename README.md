@@ -845,9 +845,10 @@ Apple currency re-checked per site.
 
 Rejected / withheld, each re-measured: osm:707 — dense body already matches the 4.8 guess
 (Δ 0.4); roofOf 6.7 is HVAC (gap 1.5 under the 2 m cut). osm:708 — multimodal (dense
-29.7%), no clean body; guess stands. Union Bank / UC Cyclery — thin-shelf near-misses on
-the same strip (dense 79.9% / gap 1.5 under cut); Apple shows HVAC on both finished roofs,
-so roofOf 8 / 6.8 stands. James' Place inside the Forum ring — heights already correct
+29.7%), no clean body; guess stands. Union Bank — later re-swept (r2c1 165434): the
+"near-miss" was a base misread; thin-shelf now fires at dense 89.1% → 5.3, and the
+override that kept 8 was withdrawn (CSC D class). UC Cyclery — gap 1.5 under cut;
+roofOf 6.8 stands. James' Place inside the Forum ring — heights already correct
 (5.1 / 10.5); residual is an OSM outline handoff, not a height bug. Class-hole rejected
 as scoped.
 
@@ -1058,6 +1059,29 @@ Withheld (off-campus multiplanes, guesses may still render): osm:1032 (canopy-gu
 near-grade body — do not admit), osm:1108 (dense 33%, roofOf 10.7), osm:1066 (trimodal,
 roofOf 12.3). Vaughan / Ritter terrain apron past z_max=1386 — heights correct, survey-box
 handoff. Residual ~33 in-shard spread>1.2 unnamed rings — per-ring imagery handoff.
+
+**The Villa La Jolla / Evening Way re-sweep (2026-08-05_165434, r2c1).** Screen of 12
+candidates (5 high / 5 medium / 2 low). Every claim re-derived from an independent
+full-depth EPT with `explainRoof` and the builder's vertex rimBase
+(`/tmp/gauntlet-r2c1-judge/reprobe.json`; point counts matched the screener exactly:
+Union Bank 588 / 580 769 / 584 703 / 615 732 / 665 1,642 / 664 853 / 787 4,726). Apple
+ring-snapshots confirmed finished strip / apartment / pool-house roofs today.
+
+| Entity | Was shipping | Now ships | Why |
+|---|---|---|---|
+| Union Bank | 8 m (`MEASURED_OVERRIDES` → p98) | **5.3 m** | Absolute dense 89.1% clears the 85% thin-shelf cut; `explainRoof` rule=thin-shelf → p75 5.3 (hist 5m:470 of 588; only 9 pts at 8 m). Prior "dense 79.9% under the cut" was a base misread; Apple HVAC is evidence FOR the body — same class as CSC D/CES. Override withdrawn. |
+| Evening Way / Gilman connectors (unnamed, osm:580 / 584 / 615) | 4.5 m shed default | **8.3 / 8.4 / 8.1 m** | Soft near-strict (spr 1.5–1.7 over the 1.2 gate, bodyTight, clear gabled roofs — no canopy). Same strip as already-admitted 600 / 601 @ 8.6 / 8.5. Build rimBase tiling (targeted probe sat 8.4 / 8.3 / 8.2). |
+| Villas Mallorca residual (unnamed, osm:665) | 4.5 m shed default | **10.1 m** | spr 1.26 barely over the gate; roofOf tracks the ~9–10 m plane already shipped for villa-east 632–651. |
+
+Withheld: osm:664 (Villas Mallorca pool house — canopy-guard 16.1 over a near-grade
+2–3 m body; Apple shows a one-storey terracotta annex; guess 4.5 nearer the truth),
+osm:787 (CRS-fringe grove — dense 20%, canopy-guard 16.3; guess 9 stands). Rejected for
+paste: Gilman multiplane 609 / 585 / 610 / 607 / 616 (roofOf 11–12 over a 5–7 m body);
+villa residual 634 / 666 (dense body ~8–9 m matches the strip, but unguarded roofOf
+pastes a sparse shelf — no override that reverses the shared rule). osm:92 / 678 —
+guess already tracks the dense body. Caminito Abrazo / Nottingham multimodal — leave.
+Rita / CRS — heights already match roofOf; grade-span handoff only. UC Cyclery 6.8
+stands (gap 1.5 under the cut).
 
 ### The colours, measured off footage
 
