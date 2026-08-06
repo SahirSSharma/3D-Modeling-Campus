@@ -1,0 +1,83 @@
+{
+  "_": "WS-E1 measurement dossier for Eighth College, built 2026-08-06. Every entry keyed by mass hash m:<cx>,<cz> = Math.round(vertex-average centroid) of the docs/data/campus-arcgis.json massing ring at build-campus-truecolor.mjs's keyOf() rule (rings /10) — verified against the actual massing polygons, which in one case (Sankofa Base) round 1m differently than the hand-given task centroid, so these keys are the polygon-derived ones, not the hand-rounded ones. Colours sampled with scripts/tmp-sample.mjs (median of a masked pixel patch) from Apple Maps 3D captures ONLY (.cache/apple-flyover, .cache/eighth-area) per the epoch rule — never from .cache/tiles-orbit, which is Google mid-construction imagery used only to cross-check facade geometry. Storey counts are GIS docs/data/campus-arcgis.json massing.levels, visually corroborated by counting window rows in a lit frame; bay_m is a VISUAL-ESTIMATE class measurement (piers counted in a near-corner, least-foreshortened crop, scaled by a floor-height calibration derived from the same crop) — treat it as a candidate figure, not survey-grade. Buildings with no captured station within useful range (Survivance tower+low sit toward the uncaptured r3 row) or with a facade never legibly resolved (Podemos low, unnamed dining pavilion, most of Sankofa Base) are OMITTED or marked resolved:false rather than guessed — see the builder report for the full per-mass account.",
+  "buildings": {
+    "m:-68,594": {
+      "name": "Sankofa Tower",
+      "storeys": 21,
+      "bay_m": 2.0,
+      "style": "precast-panel-vertical-bay-glazed-notch",
+      "walls": "#cdc5c7",
+      "srcFrames": [
+        "apple-flyover/sankofa-orbit-00-south.png",
+        "apple-flyover/sankofa-close-00-south.png"
+      ],
+      "note": "bay_m derived from a floor-height calibration (64m/21 levels) applied to a near-corner pier count in sankofa-orbit-00-south.png — moderate confidence (±~25%), not a direct scale-bar measurement. Wall hex is a median of 4 panel samples ranging #a8a7ae–#efecf0 (mixed sun/shade); reported value is the mid sample."
+    },
+    "m:-56,528": {
+      "name": "Podemos",
+      "storeys": 16,
+      "bay_m": 3.8,
+      "style": "precast-panel-punched-window-grid",
+      "walls": "#d4cbc9",
+      "srcFrames": [
+        "eighth-area/r1c3-oblique-00-south.png",
+        "eighth-area/r1c3-oblique-01-west.png"
+      ],
+      "note": "Identity confirmed by station proximity (Podemos centroid is 7.8m from the r1c3 capture target, next-nearest Eighth mass is 70m+ away). The dark reflective-glass face seen in r1c3-oblique-01-west is this same tower's short-end core, not a separate building."
+    },
+    "m:-116,613": {
+      "name": "Sankofa Mid",
+      "storeys": 10,
+      "bay_m": 3.4,
+      "style": "stucco-punched-window-midrise",
+      "walls": "#efe7e9",
+      "srcFrames": [
+        "eighth-area/r2c2-oblique-00-south.png"
+      ],
+      "note": "Wall samples in the top-down r2c2-plan-00-south.png frame were blown out by direct sun (l>0.95); walls value is from the same building's less-glared oblique frame instead."
+    },
+    "m:-182,614": {
+      "name": "Azad",
+      "storeys": 9,
+      "bay_m": 3.2,
+      "style": "stucco-punched-window-grid",
+      "walls": "#d8d3d3",
+      "srcFrames": [
+        "eighth-area/r2c1-plan-00-south.png",
+        "eighth-area/r2c1-oblique-00-south.png"
+      ],
+      "note": "Measured walls (#d8d3d3, light neutral grey-white) disagree with the unsourced first-guess #d2b895 (tan/khaki) — trust the measured value; Azad's centroid is only 13.7m from the r2c1 capture target, the closest station-to-mass match of any building in this dossier."
+    },
+    "m:-154,556": {
+      "name": "Pulse Tower",
+      "storeys": 10,
+      "bay_m": 3.5,
+      "style": "stucco-punched-window-paired-bay",
+      "walls": "#e2dade",
+      "srcFrames": [
+        "eighth-area/r1c1-plan-00-south.png"
+      ],
+      "note": "Pulse Tower and Pulse Mid are visually one continuous block in every available frame (both within ~40m of the r1c1 target, no station separates them) — this entry and m:-186,562 share the same measured walls/style/bay_m from the same facade. Levels (10 vs 9) come from GIS, not a visual per-mass split."
+    },
+    "m:-186,562": {
+      "name": "Pulse Mid",
+      "storeys": 9,
+      "bay_m": 3.5,
+      "style": "stucco-punched-window-paired-bay",
+      "walls": "#e2dade",
+      "srcFrames": [
+        "eighth-area/r1c1-plan-00-south.png"
+      ],
+      "note": "See Pulse Tower (m:-154,556) — same source facade, could not visually separate the two masses at this station; GIS levels kept distinct."
+    },
+    "m:-97,609": {
+      "name": "Sankofa Base",
+      "resolved": false,
+      "accents": { "canopy": "#8c6d75" },
+      "srcFrames": [
+        "apple-flyover/sankofa-orbit-00-south.png"
+      ],
+      "note": "Only a dusty maroon canopy/soffit strip at the tower's ground-floor plinth was legible (measured #8c6d75, sampled twice, consistent) — recorded as an accent. The plinth's actual wall material (mostly glass storefront) sits in hard shadow in every captured frame at this station (r2c2, 20m away) and in r2c1/r2c3 (49-86m away); did not guess a walls value."
+    }
+  }
+}
