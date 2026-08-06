@@ -1,0 +1,20 @@
+{
+ "control": "surveyed walk paving",
+ "enclosure": {
+  "n": 2736,
+  "raw": "#2a3d53",
+  "ship": "#a6b2bb",
+  "state": "shade"
+ },
+ "frame": "ref3",
+ "plazaObject": {
+  "n": 7180,
+  "raw": "#314250",
+  "ship": "#c2c1b5",
+  "state": "shade"
+ },
+ "shade_luma": 52.0,
+ "shade_to_sun": 3.058,
+ "split": "B-R > 4",
+ "sun_luma": 159.0
+}

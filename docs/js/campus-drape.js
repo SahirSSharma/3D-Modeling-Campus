@@ -30,10 +30,24 @@ export function fillPoly(out, poly, heightAt, lift) {
     return;
   }
   for (const tri of tris) {
-    /* Reversed after the -z flip so the face points up. Getting this backwards
-       renders every triangle as a hole once anything depth-tests against it —
-       the failure campus-muir-field.js records at length. */
-    for (const vi of [tri[0], tri[2], tri[1]]) {
+    /* UP-FACING, and measured rather than assumed. THREE.ShapeUtils.
+       triangulateShape normalises the contour, so the caller's ring order does
+       NOT decide the winding: with the (x, -z) flip above, emitting the
+       triangulator's own vertex order [0,1,2] gives every triangle a +y face
+       normal, and [0,2,1] gives every triangle a -y one. This function used to
+       emit [0,2,1] under a comment claiming the opposite, so every fill it
+       produced was back-facing.
+       Nobody noticed for three modules because they all draw UNLIT
+       (MeshBasicMaterial, DoubleSide), where no normal is ever read; a LIT
+       DoubleSide fill does read it — the shader flips the supplied +y normal on
+       a back face, so the surface is lit only by the hemisphere's GROUND term
+       and renders at ~0.42x its measured colour. That is the near-black-splat
+       failure campus-markings.js, campus-muir-field.js and campus-rimac.js each
+       record, and campus-eighth.js worked around a fourth time by re-ordering
+       the output here. Fixed at the source instead; the guard is
+       tests/campus-drape.test.mjs, which asserts normal.y > 0 for every
+       triangle this emits. */
+    for (const vi of [tri[0], tri[1], tri[2]]) {
       const x = contour[vi].x, z = -contour[vi].y;
       out.push(x, heightAt(x, z) + lift, z);
     }
@@ -64,6 +78,12 @@ export function ribbon(out, pts, half, heightAt, lift) {
  * loops of the SAME structure — same point count, corresponding corners — or
  * the quads shear. That is why callers with an arc in the loop sample it into
  * a fixed number of points whatever its radius.
+ *
+ * FACING, unlike fillPoly's, is the CALLER's: there is no contour to
+ * normalise, so the band faces whichever way the two loops are ordered, and
+ * swapping them flips it. One call is always uniformly wound. Today's only
+ * consumer (campus-rimac.js) draws unlit and cannot see it; a LIT consumer
+ * must pick the order that gives it +y and assert it.
  */
 export function bandBetween(out, outer, inner, heightAt, lift) {
   const n = Math.min(outer.length, inner.length);

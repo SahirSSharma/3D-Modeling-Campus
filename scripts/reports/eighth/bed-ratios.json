@@ -1,0 +1,104 @@
+{
+ "accept": {
+  "max_ratio": 0.8,
+  "min_px": 1500
+ },
+ "beds": {
+  "planting-bed-326": {
+   "kind": "planting-bed",
+   "n": 4041,
+   "ratio": 1.023,
+   "state": "sun"
+  },
+  "planting-bed-330": {
+   "kind": "planting-bed",
+   "n": 5501,
+   "ratio": 0.818,
+   "state": "sun"
+  },
+  "planting-bed-331": {
+   "kind": "planting-bed",
+   "n": 17389,
+   "ratio": 0.681,
+   "state": "sun"
+  },
+  "planting-bed-332": {
+   "kind": "planting-bed",
+   "n": 12535,
+   "ratio": 0.616,
+   "state": "sun"
+  },
+  "planting-bed-335": {
+   "kind": "planting-bed",
+   "n": 2652,
+   "ratio": 0.75,
+   "state": "shade"
+  },
+  "planting-bed-353": {
+   "kind": "planting-bed",
+   "n": 5513,
+   "ratio": 1.2,
+   "state": "sun"
+  },
+  "planting-bed-354": {
+   "kind": "planting-bed",
+   "n": 6468,
+   "ratio": 1.969,
+   "state": "shade"
+  },
+  "planting-bed-364": {
+   "kind": "planting-bed",
+   "n": 11313,
+   "ratio": 0.647,
+   "state": "shade"
+  },
+  "planting-bed-365": {
+   "kind": "planting-bed",
+   "n": 10755,
+   "ratio": 1.184,
+   "state": "shade"
+  },
+  "planting-bed-366": {
+   "kind": "planting-bed",
+   "n": 25410,
+   "ratio": 0.554,
+   "state": "shade"
+  },
+  "planting-bed-367": {
+   "kind": "planting-bed",
+   "n": 2735,
+   "ratio": 0.878,
+   "state": "shade"
+  },
+  "planting-bed-368": {
+   "kind": "planting-bed",
+   "n": 7890,
+   "ratio": 0.55,
+   "state": "shade"
+  },
+  "planting-bed-372": {
+   "kind": "planting-bed",
+   "n": 5277,
+   "ratio": 0.957,
+   "state": "shade"
+  },
+  "planting-bed-373": {
+   "kind": "planting-bed",
+   "n": 7415,
+   "ratio": 0.938,
+   "state": "sun"
+  },
+  "planting-bed-374": {
+   "kind": "planting-bed",
+   "n": 3379,
+   "ratio": 0.717,
+   "state": "sun"
+  },
+  "planting-bed-410": {
+   "kind": "planting-bed",
+   "n": 10767,
+   "ratio": 0.667,
+   "state": "shade"
+  }
+ }
+}

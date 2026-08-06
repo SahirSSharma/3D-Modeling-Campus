@@ -27,6 +27,8 @@ import { createLabels, createLandmarks } from "./campus-landmarks.js";
 import { createDetails } from "./campus-details.js";
 import { createAthletics } from "./campus-athletics.js";
 import { createRecreation } from "./campus-recreation.js";
+import { createEighth } from "./campus-eighth.js";
+import { createEighthFurniture } from "./campus-eighth-furniture.js";
 import { createMuirField } from "./campus-muir-field.js";
 import { createRimac } from "./campus-rimac.js";
 import { createMinimap } from "./campus-minimap.js";
@@ -51,6 +53,7 @@ const DATA = [
   { key: "landmarks", file: "campus-landmarks.json", required: false, what: "landmarks" },
   { key: "boundary", file: "campus-boundary.json", required: false, what: "campus boundary" },
   { key: "markings", file: "campus-markings.json", required: false, what: "sports markings" },
+  { key: "eighth", file: "campus-eighth.json", required: false, what: "Eighth College survey" },
 ];
 const urlOf = (file) => new URL(`../data/${file}`, import.meta.url);
 
@@ -351,6 +354,7 @@ export async function boot({ report } = {}) {
   campus = data.campus;
   lidar = data.lidar;
   const { arcgis, colors, facades, markings } = data;
+  const eighthData = data.eighth;
   const landmarkData = data.landmarks;
   /* A boundary of two points is not a boundary; the minimap and the ground
      ribbon both expect a closed ring or nothing at all. */
@@ -452,6 +456,23 @@ export async function boot({ report } = {}) {
     if (obj) athleticsZone.add(obj);
   }
   scene.add(athleticsZone);
+
+  /* Eighth College's ground plane, on its OWN layer rather than inside the
+     athletics zone: it is a colour correction over roughly 9,000 m² that the
+     construction-epoch satellite tint leaves as bare dirt, and being able to
+     drop it independently is how you see what it is covering. Same contract as
+     every zone builder — it hands back { group }, it never adds itself to the
+     scene, and it no-ops quietly when its survey file is absent. */
+  const eighthZone = new THREE.Group();
+  const eighth = createEighth(scene, { campus, arcgis, eighth: eighthData, markings, heightAt });
+  if (eighth?.group) eighthZone.add(eighth.group);
+  /* What STANDS on that ground, from the same survey plus the registered Apple
+     frames. Its own builder, parented into the SAME zone so one toggle drops
+     the college's ground and its furniture together. Kept out of
+     campus-eighth.js so the two modules do not import each other. */
+  const eighthProps = createEighthFurniture(scene, { arcgis, eighth: eighthData, heightAt });
+  if (eighthProps?.group) eighthZone.add(eighthProps.group);
+  scene.add(eighthZone);
 
   labels = createLabels(scene, massInfo);
   let landmarksGroup = null;
@@ -612,6 +633,7 @@ export async function boot({ report } = {}) {
       trees: trees.group,
       details: details.group,
       athletics: athleticsZone,
+      eighth: eighthZone,
       labels: labels.group,
       ...(landmarksGroup ? { landmarks: landmarksGroup } : {}),
     },

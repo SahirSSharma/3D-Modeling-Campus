@@ -37,6 +37,31 @@ test("every shipped tree is a believable size", () => {
   }
 });
 
+test("the survey's own courts exclude trunks, not just the ones the imagery fit found", () => {
+  /* THE BUG THIS PINS. treeExclusionZones used to learn sports pads ONLY from
+     campus-markings.json, which is fitted to the satellite chunks and names 11
+     facilities. The university's ArcGIS survey carries 143 court rings, and
+     none of them reached the function — so two 2014 canopies stood on the
+     Eighth College court, one 3.5 m from the centre trident, invisible while
+     the court was still a tan rectangle and unmissable once it was painted.
+     Asserting the zones EXIST as well as that no tree violates them: a
+     regression that drops the arcgis branch would otherwise pass vacuously. */
+  const arcgis = load("campus-arcgis.json");
+  const courtRings = arcgis.ground.filter((s) => s.k === "court");
+  assert.ok(courtRings.length > 100, `only ${courtRings.length} surveyed court rings`);
+  const surveyed = courtRings.map((s) => ({
+    ring: s.r[0].map(([x, z]) => [x / 10, z / 10]), // the survey stores decimetres
+    kind: "sports", margin: 0, name: "surveyed court",
+    bbox: { x0: -Infinity, z0: -Infinity, x1: Infinity, z1: Infinity },
+  })).filter((z) => z.ring.length >= 3);
+  const on = lidar.trees.filter(([x, z]) => treeViolation(x, z, surveyed));
+  assert.deepEqual(on.map(([x, z]) => [x, z]), [], `${on.length} trunks stand on a surveyed court`);
+  /* And the Eighth court specifically — the frame this was found in. */
+  const eighth = lidar.trees.filter(([x, z]) =>
+    x > -186 && x < -163 && z > 517 && z < 533);
+  assert.deepEqual(eighth, [], "a trunk is back on the Eighth College court");
+});
+
 test("the known 2014 ghosts stay gone: Coalition footprint and Muir Field pad", () => {
   const coalition = campus3d.buildings.find((b) => b.n === "Coalition");
   assert.ok(coalition, "Coalition footprint exists");
