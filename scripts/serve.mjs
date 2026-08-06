@@ -37,7 +37,18 @@ http
         return;
       }
       const body = await readFile(file);
-      res.writeHead(200, { "content-type": TYPES[path.extname(file)] || "application/octet-stream" });
+      /* Content-Length matters here, even though the file is sent in one lump.
+         Without it Node falls back to chunked encoding, the boot screen's
+         `content-length` lookup returns nothing, and its download denominator
+         becomes "however many bytes have arrived so far" — so the bar reads
+         100% for the entire download and the survey-data figure can only ever
+         say "5.8 of 5.8 MB". GitHub Pages sends the header, so the progress
+         bar was real in production and degenerate in development, which is the
+         wrong way round for the place the behaviour gets looked at. */
+      res.writeHead(200, {
+        "content-type": TYPES[path.extname(file)] || "application/octet-stream",
+        "content-length": body.byteLength,
+      });
       res.end(body);
     } catch {
       res.writeHead(404, { "content-type": "text/plain" }).end("not found");

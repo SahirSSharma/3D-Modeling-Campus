@@ -275,7 +275,21 @@ async function download(rep) {
       total += Math.max(advertised[i], bytes[i]);
     }
     rep.tick("data", total ? loaded / total : 0);
-    rep.fact({ key: "bytes", label: "Survey data read", value: Math.round(loaded / 1e5) / 10, unit: "MB" });
+    /* Show the denominator, not just the running total. "4.1 MB" answers
+       nothing on its own — the question anyone watching a loading bar is
+       actually asking is how much is left, and the campus is 10.5 MB of survey
+       data. The total lives in the unit slot so the number itself keeps its
+       odometer animation.
+
+       The label is "Survey data" rather than "Survey data read": the longer
+       unit needs the width, and with both the label ellipsised to
+       "Survey data re…" in the fact grid. */
+    rep.fact({
+      key: "bytes",
+      label: "Survey data",
+      value: Math.round(loaded / 1e5) / 10,
+      unit: total ? `of ${(Math.round(total / 1e5) / 10).toFixed(1)} MB` : "MB",
+    });
   };
 
   const read = async (r, i) => {
@@ -311,7 +325,17 @@ async function download(rep) {
     const d = DATA[i];
     if (!parsed[i] && d.required) throw new Error(`the campus ${d.what} could not be downloaded`);
     out[d.key] = parsed[i];
-    rep.log(parsed[i] ? `${d.file} — ${d.what}` : `${d.file} — absent, going without`);
+    /* Each file's own size, so the log reads as a manifest of what the campus
+       actually costs rather than a list of names. campus-lidar.json is 4 MB of
+       terrain and heights and campus-3d.json is another 0.9 MB of footprints —
+       that is the honest shape of the download, and it is the line that
+       explains the wait. `bytes[i]` is what was read off the stream, so a
+       gzipped host reports the real decompressed size rather than the
+       compressed header. */
+    const mb = bytes[i] ? `${(bytes[i] / 1e6).toFixed(bytes[i] < 1e6 ? 2 : 1)} MB` : null;
+    rep.log(parsed[i]
+      ? `${d.file} — ${d.what}${mb ? ` · ${mb}` : ""}`
+      : `${d.file} — absent, going without`);
   }
   rep.tick("data", 1);
   return out;
