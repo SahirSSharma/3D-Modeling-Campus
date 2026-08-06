@@ -956,6 +956,29 @@ function basketball(id, name, init) {
         const [ccx, ccz] = WW(du, dv);
         markings.push(...placeMarkings(basketballMarkings(params.L, params.W), ccx, ccz, params.theta));
       }
+      if (init.surface) {
+        const rectPoly = (du, dv) => [
+          [-params.L / 2 + du, -params.W / 2 + dv],
+          [params.L / 2 + du, -params.W / 2 + dv],
+          [params.L / 2 + du, params.W / 2 + dv],
+          [-params.L / 2 + du, params.W / 2 + dv],
+        ].map(([u, v]) => WW(u, v).map((n) => Math.round(n * 100) / 100));
+        /* Same doctrine as the track's surface fill: sample well inside the
+           painted boundary so bilinear bleed from the lines never lightens
+           the median away from the true floor colour. */
+        const inset = 2;
+        const samples = [];
+        for (const [du, dv] of centres) {
+          for (let u = -params.L / 2 + inset; u <= params.L / 2 - inset; u += 1.5) {
+            for (let v = -params.W / 2 + inset; v <= params.W / 2 - inset; v += 1.5) {
+              samples.push(WW(u + du, v + dv));
+            }
+          }
+        }
+        const colour = (await measuredColour(samples)) || init.surface;
+        markings.unshift(...centres.map(([du, dv]) => (
+          { kind: "fill", colour, surface: true, lift: 0.045, poly: rectPoly(du, dv) })));
+      }
       const lines = markings.flatMap(markingToLines);
       const err = fitError(field, lines);
       const cover = paintCoverage(field, lines, 0.45);
@@ -1202,6 +1225,21 @@ basketball("ntpll-basketball", "North Torrey Pines basketball court",
 basketball("warren-basketball", "Warren basketball court",
   { cx: 1031, cz: -170.4, theta: -0.30, L: 25, W: 14.7,
     sweep: { theta: { span: 0.45, step: 0.02 }, cx: { span: 3, step: 1 }, cz: { span: 3, step: 1 } } });
+
+// Eighth College basketball court: NOT registered, and knowingly. Seeded from
+// the dossier rectangle (-185.9/-163.2 x 517.5/532.9) with a wide sweep, the
+// fitter DID clear its own gates (coverage 52%, fitError 0.30 m at cx -176.8,
+// cz 519.2, theta 0.04, L 21.2, W 13.9) — but --overlay shows why that number
+// is not honest: the registered imagery chunks here show the site mid-
+// construction (Eighth College's new residential build), and the fitted
+// rectangle sits entirely on bare dirt/gravel, not paint. A 320 m crop around
+// the seed (checked by hand, not just the facility's own search box) has no
+// basketball court anywhere in it. The whiteness scorer found a
+// court-shaped false positive in construction dirt, and the automatic gate
+// cannot tell that apart from real paint at this coverage level. Per "better
+// absent than wrong", this is withheld by hand rather than shipped on a
+// technically-passing but visually-false fit. Re-measure once the imagery
+// chunks are refreshed past construction completion.
 
 // Skipped, and knowingly: Warren's lone tennis court (the bright pad edge
 // out-scores its faded lines and every fit slid off the paint), the
