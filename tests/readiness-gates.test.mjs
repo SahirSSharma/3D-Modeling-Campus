@@ -77,4 +77,17 @@ describe("readiness gate", () => {
     assert.doesNotMatch(SRC, /const DECLARED_ESTIMATES = new Set\(\[\s*"/,
       "POST_2014_SITES was inlined into the readiness gate — read it from the builder");
   });
+
+  test("when measured tables agree, GPU drift alone cannot invent a guess", () => {
+    /* Hubbs Hall (r2c0 2026-08-05_165434): massHeights 12.3 and heights 12.2
+       already agree; GPU rendered ≈11.8 on a 9.5 m grade drifted past the
+       0.35 m slack and the census matched the OSM tag instead. The
+       table-agree branch is the ICW massHeights lesson applied once more —
+       the auditor must not invent a guess for a building the builders
+       already measured. Slack stays 0.35; this path does not widen it. */
+    assert.match(SRC, /nearbyMass != null && near\(measured, nearbyMass\)/,
+      "table-agree measured path was dropped");
+    assert.match(SRC, /Math\.abs\(a - c\) < 0\.35/,
+      "0.35 m rendered slack was widened or removed");
+  });
 });

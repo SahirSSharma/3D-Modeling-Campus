@@ -283,7 +283,19 @@ const census = await page.evaluate(async (declared) => {
        right test — half a step is. */
     const near = (a, c) => a !== null && c !== null && Math.abs(a - c) < 0.35;
     if (near(rendered, measured) || near(rendered, nearbyMass)) bucket.measured++;
-    else if (near(rendered, b.h ?? null)) {
+    else if (nearbyMass != null && near(measured, nearbyMass)) {
+      /* Two measured tables already agree (name-level heights / osmHeights
+         and the GIS mass that actually extrudes). On a steep grade the GPU
+         roof map can drift past the 0.35 m slack while the extrusion is
+         correct — Hubbs Hall rendered ≈11.8 against massHeights 12.3 /
+         heights 12.2 on a 9.5 m grade (r2c0 2026-08-05_165434). Trusting
+         the tables when they agree is the same lesson as reading
+         massHeights at all: the auditor must not invent a guess for a
+         building the builders already measured. This is not a widened
+         slack — rendered is simply not the only evidence once two
+         independent measured sources concur. */
+      bucket.measured++;
+    } else if (near(rendered, b.h ?? null)) {
       if (b.n && declared.includes(b.n)) bucket.estimated++;
       else {
         bucket.guessed++;

@@ -446,3 +446,74 @@ Center West was closed by r1c1 this run). No action.
 ### Verification
 
 See final message for `npm test` / `npm run check` paste.
+
+---
+
+# FINDINGS — run `2026-08-05_165434` · shard r2c0 (re-sweep)
+
+Pass 1 re-sweep of the Scripps / Shores shard (Vaughan–Ritter shoreline through
+Birch Aquarium / Hubbs / Poole–Shores residential). Screen: 7 candidates
+(6 medium / 1 low). Judged by `cursor-grok-4.5-high` (own screen — Fable budget
+nearly spent; no high-severity findings). When unsure, withheld rather than
+invented.
+
+Every candidate in `pass1-r2c0.screen.json` was re-derived before judgement with
+an independent full-depth targeted EPT re-sample
+(`/tmp/gauntlet-r2c0-judge/reprobe.json`) using `scripts/lib/roof-measure.mjs`
+`explainRoof` with the builder's vertex-only rimBase. Point counts matched the
+screener exactly (Hubbs GIS 10,859 / osm:817 688 / 818 331 / 1032 4,305 /
+1108 940 / 1066 1,031). Apple snapshots from `/tmp/gauntlet-r2c0-screen/apple/`
+reviewed for currency only (no colour sampling).
+
+### Fixed
+
+| Entity | Was shipping | Now ships | Source | Test |
+|---|---|---|---|---|
+| Birch Aquarium service apron (`osm-817-birch-near-grade`, osm:817) | 4.5 m area guess | **absent** | 688 pts, `explainRoof` rule=p98 → **2.6** (`why='no guard fired; p98 is the roof'`, p50 0.3 / p75 1.4, dense 0.667, hist 0 m:275 + 1 m:184). Gate minH refuses. Apple: finished Birch Aquarium; ring is the service apron. `skipOsmAnchors` + `OSM_WITHHELD` (Foodworx patio class). Sibling 818 stays at matching 4.4≈4.5. | epoch r2c0 165434 |
+| Hubbs Hall readiness false positive (`hubbs-readiness-false-positive`) | census "named guess" at 11.8 | **still massHeights 12.3** (census class fix) | GIS ring EPT: rule=p98 → **12.2** (dense 0.789 under 85% thin-shelf cut — plant on Apple). `heights` 12.2 ≈ `massHeights` 12.3. GPU rendered ≈11.8 drifted past 0.35 m slack on 9.5 m grade. Readiness gains table-agree path when `near(measured, nearbyMass)`; slack stays 0.35. Do not paste p75=8.1. | epoch + readiness-gates |
+
+### Withheld (better absent than wrong)
+
+- **`osm-1032-overheight-neargrade` (osm:1032)**: 4,305 pts, canopy-guard → **3.8**
+  over near-grade hist (1 m:2570). Shipping roofOf invents a storey; guess 9
+  stands off-campus. `OSM_WITHHELD`. Epoch risk noted (Apple bare-earth cut
+  beside finished roof — could be landscaping DATE).
+- **`osm-1108-poole-multiplane` (osm:1108)**: 940 pts, rule=p98 → 10.7, dense
+  0.329, multimodal 3/7/8 m. No plane for auto-admit (1120 family). Guess 4.5
+  stands. `OSM_WITHHELD`.
+- **`osm-1066-multiplane-underheight` (osm:1066)**: 1,031 pts, rule=p98 → 12.3,
+  trimodal 4/7/12 m, dense 0.461. Pasting roofOf invents the upper wing; leaving
+  4.5 under-represents the main roof — neither is honest auto-admit. Guess
+  stands. `OSM_WITHHELD`.
+
+### Rejected candidates (each re-measured; do not re-find these)
+
+- **`vaughan-ritter-terrain-oob`** — REJECTED as a height bug; RE-LOGGED as
+  handoff. Vaughan / Ritter ship measured osm heights 14.9 / 14.6; terrain grid
+  still ends at z_max=1386 while centroids sit at z≈1402 (rimCoverage ≈0.27).
+  Survey-box expansion before any further admit on this fringe.
+- **`multiplane-still-guess-residue`** — REJECTED as scoped. Zero new one-plane
+  auto-admit candidates among 21 re-probed still-guess rings. Named SIO
+  landmarks track measured planes under vertex rimBase. Residual ~33
+  spread>1.2 refusals need per-ring Apple + EPT, not a blanket admit.
+
+### Named OSM-tag buildings (readiness work-list)
+
+Hubbs Hall was this shard's entry. It was never an invented height — GIS
+`massHeights[m:-1137,1171]=12.3` matches independent roofOf 12.2. The readiness
+row was a census false positive; the table-agree path clears it without
+touching the height or widening slack. Hyatt Regency remains for r2c2.
+
+### Handoffs / observations
+
+- **Vaughan / Ritter shoreline apron**: persistent survey-box handoff
+  (z_max=1386). Heights correct where measured.
+- **280 stepped unnamed rings**: 1032 / 1108 / 1066 are in-shard exemplars of
+  the class where imagery must pick the plane and statistics cannot — withheld,
+  not admitted.
+- **osm:818**: only remaining on-campus still-guess render beside the removed
+  817, and it already matches its plane within 0.1 m — not a finding.
+
+### Verification
+
+See final message for `npm test` / `npm run check` paste.

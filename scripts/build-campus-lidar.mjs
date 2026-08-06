@@ -666,9 +666,19 @@ const OSM_WITHHELD = new Set([
           it. Guess 8.4 stands; do not invent 6.1 from a GIS sibling. */
   438, 441, 465, 479, 480, 485, 497, 503, 513, 520, 656, 658,
   661, 695, 707, 708, 718, 762, 765, 769, 780, 785, 805, 806,
+  817, /* Birch Aquarium service apron @-900,1278 — near-grade pad
+          (688 pts, rule=p98 → 2.6, hist body at 0–1 m). skipOsmAnchors
+          removes the 4.5 m box; never admit 2.6 as a building. */
   825, 827, 828, 832, 833, 834, 892, 904, 907, 909, 910, 944, 975,
   982, 986, 996, 997, 999, 1002, 1007, 1008, 1013, 1017, 1022, 1023,
-  1024, 1033, 1062, 1068, 1075, 1089, 1120, 1127, 1144, 1146, 1160, 1218,
+  1024, 1032, /* 9530 La Jolla Shores — canopy-guard 3.8 over near-grade
+          hist (1 m:2570 of 4305); shipping roofOf invents a storey from
+          a low deck. Guess 9 stands off-campus; do not admit 3.8. */
+  1033, 1062, 1066, /* 9410 La Jolla Shores — trimodal 4/7/12 m house;
+          roofOf 12.3 pastes the upper wing; dense 46%. Guess 4.5 stands. */
+  1068, 1075, 1089, 1108, /* 9485 Poole Street — multimodal dense 33%,
+          roofOf 10.7; no plane for auto-admit (1120 family). Guess 4.5. */
+  1120, 1127, 1144, 1146, 1160, 1218,
   1339, 1345, 1352, 1354, 1392,
 ]);
 

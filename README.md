@@ -1043,6 +1043,22 @@ real and standing today; needs Sahir / facilities map for identity — not a hei
 Student Center Pub stays skipped (stepped under canopy; Stage Room HAND_AUDITED answers the
 OSM name).
 
+**The Scripps / Shores re-sweep (2026-08-05_165434, r2c0).** Screen of 7 candidates (6 medium /
+1 low) plus the readiness named-guess work-list entry for this shard (Hubbs Hall). Every claim
+re-derived from an independent full-depth EPT with `explainRoof` and the builder's vertex
+rimBase (`/tmp/gauntlet-r2c0-judge/reprobe.json`; point counts matched the screener exactly:
+Hubbs GIS 10,859 / osm:817 688 / 818 331 / 1032 4,305 / 1108 940 / 1066 1,031).
+
+| Entity | Was shipping | Now ships | Why |
+|---|---|---|---|
+| Birch Aquarium service apron (unnamed, osm:817) | 4.5 m area guess | **absent** | Near-grade pad (688 returns, rule=p98 → 2.6, hist body at 0–1 m). Apple shows the finished aquarium complex; this 130 m² rectangle is the service apron. `skipOsmAnchors` + `OSM_WITHHELD` — Foodworx patio class. Sibling osm:818 keeps its matching 4.4≈4.5 plane. |
+| Hubbs Hall (readiness "named guess") | census said inventing 11.8 | **still massHeights 12.3** | Independent EPT rule=p98 → 12.2 (dense 0.789 under the 85% thin-shelf cut — mechanical plant on today's Apple). GPU rendered ≈11.8 drifted past the 0.35 m slack on a 9.5 m grade while `heights` 12.2 and `massHeights` 12.3 already agreed. Readiness census gains a table-agree path; slack stays 0.35. Do not paste p75=8.1. |
+
+Withheld (off-campus multiplanes, guesses may still render): osm:1032 (canopy-guard 3.8 over
+near-grade body — do not admit), osm:1108 (dense 33%, roofOf 10.7), osm:1066 (trimodal,
+roofOf 12.3). Vaughan / Ritter terrain apron past z_max=1386 — heights correct, survey-box
+handoff. Residual ~33 in-shard spread>1.2 unnamed rings — per-ring imagery handoff.
+
 ### The colours, measured off footage
 
 Satellite imagery sees roofs and ground; it cannot see a wall, a tree trunk, or the sky. For

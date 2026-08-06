@@ -421,12 +421,21 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
      NO_SOLID_ROOF. Fresh EPT: 1,055 returns, 90.7% in −1..0 m; Apple
      shows the west patio umbrellas, not a dining-room box. The GIS
      removal left this 4.5 m area-guess extrusion standing 3.4 m from
-     the withheld pad. Better absent than the same patio twice. */
+     the withheld pad. Better absent than the same patio twice.
+     r2c0 re-sweep 2026-08-05_165434: (−899.8, 1278.2) — osm:817, a
+     130 m² Birch Aquarium service-apron rectangle. Independent EPT:
+     688 returns, explainRoof rule=p98 → 2.6 (hist 0 m:275 + 1 m:184 —
+     near-grade body; gate minH refuses). Apple shows the finished
+     aquarium white roofs / tank yard / circular drive; this ring is
+     the apron, not a hall. Sibling osm:818 at (−902, 1295) matches
+     its 4.4 m plane and stays. Better absent than a 4.5 m box on a
+     pad (Foodworx patio class). */
   const skipOsmAnchors = [
     [1416, -1299], [545.3, 48.3], [374.4, -88.3],
     [404.0, -65.6], [734.5, -100.4], [87.6, 265.4],
     [840.9, 452.2], [-106.8, 475.2],
     [1002.8, -112.3],
+    [-899.8, 1278.2],
   ];
   /* Building indices whose ring (or any part) stands in the world — the
      host rename below must know, because a name may only move onto the

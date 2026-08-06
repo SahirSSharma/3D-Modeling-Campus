@@ -201,6 +201,12 @@
  *      name-level height syncs to the covering GIS mass (8.2); Bonner
  *      19.2 and Powell-Focht 23.1 keep their upper planes; VAF-3
  *      GIS/OSM identity double stays open.
+ *  44. The r2c0 re-sweep 2026-08-05_165434's measurements hold: Birch
+ *      Aquarium service apron osm:817 stays absent (near-grade pad,
+ *      Foodworx patio class); Hubbs Hall keeps massHeights 12.3 (readiness
+ *      named-guess was a census false positive on GPU drift); Poole /
+ *      Shores multiplane withholds 1032 / 1108 / 1066 stay off osmHeights;
+ *      Vaughan / Ritter terrain apron and residual multiplanes stay handoff.
  */
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
@@ -4030,5 +4036,62 @@ describe("campus epoch — r1c2 re-sweep (2026-08-05_165434)", () => {
       "tower-bleed canopy-guard shipped for osm:365");
     const rendered = rendersNear(1858.1, 445.3, 4).find((m) => m.src === "osm");
     assert.equal(rendered?.h, 8.4, "osm:365 must keep its declared guess");
+  });
+});
+
+describe("campus epoch — r2c0 re-sweep 2026-08-05_165434", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("Birch Aquarium service apron (osm:817) stays absent; sibling 818 stands", () => {
+    /* Independent full-depth EPT (/tmp/gauntlet-r2c0-judge/reprobe.json):
+       osm:817 — 688 pts, explainRoof rule=p98 → 2.6 (p50 0.3 / p75 1.4 /
+       dense 0.667, hist 0 m:275 + 1 m:184). Gate minH refuses. Apple:
+       finished Birch Aquarium white roofs / tank yard / circular drive;
+       this 130 m² rectangle is the service apron, not a hall. Foodworx
+       patio / skipOsmAnchors class — better absent than a 4.5 m box.
+       Sibling osm:818 — 331 pts, rule=p98 → 4.4 matches the 4.5 guess;
+       stays. */
+    assert.equal(rendersNear(-899.8, 1278.2, 5).find((m) => m.src === "osm"), undefined,
+      "osm:817 Birch apron extrudes again");
+    assert.equal(LIDAR.osmHeights?.[817], undefined, "osm:817 must not ship a plane");
+    assert.equal(rendersNear(-901.6, 1295.0, 4).find((m) => m.src === "osm")?.h, 4.5,
+      "sibling osm:818 must keep its matching plane");
+  });
+
+  test("Hubbs Hall keeps its measured GIS mass; readiness tables agree", () => {
+    /* Independent EPT on the GIS ring: 10,859 pts, rule=p98 → 12.2
+       (p50 8.1 / p75 8.1 / p98 12.2, dense 0.789 under the 85% thin-shelf
+       cut — mechanical plant on today's Apple). massHeights 12.3 / heights
+       12.2. Do not paste p75=8.1. The readiness named-guess row was a
+       census false positive (GPU rendered ≈11.8 drifted past 0.35 m slack
+       on a 9.5 m grade while both measured tables already agreed). */
+    assert.equal(LIDAR.massHeights["m:-1137,1171"], 12.3, "Hubbs keeps massHeights");
+    assert.equal(LIDAR.heights["Hubbs Hall"], 12.2, "Hubbs keeps name-level plane");
+    const hubbs = rendersNear(-1137.4, 1171.1, 6).find((m) => m.name === "Hubbs Hall");
+    assert.ok(hubbs, "Hubbs Hall vanished");
+    assert.equal(hubbs.src, "gis", "Hubbs must render from GIS massing");
+    assert.equal(hubbs.h, 12.3, "Hubbs must keep the measured mass");
+    assert.ok(Math.abs(LIDAR.heights["Hubbs Hall"] - LIDAR.massHeights["m:-1137,1171"]) < 0.35,
+      "Hubbs heights and massHeights must stay in agreement (readiness table-agree path)");
+  });
+
+  test("Poole / Shores multiplane withholds stay off osmHeights", () => {
+    /* Independent EPT: 1032 canopy-guard 3.8 over near-grade body;
+       1108 multimodal dense 33% roofOf 10.7; 1066 trimodal roofOf 12.3.
+       Gate already refuses; OSM_WITHHELD pins the judgment so a future
+       admit cannot paste the wrong plane. Guesses may still render
+       off-campus — better a declared guess than an invented storey. */
+    for (const i of [1032, 1108, 1066]) {
+      assert.equal(LIDAR.osmHeights?.[i], undefined, `osm:${i} shipped a withheld plane`);
+    }
   });
 });
