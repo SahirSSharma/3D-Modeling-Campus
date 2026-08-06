@@ -123,3 +123,101 @@ Of the 446 unnamed rings still on guesses:
 
 Prefer the 280. A ring you correctly resolve into its real levels changes what a
 person sees walking past it; a 0.1 m refinement does not.
+
+## The handover gate now says NOT READY, and names why
+
+`npm run readiness` (added 2026-08-05) is the check that decides whether this
+campus is worth an hour of Sahir's attention. It counts, through the real render
+path, how much of what a walker sees is measured. Run it before you finish.
+
+**CORRECTION — an earlier version of this section listed EIGHT named buildings
+on invented heights. That list was wrong, and the reason is worth reading.**
+
+The census derived a mass's height by subtracting probed ground from probed
+roof. The extruder was placing roofs at `centroid-ground + h` while the LiDAR
+builder defines `h = roof − rimMedian`, so on any graded site the two bases
+diverged and the census compared a drifted roof to a drifted base. Eckart
+Building (15.6 m of grade across its own ring) came back at 11.7 m and matched
+its 12 m OSM tag inside the 0.35 m slack — a GIS-surveyed 12.8 m building
+reported as a guess. Price Center, rendered as several masses, returned a height
+none of its masses had.
+
+The r0c1 sweep fixed the extruder rather than the census — `roofElevation` in
+`campus-massing.js` now anchors every mass at its rim median, exported so the
+census and the epoch tests pin the same rule the extruder uses. Named buildings
+recognised as measured went 214 → 249 on that change alone.
+
+**Do not chase the old list of eight.** The real remainder is three:
+
+```
+osm:27   Hubbs Hall                           11.8 m
+osm:76   Hyatt Regency La Jolla at Aventine   16.0 m
+osm:167  International Center West             8.3 m
+```
+
+A label is a claim, so these outrank any unnamed ring: a person reading "Hubbs
+Hall, 11.8 m" has been told a number that was invented. None is in
+`POST_2014_SITES`. Re-derive each with `explainRoof` and a rim base — that list
+is a claim like any other. A ring that genuinely cannot be measured goes in the
+withheld table with its reason, and the gate's own count is never an argument
+for shipping a guess. **Better absent than wrong outranks a green gate**: if the
+honest answer is that three named buildings have no resolvable height, say so in
+FINDINGS and leave the gate red.
+
+**Also still open — 358 unnamed rings on guesses.** The 280 stepped roofs
+described above are the bulk of these and remain the highest-value target.
+
+**The buried mass is RESOLVED — do not re-open it.** `dfcbcf8` anchored every
+mass at its rim median and floored it at the highest footprint ground; the
+campus-wide buried count is now 0 of 1366. The floor was checked for scope
+before being trusted: it engages on exactly ONE mass campus-wide (Eckart, lifted
+~2 m), so it is a narrow trade for a bluff site the flat-slab model cannot
+describe, not a silent re-elevation of the hillside campus.
+
+Leave it alone unless you have new evidence. If you ever see that floor firing on
+many masses at once, that is not a hillside — that is a footprint swallowing
+terrain that is not its pad, and the ring is the bug.
+
+The three named buildings above sit in `r1c1` (International Center West),
+`r2c0` (Hubbs Hall) and `r2c2` (Hyatt Regency). Each is this pass's work for the
+shard that owns it — do not reach outside your own bounds for them.
+
+Do not edit the thresholds in `scripts/readiness.mjs`. They are pinned by
+`tests/readiness-gates.test.mjs`, and moving one to turn the gate green is the
+same offence as widening a fit tolerance.
+
+
+## NEVER edit data to satisfy the readiness gate
+
+`npm run readiness` appears in the driver log, which means its failures are
+visible to you. That is useful and it is also a trap, and one shard already fell
+into it.
+
+`96c1f29` hand-pinned International Center West to 8.2 m, giving the reason
+"Readiness named-guess cleared by matching the rendered plane." The underlying
+observation was sound — the OSM host ring is oversized and its canopy-guard p75
+of 6.7 is courtyard contamination — but the motivation was a number in an audit,
+and the fix was an override added to the builder.
+
+**The gate was wrong, not the data.** Its census compared the rendered height
+against `heights[name]` and `osmHeights[i]` and never looked at `massHeights`.
+Where the university's GIS massing covers a footprint the OSM ring is suppressed
+and a GIS mass renders in its place, keyed by its own centroid — which is how 62
+named buildings on this campus are drawn. International Center West renders from
+mass `m:225,82` at a measured 8.2 m, four metres from the ring centroid. The
+census could not see it, so it scored a measured building as an invented guess.
+
+The census now reads `massHeights` too, and named buildings recognised as
+measured went 249 → 280 on that change alone.
+
+**What this means for you:**
+
+- A readiness failure is a REPORT, never an instruction. If clearing it requires
+  editing data rather than fixing a builder rule, the gate is probably wrong —
+  say so in FINDINGS and leave it red. A red gate that is telling the truth is
+  worth more than a green one that was argued into place.
+- The ICW override now has no effect on the gate. It should stand or fall on the
+  courtyard-contamination evidence alone. If that evidence holds, keep it and
+  say so plainly without citing readiness; if it does not, withdraw it.
+- Hand overrides went 3 → 1 earlier today because two of them were reversing the
+  shared measurement rule. Adding them back to satisfy an audit undoes that.

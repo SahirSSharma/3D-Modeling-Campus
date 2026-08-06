@@ -254,11 +254,35 @@ const census = await page.evaluate(async (declared) => {
     const fac = arcgis?.buildings?.[b.n];
     const measured = fac?.newer ? fac.height
       : (lidar.osmHeights?.[i] ?? (b.n ? lidar.heights?.[b.n] : null) ?? fac?.height ?? null);
+
+    /* THE MASS THAT ACTUALLY RENDERS may not be the OSM ring at all. Where the
+       university's GIS massing covers a footprint, the OSM ring is suppressed
+       and a GIS mass is extruded in its place, measured into `massHeights` and
+       keyed by its own centroid — never by the OSM name or index. 62 named
+       buildings render this way.
+     *
+     * Leaving those out is what made this census demand a data edit it had no
+     * right to. International Center West renders from mass m:225,82 at a
+     * measured 8.2 m; the census compared that against a stale name-level 6.7,
+     * missed, then matched the 8.4 OSM tag inside the slack and reported a
+     * measured building as an invented guess. A gauntlet agent duly "fixed" it
+     * by hand-pinning the name — an override added to satisfy a bug in the
+     * auditor. The auditor is the thing that was wrong. */
+    const nearbyMass = (() => {
+      let best = null, bestD = 25; // metres; a mass further than this is a neighbour
+      for (const [k, v] of Object.entries(lidar.massHeights ?? {})) {
+        const m = /^m:(-?\d+),(-?\d+)$/.exec(k);
+        if (!m) continue;
+        const d = Math.hypot(+m[1] - cx, +m[2] - cz);
+        if (d < bestD) { bestD = d; best = v; }
+      }
+      return best;
+    })();
     /* 0.35 m of slack: the world's roof is sampled off a rasterised map and the
        mass sits on its own reconciled base, so an exact float match is not the
        right test — half a step is. */
     const near = (a, c) => a !== null && c !== null && Math.abs(a - c) < 0.35;
-    if (near(rendered, measured)) bucket.measured++;
+    if (near(rendered, measured) || near(rendered, nearbyMass)) bucket.measured++;
     else if (near(rendered, b.h ?? null)) {
       if (b.n && declared.includes(b.n)) bucket.estimated++;
       else {
