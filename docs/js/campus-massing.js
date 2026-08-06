@@ -740,6 +740,11 @@ export function createBuildings(scene, { campus, lidar, arcgis, colors, facades,
   const walls = facades?.walls || facades || {};
   const styles = facades?.styles || {};
   const accents = facades?.accents || {};
+  /* Per-MASS overrides, keyed by the same `m:`/`b:` + rounded centroid hash
+     used for TRUECOLOR below — lets a multi-mass building (a tower, its mid
+     section, its base) diverge from its name-keyed default. Checked before
+     the name-keyed maps above. */
+  const massFacades = facades?.masses || {};
 
   /* Geisel's floor stack renders separately below. */
   const geisel = arcgis?.geiselFloors || [];
@@ -810,15 +815,16 @@ export function createBuildings(scene, { campus, lidar, arcgis, colors, facades,
        tint gently toward the measured roof so a mass reads as one building.
        The tint is a pure function of (wall pick, quantised roof), so the
        bucket count cannot grow. */
-    const trueRoof = guardRoof(
-      TRUECOLOR?.roofs?.[`${m.src === "gis" ? "m" : "b"}:${Math.round(cx)},${Math.round(cz)}`]
-    );
-    const roofHex = q(accents[m.name]?.roof || trueRoof || m.roof);
-    let wallHex = walls[m.name] || WALL_PALETTE[Math.floor(hash(outer[0][0], outer[0][1]) * WALL_PALETTE.length)];
-    if (trueRoof && !walls[m.name]) {
+    const massKey = `${m.src === "gis" ? "m" : "b"}:${Math.round(cx)},${Math.round(cz)}`;
+    const massEntry = massFacades[massKey];
+    const trueRoof = guardRoof(TRUECOLOR?.roofs?.[massKey]);
+    const roofHex = q(massEntry?.accents?.roof || accents[m.name]?.roof || trueRoof || m.roof);
+    let wallHex =
+      massEntry?.walls || walls[m.name] || WALL_PALETTE[Math.floor(hash(outer[0][0], outer[0][1]) * WALL_PALETTE.length)];
+    if (trueRoof && !walls[m.name] && !massEntry?.walls) {
       wallHex = `#${new THREE.Color(wallHex).lerp(new THREE.Color(roofHex), 0.12).getHexString()}`;
     }
-    const style = styles[m.name] || "band";
+    const style = massEntry?.style || styles[m.name] || "band";
     /* Chunked by 500 m so buildings behind the camera or past the fog can be
        culled — one campus-wide merge drew every building every frame. */
     const key = `${wallHex}|${roofHex}|${style}|${Math.floor(cx / 500)}:${Math.floor(cz / 500)}`;

@@ -44,6 +44,26 @@ const RENDERED = new Set(
 );
 RENDERED.add("Geisel Library");
 
+/* Per-mass hashes, for the `masses` section (facades keyed by an individual
+   mass rather than a building name — Sankofa's tower vs. its base). Pinned to
+   campus-massing.js's createBuildings: `${m.src === "gis" ? "m" : "b"}:` +
+   the outer-ring vertex-average centroid, rounded to the metre. Same skip
+   (rings with fewer than 3 vertices never reach the renderer) as that loop. */
+const centroidOf = (ring) => {
+  let x = 0;
+  let z = 0;
+  for (const p of ring) { x += p[0]; z += p[1]; }
+  return [x / ring.length, z / ring.length];
+};
+const RENDERED_MASS_KEYS = new Set(
+  assembleMasses({ campus: CAMPUS, lidar: LIDAR, arcgis: ARCGIS, colors: COLORS })
+    .filter((m) => m.rings[0] && m.rings[0].length >= 3)
+    .map((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return `${m.src === "gis" ? "m" : "b"}:${Math.round(cx)},${Math.round(cz)}`;
+    })
+);
+
 /* One shared tile per family. A style outside this set names a tile the
    renderer cannot build, which is the same silent nothing as a dead key. */
 const STYLES = new Set(["fins", "eggcrate", "glass", "ribbon", "balcony", "bands", "blank"]);
@@ -137,6 +157,41 @@ describe("campus-facades.json", () => {
     assert.equal(FACADES.walls["Student Services Center"], "#d4bfa4", "SSC is a stucco box again");
     assert.equal(FACADES.accents["Geisel Library"].trim, "#e8e9e2", "Geisel lost its fascia ribbon");
     assert.equal(FACADES.accents["Biology"].panel, "#6d7440", "Muir Biology lost its avocado panels");
+  });
+
+  test("masses: every key names a mass hash the renderer actually builds", () => {
+    /* Same silent-nothing failure as THE GUARD above, but for the per-mass
+       section: a stale hash (footprint moved on a data rebuild) just never
+       matches and the override draws nothing. Empty in this workstream —
+       exists to catch the next one's entries. */
+    const masses = FACADES.masses || {};
+    const dead = Object.keys(masses).filter((key) => !RENDERED_MASS_KEYS.has(key));
+    assert.deepEqual(
+      dead,
+      [],
+      `${dead.length} mass-facade entries name a hash the renderer doesn't build: ${dead.join(", ")}`
+    );
+  });
+
+  test("masses: every style/wall/accent value is well-formed", () => {
+    const masses = FACADES.masses || {};
+    const bad = [];
+    for (const [key, entry] of Object.entries(masses)) {
+      assert.ok(entry && typeof entry === "object", `${key}'s override is not an object`);
+      if (entry.style !== undefined && !STYLES.has(entry.style)) {
+        bad.push(`${key}.style: "${entry.style}"`);
+      }
+      if (entry.walls !== undefined && !HEX.test(entry.walls)) {
+        bad.push(`${key}.walls: ${entry.walls}`);
+      }
+      if (entry.accents) {
+        for (const [slot, hex] of Object.entries(entry.accents)) {
+          if (!ACCENT_SLOTS.has(slot)) bad.push(`${key}.accents.${slot} is not a known accent slot`);
+          else if (!HEX.test(hex)) bad.push(`${key}.accents.${slot}: ${hex}`);
+        }
+      }
+    }
+    assert.deepEqual(bad, [], bad.join("; "));
   });
 
   test("no building is styled without being coloured, except where only the roof was measured", () => {
