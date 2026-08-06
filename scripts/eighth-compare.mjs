@@ -266,9 +266,27 @@ async function renderOne(frameName, outDir) {
   const { hover, pitch, spanDeg, spanSource, targetGroundSpanM, renderGroundWidthM, vFovDeg, hFovDeg } =
     cameraForPass(entry.pass, aspect, appleScaleBarRaw.found ? appleScaleBarRaw.groundWidthM : null);
 
+  /* STAND OFF, do not hover the target. `fly(x, z, ...)` puts the CAMERA at
+     x/z, so passing the target's own coordinates points the view axis at the
+     ground `hover / tan(downAngle)` metres PAST it — the target sits off
+     centre, or out of frame entirely. At the oblique pass's -0.25 rad that
+     miss is over 200 m, which is most of Eighth College.
+
+     Apple centres on its `ll` and pulls the camera back as it tilts, so the
+     render has to do the same: walk back along the view direction by exactly
+     that ground offset. yaw follows __campusWalk.face's atan2(dx, dz)
+     (campus-walk.js:562), so the forward vector is (sin yaw, cos yaw).
+
+     This is independent of the scale-bar fix above — that one sized the
+     frame, this one aims it. Both were wrong at once, and a frame can be
+     correctly sized and still pointed at the wrong patch of ground. */
+  const groundOffset = hover / Math.tan(-pitch);
+  const camX = x - Math.sin(yawRad) * groundOffset;
+  const camZ = z - Math.cos(yawRad) * groundOffset;
+
   await page.evaluate(
-    ({ x, z, hover, yaw, pitch }) => window.__campusWalk.fly(x, z, hover, yaw, pitch),
-    { x, z, hover, yaw: yawRad, pitch },
+    ({ camX, camZ, hover, yaw, pitch }) => window.__campusWalk.fly(camX, camZ, hover, yaw, pitch),
+    { camX, camZ, hover, yaw: yawRad, pitch },
   );
   await page.waitForTimeout(entry.pass === "plan" ? 900 : 600);
 
@@ -312,7 +330,8 @@ async function renderOne(frameName, outDir) {
     look: entry.look,
     yawDeg,
     yawRad,
-    camera: { x, z, hover, pitch, altitude: hover },
+    camera: { x: camX, z: camZ, hover, pitch, altitude: hover, groundOffset },
+    aimedAt: { x, z },
     fov: { vDeg: vFovDeg, hDeg: hFovDeg },
     spanDeg,
     spanSource,

@@ -65,12 +65,41 @@ const RENDERED_MASS_KEYS = new Set(
 );
 
 /* One shared tile per family. A style outside this set names a tile the
-   renderer cannot build, which is the same silent nothing as a dead key. */
-const STYLES = new Set(["fins", "eggcrate", "glass", "ribbon", "balcony", "bands", "blank", "paired"]);
+   renderer cannot build — and createBuildings resolves it as
+   `tiles[style] || tiles.band`, so it does not throw, it quietly draws the
+   default band. Same silent nothing as a dead key.
+
+   READ OUT OF THE RENDERER, not typed here. facadeTiles() cannot be called
+   from node — makeTile needs `document` and a WebGL THREE.CanvasTexture — so
+   this scrapes the keys off its object literal instead. A hand-kept copy of
+   this list is a second source of truth that drifts: delete a tile from
+   campus-massing.js and the copy still swears the style is fine, while every
+   building wearing it silently falls back to band. */
+const MASSING_SRC = readFileSync(path.join(ROOT, "docs/js/campus-massing.js"), "utf8");
+const TILE_BLOCK = MASSING_SRC.slice(
+  MASSING_SRC.indexOf("function facadeTiles()"),
+  MASSING_SRC.indexOf("export function createBuildings")
+);
+const STYLES = new Set([...TILE_BLOCK.matchAll(/^ {4}([a-z]+): makeTile\(/gm)].map((m) => m[1]));
 const ACCENT_SLOTS = new Set(["roof", "trim", "glass", "panel"]);
 const HEX = /^#[0-9a-f]{6}$/;
 
 describe("campus-facades.json", () => {
+  /* The scrape above fails SAFE — if the regex stopped matching, STYLES goes
+     empty and every style in the file reads as unknown, so the suite goes red
+     rather than green. This pins it anyway, because a red suite that blames
+     the wrong thing costs an hour: it says "the tile list could not be read"
+     instead of "all nine of your styles are invalid". */
+  test("the renderer's tile list is actually readable from its source", () => {
+    assert.ok(
+      STYLES.size >= 8,
+      `scraped only ${STYLES.size} tiles from facadeTiles() ([${[...STYLES]}]) — the ` +
+      `object-literal shape it is read from has changed, so this file's style ` +
+      `check is not testing what it claims`
+    );
+    assert.ok(STYLES.has("band"), "no `band` tile — that is the fallback every unknown style lands on");
+  });
+
   test("parses, and carries the three sections the renderer reads", () => {
     for (const section of ["walls", "styles", "accents"]) {
       assert.ok(

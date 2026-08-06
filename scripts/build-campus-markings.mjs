@@ -956,6 +956,17 @@ function basketball(id, name, init) {
         const [ccx, ccz] = WW(du, dv);
         markings.push(...placeMarkings(basketballMarkings(params.L, params.W), ccx, ccz, params.theta));
       }
+      /* METRICS FIRST, surface fill after — the order the track already uses
+         (err/cover computed before its own unshift below). markingToLines
+         turns a kind:"fill" into a CLOSED POLYLINE, so a fill unshifted onto
+         `markings` before this point gets scored as if its ~70 m of court
+         boundary were painted line, quietly flattering fitError and inflating
+         paintCoverage. The gate numbers a court is admitted or withheld on
+         have to come from paint alone. */
+      const lines = markings.flatMap(markingToLines);
+      const err = fitError(field, lines);
+      const cover = paintCoverage(field, lines, 0.45);
+
       if (init.surface) {
         const rectPoly = (du, dv) => [
           [-params.L / 2 + du, -params.W / 2 + dv],
@@ -979,9 +990,6 @@ function basketball(id, name, init) {
         markings.unshift(...centres.map(([du, dv]) => (
           { kind: "fill", colour, surface: true, lift: 0.045, poly: rectPoly(du, dv) })));
       }
-      const lines = markings.flatMap(markingToLines);
-      const err = fitError(field, lines);
-      const cover = paintCoverage(field, lines, 0.45);
       return { markings, field, err, cover, score, fitted: params };
     },
   });
