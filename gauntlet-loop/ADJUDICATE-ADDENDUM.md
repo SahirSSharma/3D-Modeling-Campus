@@ -264,3 +264,35 @@ and 2014 LiDAR both fail on exactly the same axis.
 The general lesson, worth carrying to every remaining ring: **a spread rejection
 is not a promise that something is measurable.** Sometimes it is the point cloud
 telling you the truth — that there is no plane there to find.
+
+
+## You can now SEE which building a ring is: scripts/ring-snapshot.mjs
+
+```
+node scripts/ring-snapshot.mjs --ring 899 --zoom 20
+node scripts/ring-snapshot.mjs --ring 17,131,140 --zoom 20
+```
+
+It pulls an Apple satellite snapshot centred on the ring and draws the footprint
+on it in magenta, projected through the same Web Mercator the snapshot is
+rendered in. Use it before ruling on any unnamed ring.
+
+This existed because a bare snapshot cannot answer the question that matters.
+`osm:899` reads 15 m off the point cloud on a 121 m² footprint, and the plain
+image showed a service yard with a dozen packed flat roofs and taller
+neighbours on two sides — no way to tell which roof the ring meant, or whether
+15 m was a real structure or bleed. With the outline drawn it took seconds: the
+ring lands on a single-storey flat-roofed shed with a short shadow. **The 15 m
+is bleed off the taller building to its north. Withhold; the 4.5 m guess is
+nearer the truth than the measurement.**
+
+`tests/ring-snapshot.test.mjs` pins the projection by area, because the way this
+goes wrong is silent — Apple renders at scale 2, and a projection that forgets
+it draws a confident polygon at half size, sitting neatly on the wrong roof.
+Nothing about the picture looks broken.
+
+**What it can and cannot settle.** Nadir imagery shows roofs, not eaves. It
+answers WHICH building and WHAT KIND of roof; it does not answer height, and a
+storey count taken from it is a declared estimate at best. Both rings looked at
+so far — the Marshall cluster and osm:899 — ended in a withhold, and that is a
+success: each replaced an invented 11-15 m with a stated reason.
