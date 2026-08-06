@@ -868,12 +868,28 @@ Apple currency re-checked per site.
 | Large courtyard mid-rise (unnamed, osm:1356) | 16 m area guess | **13.2 m** | Clean single plane (24,983 returns, p50 12.1 / p75 12.2). |
 | Large courtyard mid-rise (unnamed, osm:1355) | 16 m area guess | **13.8 m** | Clean single plane (21,686 returns); sibling of 1356. |
 
-Rejected / withheld, each re-measured: osm:1364 — dense 78.7% under the 85% thin-shelf cut
-(Sheraton near-miss); guess stands. osm:704 / 705 — stepped mid-rises (dense 2 m band
-47% / 44%); no single plane. osm:257 / 258 — dense body ≈ the 12 m guess; roofOf rides an
-upper wing. Medical — dense 85.8%, gap 1.9 under the 2 m cut; roofOf 10.7 stands. Hyatt /
-helipad osm:83 — prior composite withholds (HAND_AUDITED null / bodyTight=false); no
-parts source. Class-hole rejected as scoped.
+Rejected / withheld, each re-measured: osm:257 / 258 — dense body ≈ the 12 m guess;
+roofOf rides an upper wing. Medical — dense 85.8%, gap 1.9 under the 2 m cut; roofOf
+10.7 stands. Hyatt / helipad osm:83 — prior composite withholds (HAND_AUDITED null /
+bodyTight=false); no parts source. Class-hole rejected as scoped.
+
+**The Sheraton-strip / Mahaila re-sweep (2026-08-05, r2c2 · run `2026-08-05_165434`).**
+Screen of 10 candidates. Every height re-derived from an independent full-depth EPT
+(`/tmp/gauntlet-r2c2-judge/reprobe.json`; point counts matched the screener exactly —
+Hyatt 11,029 / Medical 8,846 / 1364 5,795 / 704 2,198 / 705 2,254 / …); Apple ring
+overlays via `scripts/ring-snapshot.mjs`.
+
+| Entity | Was shipping | Now ships | Why |
+|---|---|---|---|
+| Sheraton-strip pad (unnamed, osm:1364) | 9 m area guess | **5.4 m** | Thin-shelf near-miss: dense 78.7% under the 85% cut (gap 3.9, bodyTight; hist 5 m:4473). Apple: one-storey flat roof with HVAC and east-end palm overhang — density shortfall is canopy bleed, not a second storey. Siblings 1365/1366/1367 already ship 5.1–5.3. Keeping the guess was the shelf paste by another door; `MEASURED_OVERRIDES` takes p75. |
+
+Withheld: osm:704 / 705 (3950 Mahaila / Axiom) — Apple 2–3 storey terracotta gables;
+roofOf 15.6 / 16.1 on dense 44–47% is Marshall-class smear; `OSM_WITHHELD`, guess 9
+stands. Rejected: Hyatt — still HAND_AUDITED null / OSM-tag 16 (no parts source;
+readiness named-guess stays red on purpose). Mesa 359/361–364/366 — OSM already
+GIS-suppressed; walker sees gisH=6.1, not the 8.4 guess or roofOf tower bleed.
+Medical / Belmont / Temple / Lebon 298–301 / Nobel rim-edge 283/284 / osm:479 —
+re-measured, prior judgments stand.
 
 **The east-of-I-5 / One Miramar pass-2 (2026-08-05, r2c2).** Fresh screen of 11 candidates
 (7 high / 3 medium / 1 low). Every height re-derived from an independent full-depth EPT

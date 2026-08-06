@@ -674,6 +674,18 @@ const OSM_WITHHELD = new Set([
           (853 pts, hist 2m:239 / 3m:198). Apple ring overlay: real
           one-storey pool house beside the pool; crown bleed invents
           ~3 storeys. Guess 4.5 stands nearer the truth. r2c1 165434. */
+  704, /* 3950 Mahaila / Axiom La Jolla east pad @1822,988 — Apple
+          ring overlay: finished 2–3 storey terracotta gabled apartment
+          (short building shadow; palms along the east eave). Independent
+          EPT 2,198 pts, rule=p98 → 15.6 (p50 12.7 / p75 13.7, dense
+          0.469, spr 1.9). Dense body sits above the 9 m guess but under
+          half the returns fall in any 2 m band — Marshall-class smear
+          risk; shipping roofOf invents a mid-rise. Guess 9 stands nearer
+          the storey count. r2c2 165434. */
+  705, /* 3950 Mahaila / Axiom La Jolla west pad @1798,976 — sibling of
+          704. Independent EPT 2,254 pts, rule=p98 → 16.1 (p50 13.3 /
+          p75 14.4, dense 0.441, spr 1.7). Same Apple identity; same
+          low-dense smear. Do not admit. r2c2 165434. */
   787, /* Theatre District Drive / CRS-fringe @236,517 — 432 m² ring
           over a corrugated shed whose roof is physically overhung by
           grove crowns (4,726 pts, dense 20%, canopy-guard 16.3). Apple
@@ -840,17 +852,17 @@ const OSM_UNNAMED_VERIFIED = new Set([
        1356: 24,983 returns, clean p98 13.2 (p50 12.1 / p75 12.2) — was 16.
        1355: 21,686 returns, clean p98 13.8 (p50 12.9 / p75 13.0) — was 16.
      Deliberately NOT admitted this pass:
-       1364: dense 78.7% under the 85% thin-shelf cut (gap 3.9) —
-             Sheraton-strip near-miss sibling of 1366; admitting roofOf
-             would paste the 9.3 shelf. Keep the 9 m guess.
-       704 / 705: stepped mid-rises (dense 2 m band 47% / 44%); no
-             single plane — keep the 9 m guesses.
+       704 / 705: see OSM_WITHHELD (r2c2 165434 re-sweep) — Apple
+             shows 2–3 storey gabled Axiom / Mahaila apartments; roofOf
+             15–16 rides a low-dense (44–47%) shelf. Guess 9 stands.
        257 / 258: dense body ≈ the 12 m guess; roofOf 16 / 17 rides an
              upper wing (osm:707 family). Keep the guesses.
        Medical (named): dense 85.8%, gap 1.9 under the 2 m cut; HVAC
              shelf on a finished roof — keep roofOf 10.7.
        Hyatt / osm:83 / 497 / 289: prior composite / canopy withholds
-             (HAND_AUDITED null / bodyTight=false). */
+             (HAND_AUDITED null / bodyTight=false).
+     1364: re-judged r2c2 165434 — MEASURED_OVERRIDES takes the dense
+           body (p75 5.4), not roofOf. See override reason. */
   1366, 1365, 285, 81, 287, 286, 1356, 1355,
   /* r0c0 pass-2 re-sweep 2026-08-05 — remaining La Jolla Farms / Estancia
      unnamed pads after pass-1's 331/149/974/1372/878/483 admissions.
@@ -1984,6 +1996,21 @@ async function build() {
          The error has a direction: a probe reports the top of the mechanical
          spike as the roof, so every probe-verified height is biased TALL. These
          nine now take the builder's measurement. */
+
+      /* r2c2 165434: Sheraton-strip thin-shelf near-miss. Independent
+         full-depth EPT with explainRoof (vertex rimBase): 5,795 pts,
+         rule=p98 → 9.3 because dense 78.7% sits under the 85% thin-shelf
+         cut (gap 3.9, bodyTight p50=p75=5.3/5.4; hist 5m:4473 = 77%).
+         Apple ring overlay: finished one-storey flat grey roof with HVAC
+         and palm crowns physically overhanging the east end — the
+         density shortfall is canopy bleed on the same pad, not a second
+         storey. Siblings 1365/1366/1367 already ship the 5.1–5.3 body via
+         canopy-guard / thin-shelf. Admitting unguarded roofOf pastes the
+         shelf; keeping the 9 m area guess is the same paste by another
+         door. Override takes the dense body. Not a readiness fix and not
+         a reversal of thin-shelf — the rule's body answer, applied where
+         palm overhang kept density 6 pts under the cut. */
+      "1364": [5.4, "Sheraton-strip thin-shelf near-miss (dense 78.7% < 85%, gap 3.9, bodyTight); Apple one-storey flat roof w/ east-end palm overhang; siblings 1365/1366/1367 ship 5.1–5.3. Take p75 body, not roofOf shelf / area guess 9. Judged r2c2 165434."],
     },
   };
 

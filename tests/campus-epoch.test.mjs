@@ -131,6 +131,10 @@
  *      planes (two via thin-shelf host rule), the near-miss / stepped /
  *      composite withholds keep their guesses, and Medical / Hyatt /
  *      helipad residuals stay as judged.
+ *  26b. SUPERSEDED for osm:1364 by the 2026-08-05_165434 r2c2 re-sweep
+ *      below — thin-shelf near-miss now ships the dense body (5.4) via
+ *      MEASURED_OVERRIDES; 704/705 move into OSM_WITHHELD (Marshall-
+ *      class smear). Hyatt / Medical / Mesa GIS-suppression stand.
  *  27. The r0c0 pass-2 re-sweep's measurements hold: nine LJF / Estancia
  *      unnamed pads ship their measured planes (two canopy-guarded),
  *      the near-ground Salk-road fringe (osm:828) and coastal-scrub
@@ -2505,13 +2509,14 @@ describe("campus epoch — r2c2 re-sweep (2026-08-05)", () => {
   });
 
   test("near-miss thin-shelf and stepped rings keep their declared guesses", () => {
-    /* 1364: dense 78.7% under the 85% thin-shelf cut (gap 3.9) —
-       Sheraton-strip near-miss sibling of 1366; admitting roofOf would
-       paste the 9.3 shelf. 704 / 705: stepped mid-rises (dense 2 m band
-       47% / 44%); no single plane. 257 / 258: dense body ≈ the 12 m
-       guess; roofOf 16 / 17 rides an upper wing (osm:707 family). */
+    /* 1364: re-judged r2c2 165434 — MEASURED_OVERRIDES now ships the
+       dense body (see "Sheraton-strip 1364 ships its thin-shelf body").
+       704 / 705: Apple 2–3 storey Axiom / Mahaila gables; roofOf 15–16
+       on dense 44–47% is Marshall-class smear — OSM_WITHHELD, guess 9.
+       257 / 258: dense body ≈ the 12 m guess; roofOf 16 / 17 rides an
+       upper wing (osm:707 family). */
     for (const [i, h, x, z] of [
-      [1364, 9, 891.6, 881.4], [704, 9, 1821.8, 987.6],
+      [704, 9, 1821.8, 987.6],
       [705, 9, 1798.5, 975.5], [257, 12, 1640.9, 1125.9],
       [258, 12, 1696.8, 1115.3],
     ]) {
@@ -2522,6 +2527,16 @@ describe("campus epoch — r2c2 re-sweep (2026-08-05)", () => {
     }
   });
 
+  test("Sheraton-strip 1364 ships its thin-shelf body", () => {
+    /* Independent EPT: 5,795 pts, explainRoof rule=p98 → 9.3 only because
+       dense 78.7% sits under the 85% thin-shelf cut (gap 3.9, bodyTight
+       p50=p75=5.3/5.4; hist 5m:4473). Apple ring overlay: one-storey flat
+       roof with HVAC and east-end palm overhang. Siblings 1365/1366/1367
+       already ship 5.1–5.3. Override takes p75, not the shelf / guess 9. */
+    assert.equal(LIDAR.osmHeights?.[1364], 5.4, "osm:1364 body plane");
+    assert.equal(rendersNear(891.6, 881.4, 4).find((m) => m.src === "osm")?.h, 5.4,
+      "osm:1364 renders at its body plane");
+  });
   test("Medical keeps its roofOf shelf; Hyatt and helipad composites stay withheld", () => {
     /* Medical: dense 85.8%, gap 1.9 under the 2 m thin-shelf cut — HVAC
        on a finished Aventine strip roof (Union Bank / UC Cyclery family).
@@ -4168,6 +4183,67 @@ describe("campus epoch — r2c0 re-sweep 2026-08-05_165434", () => {
        off-campus — better a declared guess than an invented storey. */
     for (const i of [1032, 1108, 1066]) {
       assert.equal(LIDAR.osmHeights?.[i], undefined, `osm:${i} shipped a withheld plane`);
+    }
+  });
+});
+
+describe("campus epoch — r2c2 re-sweep 2026-08-05_165434", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("Sheraton-strip 1364 ships the dense body, not the HVAC shelf", () => {
+    /* Independent full-depth EPT (/tmp/gauntlet-r2c2-judge/reprobe.json):
+       5,795 pts, explainRoof rule=p98 → 9.3 only because dense 78.7%
+       sits under the 85% thin-shelf cut (gap 3.9, bodyTight; hist
+       5m:4473). Apple ring overlay: finished one-storey flat grey roof
+       with HVAC and palm crowns on the east end. Siblings 1365/1366/
+       1367 already ship 5.1–5.3. Keeping the 9 m guess was the shelf
+       paste by another door; MEASURED_OVERRIDES takes p75. */
+    assert.equal(LIDAR.osmHeights?.[1364], 5.4);
+    assert.equal(rendersNear(891.6, 881.4, 4).find((m) => m.src === "osm")?.h, 5.4);
+  });
+
+  test("Mahaila / Axiom 704 and 705 stay withheld", () => {
+    /* Independent EPT: 704 → 15.6 (dense 0.469), 705 → 16.1 (dense
+       0.441). Apple ring overlays: finished 2–3 storey terracotta
+       gabled apartments with short building shadows; palms along the
+       east eave of 705. Shipping roofOf invents a mid-rise over a
+       Marshall-class low-dense cloud. OSM_WITHHELD; guess 9 stands. */
+    for (const [i, x, z] of [[704, 1821.8, 987.6], [705, 1798.5, 975.5]]) {
+      assert.equal(LIDAR.osmHeights?.[i], undefined, `osm:${i} shipped a withheld plane`);
+      assert.equal(rendersNear(x, z, 4).find((m) => m.src === "osm")?.h, 9,
+        `osm:${i} must keep its declared guess`);
+    }
+  });
+
+  test("Hyatt stays a stated OSM-tag guess; Mesa OSM stays GIS-suppressed", () => {
+    /* Hyatt: 11,029 pts bimodal (49% @4 m podium vs tower 41–52);
+       HAND_AUDITED null; ships OSM tag 16. No parts source — leave the
+       readiness named-guess red. Mesa 359/361–364/366: OSM rings are
+       unnamed re-traces of Mesa Apartments Central GIS pads; assembleMasses
+       suppresses them and the walker sees gisH=6.1. Do not admit roofOf
+       20–28 (neighbour-tower bleed). */
+    assert.equal(LIDAR.heights["Hyatt Regency La Jolla at Aventine"], undefined);
+    assert.equal(rendersNear(1467.0, 799.9, 6).find(
+      (m) => m.name === "Hyatt Regency La Jolla at Aventine")?.h, 16);
+    for (const [x, z, name] of [
+      [1826.6, 523.8, "Mesa Apartments Central - 9236"],
+      [1804.1, 551.8, "Mesa Apartments Central - 9234"],
+      [1701.2, 548.6, "Mesa Apartments Central - 9228"],
+    ]) {
+      const hits = rendersNear(x, z, 8);
+      assert.equal(hits.find((m) => m.src === "osm"), undefined,
+        `OSM re-trace still extrudes beside ${name}`);
+      assert.equal(hits.find((m) => m.name === name)?.h, 6.1,
+        `${name} must keep GIS L2`);
     }
   });
 });

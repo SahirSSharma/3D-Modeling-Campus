@@ -576,3 +576,89 @@ Apple ring-snapshots (`scripts/ring-snapshot.mjs`) for identity / canopy.
 ### Verification
 
 See final message for `npm test` / `npm run check` paste.
+
+---
+
+# FINDINGS — run `2026-08-05_165434` · shard r2c2 (re-sweep)
+
+Pass 1 re-sweep of the SE shard (Hyatt / Sheraton strip / Mahaila / Mesa Central /
+Temple / Belmont / Medical). Screen: 10 candidates (3 high / 6 medium / 1 low).
+Judged by `cursor-grok-4.5-high`.
+
+Every candidate in `pass1-r2c2.screen.json` was re-derived before judgement with
+an independent full-depth targeted EPT re-sample
+(`/tmp/gauntlet-r2c2-judge/reprobe.json`; point counts matched the screener
+exactly — Hyatt 11,029 / Medical 8,846 / Belmont 6,947 / Temple 5,559 /
+1364 5,795 / 704 2,198 / 705 2,254 / Mesa 359–366 / 479 / 283–284 / Lebon
+298–301). Measurement via `scripts/lib/roof-measure.mjs` `explainRoof` with
+builder vertex rimBase. Apple ring-snapshots (`scripts/ring-snapshot.mjs`) for
+identity / canopy.
+
+### Fixed — heights
+
+| Entity | Was shipping | Now ships | Source | Test |
+|---|---|---|---|---|
+| Sheraton-strip pad (`osm-1364-sheraton-overheight`, osm:1364) | 9 m area guess | **5.4 m** | Independent EPT: `explainRoof` rule=p98 → 9.3 only because dense **78.7%** sits under the 85% thin-shelf cut (gap 3.9, bodyTight p50=p75=5.3/5.4; hist 5m:4473 = 77%). Apple ring overlay: finished one-storey flat grey roof with HVAC and palm crowns on the east end — density shortfall is canopy bleed, not a second storey. Siblings 1365/1366/1367 already ship 5.1–5.3. Keeping the guess was the shelf paste by another door; `MEASURED_OVERRIDES` takes p75. Not a readiness fix and not a reversal of thin-shelf. | epoch r2c2 165434 |
+
+### Withheld (better absent than wrong)
+
+- **`mahaila-704-705-underheight` (osm:704 / 705)**: Independent EPT → 15.6 / 16.1
+  (dense 0.469 / 0.441, spr 1.9 / 1.7). Apple ring overlays: finished 2–3 storey
+  terracotta gabled Axiom / Mahaila apartments with short building shadows;
+  palms along the east eave of 705. Shipping roofOf invents a mid-rise over a
+  Marshall-class low-dense cloud. `OSM_WITHHELD`; guess 9 stands nearer the
+  storey count.
+- **`osm-479-new-plane-evidence` (osm:479)**: NEW vs prior 0-pt rationale —
+  1,312 pts, clean plane (spr 0.6, roofOf 10.6) but rim=0.455 still fails
+  `STAT_MIN_RIM`. Keep `OSM_WITHHELD`; survey-edge handoff, not a reopen.
+
+### Rejected candidates (each re-measured; do not re-find these)
+
+- **`hyatt-named-guess`** — REJECTED as actionable height fix. Independent EPT
+  matches prior: 11,029 pts, rule=canopy-guard → 45.2 over a bimodal cloud
+  (hist 4m:5413 = 49% podium vs tower 41–52). `HAND_AUDITED` null stands; ships
+  OSM-tag 16 as a **stated guess**. No parts-level source. Readiness named-guess
+  stays red on purpose — better absent than pasting the tower across the podium.
+- **`mesa-regents-tower-bleed-class` (osm:359/361–364/366)** — REJECTED as
+  render bug. OSM rings are unnamed re-traces of Mesa Apartments Central GIS
+  pads; `assembleMasses` already suppresses them (0 OSM masses in the Mesa
+  box). Walker sees gisH=6.1. roofOf 20–28 is neighbour-tower bleed — do not
+  admit. (Code comment already names osm:359 as the 0.5 unnamed-coverage
+  exemplar.)
+- **`belmont-courtyard-contamination`** — REJECTED. Ship = fresh roofOf = 9.1
+  (dense 0.44, courtyard/ground mode). Prior pin stands; OSM tag 62.4 stays
+  ignored.
+- **`medical-thin-shelf-near-miss`** — REJECTED. Dense 85.8%, gap 1.9 under the
+  2 m cut; body 8.8 vs ship 10.7. Do not loosen `SHELF_GAP`. Prior keep stands.
+- **`temple-tiered-spire`** — REJECTED. Canopy-guard 21.6 over tiered sacred
+  architecture (spire tail to 36.8). No single plane; prior pin stands.
+- **`lebon-soft-shelf-298-301`** — REJECTED. Guess 9 ≈ p75 9.4–9.5 within
+  ~0.5 m; roofOf ~11 is shelf triage, not underheight.
+- **`nobel-east-283-284-rim-edge`** — REJECTED as height bug. Clean planes
+  (spr 0.1–0.2) blocked only by rim=0.5; ship 9 vs roofOf 10.1 is a 1 m
+  survey-edge miss, not a storey-class error.
+
+### Named OSM-tag buildings (readiness work-list)
+
+Hyatt Regency remains the sole readiness named-guess (`osm:76`, 16 m). Re-derived
+with `explainRoof` + rim base; honest answer is still "no resolvable single
+plane." Gate stays red.
+
+### Handoffs / observations
+
+- **Thin-shelf near-miss with sibling plane**: osm:1364 is the exemplar where
+  keeping the area guess *is* the shelf paste (guess ≈ p98). When dense falls a
+  few points under 85% because of documented eave canopy, and measured siblings
+  already ship the body, `MEASURED_OVERRIDES` taking p75 is applying thin-shelf
+  intent — not reversing it (Union Bank / CSC-D were the reverse case).
+- **Mesa screener false-positive class**: any future screen that flags OSM
+  `shipH` without checking `assembleMasses` suppression will re-find Mesa /
+  similar GIS-covered unnamed re-traces.
+- **Hyatt parts split**: still the only fix that retires the named guess — OSM
+  parts or a GIS massing split; height pass cannot invent one.
+
+### Verification
+
+`npm test`: 572 pass / 0 fail.
+`npm run check`: OK including `--verify` (osmHeights[1364] — → 5.4 reproduces).
+`npm run readiness`: NOT READY — named guess = Hyatt only (expected).
