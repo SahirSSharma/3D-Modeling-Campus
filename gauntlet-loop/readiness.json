@@ -1,12 +1,12 @@
 {
-  "at": "2026-08-06T03:29:42.177Z",
+  "at": "2026-08-06T04:37:44.284Z",
   "head": null,
   "ready": false,
   "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)",
-  "onCampusGuesses": 27,
-  "offCampusGuesses": 323,
-  "onCampusGuessArea_m2": 5834,
-  "campusMeasuredPct": 99.09,
+  "onCampusGuesses": 23,
+  "offCampusGuesses": 317,
+  "onCampusGuessArea_m2": 5016,
+  "campusMeasuredPct": 99.22,
   "results": [
     {
       "ok": false,
@@ -17,7 +17,7 @@
     {
       "ok": false,
       "label": "ON-CAMPUS unnamed rings on a guess",
-      "observed": "27 (+323 off campus)",
+      "observed": "23 (+317 off campus)",
       "gate": "<= 20"
     },
     {

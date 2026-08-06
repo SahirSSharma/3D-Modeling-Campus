@@ -78,6 +78,24 @@ describe("readiness gate", () => {
       "POST_2014_SITES was inlined into the readiness gate — read it from the builder");
   });
 
+  test("unnamed rings get the same epoch courtesy as named buildings", () => {
+    /* POST_2014_OSM_RINGS is the per-ring epoch list: rings whose site the 2014
+       flight saw as foundations or bare ground. Such a ring renders at its OSM
+       tag BY DESIGN, which makes it a stated estimate — the same thing
+       POST_2014_SITES means for a named building.
+
+       The gate honoured that for named buildings and not for unnamed ones, so a
+       correctly-declared ring was reported as an invented guess. That is the
+       epoch rule being punished for working. It was one ring the day this was
+       fixed; it would be all of them the day a pass declares twenty. */
+    assert.match(SRC, /BUILDER\.indexOf\("const POST_2014_OSM_RINGS = new Set\(\["/,
+      "the per-ring epoch list is no longer read from the builder");
+    assert.match(SRC, /!b\.n && declaredRings\.includes\(i\)/,
+      "declared post-2014 rings are being counted as invented guesses again");
+    assert.match(SRC, /declaredRings: DECLARED_RINGS/,
+      "the declared-ring list is not passed into the browser context");
+  });
+
   test("when measured tables agree, GPU drift alone cannot invent a guess", () => {
     /* Hubbs Hall (r2c0 2026-08-05_165434): massHeights 12.3 and heights 12.2
        already agree; GPU rendered ≈11.8 on a 9.5 m grade drifted past the

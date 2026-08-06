@@ -122,6 +122,23 @@ const LANDMARKS = ["Geisel Library", "Argo Hall", "Blake Hall", "RIMAC Arena"];
    its height is a stated estimate, and counting it as an invented guess would
    punish the epoch rule for working. */
 const BUILDER = await readFile(new URL("./build-campus-lidar.mjs", import.meta.url), "utf8");
+/* The same courtesy for UNNAMED rings. POST_2014_OSM_RINGS is the per-ring
+   epoch list: rings whose site the 2014 flight saw as foundations or bare
+   ground, declared so the builder gives them no LiDAR height. Such a ring
+   renders at its OSM tag by design, and that is a stated estimate — exactly
+   what POST_2014_SITES means for a named building. Counting it as an invented
+   guess punishes the epoch rule for working, which is the mistake this gate
+   already avoids for named buildings and was still making for unnamed ones.
+   It moves today's count by one ring; it would misreport all of them the day a
+   pass declares twenty. */
+const DECLARED_RINGS = (() => {
+  const i = BUILDER.indexOf("const POST_2014_OSM_RINGS = new Set([");
+  if (i < 0) return [];
+  const body = BUILDER.slice(i, BUILDER.indexOf("]);", i))
+    .replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
+  return [...body.matchAll(/\d+/g)].map((m) => +m[0]);
+})();
+
 const DECLARED_ESTIMATES = new Set(
   (() => {
     const i = BUILDER.indexOf("const POST_2014_SITES =");
@@ -175,7 +192,7 @@ const renderer = await page.evaluate(() => {
   return gl ? gl.getParameter(d ? d.UNMASKED_RENDERER_WEBGL : gl.RENDERER) : "NO WEBGL";
 });
 
-const census = await page.evaluate(async ({ declared, TABLE_AGREE_DRIFT }) => {
+const census = await page.evaluate(async ({ declared, declaredRings, TABLE_AGREE_DRIFT }) => {
   const [campus, lidar, arcgis, boundary] = await Promise.all([
     fetch("data/campus-3d.json").then((r) => r.json()),
     fetch("data/campus-lidar.json").then((r) => r.json()),
@@ -302,7 +319,7 @@ const census = await page.evaluate(async ({ declared, TABLE_AGREE_DRIFT }) => {
          independent measured sources concur. */
       bucket.measured++;
     } else if (near(rendered, b.h ?? null)) {
-      if (b.n && declared.includes(b.n)) bucket.estimated++;
+      if ((b.n && declared.includes(b.n)) || (!b.n && declaredRings.includes(i))) bucket.estimated++;
       else {
         bucket.guessed++;
         if (!b.n) {
@@ -358,7 +375,7 @@ const census = await page.evaluate(async ({ declared, TABLE_AGREE_DRIFT }) => {
   out.buried.worst.sort((a, c) => c.under - a.under);
   out.buried.worst = out.buried.worst.slice(0, 12);
   return out;
-}, { declared: [...DECLARED_ESTIMATES], TABLE_AGREE_DRIFT: GATES.tableAgreeDrift_m });
+}, { declared: [...DECLARED_ESTIMATES], declaredRings: DECLARED_RINGS, TABLE_AGREE_DRIFT: GATES.tableAgreeDrift_m });
 
 /* ------------------------------------------------------------ landmarks ----
    A standing height for the buildings a reviewer checks first. Absence here is
