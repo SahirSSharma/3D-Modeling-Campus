@@ -20,6 +20,7 @@ import { readFile, mkdir, writeFile, access } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
+import { readScaleBar } from "./register-reference.mjs";
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
 const DOCS = path.join(ROOT, "docs");
@@ -54,15 +55,90 @@ function lookToYawDeg(look) {
 }
 
 /* ------------------------------------------------------------ camera plan */
-const PLAN_HOVER = 260;    // metres — matches campus-inspect.mjs FLY_HOVER, block reads whole
-const PLAN_PITCH = -1.3;   // rad — steep near-vertical, short of -PI/2 to dodge gimbal issues
-const OBLIQUE_HOVER = 90;  // metres — low/close so facades read
+const PLAN_PITCH = -1.3;     // rad — steep near-vertical, short of -PI/2 to dodge gimbal issues
 const OBLIQUE_PITCH = -0.25; // rad — shallow
 
-function cameraForPass(pass) {
-  if (pass === "plan") return { hover: PLAN_HOVER, pitch: PLAN_PITCH };
-  if (pass === "oblique") return { hover: OBLIQUE_HOVER, pitch: OBLIQUE_PITCH };
+/* Ground-span targets, degrees framed by scripts/apple-flyover.mjs's own
+   `--area` capture. Not guesses: the "plan" pass used the file's default
+   SPAN ("0.0007"), the "oblique" pass used its explicit override
+   (`passes` array literal, AREA branch, `span: "0.00038"`). Converted to
+   metres via docs/data/campus-3d.json origin.mPerDegLat below. */
+const PLAN_SPAN_DEG = 0.0007;
+const OBLIQUE_SPAN_DEG = 0.00038;
+
+const VFOV_DEG = 68; // docs/js/campus-walk.js:376 — new THREE.PerspectiveCamera(68, ...)
+
+function spanDegForPass(pass) {
+  if (pass === "plan") return PLAN_SPAN_DEG;
+  if (pass === "oblique") return OBLIQUE_SPAN_DEG;
   throw new Error(`unknown pass "${pass}" — expected "plan" or "oblique"`);
+}
+
+function pitchForPass(pass) {
+  if (pass === "plan") return PLAN_PITCH;
+  if (pass === "oblique") return OBLIQUE_PITCH;
+  throw new Error(`unknown pass "${pass}" — expected "plan" or "oblique"`);
+}
+
+/* Solve altitude so the render frames the SAME ground width Apple's capture
+ * was framed to, at the given render viewport aspect (width/height). The
+ * camera looks down `downAngleRad` below horizontal; the horizontal-FOV edge
+ * rays are obtained by rotating about the camera's own local up-axis
+ * (perpendicular to the view direction, in the tilt plane), not the world
+ * vertical axis — so the ground point on the view axis sits at SLANT RANGE
+ * slantRange = hover / sin(downAngleRad) (not horizontal distance), and the
+ * ground width visible left-to-right there is 2*slantRange*tan(hFovRad/2).
+ * Setting that equal to targetSpanM and solving for hover gives the formula
+ * below. This is a horizontal-width-at-view-centre derivation, deliberately
+ * NOT a vertical-extent one — vertical extent is undefined once part of the
+ * frame points above the horizon, which happens at the oblique pass's
+ * shallow pitch. */
+function cameraForPass(pass, aspect) {
+  const pitch = pitchForPass(pass);
+  const spanDeg = spanDegForPass(pass);
+  const targetGroundSpanM = spanDeg * origin.mPerDegLat;
+  const downAngleRad = -pitch;
+  const vFovRad = (VFOV_DEG * Math.PI) / 180;
+  const hFovRad = 2 * Math.atan(Math.tan(vFovRad / 2) * aspect);
+  const hover = (targetGroundSpanM * Math.sin(downAngleRad)) / (2 * Math.tan(hFovRad / 2));
+  /* Self-consistency check — recomputes the same formula from the chosen
+     hover/aspect, should equal targetGroundSpanM by construction. */
+  const renderGroundWidthM = 2 * (hover / Math.sin(downAngleRad)) * Math.tan(hFovRad / 2);
+  return {
+    hover, pitch, spanDeg, targetGroundSpanM, renderGroundWidthM,
+    vFovDeg: VFOV_DEG, hFovDeg: (hFovRad * 180) / Math.PI,
+  };
+}
+
+/* ----------------------------------------------------- Apple scale-bar check */
+function lumaArray(rgb, w, h, channels) {
+  const y = new Float64Array(w * h);
+  for (let i = 0; i < w * h; i++) {
+    const o = i * channels;
+    y[i] = 0.2126 * rgb[o] + 0.7152 * rgb[o + 1] + 0.0722 * rgb[o + 2];
+  }
+  return y;
+}
+
+/** Independent cross-check of targetGroundSpanM against Apple's own scale
+ *  bar drawn into the capture (0/25/50/75 ft ticks on these eighth-area
+ *  captures — NOT the function's 13 ft/tick default). Never throws: a
+ *  single frame's scale-bar detection failing or disagreeing is visible,
+ *  not fatal to the run. */
+async function appleScaleBarFor(applePath) {
+  try {
+    const { data, info } = await sharp(applePath).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+    const y = lumaArray(data, info.width, info.height, info.channels);
+    const lumAt = (r, c) => y[r * info.width + c];
+    const bar = readScaleBar(lumAt, info.width, info.height, { feetPerTick: 25, ticks: 4 });
+    if (!bar) return { found: false };
+    const metresPerPixel = bar.mPerPx;
+    const groundWidthM = info.width * metresPerPixel;
+    return { found: true, feetPerTick: 25, metresPerPixel, groundWidthM };
+  } catch (e) {
+    console.error(`  ! scale-bar read failed for ${applePath}: ${e.message}`);
+    return { found: false };
+  }
 }
 
 /* --------------------------------------------------------------- manifest */
@@ -153,7 +229,16 @@ async function renderOne(frameName, outDir) {
   const { x, z } = toLocal(target.lat, target.lng);
   const yawDeg = lookToYawDeg(entry.look);
   const yawRad = (yawDeg * Math.PI) / 180;
-  const { hover, pitch } = cameraForPass(entry.pass);
+
+  /* Match the render viewport to this Apple capture's own pixel dimensions
+     BEFORE computing altitude, so the aspect the hover formula solves for is
+     the aspect actually rendered — that's what makes the two panes come out
+     the same height with no black-band padding in the composite below. */
+  const appleMeta = await sharp(applePath).metadata();
+  await page.setViewportSize({ width: appleMeta.width, height: appleMeta.height });
+  const aspect = appleMeta.width / appleMeta.height;
+  const { hover, pitch, spanDeg, targetGroundSpanM, renderGroundWidthM, vFovDeg, hFovDeg } =
+    cameraForPass(entry.pass, aspect);
 
   await page.evaluate(
     ({ x, z, hover, yaw, pitch }) => window.__campusWalk.fly(x, z, hover, yaw, pitch),
@@ -165,11 +250,10 @@ async function renderOne(frameName, outDir) {
   const renderPath = path.join(outDir, "render.png");
   await page.screenshot({ path: renderPath });
 
-  const appleMeta = await sharp(applePath).metadata();
   const renderMeta = await sharp(renderPath).metadata();
   const gap = 4;
   const outW = appleMeta.width + renderMeta.width + gap;
-  const outH = Math.max(appleMeta.height, renderMeta.height);
+  const outH = appleMeta.height; // same viewport height as the Apple capture — no black band
 
   const sidebySidePath = path.join(outDir, "side-by-side.png");
   await sharp({ create: { width: outW, height: outH, channels: 3, background: { r: 20, g: 20, b: 20 } } })
@@ -180,6 +264,29 @@ async function renderOne(frameName, outDir) {
     .png()
     .toFile(sidebySidePath);
 
+  const appleScaleBarRaw = await appleScaleBarFor(applePath);
+  let appleScaleBar;
+  if (!appleScaleBarRaw.found) {
+    appleScaleBar = { found: false };
+  } else {
+    const matchesTarget =
+      Math.abs(appleScaleBarRaw.groundWidthM - targetGroundSpanM) / targetGroundSpanM <= 0.1;
+    appleScaleBar = {
+      found: true,
+      feetPerTick: appleScaleBarRaw.feetPerTick,
+      metresPerPixel: appleScaleBarRaw.metresPerPixel,
+      groundWidthM: appleScaleBarRaw.groundWidthM,
+      matchesTarget,
+    };
+    if (!matchesTarget) {
+      console.error(
+        `  ! WARNING [${frameName}]: Apple scale-bar ground width ` +
+        `${appleScaleBarRaw.groundWidthM.toFixed(1)}m disagrees with targetGroundSpanM ` +
+        `${targetGroundSpanM.toFixed(1)}m by more than 10%`,
+      );
+    }
+  }
+
   const compare = {
     frame: frameName,
     target: { name: target.name, lat: target.lat, lng: target.lng },
@@ -188,6 +295,11 @@ async function renderOne(frameName, outDir) {
     yawDeg,
     yawRad,
     camera: { x, z, hover, pitch, altitude: hover },
+    fov: { vDeg: vFovDeg, hDeg: hFovDeg },
+    spanDeg,
+    targetGroundSpanM,
+    renderGroundWidthM,
+    appleScaleBar,
     apple: { file: path.relative(ROOT, applePath), width: appleMeta.width, height: appleMeta.height },
     render: { file: path.relative(outDir, renderPath), width: renderMeta.width, height: renderMeta.height },
     sideBySide: path.relative(outDir, sidebySidePath),
@@ -204,6 +316,13 @@ try {
   await page.goto(base, { waitUntil: "load" });
   await page.waitForFunction(() => document.body.classList.contains("walk-live"), null, { timeout: 180_000 });
   await page.waitForFunction(() => !!window.__campusWalk?.fly, null, { timeout: 30_000 });
+
+  /* Harness-only, screenshot-time chrome hiding — a side-by-side is for
+     judging geometry, not the app's UI. Applied once here so it covers every
+     frame rendered off this one page, including all of --all. */
+  await page.addStyleTag({
+    content: ".walk-title,.walk-bar,.walk-dev,#walk-minimap,.walk-imagery,.walk-here,.walk-loading{display:none!important}",
+  });
 
   if (FRAME) {
     const outDir = path.join(OUT_BASE, FRAME);
