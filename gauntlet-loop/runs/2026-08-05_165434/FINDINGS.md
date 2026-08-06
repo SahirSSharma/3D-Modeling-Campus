@@ -141,3 +141,69 @@ the r0c1 box). No action.
 ### Verification
 
 See final message for `npm test` / `npm run check` paste.
+
+---
+
+# FINDINGS — run `2026-08-05_165434` · shard r0c2 (re-sweep)
+
+Pass 1 re-sweep of the east-campus shard (CSC yard, Preuss, Scripps Memorial
+fringe, Qualcomm AA). Screen: 6 candidates (5 medium / 1 low). Judged by
+`cursor-grok-4.5-high`.
+
+Every candidate in `pass1-r0c2.screen.json` was re-derived before judgement
+with an independent full-depth targeted EPT re-sample
+(`/tmp/gauntlet-r0c2-judge/reprobe.json`; point counts matched the screener
+exactly — CSC-D 2,004 / CES 3,329 / CSC-A 3,502 / Fleet N 545 / Preuss F
+2,896 / osm:502 17,637 / osm:509 6,943). Measurement via
+`scripts/lib/roof-measure.mjs` `explainRoof` with rim-median base on every
+target. Absolute gaps quoted unrounded. Apple snapshots from the screener's
+`/tmp/gauntlet-r0c2-165434/apple/` reviewed for currency only (no colour
+sampling).
+
+### Fixed — class (thin-shelf override reversal)
+
+| Entity | Was | Now | Source | Test |
+|---|---|---|---|---|
+| CSC Building D (`m:1069,-637`) | 6.5 via `MEASURED_OVERRIDES` | **4.5** | Independent EPT: `explainRoof` rule=thin-shelf, hRel=4.477 (p50 4.266 / p75 4.477 / p98 6.510, gapAbs **2.033**, dense 0.921, bodyTight). Prior reject claimed "gap exactly 2.0 under the >2 cut" from rounded relatives; absolute clears. Override then forced p98 after the builder already took p75. Apple: finished CSC shop with mechanical plant / solar — plant is what thin-shelf discounts (siblings C/H already at 4.8). | epoch r0c2 165434 |
+| CES (`m:1078,-476`) | 6.5 via same override class | **4.5** | Same class: gapAbs **2.030**, dense 0.871, bodyTight, hRel=4.482. Override comment called it a CSC-D near-miss sibling — both were inverted. | epoch r0c2 165434 |
+
+Root cause: `MEASURED_OVERRIDES.massHeights` entries that reverse a thin-shelf
+the shared rule already fired. Withdrawn both; Union Bank (dense under 85%)
+stays. Builder comment that pinned "CSC Building D gap exactly 2.0" updated.
+
+### Rejected candidates (each re-measured; do not re-find these)
+
+- **`fleet-n-near-shelf`** — REJECTED. gapAbs 1.753 under SHELF_GAP; rule=p98
+  → 5.699 matches ship 5.7. Dense body ≈3.9 matches GIS L1 but the cut does
+  not fire. Do not retune for one pad (CSC-A gap 1.676 same family).
+
+- **`preuss-f-dual-plane`** — REJECTED as a height bug. @1786,-549: bimodal
+  hist (4 m:693 / 11 m:578), dense 0.415, rule=p98 → 11.728 ≈ ship 11.8.
+  One GIS ring wraps both decks; upper plane is the honest extrusion for
+  that ring. Do not drop to 4 m or invent GIS 8.5 as a compromise. A parts
+  split is a mapping handoff (see below).
+
+- **`roof-anchor-502` / `roof-anchor-509`** — REJECTED as open. Screener
+  grade audit used centroid+h (Δ −2.7 / +2.0). Independent re-measure with
+  `roofElevation`: Δnew=0 on both; surveyed absolute matches. Class closed
+  by r0c1. Heights 34 / 10.9 stand.
+
+- **`qaa-terrain-apron`** — REJECTED as a height bug. Height 24.3 reconfirmed
+  (30,780 pts, rule=p98). 27/34 footprint vertices south of terrain
+  `z0=−1383` — survey-box coverage handoff, unchanged.
+
+### Handoffs / observations
+
+- **Preuss Building F dual-wing**: GIS ring at (1786, −549) needs a parts
+  split before the ~4–5 m wing can wear its own height. Mapping pass, not
+  height pass.
+- **Rounded-gap class**: any future "gap exactly 2.0 under the cut" claim
+  must quote absolute `p98−p75`, not rounded relative heights. The CSC-D /
+  CES overrides were manufactured by that rounding.
+- **Apple plant ≠ keep shelf**: when Apple shows mechanical plant on a
+  dense low body and thin-shelf fires, that is confirmation of the body,
+  not a reason to override back to p98.
+
+### Verification
+
+See final message for `npm test` / `npm run check` paste.

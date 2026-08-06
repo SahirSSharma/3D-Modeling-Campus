@@ -959,6 +959,23 @@ paste the 9.0 shelf over a one-storey body. osm:482 — cliffside multi-level te
 960 / 959 and the residual multi-plane cluster (|Δ| ≤ 1 m or pts < 400). Prior withholds
 513 / 828 / 975 untouched.
 
+**The east-campus re-sweep (2026-08-05_165434, r0c2).** CSC yard / Preuss / Scripps Memorial
+fringe. Screen of 6 candidates (5 medium / 1 low). Every claim re-derived from an independent
+full-depth EPT with `explainRoof` and a rim base (`/tmp/gauntlet-r0c2-judge/reprobe.json`;
+point counts matched the screener: CSC-D 2,004 / CES 3,329 / CSC-A 3,502 / Fleet N 545 /
+Preuss F 2,896 / osm:502 17,637 / osm:509 6,943). Absolute gaps, not rounded relatives.
+
+| Entity | Was shipping | Now ships | Why |
+|---|---|---|---|
+| Campus Services Complex - Building D | 6.5 m (`MEASURED_OVERRIDES` → p98) | **4.5 m** | Absolute gap 2.033 clears `SHELF_GAP`; `explainRoof` rule=thin-shelf → p75 4.477. Prior "gap exactly 2.0 under the cut" used rounded heights; the override then reversed the shared rule after it already fired. Apple plant is what thin-shelf discounts — same class as siblings C/H. |
+| Campus Emergency Services (CES) | 6.5 m (same override class) | **4.5 m** | Absolute gap 2.030, dense 87.1%, bodyTight — same inverted override. |
+
+Rejected, each re-measured: CSC-A (gap 1.676) and Fleet north (gap 1.753) stay under the cut —
+do not retune. Preuss F @1786 — dual-wing hist (4–5 / 10–11 m), dense 41.5%; upper plane 11.8
+is correct for one ring; a parts split is a mapping handoff. Roof-anchor osm:502 / 509
+(Δold −2.7 / +2.0) — closed by r0c1's `roofElevation` (Δnew=0). Qualcomm AA apron — height
+24.3 correct; survey-box coverage handoff south of `z0=−1383`.
+
 **The north-campus pass-3 re-sweep (2026-08-05, r0c1).** One high candidate: Geneva Hall's
 OSM union outline still extruded at 11.7 m through the plaza between Geneva Hall West and
 East. `ringCoveredBy`'s ≥0.85 area floor is deliberately above courtyard cases — interior

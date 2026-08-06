@@ -1765,12 +1765,14 @@ async function build() {
 
      Thin-shelf under the 5 m guard: same denseBandFraction / gap > 2 /
      bodyTight cut as host roofOf (Asante Meeting Rooms, CSC Building H,
-     CSC Building C, Seventh College East #6 — dense ≥88% matching GIS,
-     p98 rides a thin mechanical / shelf Apple shows today). Otterson (74%),
-     Copley (79%), and Marshall Residence Hall N (82%) stay on p98 —
-     real upper volumes / near-misses under the 85% floor. CSC Building D
-     (gap exactly 2.0) and Transit Operations Trailer (gap 0.9) stay on
-     p98 — under the >2 cut. */
+     CSC Building C, CSC Building D, CES, Seventh College East #6 — dense
+     ≥87% matching GIS, p98 rides a thin mechanical / shelf Apple shows
+     today). Absolute gap clears the cut on D/CES (2.033 / 2.030); a prior
+     "gap exactly 2.0" reject used rounded relative heights and was wrong.
+     Otterson (74%), Copley (79%), and Marshall Residence Hall N (82%) stay
+     on p98 — real upper volumes / near-misses under the 85% floor. CSC
+     Building A (gap 1.68) and Transit Operations Trailer (gap 0.9) stay
+     on p98 — under the >2 cut. */
   const massHeights = {};
   for (const t of massTargets) {
     if (t.roofs.length < 25) continue;
@@ -1858,8 +1860,15 @@ async function build() {
       "Union Bank": [8, "79.9% of returns in the 5-6 m band sits UNDER the 85% thin-shelf cut, gap 2.7 — an IGPP/Perlman near-miss. Apple shows HVAC plant on the finished roof, so pasting the dense 5.3 body would flatten a real shelf. Judged r2c0 pass-3."],
     },
     massHeights: {
-      "m:1069,-637": [6.5, "CSC Building D. GIS claims 4.3; the roofOf shelf is a near-miss the cut catches but Apple shows standing plant. Judged r0c1 pass-2."],
-      "m:1078,-476": [6.5, "CES. Same near-miss class as CSC-D, same verdict — keeps its roofOf. Judged r0c2 pass-2."],
+      /* WITHDRAWN 2026-08-05 (r0c2 165434): CSC Building D (m:1069,-637)
+         and CES (m:1078,-476) were pinned to p98=6.5 on the claim that
+         gap was "exactly 2.0 under the >2 cut" and that Apple plant
+         justified keeping the shelf. Independent full-depth EPT with
+         explainRoof (rim base) shows absolute gap 2.033 / 2.030 — the
+         shared thin-shelf rule already fires (dense 92.1% / 87.1%,
+         bodyTight) and returns p75 ≈ 4.5. Apple confirming plant is
+         evidence FOR the thin-shelf body, not against it — same class
+         as siblings C/H. The overrides were reversing the shared rule. */
     },
     osmHeights: {
       /* WITHDRAWN 2026-08-05: nine osm overrides (453, 518, 522, 526, 532, 534,
