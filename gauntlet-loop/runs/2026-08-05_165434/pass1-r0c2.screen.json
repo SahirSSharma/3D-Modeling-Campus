@@ -1,0 +1,104 @@
+[
+  {
+    "id": "csc-d-thin-shelf-fires",
+    "entity": "Campus Services Complex - Building D",
+    "where": {"x": 1069.3, "z": -636.8},
+    "claim": "assembleMasses ships h=6.5 via massHeights[m:1069,-637] over gisH=4.3 / L1. tests/campus-epoch.test.mjs pins 6.5 as a thin-shelf near-miss (\"gap exactly 2.0 under the >2 cut\"). Sibling Building C/H already ship thin-shelf p75=4.8.",
+    "observed": "Fresh EPT of the GIS ring: 2,004 pts, rimCoverage=1.00, gradeSpread=1.1 m. Absolute percentiles: base=99.5, p50=103.766, p75=103.977, p98=106.010. Gap p98−p75 = 2.033 m (> SHELF_GAP 2). denseBandFraction=0.921, bodyTight (p75−p50=0.21). explainRoof → rule=thin-shelf, height−base=4.477 m (why: 'body tight (p75-p50 = 0.2), shelf 2.0 m above it, 92.1% in a 2 m band — plant, not building'). Histogram 4 m:1724 + 5 m:121 = 92.1% in 4–5 m; 6 m bin only 98. Shipped 6.5 is the p98 shelf; the shared rule would ship p75≈4.5 (Δ = −2.0 m vs ship). Prior rejection used rounded relative heights (6.5−4.5=2.0) and concluded under the cut; the absolute gap clears it.",
+    "evidence": {
+      "lidar": "gis:CSCD 2004 pts rule=thin-shelf hRel=4.477 p50rel=4.266 p75rel=4.477 p98rel=6.510 gapAbs=2.033 dense=0.921 bodyTight; hist=[4m:1724 5m:121 6m:98 3m:58]; massHeights[m:1069,-637]=6.5",
+      "gis": "Campus Services Complex - Building D gisH=4.3 levels=1 area≈829; in PRE_2014_GIS_VERIFIED (CSC yard)",
+      "osm": "no OSM way named Building D; sibling C @ (1069.7,-560.5) massH=4.8 and H @ (1091.8,-608.9) massH=4.8 already thin-shelf spliced",
+      "apple": "Apple snapshot csc-d.jpg z19 at 32.883759,-117.229762 (2555 kB) — finished low CSC shop pad in the service yard today; light-grey flat roof with mechanical units / solar context among fleet vans; centerRGB≈202,202,202; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Thin-shelf massHeights still holding rounded p98 after siblings C/H spliced — absolute gap 2.033 clears SHELF_GAP while the epoch pin and prior reject assumed rounded gap=2.0 exactly under the cut.",
+    "epoch_risk": "Low for existence — Apple shows a finished pre-2014 CSC shop today, and the 2014 body plane is tight at ~4.3–4.5 m matching GIS L1. The 6.5 vs 4.5 split is shelf vs body assignment inside one epoch, not a rebuild. Note: epoch § currently pins 6.5, so any fix must update that pin."
+  },
+  {
+    "id": "preuss-f-dual-plane",
+    "entity": "Preuss School - Building F (GIS mass @1785.8,-548.8)",
+    "where": {"x": 1785.8, "z": -548.8},
+    "claim": "assembleMasses ships h=11.8 via massHeights[m:1786,-549] over gisH=8.5 / L2. Sibling Building F mass @ (1750.9,-509.6) ships 11.4.",
+    "observed": "Fresh EPT: 2,896 pts, rim=1.00, gradeSpread=1.1 m. explainRoof → rule=p98, roofOf−base=11.7 m (p50=8.4, p75=10.8, p98=11.7, dense=0.415). Spread=0.9 so the statistical gate would admit, but the histogram is bimodal: 4 m:693 + 5 m:509 (lower wing) vs 11 m:578 + 10 m:495 (upper wing). One GIS ring wraps both decks; the extrusion wears the upper plane. GIS L2=8.5 sits between the two real planes. Sibling F @1751 is cleaner (623 pts, dense=0.75, h=11.4, hist peaks 11/10).",
+    "evidence": {
+      "lidar": "gis:PreussF@1786,-549 2896 pts rule=p98 h=11.7 p50=8.4 p75=10.8 p98=11.7 dense=0.415 spread=0.9 hist=[4m:693 11m:578 5m:509 10m:495 9m:252 8m:156]; massHeights[m:1786,-549]=11.8; sibling@1751,-510 623 pts h=11.4 dense=0.75",
+      "gis": "Preuss School - Building F gisH=8.5 levels=2 area≈1270 (large) and area≈276 (small sibling); both pre-2014 school fabric",
+      "osm": "null for these GIS names — Preuss school masses are facilities-sourced",
+      "apple": "Apple snapshot preuss-f.jpg z18 at 32.882963,-117.222098 (2837 kB) — finished Preuss school roofs standing today among courts/fields; centerRGB≈152,147,140; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Stepped dual-wing school mass mapped as one GIS ring — lower ~4–5 m wing extruded to the upper ~11–12 m plane (Scripps Memorial / Birch gallery class); needs a split ring before the low wing can wear its own height.",
+    "epoch_risk": "Low for existence — Apple matches a finished pre-2014 Preuss campus. The 4 vs 11 m split is two real decks of one footprint the 2014 flight already saw, not a date conflict. Do not drop to 4 m; do not treat GIS 8.5 as a compromise plane."
+  },
+  {
+    "id": "roof-anchor-502",
+    "entity": "unnamed OSM building index 502 (Scripps Memorial east tower)",
+    "where": {"x": 1572.3, "z": -681.7},
+    "claim": "Renderer sets roofY = ground(centroid) + h while surveyed h = roof − median(rim ground). Ships h=34 via osmHeights[502]. Prior r0c2 passes logged this past the 2 m roof-anchor gate and handed the class off.",
+    "observed": "Re-ran grade audit over all 71 in-box rendered masses: osm:502 still past the 2 m gate — centroid ground 101.7 vs rim-median 104.4, delta=−2.7 m, footprint span 3.8 m, h=34, inGrid=19/19. Fresh EPT still matches the shipped plane (17,637 pts, rule=p98, roofOf−base=34, p50=30.3, p75=30.4, dense=0.655). Bases remain per-vertex safe. Only other |delta|≥2 in-box with a ground sample is osm:509 (+2.0).",
+    "evidence": {
+      "lidar": "grade audit: osm:502 delta=−2.7 span=3.8 h=34; EPT 17637 pts rule=p98 h=34 p50=30.3 p75=30.4 p98=34 dense=0.655; osmHeights[502]=34",
+      "gis": "null",
+      "osm": "unnamed way index 502 — Scripps east tower footprint",
+      "apple": "Apple snapshot osm502.jpg z17 at 32.884165,-117.224382 (3244 kB) — finished Scripps east-tower neighbourhood standing today; centerRGB≈180,185,185; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Cross-shard roof-anchor render class (centroid ground vs rim-median definition of h) — still open since the first r0c2 handoff; joins r0c1's Hopkins / Canyon Vista / Cuzco / VE4 list.",
+    "epoch_risk": "None — geometry definition mismatch inside one epoch, not a source-date conflict."
+  },
+  {
+    "id": "roof-anchor-509",
+    "entity": "unnamed OSM building index 509 (Scripps Memorial south wing)",
+    "where": {"x": 1377.2, "z": -912.5},
+    "claim": "Same renderer roof-anchor definition. Ships h=10.9 via osmHeights[509]. Prior first r0c2 grade audit logged Δ≈+1.9; this re-sweep measures Δ=+2.0 exactly at the gate.",
+    "observed": "Grade audit: centroid ground 94.5 vs rim-median 92.5, delta=+2.0 m, span=5.6 m, inGrid=6/6. Fresh EPT matches ship (6,943 pts, rule=p98, h=10.9, p50=8.7, p75=9.0, p98=10.9, dense=0.503, spread=1.9). Height plane itself is not the claim — the roof sits 2 m above the centroid-ground + h planting.",
+    "evidence": {
+      "lidar": "grade audit: osm:509 delta=+2.0 span=5.6 h=10.9; EPT 6943 pts rule=p98 h=10.9 p50=8.7 p75=9.0 p98=10.9 dense=0.503; osmHeights[509]=10.9",
+      "gis": "null",
+      "osm": "unnamed way index 509 — Scripps south/west wing neighbourhood",
+      "apple": "Apple snapshot osm509.jpg z18 at 32.886252,-117.226469 (2623 kB) — finished hospital-adjacent roofs standing today; centerRGB≈212,207,200; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Same roof-anchor render class as osm:502 — opposite sign (+2.0 vs −2.7) on a graded hospital pad; still a renderer pass, not a per-building height splice.",
+    "epoch_risk": "None — planting definition, not a date conflict."
+  },
+  {
+    "id": "qaa-terrain-apron",
+    "entity": "Qualcomm AA",
+    "where": {"x": 1712.0, "z": -1408.4},
+    "claim": "Height ships correctly at 24.3 m (HAND_AUDITED / lidar.heights). Terrain grid ends at z0=−1383; the building is planted via campus-terrain.js edge clamp / apron. Prior r0c2 rejected this as an in-scope height bug and re-logged it as a survey-box handoff.",
+    "observed": "Of 34 footprint vertices, only 7 have an in-grid ground sample (northern edge; rimMed≈91); 27 vertices including the centroid (1712, −1408) fall south of z0=−1383 and return null before clamp (gCent=null). Extrusion therefore uses apron-clamped edge heights for most of the ring — flat planting at the north-edge elevation rather than per-vertex grade across the full footprint. Fresh EPT still matches height (30,780 pts, rule=p98, h=24.3, p50=20.3, p75=21.6, dense=0.685).",
+    "evidence": {
+      "lidar": "osm:QAA 30780 pts rule=p98 h=24.3 p50=20.3 p75=21.6 p98=24.3 dense=0.685 (height reconfirmed); terrain grid z0=−1383 cell=3; grade audit inGrid=7/34 gCent=null rimMed=91 span=1.8",
+      "gis": "null — Qualcomm AA is OSM-only in this shard",
+      "osm": "Qualcomm AA way, shipped h=24.3 via HAND_AUDITED / lidar.heights",
+      "apple": "Apple snapshot qaa.jpg z17 at 32.890737,-117.222888 (3271 kB) — finished Qualcomm AA standing today; centerRGB≈171,176,168; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Survey/terrain grid truncation at the AREA-box edge — height correct; ground sampling still clamps most vertices to the apron; Voigt-grade per-vertex rule cannot apply until the grid covers the ring.",
+    "epoch_risk": "None for the height number (2014 roof agrees with today's Apple footprint). The planting issue is a coverage hole inside one epoch, not a source-date conflict."
+  },
+  {
+    "id": "fleet-n-near-shelf",
+    "entity": "Fleet Services (GIS mass @1136.8,-593.6)",
+    "where": {"x": 1136.8, "z": -593.6},
+    "claim": "assembleMasses ships h=5.7 via massHeights[m:1137,-594] over gisH=4.3 / L1. Sibling Fleet south @ (1135.5,-625.8) ships 10.1.",
+    "observed": "Fresh EPT: 545 pts, rim=1.00. Absolute gap p98−p75 = 1.753 m (under SHELF_GAP 2). explainRoof → rule=p98, h=5.699 (p50=3.910, p75=3.946, p98=5.699, dense=0.862). Histogram 3 m:442 (81%) under a thin 5 m bin (63). Dense body ≈3.9 m matches GIS L1; shipped 5.7 rides a +1.75 m shelf that does not clear the thin-shelf cut. Near-miss sibling of CSC D (which does clear).",
+    "evidence": {
+      "lidar": "gis:Fleet@1137,-594 545 pts rule=p98 h=5.699 p50=3.910 p75=3.946 p98=5.699 gapAbs=1.753 dense=0.862 hist=[3m:442 5m:63 4m:28]; massHeights[m:1137,-594]=5.7; sibling south@1136,-626 1317 pts h=10.1 dense=0.889 gap=1.097",
+      "gis": "Fleet Services gisH=4.3 levels=1 (two masses); PRE_2014 CSC yard",
+      "osm": "CSC Fleet Services OSM host @ (1132.3,-624.1) lidar.heights=10.1 covers the taller south mass",
+      "apple": "Apple snapshot fleet-s.jpg z19 at 32.883660,-117.229054 (2199 kB) — finished CSC fleet yard with low shop pads and parked vans today; centerRGB≈182,177,174; no crane",
+      "probe": null
+    },
+    "severity": "low",
+    "suspected_class": "Near-miss thin-shelf (gap 1.75 under a >2 cut) over an 86%-dense one-storey body — CSC-yard family; do not retune the cut for one pad.",
+    "epoch_risk": "Low — finished pre-2014 fleet pad on today's Apple. Not a date conflict; residual is whether a 1.75 m shelf over a GIS-matching body is plant noise or a real upper volume."
+  }
+]

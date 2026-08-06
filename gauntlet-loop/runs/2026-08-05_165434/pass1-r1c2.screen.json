@@ -1,0 +1,70 @@
+[
+  {
+    "id": "osm-365-mesa-area-guess",
+    "entity": "osm:365 (unnamed Mesa Apartments Central neighbour)",
+    "where": {"x": 1858.1, "z": 445.3},
+    "claim": "assembleMasses still renders src=osm unnamed at h=8.4 (area guess). lidar.osmHeights[365] absent; not OSM_WITHHELD; not POST_2014_OSM_RINGS. Zero footprint overlap with nearest GIS Mesa rings (9242 @27.5 m, 9240 @57.2 m).",
+    "observed": "Fresh vertex-rimBase EPT: 1,591 pts, rim=0.13 (survey-box edge — only ~13% of vertices have terrain), gradeSpread=0.4 m. explainRoof → rule=canopy-guard, h=25.1 (p50=17.9, p75=25.1, p98=31.5, dense=0.343, spread=6.39). Histogram mode is 5–6 m (5m:377 + 6m:168) under Mesa Nueva tower bleed (18–31 m bins). Sibling GIS Mesa 9240: 1,641 pts, canopy-guard roofOf=18.5 but hist 5m:714+6m:246 and p50=6.3 — ships unchallenged gisH=6.1 which tracks the dense body. GIS 9242 similarly bleed-contaminated (p98=29.4) yet ships 6.1. osm:365's 8.4 guess sits ~2.3 m above that Mesa L2 class with no admissible one-plane admit (rim fails, spread fails, dense 34%).",
+    "evidence": {
+      "lidar": "osm:365@1858,445 1591 pts rule=canopy-guard why='p98-p75 = 6.4 m > 5 — crown overhang, take the roof plane' h=25.1 p50=17.9 p75=25.1 p98=31.5 dense=0.343 spread=6.39 rim=0.13 hist=[5m:377 6m:168 29m:85 18m:76 31m:66]; gis:9240 1641 pts canopy-guard h=18.5 p50=6.3 hist=[5m:714 6m:246] ships gisH=6.1; gis:9242 1455 pts p98=29.4 dense=0.386 hist=[5m:408 6m:154] ships gisH=6.1; explainRoof from scripts/lib/roof-measure.mjs",
+      "gis": "No GIS mass covers osm:365 centroid. Nearest: Mesa Apartments Central - 9242 gisH=6.1 L2 @(1832.7,434.6); 9240 gisH=6.1 @(1809.4,475.5); 9238 Laundry gisH=3 @(1840.1,492.2). None in PRE_2014_GIS_VERIFIED.",
+      "osm": "unnamed way index 365 osmH=8.4 area≈491; osmHeights absent; rim coverage 0.13 bars statistical admit",
+      "apple": "Apple snapshot osm365-mesa.jpg z19 at 32.873973,-117.221325 (2812 kB, centerRGB=28,31,36) — finished Mesa Central low residential roofs among Mesa Nueva towers today; mesa-9242.jpg / mesa-9240.jpg z19 show the same finished grey Mesa pads (centerRGB≈164,162,156 / 77,63,61); no crane",
+      "probe": "explainRoof + builder vertex rimBase; gate admissible=false (minRim false, maxSpread false). Do not paste canopy-guard 25.1 — that is Mesa Nueva bleed, same trap GIS 9240/9242 correctly avoid by keeping L2=6.1."
+    },
+    "severity": "medium",
+    "suspected_class": "Unnamed Mesa Central footprint still on an area guess beside hostless GIS L2 siblings — LiDAR is tower-bleed multimodal so the gate cannot admit; imagery + GIS neighbour class (~6.1) answer what statistics cannot.",
+    "epoch_risk": "HIGH for any LiDAR number — Mesa Nueva towers (POST_2014) bleed into 2014 returns over pre-2014 Mesa Central pads. Apple shows finished low Mesa fabric today; the 8.4 vs 6.1 split is guess vs facilities L2, not a rebuild. Admitting roofOf/canopy-guard would invent a 2–5 storey building from neighbour towers."
+  },
+  {
+    "id": "pepper-canyon-courts-still-unmarked",
+    "entity": "Pepper Canyon / Foodworx tennis + pickleball courts",
+    "where": {"x": 1020.0, "z": -50.0},
+    "claim": "campus-markings.json has zero facilities whose centroids fall inside shard r1c2 (facilities walk returned 0). No pepper/foodworx/pickle tokens in the markings file. Prior passes logged this as a handoff (better absent than wrong until Apple registration residual ≤ 0.6 m).",
+    "observed": "Apple pc-courts.jpg z19 at 32.878452,-117.230290 and foodworx.jpg z19 at 32.878793,-117.230426 still show one reddish-brown tennis court and a 2×2 cluster of blue/grey pickleball courts with white lines immediately north/east of Foodworx (blue patio umbrellas visible). Painted surfaces exist today; the model still ships none. No registered Google-chunk fit was found in-shard.",
+    "evidence": {
+      "lidar": "null — markings are paint, not extruded height",
+      "gis": "null",
+      "osm": "null covering fitted court polygons in campus-markings for this pad",
+      "apple": "Apple snapshots pc-courts.jpg (2522 kB, centerRGB=46,49,36) and foodworx.jpg (2594 kB, centerRGB=190,179,165) z19 — tennis (red/green) + four blue pickleball courts north of Foodworx standing today; Foodworx roof/patio umbrellas present; no crane. Apple pixels still barred for colour sampling without per-site registration residual ≤ 0.6 m (measured campus offset 1.25 m).",
+      "probe": "markings facility walk over campus-markings.json with shard box x 883.3..1928.8, z -485.6..501.3 → 0 hits; string search pepper|foodworx|pickle → false. Same open handoff as pass-1/2/3 of run 2026-08-05_033905."
+    },
+    "severity": "medium",
+    "suspected_class": "Painted recreation pad present on Apple, unfitted until Apple georegistration passes gate — same posture as Muir west pickleball / Preuss pitch.",
+    "epoch_risk": "Low for existence — Apple (newest) shows the courts today; this is a missing paint model, not a date conflict. Do not sample unregistered Apple pixels for line colour."
+  },
+  {
+    "id": "campus-point-east-2014-midbuild",
+    "entity": "Campus Point Parking Structure East",
+    "where": {"x": 1505.4, "z": -226.3},
+    "claim": "assembleMasses ships src=gis Campus Point Parking Structure h=12.8 (gisH=12.8 L3). massHeights[m:1505,-226] absent. POST_2014_SITES lists 'Campus Point Parking Structure' (West is a separate measured 14.4 m ring).",
+    "observed": "Fresh vertex-rimBase EPT: 20,177 pts, rim=1.00, gradeSpread=9.1 m. explainRoof → rule=thin-shelf, h=6.6 (p50=6.5, p75=6.6, p98=8.6, dense=0.962, spread=2.04). Hist 6m:18,908 (94%). The 2014 flight sees a dense ~6.6 m mid-build / lower-deck plane; shipped 12.8 is the post-2014 facilities record. Apple shows a finished multi-level garage with cars on the top deck today.",
+    "evidence": {
+      "lidar": "gis:Campus Point Parking Structure East@1505,-226 20177 pts rule=thin-shelf why='body tight (p75-p50 = 0.1), shelf 2.0 m above it, 96.2% in a 2 m band — plant, not building' h=6.6 p50=6.5 p75=6.6 p98=8.6 dense=0.962 spread=2.04 hist=[6m:18908 7m:499 8m:212]; massHeights absent; West sibling @1417,-152 ships measured 14.4 (spread 1.35)",
+      "gis": "Campus Point Parking Structure East gisH=12.8 L3 area≈7735; rendered name Campus Point Parking Structure",
+      "osm": "osm:1369 unnamed area≈4978 @ (1416.1,-168.6) is GIS-covered by West and does not render; reject-diagnosis spread=1.26 — not a live extrusion",
+      "apple": "Apple snapshot campus-point-east.jpg z18 at 32.880047,-117.225098 (2919 kB, centerRGB=208,207,201) — finished light-grey top decks with parked cars today; no crane",
+      "probe": "explainRoof thin-shelf on the 2014 plane; POST_2014 posture of 12.8 matches Apple's finished garage. Do not admit 6.6."
+    },
+    "severity": "low",
+    "suspected_class": "Post-2014 garage whose 2014 returns are a clean mid-build plane — GIS/POST record is the correct source; thin-shelf 6.6 must stay barred.",
+    "epoch_risk": "HIGH — Apple's finished multi-level garage vs LiDAR's dense 6.6 m deck is a DATE (East went up with JMC ~2012–16). Both can be right. Shipping 12.8 is intentional; flagging so a future agent does not 'fix' it down to 6.6."
+  },
+  {
+    "id": "mobile-petct-near-grade",
+    "entity": "Mobile PET/CT Scanner",
+    "where": {"x": 1351.4, "z": -42.2},
+    "claim": "assembleMasses ships src=gis Mobile PET/CT Scanner h=4.3 (gisH=4.3 L1, area≈39). massHeights absent.",
+    "observed": "Fresh vertex-rimBase EPT: 108 pts, rim=1.00. explainRoof → rule=p98, h=-0.6 (p50=-0.8, p75=-0.7, p98=-0.6, dense=1.0, spread=0.11). Hist −1m:108 — every return is near-grade. Gate refuses (minH false, minPts false). Sibling Mobile CT @ (1325,-44) ships 3.0 over roof=2.1 (360 pts). Apple shows courtyard trailers/tents and a van in this pad between Sulpizio / Altman access roads — not a solid 4.3 m building.",
+    "evidence": {
+      "lidar": "gis:Mobile PET/CT Scanner@1351,-42 108 pts rule=p98 h=-0.6 p50=-0.8 p75=-0.7 p98=-0.6 dense=1.0 hist=[-1m:108]; massHeights[m:1351,-42]=undefined; sibling Mobile CT@1325,-44 360 pts roof=2.1 ship=3.0",
+      "gis": "Mobile PET/CT Scanner gisH=4.3 L1 area≈39; Mobile CT gisH=3 L1 area≈62",
+      "osm": "null covering named host",
+      "apple": "Apple snapshot mobile-petct.jpg z19 at 32.878382,-117.226745 (2355 kB, centerRGB=89,90,98) — paved courtyard with small white gabled trailers/tents and a van today under Jacobs tower shadow; no solid clinic roof at the pin",
+      "probe": "explainRoof with builder vertex rimBase; 2014 returns are empty-lot / pad, not a building plane"
+    },
+    "severity": "low",
+    "suspected_class": "GIS L1 box over a mobile-scanner pad / trailer court — 2014 near-grade returns cannot support 4.3; Apple shows temporary fabric, not a permanent extrusion candidate.",
+    "epoch_risk": "Medium — a mobile unit may come and go across epochs. Apple's trailers today vs LiDAR's empty pad is consistent with a non-permanent facility. Better absent (or an explicit mobile convention) than a solid 4.3 m box; do not admit a LiDAR plane that does not exist."
+  }
+]

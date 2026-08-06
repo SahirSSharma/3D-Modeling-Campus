@@ -1,0 +1,87 @@
+[
+  {
+    "id": "marsh-upper-gjk-no-massH",
+    "entity": "Marshall Upper Apartments G / J / K (GIS masses m:27,-604 / m:4,-532 / m:-59,-552)",
+    "where": {"x": 26.6, "z": -604.5},
+    "claim": "assembleMasses ships src=gis h=gisH=6.1 (L2) for all three. lidar.massHeights for those keys is undefined. Sibling Halls H and L already read thin-shelf 6.1 (= gisH) under the same probe; Hall M canopy-guards to 6.2.",
+    "observed": "Fresh full-depth EPT + explainRoof (scripts/lib/roof-measure.mjs, builder vertex rimBase, base passed): G 1,682 pts rule=p98 → 6.9 (p50=6.1 p75=6.1 p98=6.9, dense=0.967, spr=0.8, rim=1.00). J 2,236 pts rule=p98 → 6.9 (p50=6.2 p75=6.2 p98=6.9, dense=0.979, spr=0.7). K 2,195 pts rule=p98 → 6.8 (p50=6.1 p75=6.1 p98=6.8, dense=0.983, spr=0.7). All three clear STAT_MIN_PTS/STAT_MAX_SPREAD/STAT_MIN_HEIGHT/rim. Δ vs shipped GIS = +0.7…+0.8 m. Controls: H 1,753 pts rule=thin-shelf → 6.1 (= ship); L 1,686 pts thin-shelf → 6.1; M 2,364 pts canopy-guard → 6.2. Apple marsh-upper-g.jpg z19 — finished Marshall Upper townhome roofs among ERC fabric today; no crane.",
+    "evidence": {
+      "lidar": "G: 1682 pts rule=p98 h=6.9 dense=0.967 spr=0.8 hist=[6m:1092 5m:535]; J: 2236 pts rule=p98 h=6.9 dense=0.979 spr=0.7 hist=[6m:1605 5m:585]; K: 2195 pts rule=p98 h=6.8 dense=0.983 spr=0.7 hist=[6m:1168 5m:990]; massHeights all undefined; /tmp/gauntlet-r0c1-p2s/probe.json",
+      "gis": "all three L2 gisH=6.1; hostless GIS residence pads (no OSM host rename needed — GIS name already Marshall Upper Apartments *)",
+      "osm": "null — GIS-named townhomes; nearby unnamed osm:21/138/894/897 already carry osmHeights 6.1–6.9",
+      "apple": "Apple MapKit snapshot z19 at G 32.883467,-117.240915 (marsh-upper-g.jpg 2203 kB) centerRGB≈196,195,189 — finished white townhome roofs + landscaped courts today. No colour sampling (Apple offset unresolved).",
+      "probe": "explainRoof imported from scripts/lib/roof-measure.mjs with rim-median base on every target; thin-shelf control on H/L confirms shared measure is live"
+    },
+    "severity": "medium",
+    "suspected_class": "Hostless GIS Marshall Upper townhomes with a clean measured plane still shipping the uniform L2=6.1 record — same class as Ext H/K admissions (r0c0 pass-2) and MarshResU (low Δ). G/J/K clear the gate; H/L/M keep the record under thin-shelf/canopy.",
+    "epoch_risk": "Low for existence — Apple shows finished townhomes today and the 2014 cloud already has a dense 5–6 m body. Not a post-2014 rebuild. Δ only 0.7–0.8 m so eye-level impact is small; the finding is the missing massHeights pin, not a storey-scale lie. README's prior 'keep 6.1 under eucalyptus' note fits H/L/M, not these three clear planes."
+  },
+  {
+    "id": "osm-852-853-hopkins-fringe-pads",
+    "entity": "unnamed OSM buildings index 852 / 853 (west fringe of Hopkins Parking Structure)",
+    "where": {"x": 122.8, "z": -651.1},
+    "claim": "campus-3d still carries area-guess h=4.5 (areas ≈79 / 84 m²). Not in lidar.osmHeights; not OSM_WITHHELD. assembleMasses suppresses both — GIS coverage 85.7% / 86.7% under Hopkins Parking (gisH=18.3, massH=21.5).",
+    "observed": "Fresh EPT: osm:852 240 pts rule=p98 → 9.0 (p50=7.4 p75=8.4 p98=9.0, dense=0.671, spr=0.6, rim=1.00) — fails STAT_MIN_PTS only. osm:853 265 pts rule=p98 → 8.9 (p50=7.3 p75=8.3 p98=8.9, dense=0.683, spr=0.6). Apple ring-snapshots (scripts/ring-snapshot.mjs z19): 852 sits on a small solar-topped pad in the paved gap between RWNLLN white roofs and the Hopkins solar deck; 853 sits on a low dark rectangle in the garage's west shadow beside a parked car. Neither is the multi-storey garage itself — the ≥0.85 area test is swallowing fringe pads whose centroids fall inside an oversized Hopkins ring.",
+    "evidence": {
+      "lidar": "osm:852 240 pts rule=p98 h=9.0 spr=0.6 hist=[8m:91 7m:70 3m:42]; osm:853 265 pts rule=p98 h=8.9 spr=0.6 hist=[8m:93 7m:88 3m:43]; osmHeights both undefined; pts < STAT_MIN_PTS 400",
+      "gis": "Hopkins Parking mass m:182,-634 ships 21.5; coverage sample attributes 85–87% of each small ring to that mass — suppression, no self render",
+      "osm": "unnamed indices 852/853, campus-3d h=4.5; Nominatim reverse nearest amenity=Hopkins Parking Structure (way/39623389) — identity of the tiny pads themselves is soft",
+      "apple": "ring overlays /tmp/gauntlet-r0c1-p2s/rings/osm-852-z19.png and osm-853-z19.png — finished fringe pads today, not garage decks; no crane. Also osm852.jpg / osm853.jpg bare snapshots.",
+      "probe": "explainRoof with rim base; do not auto-admit roofOf≈9 (pts≪400 and neighbour-garage bleed risk) — imagery triage / WITHHOLD vs hand-admit"
+    },
+    "severity": "medium",
+    "suspected_class": "Fringe pad swallowed by an oversized GIS parking ring (unnamed area floor 0.5 / named 0.85) — Apple shows a real small structure that never extrudes, while LiDAR under-samples and may read garage bleed. Sibling of the 280 multi-plane residue class, but the interesting failure is suppression identity, not the 4.5 guess.",
+    "epoch_risk": "Low for currency (Apple finished pads today). High risk of mistaking the 9 m roofOf for the pad's own height — that is likely Hopkins deck / bridge bleed in a 240-pt sample, not a mid-rise shed. Better absent (current) than pasting 9; the open question is whether a 1-storey hand admit or WITHHOLD is honest once identity is fixed."
+  },
+  {
+    "id": "osm-1381-1383-wells-fargo-residue",
+    "entity": "unnamed OSM buildings index 1381 / 1383 (Wells Fargo Hall wings)",
+    "where": {"x": 13.0, "z": -981.6},
+    "claim": "campus-3d still carries area-guess h=12 / 10. Not in lidar.osmHeights; not OSM_WITHHELD. Both suppressed — GIS coverage 94% / 98.7% under Wells Fargo Hall (massH=26.1, pinned).",
+    "observed": "Fresh EPT: osm:1381 2,857 pts rule=p98 → 19.5 (p50=16.5 p75=17.5 p98=19.5, dense=0.711, spr=2.0) hist 16m:1728 — multiplane (gate refuses). osm:1383 2,106 pts rule=p98 → 23.8 (p50=21.3 p75=22.3 p98=23.8, dense=0.644, spr=1.5) hist 22m:1197. Apple ring overlays: both outlines sit on finished Wells Fargo roof fabric with solar / mechanical plant today (Apple offset ~1 m visible). Host GIS mass already ships the measured 26.1 plane (named OSM host re-probe 3,328 pts rule=p98 → 28.4 matches lidar.heights['Wells Fargo Hall']=28.4).",
+    "evidence": {
+      "lidar": "1381: 2857 pts rule=p98 h=19.5 spr=2.0 hist=[16m:1728 18m:309]; 1383: 2106 pts rule=p98 h=23.8 spr=1.5 hist=[22m:1197 17m:343]; osmHeights undefined; Wells Fargo named host pts=3328 h=28.4; massHeights[m:-28,-982]=26.1",
+      "gis": "Wells Fargo Hall gisH=17.1 mh=26.1 — already the rendered mass; these OSM rings are wing re-traces",
+      "osm": "unnamed 1381/1383, campus-3d h=12/10; Nominatim reverse nearest Ridge Walk bridge ways — soft identity, footprints are building rings in campus-3d",
+      "apple": "ring overlays osm-1381-z19.png / osm-1383-z19.png + wells-fargo.jpg z18 — finished Rady/Wells Fargo roofs with solar today; no crane",
+      "probe": "explainRoof with rim base; multiplane residue under an already-measured GIS host — do not admit roofOf onto suppressed outlines"
+    },
+    "severity": "low",
+    "suspected_class": "Suppressed multi-plane unnamed guess residue (spread>1.2) under a measured GIS host — same class as pass-1 osm:57 / Douglas. No current render; GIS 26.1 already carries the building.",
+    "epoch_risk": "Low for currency (Apple finished). The 16 vs 22 m hist bands are stepped Wells Fargo wings the 2014 flight already saw — not evidence the lot was empty. Leave unbuilt unless a parts split can name the wings; do not paste 19.5/23.8 onto the suppressed outlines."
+  },
+  {
+    "id": "osm-1361-sdsc-east-residue",
+    "entity": "unnamed OSM building index 1361 (San Diego Supercomputer East Expansion outline)",
+    "where": {"x": 171.6, "z": -713.5},
+    "claim": "campus-3d still carries area-guess h=12 (area≈2079). Not in lidar.osmHeights; not OSM_WITHHELD. Suppressed — GIS coverage 97.1% under San Diego Supercomputer East Expansion (PRE_2014_GIS_VERIFIED; massH=23.2).",
+    "observed": "Fresh EPT: 5,872 pts rule=p98 → 24.1 (p50=20.3 p75=21.3 p98=24.1, dense=0.657, spr=2.8) hist 21m:3105 — multiplane. Δ vs GIS massH 23.2 is only +0.9 m on the upper plane. Apple ring overlay: finished T-shaped SDSC expansion roof with four solar arrays and mechanical plant today; OSM outline shows the known ~1.25 m Apple offset.",
+    "evidence": {
+      "lidar": "osm:1361 5872 pts rule=p98 h=24.1 spr=2.8 hist=[21m:3105 13m:771 20m:755]; osmHeights[1361]=undefined; massHeights for SDSC East Expansion = 23.2",
+      "gis": "San Diego Supercomputer East Expansion @~(171,-705) gisH=17.1 mh=23.2 — already rendered",
+      "osm": "unnamed index 1361, campus-3d h=12; Nominatim reverse nearest Ridge Walk outdoor_seating — soft",
+      "apple": "ring overlay osm-1361-z19.png — finished solar-topped expansion roof today; no crane",
+      "probe": "explainRoof with rim base; GIS host already within 1 m of roofOf — guess residue only"
+    },
+    "severity": "low",
+    "suspected_class": "Suppressed multi-plane unnamed guess under a PRE_2014_GIS_VERIFIED host whose massHeights already matches the measured plane — documentation residue, not an eye-level bug.",
+    "epoch_risk": "Low — Apple + 2014 cloud agree a finished expansion stands here. The 12 m guess is stale bookkeeping; the rendered GIS mass is the honest answer."
+  },
+  {
+    "id": "erc-laundry-east-near-grade",
+    "entity": "ERC Laundry East (GIS mass m:-60,-806)",
+    "where": {"x": -59.7, "z": -806.0},
+    "claim": "assembleMasses ships src=gis h=gisH=3.0. massHeights undefined.",
+    "observed": "Fresh EPT: 235 pts rule=p98 → 1.5 (p50=1.1 p75=1.1 p98=1.5, dense=1.000, spr=0.4, rim=1.00) hist 0m:143 + 1m:92. Fails STAT_MIN_PTS and STAT_MIN_HEIGHT. Shipped 3 is 1.5 m over the dense near-grade body. Apple erc-laundry-east.jpg z19 centerRGB≈195,197,198 — finished ERC fabric today; the laundry pad itself is a low grey roof among the courtyards (no crane).",
+    "evidence": {
+      "lidar": "235 pts rule=p98 h=1.5 dense=1.0 spr=0.4 hist=[0m:143 1m:92]; massHeights undefined; under STAT_MIN_HEIGHT 3",
+      "gis": "ERC Laundry East gisH=3 levels=1",
+      "osm": "host name ERC Laundry East present in campus-3d; lidar.heights path not re-probed as a separate named ring this pass",
+      "apple": "Apple z19 at 32.885289,-117.241842 (erc-laundry-east.jpg 2247 kB) — finished neighbourhood; currency OK",
+      "probe": "explainRoof with rim base; do not admit 1.5 as a building plane — keep-record or withhold class"
+    },
+    "severity": "low",
+    "suspected_class": "Near-grade / under-min-height hostless GIS pad — dense body below STAT_MIN_HEIGHT while the L1 record ships 3. Same posture as Outback Adventures (mh already 2.5 on 127 pts) rather than a storey-scale lie.",
+    "epoch_risk": "Low for existence (Apple finished). The near-grade cloud could be a very low laundry canopy the flight barely clears — not evidence the building post-dates 2014. Do not invent height; GIS 3 is already the conservative one-storey record."
+  }
+]

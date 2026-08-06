@@ -1,0 +1,70 @@
+[
+  {
+    "id": "vaf3-position-double",
+    "entity": "Visual Arts Facility - Building 3",
+    "where": {"x": 670.1, "z": -85.0},
+    "claim": "assembleMasses renders TWO masses both named Visual Arts Facility - Building 3: GIS src h=11.5 at (660.9,-83.9) via massHeights[m:661,-84]=11.5, AND OSM src h=11.7 at (679.3,-86.1) via osmHeights on the smaller OSM ring. A second OSM ring also named Building 3 at (661.9,-86.7) yields to the GIS mass.",
+    "observed": "Centroid distance 18.6 m; OSM centroid not inside GIS ring and GIS centroid not inside OSM ring (coverage 0). Fresh vertex-rimBase EPT: GIS ring 2,060 pts, explainRoof rule=p98 → 11.5 (p50=10.3, p75=10.3, p98=11.5, dense=0.571, spread=1.13, admissible). OSM-render ring 473 pts, rule=p98 → 11.7 (p50=10.8, p75=11.1, p98=11.7, dense=0.909, spread=0.6, admissible). Both planes are real one-storey roofs; the disagreement is identity/position, not height.",
+    "evidence": {
+      "lidar": "gis:VAF3@661,-84 2060 pts rule=p98 why='no guard fired; p98 is the roof' h=11.5 p50=10.3 p75=10.3 p98=11.5 dense=0.571 spread=1.13 hist=[10m:1023 0m:458 9m:153 11m:114]; osm-render@679,-86 473 pts rule=p98 h=11.7 p50=10.8 p75=11.1 p98=11.7 dense=0.909 spread=0.6 hist=[10m:282 11m:148 5m:34]; rimBase=vertex-only (builder); explainRoof from scripts/lib/roof-measure.mjs",
+      "gis": "Visual Arts Facility - Building 3 gisH=8.5 levels=2 area≈421 @ (660.9,-83.9); massHeights ships 11.5",
+      "osm": "two co-named OSM rings: (679.3,-86.1) area≈191 osmH=4.5 oh=11.7 RENDERS; (661.9,-86.7) area≈440 osmH=9 oh=11.5 yields to GIS",
+      "apple": "Apple snapshots vaf3-gis.jpg / vaf3-osm.jpg z19 at 32.878759,-117.234131 and 32.878779,-117.233934 (2144/2139 kB) — finished VA complex with multiple distinct roofs (courtyard hall, sawtooth metal, amphitheater + white dome) today; centerRGB≈184,177,171 / 162,169,176; no crane. Both footprints sit on real standing fabric; Apple does not label which is Building 3.",
+      "probe": "explainRoof imported from scripts/lib/roof-measure.mjs with builder vertex rimBase on both rings"
+    },
+    "severity": "high",
+    "suspected_class": "Co-named GIS+OSM double render with zero footprint overlap — university numbering vs OSM identity. Persistent open handoff from prior r1c1 passes; neither vanishes until a source (Sahir / facilities map) says which footprint is Building 3.",
+    "epoch_risk": "Low for existence — Apple shows finished roofs at both sites today, and both 2014 planes are clean one-storey. This is not a date conflict (empty lot vs building). It is an identity/position conflict between two current footprints claiming the same name."
+  },
+  {
+    "id": "sc-g-gis-underheight",
+    "entity": "Student Center A - Building G",
+    "where": {"x": 121.8, "z": 117.7},
+    "claim": "assembleMasses ships src=gis Student Center A - Building G h=8.5 via gisH=8.5 (levels=2). massHeights[m:122,118] is absent, so the GIS levels-derived height wins.",
+    "observed": "Fresh vertex-rimBase EPT: 749 pts, rim=1.00, gradeSpread=0.7 m. explainRoof → rule=canopy-guard, roofOf−base=10.3 m (p50=10.1, p75=10.3, p98=24.0, dense=0.776, why=p98-p75=13.6 m crown overhang). Spread p75−p50=0.2 — gate-admissible one-plane body. Histogram 10 m:371 + 9 m:210 = 78% in the 9–10 m band. Shipped 8.5 is 1.8 m under the measured plane (GIS L2×4.27≈8.5 tracks the levels tag, not the laser).",
+    "evidence": {
+      "lidar": "gis:SC-G@122,118 749 pts rule=canopy-guard why='p98-p75 = 13.6 m > 5 — crown overhang, take the roof plane' h=10.3 p50=10.1 p75=10.3 p98=24.0 dense=0.776 spread=0.20 hist=[10m:371 9m:210 22m:33 21m:32 23m:19]; massHeights[m:122,118]=undefined; admissible=true",
+      "gis": "Student Center A - Building G gisH=8.5 levels=2 area≈245",
+      "osm": "null — rendered from GIS mass under Student Center host neighbourhood; sibling Building EN @ (148,52) ships 8.5 ≈ fresh roofOf 8.9",
+      "apple": "Apple snapshot sc-g.jpg z19 at 32.876933,-117.239894 (2665 kB) — finished Student Center roofs (white/grey flat pads, orange courtyard umbrellas) among mature canopy today; centerRGB≈186,186,184; no crane. Eucalyptus overhang matches the canopy-guard tail.",
+      "probe": "explainRoof imported from scripts/lib/roof-measure.mjs with builder vertex rimBase; thin-shelf did not fire (canopy-guard took p75 first)"
+    },
+    "severity": "medium",
+    "suspected_class": "GIS levels-derived height standing in for a missing massHeights key on a clean one-plane Student Center wing — laser says ~10.3 m, L2 tag says 8.5. Sibling EN already tracks its plane; G never got a per-mass write.",
+    "epoch_risk": "Low — Apple shows finished Student Center fabric; the 8.5 vs 10.3 split is a 2014 measurement vs GIS-levels disagreement, not a post-2014 rebuild. Crown overhang explains the p98=24 tail, not a taller building."
+  },
+  {
+    "id": "bonner-upper-shelf",
+    "entity": "Bonner Hall",
+    "where": {"x": 79.5, "z": 205.1},
+    "claim": "assembleMasses ships src=gis Bonner Hall h=19.2 via massHeights[m:80,205]=19.2 over gisH=17.1 / L4.",
+    "observed": "Fresh vertex-rimBase EPT: 8,800 pts, rim=1.00, gradeSpread=5.6 m. explainRoof → rule=p98, roofOf−base=19.2 m (p50=15.5, p75=15.5, p98=19.2, dense=0.757). Body is thin-shelf-tight (p75−p50=0) but dense 75.7% is under the 85% cut, so thin-shelf does not fire and p98 ships. Histogram 15 m:6,458 (73%) vs 18 m:758 + 19 m:153. GIS L4=17.1 sits between the dense body and the shelf. Apple shows a flat white roof with a long central longitudinal plant/skylight strip — the 19 m returns read as that strip, not a second storey.",
+    "evidence": {
+      "lidar": "gis:Bonner@80,205 8800 pts rule=p98 why='no guard fired; p98 is the roof' h=19.2 p50=15.5 p75=15.5 p98=19.2 dense=0.757 spread=3.71 hist=[15m:6458 18m:758 7m:565 17m:461 16m:205 19m:153]; massHeights[m:80,205]=19.2; host lidar.heights['Bonner Hall']=19.4",
+      "gis": "Bonner Hall gisH=17.1 levels=4 area≈3017; co-named 22 m² east fringe already removed (pass-3 micro-sliver rule)",
+      "osm": "Bonner Hall host; campus-3d osmH=12 lidarH=19.4",
+      "apple": "Apple snapshot bonner.jpg z19 at 32.876145,-117.240350 (2180 kB) — finished Bonner white flat roof with a long central grilled longitudinal strip (plant/skylight) and a small east protrusion today; solar-panel neighbour south; centerRGB≈224,222,219; no crane",
+      "probe": "explainRoof imported from scripts/lib/roof-measure.mjs with builder vertex rimBase; thin-shelf near-miss (dense 0.757 < 0.85)"
+    },
+    "severity": "medium",
+    "suspected_class": "Thin-shelf near-miss / upper-shelf ride on a science hall — same family as prior McGill (dense 82.2%) / Literature (84.4%) rejections. Majority plane ~15.5 m; shipped p98 19.2 tracks rooftop plant visible on Apple. Do not lower the 85% cut without a class rule that can see the plant strip.",
+    "epoch_risk": "Low for existence — Apple + GIS L4 agree a finished pre-2014 hall stands here. The 15 vs 19 m split is plant vs deck of one 2014 building, not a rebuild. Pasting 15.5 would flatten the plant the way pasting McGill's body was rejected."
+  },
+  {
+    "id": "powell-focht-upper-shelf",
+    "entity": "Powell-Focht Bioengineering Hall",
+    "where": {"x": 627.6, "z": -418.2},
+    "claim": "assembleMasses ships src=gis Powell-Focht Bioengineering Hall h=23.1 via massHeights[m:628,-418]=23.1 over gisH=17.1 / L4.",
+    "observed": "Fresh vertex-rimBase EPT: 15,276 pts, rim=1.00, gradeSpread=0.9 m. explainRoof → rule=p98, roofOf−base=23.1 m (p50=18.5, p75=19.3, p98=23.1, dense=0.683). Spread=3.82 — gate refuses auto-admit. Histogram 18 m:9,603 (63%) + 19 m:828 vs 21–23 m shelves (1581+904+440+406). Body not thin-shelf-tight (p75−p50=0.8) and dense 68% << 85%. GIS L4=17.1 sits near the dense body; shipped 23.1 rides the upper shelf. Apple shows a courtyard hall with extensive dark solar arrays on south/east wings over a light-grey roof deck.",
+    "evidence": {
+      "lidar": "gis:Powell-Focht@628,-418 15276 pts rule=p98 why='no guard fired; p98 is the roof' h=23.1 p50=18.5 p75=19.3 p98=23.1 dense=0.683 spread=3.82 hist=[18m:9603 21m:1581 22m:904 19m:828 20m:440 23m:406]; massHeights[m:628,-418]=23.1; host lidar.heights['Powell-Focht Bioengineering Hall']=23.1",
+      "gis": "Powell-Focht Bioengineering Hall gisH=17.1 levels=4 area≈2234",
+      "osm": "Powell-Focht Bioengineering Hall campus-3d osmH=15.6 lidarH=23.1",
+      "apple": "Apple snapshot powell-focht.jpg z18 at 32.881782,-117.234487 (2849 kB) — finished Powell-Focht courtyard complex with large dark solar arrays on south/east roof wings today; centerRGB≈186,190,187; no crane",
+      "probe": "explainRoof imported from scripts/lib/roof-measure.mjs with builder vertex rimBase"
+    },
+    "severity": "medium",
+    "suspected_class": "Stepped / upper-shelf science hall where massHeights rides p98 while the majority of returns sit on an ~18–19 m deck (Pacific / NatSci / BRF II family). Imagery must pick whether solar+plant is a true second plane or a shelf over one extrusion.",
+    "epoch_risk": "Low for existence — Apple shows finished solar-panel roofs today; Powell-Focht is pre-2014. The 18 vs 23 m split is two real decks/plant of one building, not a date conflict. Do not auto-drop to 18.5 without an Apple plane call — the upper volume/plant is visible."
+  }
+]

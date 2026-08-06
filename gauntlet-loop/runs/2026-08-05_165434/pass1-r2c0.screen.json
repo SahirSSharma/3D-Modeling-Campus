@@ -1,0 +1,121 @@
+[
+  {
+    "id": "osm-817-birch-near-grade",
+    "entity": "unnamed OSM building index 817 (Birch Aquarium service pad / annex)",
+    "where": {"x": -899.8, "z": 1278.2},
+    "claim": "assembleMasses still extrudes src=osm area-guess h=4.5 (area≈130, 4 verts). Not in lidar.osmHeights / OSM_WITHHELD / POST_2014_OSM_RINGS. No GIS mass within 40 m. One of only two on-campus unnamed still-guess rings that still render in this shard (sibling 818 matches its plane).",
+    "observed": "Fresh vertex-rimBase EPT: 688 pts, rim=1.00, gradeSpread=2.9 m. explainRoof → rule=p98, h=2.6 (p50=0.3, p75=1.4, p98=2.6, dense=0.667, spread=1.2). Hist 0m:275 + 1m:184 + 2m:96 — body is near-grade / low pad, not a 4.5 m building. Gate refuses (minH false). Nominatim reverse 32.866440,-117.250825 → Birch Aquarium, 2300 Expedition Way. Apple osm817.jpg z19 — finished Birch Aquarium white roofs / solar / tank yard / circular drive standing today; the 130 m² rectangle sits in the aquarium service apron, not a separate measured hall.",
+    "evidence": {
+      "lidar": "osm:817@-899.8,1278.2 688 pts rule=p98 why='no guard fired; p98 is the roof' h=2.6 p50=0.3 p75=1.4 p98=2.6 dense=0.667 spread=1.2 rim=1.00 hist=[0m:275 1m:184 2m:96 -2m:79]; lidar.osmHeights[817]=undefined; explainRoof from scripts/lib/roof-measure.mjs with builder vertex rimBase",
+      "gis": "No GIS mass within 40 m of centroid. Nearest named host Birch Aquarium ships measured lidar.heights=7.2 @(-884.1,1339.1).",
+      "osm": "unnamed index 817 h=4.5 area≈130 verts=4 ring [(-910.2,1281.3)…(-910.2,1275.1)]; Nominatim → Birch Aquarium, 2300 Expedition Way",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c0-screen/apple/osm817.jpg z19 at 32.866440,-117.250825 (2563 kB, centerRGB=77,80,76 ent=7.22) — finished Birch Aquarium complex today (white roofs, solar rows, cylindrical tank yard, circular drive); no crane",
+      "probe": "sibling osm:818 @(-901.6,1295) 331 pts rule=p98 h=4.4 dense=0.816 spread=0.3 — already matches the 4.5 guess within 0.1 m; not a finding. 817 is the near-grade outlier."
+    },
+    "severity": "medium",
+    "suspected_class": "On-campus unnamed OSM pad/plaza still shipping an area-guess solid over near-grade 2014 returns (Foodworx-patio / NO_SOLID_ROOF class) — only on-campus still-guess render in-shard whose plane fails minH.",
+    "epoch_risk": "Low for existence of the aquarium — Apple shows the finished complex today. The open question is whether this 130 m² rectangle is a real low annex or a courtyard/service pad mis-tagged as building. Do not admit roofOf=2.6 as a building height; better absent (or an explicit pad convention) than a 4.5 m box over a near-grade hist."
+  },
+  {
+    "id": "osm-1032-overheight-neargrade",
+    "entity": "unnamed OSM building index 1032 (9530 La Jolla Shores Drive)",
+    "where": {"x": -398.8, "z": 504.9},
+    "claim": "assembleMasses ships src=osm area-guess h=9 (area≈501). Not in lidar.osmHeights / OSM_WITHHELD. Reject-diagnosis why=spread>1.2.",
+    "observed": "Fresh vertex-rimBase EPT: 4,305 pts, rim=1.00, gradeSpread=5.8 m. explainRoof → rule=canopy-guard, h=3.8 (p50=1.9, p75=3.8, p98=9.2, dense=0.637, spread=5.4). Hist 1m:2570 (60%) — dense body is near-grade / low deck; shipping 9 pastes the canopy/shelf tail the guard already rejected. Nominatim → 9530 La Jolla Shores Drive. Apple osm1032.jpg z19 — finished Shores residential fabric today; snapshot also shows a bright white multi-level roof beside a circular bare-earth cut (pool/landscaping), so currency is mixed at the pin.",
+    "evidence": {
+      "lidar": "osm:1032@-398.8,504.9 4305 pts rule=canopy-guard why='p98-p75 = 5.4 m > 5 — crown overhang, take the roof plane' h=3.8 p50=1.9 p75=3.8 p98=9.2 dense=0.637 spread=5.4 rim=1.00 rimMinusCent=+1.4 hist=[1m:2570 4m:601 3m:314 5m:233]; lidar.osmHeights[1032]=undefined",
+      "gis": null,
+      "osm": "unnamed index 1032 h=9 area≈501; Nominatim → 9530 La Jolla Shores Drive, Torrey Pines; off-campus (boundary test false)",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c0-screen/apple/osm1032.jpg z19 at 32.873434,-117.245466 (2840 kB, centerRGB=101,103,96 ent=7.49) — finished Shores roofs + a circular bare-earth cut beside a bright white multi-level pad today; no tower crane",
+      "probe": "gate refuses (maxSpread false). Do not admit canopy-guard 3.8 as a substitute for the 9 guess without choosing a plane — but the 9 guess is already high vs the dense 1 m body."
+    },
+    "severity": "medium",
+    "suspected_class": "Unnamed over-guess (h=9) over a near-grade-dominated multimodal hist — spread>1.2 class where imagery must pick the plane; shipping roofOf would still invent a storey from a low body.",
+    "epoch_risk": "Medium — Apple's circular bare-earth cut beside a finished white roof could be a pool/landscaping DATE rather than a 2014 measurement error. Both the 9 guess and any 2014 plane could be wrong about today's pad. Do not treat disagreement as automatic underheight."
+  },
+  {
+    "id": "osm-1108-poole-multiplane",
+    "entity": "unnamed OSM building index 1108 (9485 Poole Street)",
+    "where": {"x": -286.9, "z": 622.2},
+    "claim": "assembleMasses ships src=osm area-guess h=4.5 (area≈207). Not in lidar.osmHeights / OSM_WITHHELD. Reject-diagnosis why=spread>1.2. Same Poole Street corridor as already-admitted 1097/1105 and withheld 1120.",
+    "observed": "Fresh vertex-rimBase EPT: 940 pts, rim=1.00, gradeSpread=1.5 m. explainRoof → rule=p98, h=10.7 (p50=6.2, p75=8.2, p98=10.7, dense=0.329, spread=2.5). Hist multimodal 3m:225 / 7m:124 / 8m:113 / 6m:100 — no single plane for auto-admit; body (p50=6.2) still sits ~1.7 m above the 4.5 guess. Nominatim → 9485 Poole Street. Apple osm1108.jpg z19 — finished Poole Street residential row with solar arrays / mixed gable+flat roofs standing today; no crane.",
+    "evidence": {
+      "lidar": "osm:1108@-286.9,622.2 940 pts rule=p98 h=10.7 p50=6.2 p75=8.2 p98=10.7 dense=0.329 spread=2.5 rim=1.00 hist=[3m:225 7m:124 8m:113 6m:100 2m:84 10m:70]; lidar.osmHeights[1108]=undefined; siblings 1097 oh=7.6 / 1105 oh=6.8 already admitted; 1120 withheld",
+      "gis": null,
+      "osm": "unnamed index 1108 h=4.5 area≈207; Nominatim → 9485 Poole Street, Torrey Pines; off-campus",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c0-screen/apple/osm1108.jpg z19 at 32.872373,-117.244269 (2683 kB, centerRGB=91,93,88 ent=7.31) — finished Poole Street house roofs with solar today among the same corridor as 1097/1105",
+      "probe": "gate refuses (maxSpread false, dense 33%). Imagery can pick the occupied plane; statistics cannot. Do not paste roofOf=10.7."
+    },
+    "severity": "medium",
+    "suspected_class": "Spread>1.2 unnamed under-guess on Poole Street — body above the 4.5 shed default, no dominant bin for statistical admit (1120-class hand-triage).",
+    "epoch_risk": "Low for existence — Apple + Nominatim agree a finished house sits here. Spread across 3/6/7/8 m bins is stepped roof or canopy mix within one epoch, not a rebuild date."
+  },
+  {
+    "id": "osm-1066-multiplane-underheight",
+    "entity": "unnamed OSM building index 1066 (9410 La Jolla Shores Drive)",
+    "where": {"x": -552.6, "z": 684.9},
+    "claim": "assembleMasses ships src=osm area-guess h=4.5 (area≈381). Not in lidar.osmHeights / OSM_WITHHELD. Reject-diagnosis why=spread>1.2 would=12.4.",
+    "observed": "Fresh vertex-rimBase EPT: 1,031 pts, rim=1.00, gradeSpread=1.1 m. explainRoof → rule=p98, h=12.3 (p50=4.5, p75=7.9, p98=12.3, dense=0.461, spread=4.4). Hist trimodal 4m:247 / 7m:241 / 3m:228 — the 4.5 guess sits exactly on p50 (low wing); upper planes at ~8 / 12 m are real returns the gate correctly refuses to paste. Nominatim → 9410 La Jolla Shores Drive. Apple osm1066.jpg z19 — finished multi-level white flat roofs with solar among Shores residential fabric today; no crane.",
+    "evidence": {
+      "lidar": "osm:1066@-552.6,684.9 1031 pts rule=p98 h=12.3 p50=4.5 p75=7.9 p98=12.3 dense=0.461 spread=4.4 rim=1.00 hist=[4m:247 7m:241 3m:228 8m:148]; lidar.osmHeights[1066]=undefined",
+      "gis": null,
+      "osm": "unnamed index 1066 h=4.5 area≈381; Nominatim → 9410 La Jolla Shores Drive; off-campus",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c0-screen/apple/osm1066.jpg z19 at 32.871806,-117.247111 (2686 kB, centerRGB=91,91,88 ent=7.42) — finished multi-level white roofs + solar today; no crane",
+      "probe": "gate refuses (maxSpread false). Pasting roofOf=12.3 would invent a storey from the upper wing; leaving 4.5 under-represents the main roof Apple shows. Parts split or imagery-picked plane — not auto-admit."
+    },
+    "severity": "medium",
+    "suspected_class": "Spread>1.2 multi-plane house whose low wing matches the area guess — imagery shows the taller occupied roof the statistics cannot choose.",
+    "epoch_risk": "Low for existence. The 4.5 vs 12.3 split is two real 2014 planes on one footprint (stepped house), not a date conflict — Apple agrees the multi-level fabric is standing today."
+  },
+  {
+    "id": "vaughan-ritter-terrain-oob",
+    "entity": "Vaughan Hall / Ritter Hall (shoreline pair)",
+    "where": {"x": -1126.0, "z": 1402.0},
+    "claim": "Heights already ship measured planes (Vaughan osm h=14.9, Ritter osm h=14.6 from lidar.heights). Terrain grid still ends at z_max = z0 + rows·cell = −1383 + 923·3 = 1386; both centroids sit at z≈1402.",
+    "observed": "Grade audit unchanged: Vaughan 49 verts — centroid groundAt null, only 13/49 verts in-grid (span 6.2 m on the fringe, rimCoverage=0.265); Ritter 26 verts — centroid null, 7/26 in-grid (span 2.6 m, rimCoverage=0.269). Fresh EPT still returns full roof clouds (Vaughan 13,623 pts rule=p98 h=14.9; Ritter 5,798 pts rule=p98 h=14.6) — heights are not the bug. Per-vertex ground sampling cannot follow the shoreline apron past the survey box. Apple vaughan.jpg z18 — finished shoreline halls standing today.",
+    "evidence": {
+      "lidar": "terrain z0=-1383 cell=3 rows=923 → max z=1386; Vaughan cent (−1101.9,1402.4) groundAt oob nulls=36/49 rim=0.265; Ritter cent (−1150.1,1402.0) nulls=19/26 rim=0.269; EPT Vaughan 13623 pts rule=p98 h=14.9 / Ritter 5798 pts rule=p98 h=14.6",
+      "gis": "no GIS host for Vaughan/Ritter in-box; both render src=osm from lidar.heights",
+      "osm": "Vaughan Hall index 25; Ritter Hall index 65",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c0-screen/apple/vaughan.jpg z18 at 32.865321,-117.252987 (3129 kB, centerRGB=103,106,99 ent=7.55) — finished shoreline Vaughan/Ritter block today; no crane",
+      "probe": "same apron-clamp class as prior r2c0 passes / QAA at the opposite survey edge; siblings 1144/1146/1160 already withheld for 0 EPT via groundAt-null"
+    },
+    "severity": "medium",
+    "suspected_class": "Survey/terrain grid truncation at the southern shoreline — height correct; ground sampling clamps most vertices to the apron (handoff: expand survey box before any further admit on this fringe).",
+    "epoch_risk": "None for the height number (2014 roof agrees with today's Apple footprint). The planting issue is a coverage hole inside one epoch, not a source-date conflict."
+  },
+  {
+    "id": "hubbs-readiness-false-positive",
+    "entity": "Hubbs Hall (readiness named-guess work-list)",
+    "where": {"x": -1137.4, "z": 1171.1},
+    "claim": "gauntlet-loop/readiness.json still lists Hubbs Hall as a named guess (i=27, h=11.8). assembleMasses actually ships src=gis Hubbs Hall h=12.3 via massHeights[m:-1137,1171]; lidar.heights['Hubbs Hall']=12.2; GIS fac L4=17.1 is superseded by the measured mass.",
+    "observed": "Fresh vertex-rimBase EPT on the GIS ring: 10,859 pts, rim=1.00, gradeSpread=9.5 m. explainRoof → rule=p98, h=12.2 (p50=8.1, p75=8.1, p98=12.2, dense=0.789, spread=4.1). Ships 12.3 (Δ=0.1). Dense body at 8 m (hist 8m:8195) under a mechanical shelf — dense 78.9% under the 85% thin-shelf cut (prior r2c0 pass-2 near-miss; Apple shows the plant). Readiness's 11.8 is a GPU-probe / 0.35 m slack artifact on a 9.5 m grade: |11.8−12.2|=0.4 and |11.8−12.3|=0.5 both miss 'measured', then |11.8−12|=0.2 matches the OSM tag and buckets 'guessed'.",
+    "evidence": {
+      "lidar": "gis:Hubbs@-1137.4,1171.1 10859 pts rule=p98 h=12.2 p50=8.1 p75=8.1 p98=12.2 dense=0.789 spread=4.1 rim=1.00 gradeSpread=9.5 hist=[8m:8195 11m:826 9m:373 12m:294]; massHeights[m:-1137,1171]=12.3; heights['Hubbs Hall']=12.2",
+      "gis": "Hubbs Hall gisH=17.1 L4; OSM centroid covered by GIS ring (OSM ring suppressed)",
+      "osm": "Hubbs Hall index 27 campus-3d h=12; Conference Center annex separately ships measured override 4.0",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c0-screen/apple/hubbs.jpg z19 at 32.867409,-117.253366 (2467 kB, centerRGB=108,110,105 ent=7.50) — finished Hubbs block with rooftop mechanical plant today; no crane",
+      "probe": "Prior judge (r2c0 pass-2) already kept massHeights 12.3 — thin-shelf near-miss under 85%. This finding is the readiness census false positive only; do not re-open the height."
+    },
+    "severity": "low",
+    "suspected_class": "Readiness named-guess false positive on a steep-grade measured GIS mass — same auditor slack class International Center West hit before the nearbyMass fix; Hubbs still trips because GPU rendered≈11.8 sits 0.4–0.5 m off 12.2/12.3.",
+    "epoch_risk": "None for the building — Apple and 2014 agree Hubbs stands. The 8 m dense body vs 12 m shelf is mechanical plant within one epoch (already judged). Clearing the readiness row must not paste p75=8.1."
+  },
+  {
+    "id": "multiplane-still-guess-residue",
+    "entity": "remaining unnamed OSM still-guess rings in-shard (spread>1.2 class)",
+    "where": {"x": -550.0, "z": 650.0},
+    "claim": "After prior Poole/Shores admissions (1097/1105/1147/…) and withholds (1033/1062/1120/1144/1146/1160/1345/…), enumerate still finds ~55 unnamed guesses in-box / ~60 still-guess OSM renders; reject-diagnosis lists 33 spread>1.2 refusals in-shard.",
+    "observed": "Fresh vertex-rimBase EPT on 21 still-guess + named GIS targets produced ZERO new one-plane auto-admit candidates (no ring with pts≥400, rim≥0.99, spread≤1.2, |ship−roof|≥2). Named SIO landmarks re-checked with builder vertex rimBase: Hubbs/MESOM/Isaacs/NOAA/Hydraulics/Keck2-north/Keck2-south/Spiess/IGPP2000/Scholander all |ship−roofOf|≤0.1 (Keck2-south Δ=0 under vertex rim — prior 'overheight' was dense-edge rim artifact, already rejected). Standout multiplanes called out above (1032/1108/1066); other |Δ|≥2 softs are canopy-smeared (1045/1052/1074/1077) or |body−guess|<2. On-campus still-guess renders that are not 817: only osm:818 (already matches 4.4≈4.5).",
+    "evidence": {
+      "lidar": "/tmp/gauntlet-r2c0-screen/probe.json — 43 targets, vertex rimBase + explainRoof; inventory counts unnamedGuesses=55 / spreadRejects=33 / onCampusStillGuessRenders={817,818}",
+      "gis": "named GIS soft-spots re-sampled: Coastal Studies / Marine Conservation are POST_2014_SITES (2014 roofs 5.0 / canopy-guard 13.5 vs intentional GIS 12.8 / 17.1) — not new admits; MESOM mh=13.3 matches roofOf 13.3 dense 97.5%",
+      "osm": "POST_2014_OSM_RINGS/WITHHELD in-shard left untouched (1345/1033/1120/1144/1146/1160/1062/…); no new evidence to re-file",
+      "apple": "Contact sheet /tmp/gauntlet-r2c0-screen/apple/ — SIO shore + Shores/Poole residential mostly finished fabric today; Coastal/Marine Conservation show finished post-renovation blocks (epoch bookkeeping already correct)",
+      "probe": "do not blanket-admit; per-ring Apple+EPT remains the shape — same scoped verdict as prior r2c0 passes. Named landmark height sweep is clean under vertex rimBase."
+    },
+    "severity": "medium",
+    "suspected_class": "Standing unnamed multi-plane guess class hole (handoff, not a one-row patch) — residual after confirming named SIO planes and isolating the few imagery-answerable standouts above.",
+    "epoch_risk": "Per-ring — some pads could be post-2014 or canopy-smeared (1032's bare-earth cut; Coastal/Marine already POST_2014). That is why OSM_UNNAMED_VERIFIED / WITHHELD stay index-keyed."
+  }
+]

@@ -1,0 +1,206 @@
+[
+  {
+    "id": "union-bank-thin-shelf",
+    "entity": "Union Bank",
+    "where": {"x": 777.2, "z": 1173.1},
+    "claim": "assembleMasses ships src=osm h=8 from lidar.heights['Union Bank']=8. Prior r2c1 pass-1 judge kept 8 as a thin-shelf near-miss (dense 79.9% under the 85% cut).",
+    "observed": "Fresh vertex-rimBase EPT: 588 pts, rim=1.00, gradeSpread=0.3 m. explainRoof → rule=thin-shelf, h=5.3 (p50=5.2, p75=5.3, p98=8.0, dense=0.891, spread=2.7). why='body tight (p75-p50 = 0.1), shelf 2.7 m above it, 89.1% in a 2 m band — plant, not building'. Hist 5m:470 (80% of returns) with only 9 pts in the 8 m bin. Shipping 8 pastes the HVAC/parapet shelf ~2.7 m above the dense one-storey body — the thin-shelf host rule now fires with a proper base. Apple union-bank.jpg z19 — finished Villa La Jolla strip (teal arched canopy + flat white roof with HVAC) standing today; no crane.",
+    "evidence": {
+      "lidar": "host:Union Bank 588 pts rule=thin-shelf why='body tight (p75-p50 = 0.1), shelf 2.7 m above it, 89.1% in a 2 m band — plant, not building' h=5.3 p50=5.2 p75=5.3 p98=8.0 dense=0.891 spread=2.7 rim=1.00 hist=[5m:470 6m:54 4m:41 8m:9]; lidar.heights['Union Bank']=8; explainRoof from scripts/lib/roof-measure.mjs with builder vertex rimBase",
+      "gis": null,
+      "osm": "Union Bank way index 181 osmH=4.5 lidarH=8 area≈234; assembleMasses ships src=osm h=8",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c1-screen/apple/union-bank.jpg z19 at 32.867391,-117.232887 (2535 kB, centerRGB=125,125,123 ent=7.50) — finished strip-mall roofs (teal arch + white flat w/ HVAC) on Villa La Jolla Dr today; no crane",
+      "probe": "Sibling UC Cyclery @ same strip: 726 pts rule=p98 h=6.8 dense=0.931 spread=1.5 (gap 1.5 ≤ SHELF_GAP 2 — thin-shelf correctly does not fire; prior keep of 6.8 stands). Urban Plates: rule=p98 h=6.4 ship=6.5 Δ=0.1 — clean."
+    },
+    "severity": "high",
+    "suspected_class": "Named host thin-shelf — dense one-storey body with a sparse p98 shelf pasting ~1 storey of wrong height. Prior near-miss judgment is superseded: with rimBase the 85% dense cut clears (89.1%). Same full-rebuild drift that moved Union Bank 8→5.3 when the Set was rewritten.",
+    "epoch_risk": "Low for existence — Apple shows the finished strip today. The 5.3 vs 8 split is body vs thin roof plant on a pre-2014 pad, not a rebuild date. Do not treat the prior 'keep 8' as still binding once thin-shelf fires with base."
+  },
+  {
+    "id": "evening-gilman-4.5-underheight-class",
+    "entity": "unnamed OSM pads osm:580/583–586/589/598/602–603/607/609–610/614–616 (Evening Way / Gilman Drive apartment connectors)",
+    "where": {"x": 390, "z": 1100},
+    "claim": "assembleMasses still extrudes this corridor as src=osm area-guess h=4.5. None in lidar.osmHeights / OSM_WITHHELD. Gate refuses on spread>1.2. Prior pass-3 admitted Evening Way siblings 600/601 and Villa-east 632–651; this west/Gilman residual was left.",
+    "observed": "Fresh vertex-rimBase EPT on exemplars: shared ~5–7 m 2014 body under the 4.5 shed, with upper wings pushing roofOf to 8–13 m. Near-strict (spr 1.5–1.7, bodyTight): 580 roofOf=8.4 dense=0.641; 584 roofOf=8.3 dense=0.693; 615 roofOf=8.2 dense=0.669. Multiplane standouts: 609 roofOf=12.3 spr=4.8 dense=0.559 hist 5/6/7 m; 585 roofOf=12.2 spr=4.6 dense=0.623; 610 roofOf=12.2 spr=4.8 dense=0.58; 607 roofOf=12.3 spr=5.0 dense=0.624. Shipping 4.5 is −3.7…−7.8 m under roofOf / −1.5…−3 under the dense body. Nominatim: 580→3103 Evening Way; 584/607→3155 Evening Way; 585→3139 Evening Way; 609/610/615→8795 Gilman Drive. Apple boardwalk-cluster.jpg z17 + osm609/585/610 z19 — finished multi-unit brown/tan gabled apartment roofs + pool fabric standing today; no crane.",
+    "evidence": {
+      "lidar": "near-strict: 580:769pts rule=p98 h=8.4 p50=6.0 p75=6.7 spr=1.7 dense=0.641 hist=[6m:256 5m:237]; 584:703/8.3/6.1/6.8/1.5/0.693; 615:732/8.2/5.9/6.6/1.6/0.669. Multiplane: 609:913pts h=12.3 spr=4.8 dense=0.559 hist=[5m:277 6m:233 7m:115]; 585:796/12.2/4.6/0.623; 610:951/12.2/4.8/0.58; 607:716/12.3/5.0/0.624. osmHeights[i]=undefined for all; 16 in-corridor still-guess spread>1.2 rings",
+      "gis": null,
+      "osm": "unnamed rings shipH=4.5 area≈290–388; Nominatim Evening Way / Gilman Drive addresses; siblings 600/601 already OSM_UNNAMED_VERIFIED @ 8.6/8.5",
+      "apple": "Apple /tmp/gauntlet-r2c1-screen/apple/boardwalk-cluster.jpg z17 + osm609.jpg osm585.jpg osm610.jpg z19 — finished Evening Way / Gilman multi-unit gabled roofs, pools, mature landscaping; no crane",
+      "probe": "/tmp/gauntlet-r2c1-screen/probe.json; gate refuses maxSpread on all. Soft near-strict (spr≤1.7) can admit via p75/dense body; multiplane need imagery-picked plane — do not paste unguarded roofOf."
+    },
+    "severity": "high",
+    "suspected_class": "Unnamed OSM under-tag cluster — Boardwalk / Evening Way / Village Square family continuing onto Gilman after 600/601 and villa-east 632–651 admissions.",
+    "epoch_risk": "Low for existence — Apple and 2014 both describe standing multi-storey apartments. Disagreement is guess vs laser, not a rebuild. Soft siblings under spr≈1.5–1.7 should prefer dense-body/p75, not unguarded p98."
+  },
+  {
+    "id": "osm-609-underheight",
+    "entity": "unnamed osm:609 (8795 Gilman Drive connector)",
+    "where": {"x": 378.7, "z": 1151.9},
+    "claim": "OSM area guess ships h=4.5 (src=osm); not in OSM_UNNAMED_VERIFIED / lidar.osmHeights. Reject-diagnosis why=spread>1.2.",
+    "observed": "Fresh vertex-rimBase EPT (913 pts): explainRoof → rule=p98, h=12.3 (p50=6.1, p75=7.5, p98=12.3, dense=0.559, spread=4.8). Hist 5m:277 / 6m:233 / 7m:115 — dense body ~5–7 m; shipping 4.5 is −3.0 under p75 / −7.8 under roofOf. Nominatim → 8795 Gilman Drive. Apple osm609.jpg z19 — finished multi-unit tan gabled roofs + pool courtyard standing today.",
+    "evidence": {
+      "lidar": "osm:609@378.7,1151.9 913 pts rule=p98 h=12.3 p50=6.1 p75=7.5 p98=12.3 dense=0.559 spread=4.8 rim=1.00 hist=[5m:277 6m:233 7m:115 2m:52 8m:51]; lidar.osmHeights[609]=undefined",
+      "gis": null,
+      "osm": "index 609 unnamed h=4.5 area≈336; Nominatim → 8795 Gilman Drive",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c1-screen/apple/osm609.jpg z19 at 32.867583,-117.237149 (2670 kB, centerRGB=115,113,105 ent=7.38) — finished Gilman multi-unit roofs + cyan pool; no crane",
+      "probe": "gate refuses (maxSpread false). Exemplar of evening-gilman-4.5-underheight-class; imagery can pick the occupied plane."
+    },
+    "severity": "high",
+    "suspected_class": "Exemplar of the Evening Way / Gilman 4.5→~6–12 under-tag / multiplane class.",
+    "epoch_risk": "Low — standing pre-2014 apartment fabric on Apple and LiDAR."
+  },
+  {
+    "id": "villa-mallorca-residual",
+    "entity": "unnamed OSM pads osm:634/665/666 (Villa La Jolla Drive / Villas Mallorca residual)",
+    "where": {"x": 555, "z": 1190},
+    "claim": "assembleMasses still extrudes these as src=osm area-guess h=4.5 after pass-3 admitted villa-east 632–651 (except these multiplane holdouts). Not in lidar.osmHeights / OSM_WITHHELD.",
+    "observed": "Fresh vertex-rimBase EPT: 634 (2083 pts) rule=p98 h=13.5 p50=8.9 p75=9.6 spr=3.9 dense=0.72 hist 8m:806 / 9m:693 — dense body ~9 m, shipping 4.5 is −5.1 under p75 / −9 under roofOf. 665 (1642 pts) rule=p98 h=10.1 p50=7.9 p75=8.8 spr=1.26 dense=0.572 — barely over the 1.2 gate; body at 7–8 m. 666 (1613 pts) rule=p98 h=11.3 p50=8.2 p75=8.7 spr=2.6 dense=0.586 hist 8m:493 / 7m:452. Nominatim: 634→8720 Villa La Jolla Drive; 665/666→Villas Mallorca. Apple osm634/665/666 z19 — finished multi-unit dark gabled + reddish-tile roofs + tennis courts standing today; no crane.",
+    "evidence": {
+      "lidar": "634:2083pts rule=p98 h=13.5 p50=8.9 p75=9.6 spr=3.9 dense=0.72 hist=[8m:806 9m:693 10m:149]; 665:1642pts h=10.1 p50=7.9 p75=8.8 spr=1.26 dense=0.572 hist=[7m:480 8m:459 9m:270]; 666:1613pts h=11.3 p50=8.2 p75=8.7 spr=2.6 dense=0.586 hist=[8m:493 7m:452 6m:270]; osmHeights undefined",
+      "gis": null,
+      "osm": "unnamed shipH=4.5 area≈299–345; Nominatim Villa La Jolla Drive / Villas Mallorca; neighbours 632–651 already admitted @ 9.8–10.5",
+      "apple": "Apple /tmp/gauntlet-r2c1-screen/apple/osm634.jpg osm665.jpg osm666.jpg z19 — finished Villas Mallorca / Villa La Jolla multi-unit roofs (dark gable + terracotta tile) + blue tennis courts; no crane",
+      "probe": "665 is a near-strict gate miss (spr=1.26); 634/666 need imagery-picked plane over the dense ~8–9 m body. Do not paste roofOf=13.5."
+    },
+    "severity": "high",
+    "suspected_class": "Villa-east under-tag residual the pass-3 class admission missed because spread>1.2 — same Boardwalk / Village Square family.",
+    "epoch_risk": "Low for existence. Multiplane spread is stepped gables within one epoch (Apple agrees fabric stands today), not a post-2014 rebuild."
+  },
+  {
+    "id": "caminito-abrazo-underheight",
+    "entity": "unnamed OSM pads osm:1212–1214/1216/1221/1223 (Caminito Abrazo residential row)",
+    "where": {"x": 180, "z": 1280},
+    "claim": "assembleMasses ships src=osm area-guess h=4.5. Not in lidar.osmHeights / OSM_WITHHELD. Reject-diagnosis why=spread>1.2 on all.",
+    "observed": "Fresh vertex-rimBase EPT: 1214 (3335 pts) rule=p98 h=13.0 p50=6.7 p75=9.0 spr=4.0 dense=0.318 hist multimodal 6/2/5 m; 1212 (1801) h=10.5 spr=3.8 dense=0.408; 1213 (1842) h=10.5 spr=3.8 dense=0.439; 1221 (1952) h=11.3 spr=4.8 dense=0.448; 1216 (869) h=10.1 spr=3.6 dense=0.487; 1223 (1508) h=8.4 spr=2.6 dense=0.530. Shipping 4.5 is −3.9…−8.5 m under roofOf. Nominatim: 1214→8713 Caminito Abrazo; 1212→8737; 1221→8773. Apple scenic-cluster.jpg z17 + osm1214.jpg z19 — finished Caminito Abrazo house roofs standing today among Scenic residential fabric; no crane.",
+    "evidence": {
+      "lidar": "1214:3335pts rule=p98 h=13.0 spr=4.0 dense=0.318 hist=[6m:605 2m:545 5m:457]; 1212:1801/10.5/3.8/0.408; 1213:1842/10.5/3.8/0.439; 1221:1952/11.3/4.8/0.448; 1216:869/10.1/3.6/0.487; 1223:1508/8.4/2.6/0.530; osmHeights undefined",
+      "gis": null,
+      "osm": "unnamed shipH=4.5 area≈278–331; Nominatim Caminito Abrazo addresses; off-campus Scenic fringe",
+      "apple": "Apple /tmp/gauntlet-r2c1-screen/apple/scenic-cluster.jpg z17 + osm1214.jpg z19 at 32.866165,-117.239346 (2799 kB) — finished Caminito Abrazo residential roofs today; no crane",
+      "probe": "gate refuses (maxSpread / low dense). Imagery triage of the occupied plane; statistics cannot auto-admit. Do not paste roofOf."
+    },
+    "severity": "high",
+    "suspected_class": "Spread>1.2 unnamed under-guess on Caminito Abrazo — Scenic residential multiplane class where imagery must pick the plane.",
+    "epoch_risk": "Low for existence — Apple + Nominatim agree finished houses sit here. Spread across 2/5/6/9 m bins is stepped roof or canopy mix within one epoch."
+  },
+  {
+    "id": "osm-92-holiday-court",
+    "entity": "unnamed osm:92 (3211 Holiday Court / UTC Nails Lounge pad)",
+    "where": {"x": 728.3, "z": 870.9},
+    "claim": "assembleMasses ships src=osm area-guess h=8.4. Not in lidar.osmHeights / OSM_WITHHELD. Reject-diagnosis why=spread>1.2 would=13.5.",
+    "observed": "Fresh vertex-rimBase EPT (1960 pts): explainRoof → rule=p98, h=13.4 (p50=7.4, p75=8.9, p98=13.4, dense=0.614, spread=4.5). Hist 7m:606 / 8m:597 — dense body ~7–8 m matches the 8.4 guess within ~0.5 m of p75; roofOf rides a thin upper shelf. Shipping 8.4 is not an underheight of the dense body — the open question is whether the 13.4 shelf is real plant or a paste. Nominatim → UTC Nails Lounge & Spa, 3211 Holiday Court. Apple osm92.jpg z19 — finished flat grey commercial roofs with recessed HVAC bays standing today; road work visible on Villa La Jolla Dr west of the pin.",
+    "evidence": {
+      "lidar": "osm:92@728.3,870.9 1960 pts rule=p98 h=13.4 p50=7.4 p75=8.9 p98=13.4 dense=0.614 spread=4.5 rim=1.00 hist=[7m:606 8m:597 9m:178 1m:117]; lidar.osmHeights[92]=undefined",
+      "gis": null,
+      "osm": "index 92 unnamed h=8.4 area≈674; Nominatim → 3211 Holiday Court (UTC Nails Lounge & Spa)",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c1-screen/apple/osm92.jpg z19 at 32.870124,-117.233410 (2270 kB, centerRGB=119,120,119 ent=7.57) — finished flat commercial roofs w/ HVAC; active road construction on Villa La Jolla Dr west edge (Apple currency, not a building date)",
+      "probe": "gate refuses (maxSpread). Dense body ≈ ship; do not paste roofOf=13.4 without imagery confirming the upper plane is occupied roof rather than plant."
+    },
+    "severity": "medium",
+    "suspected_class": "Commercial pad whose area guess already tracks the dense body — multiplane shelf triage, not a storey-class underheight.",
+    "epoch_risk": "Low for the building. Road construction on Apple is a surface DATE beside the pad, not evidence the commercial roof changed since 2014."
+  },
+  {
+    "id": "osm-678-underheight",
+    "entity": "unnamed osm:678 (8654 Villa La Jolla Drive)",
+    "where": {"x": 688.7, "z": 1335.4},
+    "claim": "assembleMasses ships src=osm area-guess h=9. Not in lidar.osmHeights / OSM_WITHHELD. Reject-diagnosis why=spread>1.2 would=14.1.",
+    "observed": "Fresh vertex-rimBase EPT (1087 pts): explainRoof → rule=p98, h=14.1 (p50=9.4, p75=10.3, p98=14.1, dense=0.601, spread=3.8). Hist 9m:347 / 10m:306 / 8m:241 — dense body ~9–10 m matches the 9 guess; roofOf pastes a 14 m shelf. Shipping 9 sits on the body. Nominatim → 8654 Villa La Jolla Drive. Apple osm678.jpg z19 — finished commercial/residential fabric on Villa La Jolla today.",
+    "evidence": {
+      "lidar": "osm:678@688.7,1335.4 1087 pts rule=p98 h=14.1 p50=9.4 p75=10.3 p98=14.1 dense=0.601 spread=3.8 rim=1.00 hist=[9m:347 10m:306 8m:241]; lidar.osmHeights[678]=undefined",
+      "gis": null,
+      "osm": "index 678 unnamed h=9 area≈430; Nominatim → 8654 Villa La Jolla Drive",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c1-screen/apple/osm678.jpg z19 at 32.865923,-117.233833 (2917 kB, centerRGB=105,105,101 ent=7.52) — finished roofs on Villa La Jolla today; no crane",
+      "probe": "gate refuses. Guess already near dense body; imagery must decide whether 14.1 is real upper wing or plant before any height change."
+    },
+    "severity": "medium",
+    "suspected_class": "Spread>1.2 commercial/residential pad whose guess tracks the dense body — shelf triage, not auto-admit roofOf.",
+    "epoch_risk": "Low for existence. Body vs shelf is within-epoch geometry, not a date conflict."
+  },
+  {
+    "id": "osm-664-canopy-pad",
+    "entity": "unnamed osm:664 (8506 Villa La Jolla Drive)",
+    "where": {"x": 512.4, "z": 1299.9},
+    "claim": "assembleMasses ships src=osm area-guess h=4.5 (area≈101). Not in lidar.osmHeights / OSM_WITHHELD. Reject-diagnosis why=spread>1.2 would=16.1 (canopy-guard).",
+    "observed": "Fresh vertex-rimBase EPT (853 pts): explainRoof → rule=canopy-guard, h=16.1 (p50=3.5, p75=16.1, p98=29.3, dense=0.512, spread=13.2). Hist 2m:239 / 3m:198 dominate — dense body is near-grade / low pad; canopy-guard still returns a 16 m plane that would invent ~3 storeys over a low apron. Nominatim → 8506 Villa La Jolla Drive. Apple osm664.jpg z19 — finished Villa La Jolla fabric today; the small 101 m² ring sits in a service/landscaped pocket, not a measured hall.",
+    "evidence": {
+      "lidar": "osm:664@512.4,1299.9 853 pts rule=canopy-guard why='p98-p75 = 13.2 m > 5 — crown overhang, take the roof plane' h=16.1 p50=3.5 p75=16.1 dense=0.512 spread=13.2 rim=1.00 hist=[2m:239 3m:198 14m:45 13m:41 16m:41]; lidar.osmHeights[664]=undefined",
+      "gis": null,
+      "osm": "index 664 unnamed h=4.5 area≈101; Nominatim → 8506 Villa La Jolla Drive",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c1-screen/apple/osm664.jpg z19 at 32.866244,-117.235719 (3189 kB, centerRGB=100,96,88 ent=7.38) — finished Villa La Jolla neighbourhood today; no crane",
+      "probe": "gate refuses (maxSpread / canopy). Do not admit canopy-guard 16.1 as a building height; better absent (or keep the low guess) than paste crown returns. Birch-apron / Foodworx-patio class."
+    },
+    "severity": "medium",
+    "suspected_class": "Tiny unnamed OSM pad/plaza over near-grade returns with canopy bleed — NO_SOLID_ROOF / better-absent class (sibling of osm:817 Birch apron).",
+    "epoch_risk": "Low for neighbourhood existence. Open question is whether this 101 m² rectangle is a real low annex or a courtyard mis-tagged as building — Apple does not resolve a separate hall at the pin."
+  },
+  {
+    "id": "osm-787-canopy-smear",
+    "entity": "unnamed osm:787 (Theatre District Drive / CRS-fringe grove)",
+    "where": {"x": 235.7, "z": 517.1},
+    "claim": "assembleMasses ships src=osm area-guess h=9 (area≈432). Not in lidar.osmHeights / OSM_WITHHELD. Reject-diagnosis why=spread>1.2 would=16 (canopy-guard).",
+    "observed": "Fresh vertex-rimBase EPT (4726 pts): explainRoof → rule=canopy-guard, h=16.3 (p50=5.8, p75=16.3, p98=21.8, dense=0.203, spread=5.5). Hist −1m:573 / 0m:388 dominate alongside upper 12–17 m bins — dense fraction only 20%; shipping 9 sits between near-grade and crown. Nominatim → Theatre District Drive. Apple osm787.jpg z18 — finished CRS / cooling-tower industrial fabric + dense grove standing today; the ring overlaps canopy, not a clean hall roof.",
+    "evidence": {
+      "lidar": "osm:787@235.7,517.1 4726 pts rule=canopy-guard h=16.3 p50=5.8 p75=16.3 dense=0.203 spread=5.5 rim=1.00 hist=[-1m:573 0m:388 12m:310 16m:266 13m:264]; lidar.osmHeights[787]=undefined",
+      "gis": "Nearest CRS mass ships mh=17.5 @ (465,502) — separate measured host; this unnamed ring is not that mass",
+      "osm": "index 787 unnamed h=9 area≈432; Nominatim → Theatre District Drive",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c1-screen/apple/osm787.jpg z18 at 32.873323,-117.238679 (2992 kB, centerRGB=93,93,89 ent=7.35) — finished CRS cooling fans / white tank / solar roofs + dense central grove today; no crane",
+      "probe": "gate refuses (dense 20%, canopy). Do not admit canopy-guard 16.3; leaving 9 or withholding are both better than pasting crown."
+    },
+    "severity": "medium",
+    "suspected_class": "Large unnamed footprint over canopy/grove smear beside a measured industrial host — better absent than a single invented plane.",
+    "epoch_risk": "Low for CRS existence (Apple shows finished plant). The ring's near-grade + crown mix is 2014 vegetation over a service apron, not a missing post-2014 hall."
+  },
+  {
+    "id": "osm-1245-multiplane",
+    "entity": "unnamed osm:1245 (8941 Nottingham Place)",
+    "where": {"x": 1.2, "z": 1020.8},
+    "claim": "assembleMasses ships src=osm area-guess h=4.5 (area≈105). Not in lidar.osmHeights / OSM_WITHHELD. Reject-diagnosis why=spread>1.2 would=13.2.",
+    "observed": "Fresh vertex-rimBase EPT (549 pts): explainRoof → rule=p98, h=13.2 (p50=5.9, p75=11.0, p98=13.2, dense=0.288, spread=2.2). Hist trimodal 2m:83 / 10m:77 / 3m:75 — no dominant plane; dense only 29%. Shipping 4.5 under-represents upper returns; pasting 13.2 invents a storey from a sparse tail. Nominatim → 8941 Nottingham Place. Apple osm1245.jpg z19 — finished Nottingham Place residential fabric standing today.",
+    "evidence": {
+      "lidar": "osm:1245@1.2,1020.8 549 pts rule=p98 h=13.2 p50=5.9 p75=11.0 p98=13.2 dense=0.288 spread=2.2 rim=1.00 hist=[2m:83 10m:77 3m:75 12m:60 11m:58]; lidar.osmHeights[1245]=undefined",
+      "gis": null,
+      "osm": "index 1245 unnamed h=4.5 area≈105; Nominatim → 8941 Nottingham Place; off-campus",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c1-screen/apple/osm1245.jpg z19 at 32.868768,-117.241187 (2850 kB, centerRGB=103,104,98 ent=7.43) — finished Nottingham Place house roofs today; no crane",
+      "probe": "gate refuses (maxSpread, dense 29%, pts barely over 400). Imagery can pick the occupied plane; do not paste roofOf."
+    },
+    "severity": "medium",
+    "suspected_class": "Small off-campus multiplane house — spread>1.2 class requiring imagery triage (1120 family).",
+    "epoch_risk": "Low for existence. Trimodal hist is stepped roof within one epoch."
+  },
+  {
+    "id": "rita-roof-anchor",
+    "entity": "Rita Atkinson Residences (GIS mass)",
+    "where": {"x": 562.4, "z": 603.5},
+    "claim": "assembleMasses ships src=gis h=26.8 (gisH=27.4). Heights already match fresh roofOf (GIS mass 26.8 / OSM host lidarH 25.4). Inventory flags roofAnchorDelta=+2.6 m (centroid ground above rim-median) with gradeSpread=3.6 m.",
+    "observed": "Fresh EPT confirms planes: gis:rita 19007 pts rule=p98 h=26.8 dense=0.402 spr=1.3 gradeSpread=3.6 rimMinusCent=−2.6; host OSM 19133 pts rule=p98 h=25.4 dense=0.355 spr=1.4 gradeSpread=3.6 rimMinusCent=+1.3. Height is not the bug — per-vertex grade span of 3.6 m with a 2.6 m roof-anchor offset is the residual. Apple rita.jpg z18 — finished white Rita towers with mechanical plant standing today.",
+    "evidence": {
+      "lidar": "gis:rita 19007 pts rule=p98 h=26.8 dense=0.402 spr=1.3 grade=3.6 rimΔcent=−2.6 hist=[25m:6623 19m:3337]; host:Rita 19133 pts h=25.4 dense=0.355 spr=1.4 grade=3.6 rimΔcent=+1.3; massHeights ships 26.8",
+      "gis": "Rita Atkinson Residences gisH=27.4 mh=26.8 Δ=0.6 — challenged and within gate",
+      "osm": "Rita Atkinson Residences index 332 osmH=16 lidarH=25.4; rendered from GIS mass not OSM guess",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c1-screen/apple/rita.jpg z18 at 32.872542,-117.235184 (2807 kB, centerRGB=106,106,102 ent=7.55) — finished white Rita complex + LJVD pedestrian bridge today; no crane",
+      "probe": "Height OK. Flag is terrain/roof-anchor on a graded footprint — same class as prior CRS grade-span handoff."
+    },
+    "severity": "medium",
+    "suspected_class": "Roof-anchor / per-vertex grade span on a large multi-wing host — height measured, planting on grade may still read flat at eye level on the steep edge.",
+    "epoch_risk": "None for height/existence — Apple and 2014 agree the towers stand. Grade span is terrain geometry within one epoch."
+  },
+  {
+    "id": "crs-grade-span",
+    "entity": "Central Research Services Facility",
+    "where": {"x": 464.8, "z": 501.6},
+    "claim": "assembleMasses ships src=gis h=17.5 (gisH=21.3, mh=17.5). Fresh roofOf matches 17.5. GIS inventory gradeSpread=4.6 m on the mass ring (OSM host gradeSpread only 0.9 m — different ring).",
+    "observed": "Fresh EPT: gis:crs 4112 pts rule=p98 h=17.5 dense=0.674 spr=2.3 gradeSpread=4.6 rimMinusCent=+0.8; host OSM 3799 pts h=17.5 dense=0.672 spr=2.3 gradeSpread=0.9. Height plane is pinned; the 4.6 m GIS-ring grade span is the residual handoff from prior r2c1 passes. Apple crs.jpg z18 — finished CRS with cooling fans / tank / solar standing today.",
+    "evidence": {
+      "lidar": "gis:crs 4112 pts rule=p98 h=17.5 dense=0.674 spr=2.3 grade=4.6 rimΔcent=+0.8 hist=[13m:2023 14m:750]; host 3799 pts same h=17.5 grade=0.9; massHeights=17.5",
+      "gis": "Central Research Services gisH=21.3 mh=17.5 Δ=3.8 — already challenged; gradeSpread=4.6 on GIS ring",
+      "osm": "Central Research Services Facility index 415 lidarH=17.5; rendered from GIS",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c1-screen/apple/crs.jpg z18 at 32.873460,-117.236226 (2791 kB, centerRGB=115,115,110 ent=7.65) — finished CRS cooling plant + solar today; no crane",
+      "probe": "Height OK. Prior pass-2/3 handoff unchanged — grade span on GIS ring, not a new height bug. Satellite Utility Plant sibling @ (419,523) is POST_2014 (ships GIS 12.8; 2014 plane 4.2 predecessor) — not re-filed."
+    },
+    "severity": "low",
+    "suspected_class": "Prior CRS grade-span handoff — height already measured; per-vertex draping check on a 4.6 m GIS ring.",
+    "epoch_risk": "None for CRS height. Satellite Utility Plant next door is a DATE (POST_2014_SITES) — 2014 plane 4.2 must never replace GIS 12.8."
+  }
+]

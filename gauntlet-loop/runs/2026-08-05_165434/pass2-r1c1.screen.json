@@ -1,0 +1,87 @@
+[
+  {
+    "id": "canyonview-admin-double",
+    "entity": "Canyonview Rec/Athletics Administration (GIS) + Canyonview Recreation & Athletics Administration (OSM)",
+    "where": {"x": 807.1, "z": -279.0},
+    "claim": "assembleMasses extrudes TWO masses for the same pad: GIS src h=4.3 at (807.1,-279.0) area≈266, AND OSM src h=4.6 at (805.7,-277.2) area≈270. Case-folded name equality fails (Rec/Athletics vs Recreation & Athletics), so the twin-suppression path never runs. massHeights absent for the GIS key.",
+    "observed": "Centroid distance 2.26 m. Grid coverage GIS→OSM 0.967 / OSM→GIS 0.962 (near-identical footprints). Fresh vertex-rimBase EPT on both rings: GIS 736 pts rule=p98 → 4.6 (p50=3.6 p75=3.7 p98=4.6, dense=0.989, spread=0.9, GATE); OSM 749 pts rule=p98 → 4.6 (p50=3.6 p75=3.7 p98=4.6, dense=0.975, spread=0.9, GATE). One clean one-storey plane; the model draws it twice.",
+    "evidence": {
+      "lidar": "gis:CanyonAdmin@807,-279 736 pts rule=p98 why='no guard fired; p98 is the roof' h=4.6 p50=3.6 p75=3.7 p98=4.6 dense=0.989 spr=0.9 hist=[3m:636 4m:92]; osm twin 749 pts same rule/h; massHeights[m:807,-279]=undefined; /tmp/gauntlet-r1c1-p2s/probe.json + probe2.json",
+      "gis": "Canyonview Rec/Athletics Administration gisH=4.3 levels=1 area≈266",
+      "osm": "Canyonview Recreation & Athletics Administration campus-3d h=4.5; lidar.heights=4.6 (rendered OSM mass)",
+      "apple": "Apple snapshot canyon-admin.jpg z19 at 32.880523,-117.232567 (2481 kB) — finished L-shaped white flat roof west of Canyonview pool with HVAC pads today; centerRGB≈106,106,106; no crane. One building visible, not two.",
+      "probe": "explainRoof from scripts/lib/roof-measure.mjs with builder vertex rimBase on both rings; overlap via 30×30 in-ring grid"
+    },
+    "severity": "high",
+    "suspected_class": "GIS+OSM co-named twin that escapes exact/case-folded name equality because of Rec/ vs Recreation & — same pad extruded twice (near-100% coverage). Sibling of the One Miramar case-fold fix; VAF3 is the zero-overlap identity cousin, not this class.",
+    "epoch_risk": "Low for existence — Apple shows one finished admin roof by the pool today, and both 2014 planes are the same clean 4.6 m body. This is not a date conflict; it is a naming/twin-suppression miss on a pre-2014 pad."
+  },
+  {
+    "id": "ext-o-p-hostless-clear",
+    "entity": "Extended Studies and Public Programs - Buildings O-West, O-East, and P",
+    "where": {"x": -135.1, "z": -458.6},
+    "claim": "assembleMasses ships src=gis h=gisH=4.3 (L1) for all three. lidar.massHeights for m:-145,-455 / m:-129,-464 / m:-131,-457 are undefined. Not yet in PRE_2014_GIS_VERIFIED (siblings F/G/X/Z/E/H/K/M already are).",
+    "observed": "Fresh vertex-rimBase EPT: O-West 929 pts rule=canopy-guard → 4.4 (p50=4.3 p75=4.4 p98=10.0, dense=0.734, spread=0.1, GATE); O-East 615 pts rule=p98 → 3.4 (p50=3.3 p75=3.3 p98=3.4, dense=0.987, spread=0.1, GATE); P 598 pts rule=p98 → 4.0 (p50=3.9 p75=3.9 p98=4.0, dense=0.910, spread=0.1, GATE). All clear STAT_MIN_PTS/STAT_MAX_SPREAD/STAT_MIN_HEIGHT. Δ vs shipped GIS: +0.1 / −0.9 / −0.3 m.",
+    "evidence": {
+      "lidar": "ExtOWest: 929 pts canopy-guard h=4.4 dense=0.734 spr=0.1 hist body at 4 m; ExtOEast: 615 pts p98 h=3.4 dense=0.987 spr=0.1 hist=[3m dominant]; ExtP: 598 pts p98 h=4.0 dense=0.91 spr=0.1; massHeights all undefined; /tmp/gauntlet-r1c1-p2s/probe.json",
+      "gis": "all three L1 gisH=4.3 area≈150 / 136 / 111; hostless (no OSM host ring)",
+      "osm": "null — Extended Studies cottage row has no OSM hosts for these pads (same hostless pattern as Ext F/G/X/Z/E/H/K/M)",
+      "apple": "Apple snapshots ext-o-west.jpg / ext-o-east.jpg / ext-p.jpg z19 at 32.882111,-117.242754 / 32.882197,-117.242582 / 32.882133,-117.242600 (2511/2515/2496 kB) — finished Ext Studies fabric among mature trees + parking today; light grey/white cottage roofs visible on the west edge of frame; centerRGB≈187,189,189 / 186,188,188 / 228,228,226; no crane. Currency OK; no colour sampling (Apple offset unresolved).",
+      "probe": "explainRoof imported from scripts/lib/roof-measure.mjs with rim-median vertex base on every target"
+    },
+    "severity": "medium",
+    "suspected_class": "Hostless GIS Extended Studies cottages with a clean measured plane still shipping the uniform L1=4.3 record — same PRE_2014_GIS_VERIFIED admit class as Ext F/G/X/Z/E/H/K/M. O-East is the largest Δ (−0.9 m).",
+    "epoch_risk": "Low for existence — Apple shows finished one-storey roofs today and the 2014 cloud already has dense 3–4 m bodies. The p98=10 tail on O-West is crown overhang (canopy-guard discarded it), not a rebuild. Eye-level impact of pinning the plane is small; the finding is the missing massHeights pin."
+  },
+  {
+    "id": "pepper-switch-clear-plane",
+    "entity": "Pepper Canyon Switching Station",
+    "where": {"x": 839.8, "z": -380.9},
+    "claim": "assembleMasses ships src=gis h=gisH=4.3 (L1). massHeights[m:840,-381] undefined. Hostless.",
+    "observed": "Fresh vertex-rimBase EPT: 538 pts rule=p98 → 4.1 (p50=3.6 p75=3.7 p98=4.1, dense=0.968, spread=0.4, GATE). Δ vs GIS = −0.2 m — at the noise line, but the plane clears the statistical admit gate and has no massHeights pin.",
+    "evidence": {
+      "lidar": "PepperSwitch@840,-381 538 pts rule=p98 h=4.1 dense=0.968 spr=0.4 hist=[3m dominant]; massHeights undefined; GATE",
+      "gis": "Pepper Canyon Switching Station L1 gisH=4.3 area≈222",
+      "osm": "null — hostless utility pad",
+      "apple": "Apple snapshot pepper-switch.jpg z19 at 32.881445,-117.232217 (2555 kB) — finished small rectangular grey-roof pad east of the road beside Canyonview canyon vegetation today; centerRGB≈186,185,179; no crane",
+      "probe": "explainRoof with vertex rimBase"
+    },
+    "severity": "low",
+    "suspected_class": "Hostless pre-2014 utility pad with a gate-clear plane still on the GIS L1 default — same admit family as Ext cottages / CSC hostless; Δ only 0.2 m so eye-level is moot.",
+    "epoch_risk": "Low — Apple shows a finished one-storey pad today; 2014 already has a dense 3–4 m body. Not a date conflict."
+  },
+  {
+    "id": "fac-club-exp-stepped",
+    "entity": "Faculty Club Expansion",
+    "where": {"x": 147.2, "z": -172.8},
+    "claim": "assembleMasses ships src=gis h=gisH=4.3 (L1). massHeights undefined. Host Ida and Cecil Green Faculty Club is HAND_AUDITED at 6.5; this expansion mass does not inherit that audit.",
+    "observed": "Fresh vertex-rimBase EPT: 1,676 pts rule=p98 → 6.6 (p50=3.4 p75=4.9 p98=6.6, dense=0.742, spread=1.7). Gate refuses (spread>1.2). Histogram 3 m:941 + 4 m:302 + 5 m:236 + 6 m:140 — stepped / pitched volumes, not one plane. Shipped 4.3 sits on the dense lower body; roofOf 6.6 rides the upper shelf.",
+    "evidence": {
+      "lidar": "FacClubExp@147,-173 1676 pts rule=p98 why='no guard fired; p98 is the roof' h=6.6 p50=3.4 p75=4.9 p98=6.6 dense=0.742 spr=1.7 hist=[3m:941 4m:302 5m:236 6m:140]; massHeights undefined; host HAND_AUDITED Faculty Club=6.5",
+      "gis": "Faculty Club Expansion L1 gisH=4.3 area≈681; host Faculty Club gisH=4.3 overridden to 6.5 by HAND_AUDITED",
+      "osm": "null as its own name — sits under Ida and Cecil Green Faculty Club host outline",
+      "apple": "Apple snapshot fac-club-exp.jpg z19 at 32.879563,-117.239625 (2544 kB) — finished Faculty Club complex with multiple flat/pitched roof planes, skylights and plant today; centerRGB≈150,149,143; no crane. Expansion wing is standing fabric, not a bare pad.",
+      "probe": "explainRoof with vertex rimBase; thin-shelf did not fire (body not tight / dense 0.742 < 0.85)"
+    },
+    "severity": "medium",
+    "suspected_class": "Stepped/pitched expansion wing under a HAND_AUDITED host — GIS L1 tracks the dense eave body; p98 tracks an upper plane/ridge. Imagery must pick whether to keep 4.3, inherit the host's 6.5 ridge convention, or split parts. Do not auto-paste 6.6.",
+    "epoch_risk": "Low for existence (Apple finished today; pre-2014 Faculty Club fabric). The 3 vs 6 m split is two real decks/planes of one building, not a rebuild. Pasting p98 without a parts split would lift the low wing the way pasting McGill's plant was rejected."
+  },
+  {
+    "id": "amphi-kiosk-sparse",
+    "entity": "Amphitheater Kiosk",
+    "where": {"x": 806.6, "z": -110.8},
+    "claim": "assembleMasses ships src=gis h=gisH=4.6 area≈75. massHeights undefined. Only 17 non-ground EPT returns inside the ring.",
+    "observed": "Fresh vertex-rimBase EPT: 17 pts rule=p98 → 2.0 (p50=1.2 p75=1.8 p98=2.0, dense=1.0). Far under STAT_MIN_PTS 400 and under STAT_MIN_HEIGHT 3. Shipped 4.6 has no 2014 plane to support it. Apple places the ring on the Epstein / Pepper Canyon West plaza fabric (finished amphitheater bowl + white roofs + trolley), where small kiosk-scale pads sit among the plaza.",
+    "evidence": {
+      "lidar": "AmphiKiosk@807,-111 17 pts rule=p98 h=2.0 hist=[1m:12 0m:5]; massHeights undefined; gate refuses on pts and height",
+      "gis": "Amphitheater Kiosk gisH=4.6 area≈75",
+      "osm": "null — GIS-only kiosk mass",
+      "apple": "Apple snapshot amphi-kiosk.jpg z19 at 32.879002,-117.232572 (2334 kB) — finished Epstein amphitheater / PCW plaza / Mid-Coast trolley station today; centerRGB≈197,197,195; no crane. Plaza kiosks/furniture visible; not a hall-scale roof.",
+      "probe": "explainRoof with vertex rimBase; 17 returns is not a measurement"
+    },
+    "severity": "medium",
+    "suspected_class": "Tiny GIS kiosk/plaza pad with essentially no 2014 returns, sitting in the Epstein Amphitheater (POST_2014, opened 2022) / PCW district — better absent than a 4.6 m box on a plaza, same instinct as the Mayer hex-bridge and Foodworx patio removals.",
+    "epoch_risk": "High — Epstein Family Amphitheater is POST_2014_SITES; the surrounding PCW fabric is 2023. A GIS 'kiosk' here may postdate the flight entirely, so empty 2014 returns are a DATE, not proof the pad is wrong. Apple confirms plaza furniture exists today; what is unresolved is whether a solid 4.6 m extrusion is the right representation. Ask before inventing a height."
+  }
+]

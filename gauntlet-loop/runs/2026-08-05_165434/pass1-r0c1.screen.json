@@ -1,0 +1,87 @@
+[
+  {
+    "id": "vw2-underheight",
+    "entity": "Village West Building 2 (GIS Seventh College West #2)",
+    "where": {"x": -124.6, "z": -1108.4},
+    "claim": "assembleMasses ships gis Village West Building 2 h=13 via lidar.massHeights[m:-125,-1108]=13 over gisH=15.2. OSM host lidar.heights['Village West Building 2']=15.8 is ignored because own massHeights wins.",
+    "observed": "Fresh EPT of the GIS ring: 5,031 pts, rim=1.00, gradeSpread=2.9 m. explainRoof → rule=p98, roofOf−base=15.6 m (p50=15.1, p75=15.1, p98=15.6, dense=0.798). Spread=0.51 — statisticallyAdmissible would admit. Histogram 15 m:3962 (79%). Shipped 13 is 2.6 m under roofOf and 2.2 m under GIS L-levels; OSM host plane 15.8 and Overpass building:levels=5 both agree with ~15–16 m, not 13.",
+    "evidence": {
+      "lidar": "gis:West#2 5031 pts rule=p98 why='no guard fired; p98 is the roof' h=15.6 p50=15.1 p75=15.1 p98=15.6 dense=0.798 spread=0.51 hist=[15m:3962 2m:257 6m:187]; massHeights[m:-125,-1108]=13; host lidar.heights['Village West Building 2']=15.8; osm-host re-probe 5022 pts roofOf=15.7 matches host",
+      "gis": "Seventh College West #2 gisH=15.2 levels≈4–5 area; rendered name Village West Building 2 via OSM host rename",
+      "osm": "way/67750296 tags={building:dormitory, building:levels:5, name:Village West Building 2, source:Bing}; campus-3d h3d=19.2 lidarH=15.8 @(-128.2,-1110.7)",
+      "apple": "Apple snapshot vw2.jpg z19 at 32.888024,-117.242533 (2420 kB) — finished Village West residential pads with flat light roofs among lawns/paths today; centerRGB≈213,209,209; no crane",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "GIS massHeights under-read on a one-plane Village West dorm — shipped key is 2.6 m below a fresh admissible roofOf that agrees with GIS levels, OSM host plane, and building:levels=5. Possible campus-lidar.json drift vs builder (sibling West #3 ships 14.3 ≈ gisH).",
+    "epoch_risk": "Low for existence — Apple + OSM levels agree a finished 5-level dorm stands here. The 13 vs 15.6 split is a measurement/assignment disagreement inside the 2014 epoch, not a post-2014 rebuild. Do not treat the short ship as epoch evidence."
+  },
+  {
+    "id": "ve5-underheight",
+    "entity": "Village East Building 5",
+    "where": {"x": -50.6, "z": -1088.8},
+    "claim": "assembleMasses ships src=osm Village East Building 5 h=12.4 via lidar.heights['Village East Building 5']=12.4 (no covering GIS mass suppresses the OSM ring).",
+    "observed": "Fresh EPT of the OSM ring: 1,420 pts, rim=1.00, gradeSpread=4.5 m. explainRoof → rule=p98, roofOf−base=15.0 m (p50=13.9, p75=14.0, p98=15.0, dense=0.754). Spread=1.03 — admissible. Histogram 13 m:734 + 14 m:337 = 75% in the 13–14 m band. Shipped 12.4 is 2.6 m under roofOf. Overpass building:levels=5 agrees with ~15 m; OSM height=6 tag is the known wild tag, not the plane.",
+    "evidence": {
+      "lidar": "osm:VE5 1420 pts rule=p98 h=15.0 p50=13.9 p75=14.0 p98=15.0 dense=0.754 spread=1.03 hist=[13m:734 14m:337 11m:54 15m:49]; lidar.heights['Village East Building 5']=12.4; nearest GIS East #5 @(-49,-1057) is a different mass 31 m north (mh=12.3 matches its own fresh roofOf=12.2)",
+      "gis": "no GIS mass centroid-covers this OSM ring; siblings East #3 mh=15.8 / East #6 mh=8.3 / East #7 mh=9.4",
+      "osm": "way/180765919 tags={building:dormitory, building:levels:5, height:6, name:Village East Building 5}; campus-3d h3d=6 lidarH=12.4",
+      "apple": "Apple snapshot ve5.jpg z19 at 32.887847,-117.241741 (2165 kB) — finished Village East comb/E-shaped dorms with solar-panel roof strips and landscaped courtyards today; centerRGB≈160,162,154; no crane",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Named OSM host height under-read on a Village East 5-level dorm — same class as vw2-underheight: fresh admissible roofOf and building:levels=5 both sit ~15 m while the shipped lidar.heights entry is ~12.4.",
+    "epoch_risk": "Low — Apple shows finished solar-panel roofs today; Village East is pre-2014 (PRE_2014_GIS_VERIFIED neighbourhood). The short ship is not a date conflict."
+  },
+  {
+    "id": "ve4-underheight",
+    "entity": "Village East Building 4",
+    "where": {"x": -38.4, "z": -1105.0},
+    "claim": "assembleMasses ships src=osm Village East Building 4 h=12.1 via lidar.heights['Village East Building 4']=12.1.",
+    "observed": "Fresh EPT of the OSM ring: 2,716 pts, rim=1.00, gradeSpread=4.5 m. explainRoof → rule=p98, roofOf−base=14.0 m (p50=13.0, p75=13.0, p98=14.0, dense=0.761). Spread=0.94 — admissible. Histogram 12 m:1302 + 13 m:764. Shipped 12.1 is 1.9 m under roofOf. Overpass building:levels=5.",
+    "evidence": {
+      "lidar": "osm:VE4 2716 pts rule=p98 h=14.0 p50=13.0 p75=13.0 p98=14.0 dense=0.761 spread=0.94 hist=[12m:1302 13m:764 10m:294]; lidar.heights['Village East Building 4']=12.1",
+      "gis": "no co-named GIS mass at this centroid; roof-anchor Δ=−2.1 m on this ring (rim vs centroid) — separate from the height under-read",
+      "osm": "way/180765929 tags={building:dormitory, building:levels:5, height:5, name:Village East Building 4}; campus-3d h3d=5 lidarH=12.1",
+      "apple": "Apple snapshot ve5.jpg neighbourhood (VE4 adjacent in same Village East comb) z19 — finished dorm roofs with solar strips today; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Same Village East/West host-height under-read class as ve5-underheight — smaller Δ (1.9 m) but same levels=5 vs ~12 ship pattern.",
+    "epoch_risk": "Low — finished pre-2014 Village East fabric on Apple. Not a rebuild."
+  },
+  {
+    "id": "cvr-bimodal-planes",
+    "entity": "Canyon Vista Restaurant",
+    "where": {"x": 750.8, "z": -682.8},
+    "claim": "assembleMasses ships src=osm Canyon Vista Restaurant h=8.6 via lidar.heights['Canyon Vista Restaurant']=8.6.",
+    "observed": "Fresh EPT: 831 pts, rim=1.00, gradeSpread=0. explainRoof → rule=p98, roofOf−base=8.6 m (p50=4.6, p75=8.3, p98=8.6, dense=0.67). Spread p98−p75=0.25 so gate admits, but the histogram is bimodal: 4 m:502 (60%) vs 8 m:203 (24%). Body is not thin-shelf-tight (p75−p50=3.7 > 2). Shipped number equals the upper plane; the dominant return count sits on a ~4–5 m deck Apple shows as terrace/lower volume beside the dining hall.",
+    "evidence": {
+      "lidar": "osm:CVR 831 pts rule=p98 h=8.6 p50=4.6 p75=8.3 p98=8.6 dense=0.67 spread=0.25 hist=[4m:502 8m:203 5m:55 3m:37]; lidar.heights ships 8.6; no GIS mass for this name",
+      "gis": "null — Canyon Vista Administration is the neighbouring OSM ring at (744.3,-664.5) shipping 12",
+      "osm": "way/439620065 tags={amenity:restaurant, building:yes, cuisine:cafeteria, name:Canyon Vista Restaurant}; campus-3d h3d=4.5 lidarH=8.6",
+      "apple": "Apple snapshot cvr.jpg z19 at 32.884175,-117.233169 (2751 kB) — finished multi-level Canyon Vista dining complex with grey roofs, rooftop mechanical plant, and an outdoor terrace (blue umbrellas) today; amphitheater steps east; centerRGB≈179,169,164; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Bimodal / stepped dining hall where statistics admit the upper plane because p98≈p75, while the majority of returns sit on a lower terrace deck — imagery must pick which volume the extrusion should wear.",
+    "epoch_risk": "Low for existence (Apple + OSM amenity). The 4 vs 8 m split is two real decks of one pre-2014 complex, not a date conflict. Do not auto-drop to 4.6 without an Apple plane call — the upper dining volume is real."
+  },
+  {
+    "id": "osm57-multiplane-suppressed",
+    "entity": "unnamed OSM building index 57 (near Douglas / Brown / Brennan)",
+    "where": {"x": 795.8, "z": -580.4},
+    "claim": "campus-3d still carries unnamed osm:57 area-guess h=9 (area≈676). Not in lidar.osmHeights; not OSM_WITHHELD. assembleMasses suppresses it (no rendered self) — nearest rendered masses are GIS Douglas/Brown/Brennan.",
+    "observed": "Fresh EPT: 1,976 pts, rim=1.00, gradeSpread=2.8 m. explainRoof → rule=p98, roofOf−base=16.0 m (p50=8.1, p75=13.0, p98=16.0, dense=0.276). Spread=3.00 — gate refuses (multi-plane residue). Histogram multimodal 5 m:516 / 10 m:288 / 13 m:238 / 15 m:216. Ring does not currently render, so eye-level impact is nil unless suppression regresses.",
+    "evidence": {
+      "lidar": "osm:57 1976 pts rule=p98 h=16.0 p50=8.1 p75=13.0 p98=16.0 dense=0.276 spread=3.00 hist=[5m:516 10m:288 13m:238 15m:216]; osmHeights[57]=undefined; gate maxSpread=false",
+      "gis": "null for this ring — suppressed under Douglas/Brown/Brennan GIS coverage neighbourhood (centroids 28–54 m away)",
+      "osm": "unnamed way index 57, campus-3d h=9, area≈676 @ (795.8,-580.4)",
+      "apple": "Apple snapshot osm57.jpg z19 at 32.883249,-117.232688 (2691 kB) — finished Warren residential/academic roofs with stepped decks and mechanical plant today among lawns and courts; centerRGB≈107,91,80; no crane",
+      "probe": null
+    },
+    "severity": "low",
+    "suspected_class": "Suppressed multi-plane (spread>1.2) unnamed guess residue in the 280-campus set — no current render, but still an unmeasured ring if suppression ever lifts.",
+    "epoch_risk": "Low for currency (Apple finished). The multimodal 5/10/13/15 m returns are stepped Warren hall wings the 2014 flight already saw — not evidence the lot was empty. Leave unbuilt unless imagery can split parts; do not admit roofOf=16 onto a suppressed outline."
+  }
+]

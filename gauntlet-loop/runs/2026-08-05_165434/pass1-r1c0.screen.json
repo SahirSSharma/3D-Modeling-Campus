@@ -1,0 +1,19 @@
+[
+  {
+    "id": "hdh-bimodal-planes",
+    "entity": "Housing Dining and Hospitality Administration Building (GIS: Housing, Dining and Hospitality Services)",
+    "where": {"x": -175.0, "z": 381.9},
+    "claim": "assembleMasses ships src=gis h=19.4 via massHeights[m:-175,382]=19.4 over gisH=17.1 / L4. OSM host lidar.heights['Housing Dining and Hospitality Administration Building']=19.8 (outline suppressed under GIS).",
+    "observed": "Fresh EPT of the GIS ring: 8,259 pts, rim=1.00, gradeSpread=1.0 m. explainRoof → rule=p98, roofOf−base=19.6 m (p50=15.4, p75=18.1, p98=19.6, dense=0.614). Body not thin-shelf-tight (p75−p50=2.7 > 2; dense 61% < 85%). Histogram bimodal: 15 m:4,692 (57%) vs 18 m:1,149 + 19 m:1,115 (27% combined). Shipped 19.4 equals the upper shelf; GIS L4=17.1 and the OSM tag h=15.6 both sit with the majority 15 m band. OSM-host re-probe 8,475 pts same pattern (hist 15 m:4,628 / 19 m:1,232 / 18 m:1,050; roofOf=19.7).",
+    "evidence": {
+      "lidar": "gis:HDH@-175,382 8259 pts rule=p98 why='no guard fired; p98 is the roof' h=19.6 p50=15.4 p75=18.1 p98=19.6 dense=0.614 spreadGate=1.5 hist=[15m:4692 18m:1149 19m:1115 17m:611]; massHeights[m:-175,382]=19.4; osm-host 8475 pts roofOf=19.7 hist=[15m:4628 19m:1232 18m:1050]; lidar.heights host=19.8",
+      "gis": "Housing, Dining and Hospitality Services gisH=17.1 levels=4 area≈1038; rendered name via OSM host rename",
+      "osm": "way for Housing Dining and Hospitality Administration Building tags height/area → campus-3d h3d=15.6; lidarH=19.8 @(-182.8,384.1); outline yields to GIS mass",
+      "apple": "Apple snapshot hdh.jpg z19 at 32.874526,-117.243155 (2315 kB) — finished HDH admin with multi-level flat roof and a central grey metal-grate / trellis over rooftop mechanical plant today; Keeling North solar roof and Keeling West green-roof bar adjacent; centerRGB≈120,127,134; no crane",
+      "probe": "explainRoof imported from scripts/lib/roof-measure.mjs with rim-median base; thin-shelf did not fire (body not tight, dense 0.61)"
+    },
+    "severity": "medium",
+    "suspected_class": "Bimodal / stepped admin hall where statistics admit the upper plane (and massHeights ships it) while the majority of returns sit on a ~15 m deck that agrees with GIS L4 and the OSM height tag — imagery must pick which volume the extrusion should wear (Canyon Vista Restaurant class).",
+    "epoch_risk": "Low for existence — Apple + OSM + GIS agree a finished pre-2014 admin building stands here. The 15 vs 19 m split is two real decks / plant volume of one building, not a post-2014 rebuild. Do not auto-drop to 15.4 without an Apple plane call — the upper mechanical/trellis volume is real on today's imagery."
+  }
+]

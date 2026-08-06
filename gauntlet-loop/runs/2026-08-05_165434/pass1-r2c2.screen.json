@@ -1,0 +1,172 @@
+[
+  {
+    "id": "hyatt-named-guess",
+    "entity": "Hyatt Regency La Jolla at Aventine",
+    "where": {"x": 1467, "z": 799.9},
+    "claim": "assembleMasses ships src=osm h=16. HAND_AUDITED['Hyatt Regency La Jolla at Aventine']=null (emit nothing). Only remaining readiness namedGuess (i=76). Prior r2c2 judge: one OSM ring wraps tower + podium / circular pavilion.",
+    "observed": "Fresh vertex-rimBase EPT (11,029 pts): explainRoof → rule=canopy-guard, h=45.2 (p50=4.7, p75=45.2, p98=51.6, dense=0.508, spread=6.4). Hist 4m:5413 (49%) under a tower plane at 41–51 m — bimodal composite. Unguarded p98 would paste ~52 m across the whole 92×96 m footprint. Shipping 16 is the stated OSM tag guess, not a measured plane. Apple hyatt.jpg z17 — finished white tower + circular terracotta pavilion + pool standing today; no crane.",
+    "evidence": {
+      "lidar": "host:Hyatt 11029 pts rule=canopy-guard why='p98-p75 = 6.4 m > 5 — crown overhang, take the roof plane' h=45.2 p50=4.7 p75=45.2 p98=51.6 dense=0.508 spread=6.4 rim=1.00 hist=[4m:5413 44m:1095 51m:697 50m:579]; lidar.heights['Hyatt…']=undefined (HAND_AUDITED null)",
+      "gis": null,
+      "osm": "way index 76 named h=16 area≈4366 parts=0; readiness.namedGuesses sole entry",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c2-screen/apple/hyatt.jpg z17 at 32.870766,-117.225508 (3319 kB, centerRGB=106,107,103 ent=7.50) — finished Aventine tower + circular pavilion + HVAC roofs today; no crane",
+      "probe": "/tmp/gauntlet-r2c2-screen/probe.json; explainRoof from scripts/lib/roof-measure.mjs with builder vertex rimBase. Parts-level source still absent — neither single extrusion is honest."
+    },
+    "severity": "high",
+    "suspected_class": "Named composite OSM ring (tower + podium) — readiness named-guess blocker. Same shape as withheld osm:83 helipad medical.",
+    "epoch_risk": "Low for existence — Apple shows the finished hotel today. The 4 m vs 45 m split is two heights in one ring within one epoch, not a rebuild date. Do not treat canopy-guard 45.2 as a shippable roof."
+  },
+  {
+    "id": "mahaila-704-705-underheight",
+    "entity": "unnamed OSM pads osm:704/705 (3950 Mahaila Avenue / Axiom La Jolla)",
+    "where": {"x": 1810, "z": 981},
+    "claim": "assembleMasses still extrudes both as src=osm area-guess h=9. Not in lidar.osmHeights / OSM_WITHHELD. Prior r2c2 pass-1 deliberately did not admit (stepped, dense 2 m band 47%/44%).",
+    "observed": "Fresh vertex-rimBase EPT: 704 (2198 pts) rule=p98 h=15.6 (p50=12.7, p75=13.7, p98=15.6, dense=0.469, spread=1.9) hist 12m:541 / 13m:489 / 11m:412 — dense body ~12–14 m; shipping 9 is −4.7 under p75 / −6.6 under roofOf. 705 (2254 pts) rule=p98 h=16.1 (p50=13.3, p75=14.4, dense=0.441, spread=1.7) hist 13m:528 / 14m:465 / 12m:432 — shipping 9 is −5.4 under p75. Nominatim both → 3950 Mahaila Avenue (Axiom La Jolla). Apple osm704/705 + belmont-cluster — finished multi-unit terracotta gabled roofs + pools standing today.",
+    "evidence": {
+      "lidar": "704:2198pts rule=p98 h=15.6 p50=12.7 p75=13.7 spr=1.9 dense=0.469 hist=[12m:541 13m:489 11m:412]; 705:2254pts h=16.1 p50=13.3 p75=14.4 spr=1.7 dense=0.441 hist=[13m:528 14m:465 12m:432]; osmHeights undefined both",
+      "gis": null,
+      "osm": "unnamed shipH=9 area≈813–834; Nominatim → 3950 Mahaila Avenue, Axiom La Jolla",
+      "apple": "Apple /tmp/gauntlet-r2c2-screen/apple/osm704.jpg osm705.jpg z19 + belmont-cluster.jpg z16 — finished Axiom / Mahaila multi-unit terracotta roofs + courtyard pools today; no crane",
+      "probe": "gate refuses (maxSpread / low dense). Dense body clearly above the 9 m guess — imagery must pick the occupied plane; do not paste unguarded roofOf 15–16."
+    },
+    "severity": "high",
+    "suspected_class": "Stepped mid-rise under-guess — dense body ~12–14 m under a 9 m area default; statistics cannot auto-admit, imagery can.",
+    "epoch_risk": "Low for existence — Apple and 2014 both describe standing multi-storey apartments. Spread is stepped wings within one epoch, not a post-2014 rebuild."
+  },
+  {
+    "id": "osm-1364-sheraton-overheight",
+    "entity": "unnamed osm:1364 (3299 Holiday Court / Sheraton-strip sibling)",
+    "where": {"x": 891.6, "z": 881.4},
+    "claim": "assembleMasses ships src=osm area-guess h=9. Not in osmHeights. Prior r2c2 pass-1 near-miss sibling of admitted 1365/1366/1367 — dense 78.7% under the 85% thin-shelf cut; kept 9.",
+    "observed": "Fresh vertex-rimBase EPT (5795 pts): explainRoof → rule=p98, h=9.3 (p50=5.3, p75=5.4, p98=9.3, dense=0.787, spread=3.9). Hist 5m:4473 (77% of returns) — textbook one-storey body under a sparse 9 m shelf. Thin-shelf host rule needs dense≥0.85 (here 78.7%) and gap>2 (here 3.9) — dense cut misses by ~6 pts. Shipping 9 pastes the HVAC/parapet shelf ~3.9 m above the dense body. Nominatim → 3299 Holiday Court. Apple osm1364.jpg z19 — finished flat commercial/hospitality roof with plant standing today beside admitted Sheraton-strip siblings.",
+    "evidence": {
+      "lidar": "osm:1364@891.6,881.4 5795 pts rule=p98 h=9.3 p50=5.3 p75=5.4 p98=9.3 dense=0.787 spread=3.9 rim=1.00 hist=[5m:4473 2m:623 3m:234]; lidar.osmHeights[1364]=undefined; siblings 1365/1366/1367 already ship ~5.1–5.2",
+      "gis": null,
+      "osm": "index 1364 unnamed h=9 area≈1190; Nominatim → 3299 Holiday Court",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c2-screen/apple/osm1364.jpg z19 at 32.870029,-117.231663 (2757 kB, centerRGB=109,111,108 ent=7.57) — finished flat grey roof w/ HVAC beside Sheraton strip today; no crane",
+      "probe": "thin-shelf near-miss (dense 78.7% < 85%). Same class as Union Bank before rimBase cleared the cut — body plane ≈5.4 matches admitted siblings; do not keep pasting 9."
+    },
+    "severity": "high",
+    "suspected_class": "Sheraton-strip thin-shelf overheight — dense one-storey body with a sparse p98 shelf; prior near-miss judgment may be superseded if imagery confirms the body plane.",
+    "epoch_risk": "Low — finished pre-2014 hospitality pad on Apple and LiDAR. Body vs shelf is plant geometry, not a date conflict."
+  },
+  {
+    "id": "mesa-regents-tower-bleed-class",
+    "entity": "unnamed OSM pads osm:359/361–364/366 (Mesa Apartments Central / Regents Road)",
+    "where": {"x": 1760, "z": 560},
+    "claim": "assembleMasses still extrudes this strip as src=osm area-guess h=8.4. Not in osmHeights / OSM_WITHHELD. Reject-diagnosis why=spread>1.2 with would=20–28.",
+    "observed": "Fresh vertex-rimBase EPT: shared dense body at 5–6 m matching GIS L2=6.1, while roofOf rides 20–28 m neighbour-tower bleed. 364 (1719 pts) rule=p98 h=28.1 hist 5m:588 / 6m:215 under 21–27 m bins; 363 (3719) h=26.3 hist 5m:737; 362 (1386) h=25.8; 359 (1051) canopy-guard h=20.9; 366 (3795) canopy-guard h=20.1. Shipping 8.4 sits ~2 m above the GIS body, not at the tower plane. GIS masses Mesa Central 9226/9228/9230/9232/9234/9236 all gisH=6.1 mh=null. Nominatim: 364→9234 Regents Road; 363→9230 Regents Road. Apple mesa-cluster + osm363/364 — finished Mesa low-rise apartment roofs beside taller fabric today.",
+    "evidence": {
+      "lidar": "364:1719pts h=28.1 densemode≈5–6; 363:3719/26.3; 362:1386/25.8; 359:1051 canopy-guard 20.9; 366:3795 canopy-guard 20.1; body bins dominate at 5–6 m; osmHeights undefined",
+      "gis": "Mesa Apartments Central 9226/9228/9230/9232/9234/9236 all gisH=6.1 L2 mh=null — agrees with the 5–6 m LiDAR body, not roofOf 20–28",
+      "osm": "unnamed rings shipH=8.4 area≈328–492; Nominatim Regents Road Mesa Central addresses",
+      "apple": "Apple /tmp/gauntlet-r2c2-screen/apple/mesa-cluster.jpg z16 + osm363.jpg osm364.jpg z19 — finished Mesa low/mid apartment roofs today; taller neighbour fabric visible but not evidence to paste 28 m onto these rings",
+      "probe": "gate refuses on spread. Do NOT admit roofOf — that pastes Mesa Nueva / neighbour tower bleed. Prefer GIS 6.1 / dense body ~5–6 over the 8.4 guess if anything moves."
+    },
+    "severity": "medium",
+    "suspected_class": "Neighbour-tower bleed into low Mesa rings — dense body agrees with GIS L2; unguarded roofOf manufactures a false underheight.",
+    "epoch_risk": "Possible DATE mix: Mesa Nueva towers are newer fabric; 2014 returns over these rings can include bleed from later/taller neighbours. Treat tower bins as contamination, not as this pad's roof. Apple confirms the Mesa pads themselves stand finished today."
+  },
+  {
+    "id": "osm-479-new-plane-evidence",
+    "entity": "unnamed osm:479 (La Jolla Village Drive east-edge pad)",
+    "where": {"x": 1843.8, "z": 810.6},
+    "claim": "OSM_WITHHELD. Prior r2c2 pass-3: centroid past terrain x grid → 0 EPT pts / groundAt-null; kept 9 m guess (survey-box handoff).",
+    "observed": "Fresh vertex-rimBase EPT now returns 1,312 pts: explainRoof → rule=p98, h=10.6 (p50=9.3, p75=10.0, p98=10.6, dense=0.723, spread=0.6). Hist 9m:501 / 8m:447 / 10m:286 — clean one-plane shape. BUT rim coverage = 0.455 (gate needs ≥0.99) — only ~half the footprint vertices have terrain. Shipping 9 is −1.6 under roofOf. Nominatim → La Jolla Village Drive. Apple osm479.jpg z19 — finished terracotta multi-unit roofs + pool fabric standing today on the east edge.",
+    "evidence": {
+      "lidar": "osm:479@1843.8,810.6 1312 pts rule=p98 h=10.6 p50=9.3 p75=10.0 p98=10.6 dense=0.723 spread=0.6 rim=0.455 hist=[9m:501 8m:447 10m:286]; NEW vs prior 0-pt sample; still OSM_WITHHELD",
+      "gis": null,
+      "osm": "index 479 unnamed h=9 area≈586; Nominatim → La Jolla Village Drive; OSM_WITHHELD",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c2-screen/apple/osm479.jpg z19 at 32.870669,-117.221478 (2481 kB, centerRGB=119,114,109 ent=7.46) — finished terracotta residential roofs + pool today; no crane",
+      "probe": "NEW EVIDENCE vs prior withhold rationale (0 pts). Plane is clean (spr=0.6) but rim=0.455 still fails the statistical gate. Judge: reopen withhold with this sample, or keep as survey-edge handoff."
+    },
+    "severity": "medium",
+    "suspected_class": "Survey-edge rim failure with a newly resolved clean plane — withheld-reopen candidate, not a blind re-file.",
+    "epoch_risk": "Low for existence — Apple shows finished fabric today. Prior 0-pt reading was a terrain-grid DATE/extent issue, not a demolished building."
+  },
+  {
+    "id": "belmont-courtyard-contamination",
+    "entity": "Belmont Village Senior Living",
+    "where": {"x": 1623, "z": 977.2},
+    "claim": "assembleMasses ships src=osm h=9.1 from lidar.heights['Belmont Village Senior Living']=9.1. campus-3d.json OSM tag remains 62.4. Not a readiness namedGuess (has a measured entry).",
+    "observed": "Fresh vertex-rimBase EPT (6947 pts): explainRoof → rule=p98, h=9.1 (p50=2.8, p75=4.6, p98=9.1, dense=0.440, spread=4.5). Hist −1m:2539 (37%) / 4m:1011 / 3m:730 — courtyard/ground returns dominate; the shipped 9.1 rides a sparse upper tail over a contaminated cloud. OSM tag 62.4 (~20 storeys) is absurd for this footprint. Apple belmont.jpg z17 — finished multi-storey senior-living / courtyard fabric standing today; no crane. Open question whether 9.1 under-reads a mid-rise body or correctly describes a low wing whose ring includes plazas.",
+    "evidence": {
+      "lidar": "host:Belmont 6947 pts rule=p98 h=9.1 p50=2.8 p75=4.6 p98=9.1 dense=0.440 spread=4.5 rim=1.00 hist=[-1m:2539 4m:1011 3m:730 0m:520]; lidar.heights['Belmont Village Senior Living']=9.1",
+      "gis": null,
+      "osm": "way index 808 named h=62.4 area≈1754; ship uses lidar 9.1",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c2-screen/apple/belmont.jpg z17 at 32.869162,-117.223840 (3432 kB, centerRGB=113,113,110 ent=7.53) — finished multi-storey white/terracotta courtyard roofs today; no crane",
+      "probe": "dense 44% / near-ground mode — measurement quality is poor. Do not trust OSM 62.4; do not treat 9.1 as locked without imagery confirming which plane the ring owns."
+    },
+    "severity": "medium",
+    "suspected_class": "Named host with courtyard-contaminated returns — same composite-ring family as Hyatt, but already carrying a (possibly low) measured height.",
+    "epoch_risk": "Low for existence. Contaminated hist is footprint geometry (plaza inside ring), not a post-2014 rebuild."
+  },
+  {
+    "id": "medical-thin-shelf-near-miss",
+    "entity": "La Jolla Medical & Surgical Center",
+    "where": {"x": 1364.9, "z": 887.9},
+    "claim": "assembleMasses ships src=osm h=10.7 from lidar.heights. Prior r2c2 pass-1: dense 85.8%, gap 1.9 under the 2 m thin-shelf cut — kept roofOf 10.7.",
+    "observed": "Fresh vertex-rimBase EPT (8846 pts): explainRoof → rule=p98, h=10.7 (p50=8.8, p75=8.8, p98=10.7, dense=0.858, spread=1.9). Hist 8m:7108 (80%) — dense body at 8.8 m; shelf gap 1.9 m just under SHELF_GAP=2 so thin-shelf does not fire despite dense≥0.85. Shipping 10.7 pastes ~1.9 m of HVAC shelf. Apple medical.jpg z18 — finished flat medical roof with plant standing today.",
+    "evidence": {
+      "lidar": "host:Medical 8846 pts rule=p98 h=10.7 p50=8.8 p75=8.8 p98=10.7 dense=0.858 spread=1.9 rim=1.00 hist=[8m:7108 0m:496 9m:480]; lidar.heights=10.7",
+      "gis": null,
+      "osm": "way index 161 named h=12 area≈2151; ship uses lidar 10.7",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c2-screen/apple/medical.jpg z18 at 32.869970,-117.226601 (2713 kB, centerRGB=113,114,113 ent=7.64) — finished medical roof w/ HVAC today; no crane",
+      "probe": "thin-shelf near-miss by 0.1 m of gap. Body plane 8.8 vs ship 10.7 — same class as Union Bank / osm:1364; prior keep may still stand if imagery says the shelf is occupied roof."
+    },
+    "severity": "medium",
+    "suspected_class": "Named thin-shelf near-miss — dense body clear, gap 1.9 just under the 2 m host cut.",
+    "epoch_risk": "Low — finished pre-2014 medical pad. Body vs plant is within-epoch geometry."
+  },
+  {
+    "id": "nobel-east-283-284-rim-edge",
+    "entity": "unnamed OSM pads osm:283/284 (Nobel Drive east-edge apartments)",
+    "where": {"x": 1836, "z": 1120},
+    "claim": "assembleMasses ships src=osm area-guess h=9. Reject-diagnosis why=rim<0.99. Not in osmHeights / OSM_WITHHELD.",
+    "observed": "Fresh vertex-rimBase EPT: both read as near-strict one-planes blocked only by rim=0.5. 283 (1733 pts) rule=p98 h=10.1 (p50=9.1, p75=10.0, spread=0.1, dense=0.586); 284 (1962 pts) h=10.1 (p50=8.9, p75=9.9, spread=0.2, dense=0.587). Shipping 9 is −1.0 under roofOf / ≈p50. Nominatim → Nobel Drive. Apple osm283/284 z19 — finished multi-unit terracotta roofs + solar arrays standing today on the east survey edge.",
+    "evidence": {
+      "lidar": "283:1733pts rule=p98 h=10.1 spr=0.1 dense=0.586 rim=0.5 hist=[9m:592 8m:424 10m:312]; 284:1962pts h=10.1 spr=0.2 dense=0.587 rim=0.5 hist=[9m:704 8m:448 10m:210]; osmHeights undefined",
+      "gis": null,
+      "osm": "unnamed shipH=9 area≈771–832; Nominatim → Nobel Drive",
+      "apple": "Apple /tmp/gauntlet-r2c2-screen/apple/osm283.jpg osm284.jpg z19 — finished Nobel east multi-unit roofs w/ solar today; no crane",
+      "probe": "spread would admit; rim=0.5 fails STAT_MIN_RIM. Mild under-tag (~1 m) — survey-edge class sibling of osm:479."
+    },
+    "severity": "medium",
+    "suspected_class": "East-edge rim-coverage refusal on an otherwise clean one-plane — survey box handoff, mild height miss.",
+    "epoch_risk": "Low for existence. Rim failure is terrain-grid extent, not a demolished pad."
+  },
+  {
+    "id": "temple-tiered-spire",
+    "entity": "San Diego California Temple",
+    "where": {"x": 1168.7, "z": 1283.1},
+    "claim": "assembleMasses ships src=osm h=21.6 from lidar.heights (canopy-guard). OSM tag was 12.",
+    "observed": "Fresh vertex-rimBase EPT (5559 pts): explainRoof → rule=canopy-guard, h=21.6 (p50=17.3, p75=21.6, p98=36.8, dense=0.356, spread=15.2). Hist 17m:1451 / 12m:689 / 16m:526 / 21m:310 — tiered white roofs with a sparse spire tail to 36.8. Shipping 21.6 is p75 after the canopy guard; dense mode is closer to 17 m. Apple temple.jpg z17 — finished white multi-tier temple + spires + formal gardens standing today; no crane.",
+    "evidence": {
+      "lidar": "host:Temple 5559 pts rule=canopy-guard h=21.6 p50=17.3 p75=21.6 p98=36.8 dense=0.356 spread=15.2 rim=1.00 hist=[17m:1451 12m:689 16m:526 11m:384 21m:310]; lidar.heights=21.6",
+      "gis": null,
+      "osm": "way index 207 named h=12 area≈1788; ship uses lidar 21.6",
+      "apple": "Apple snapshot /tmp/gauntlet-r2c2-screen/apple/temple.jpg z17 at 32.866396,-117.228699 (3379 kB, centerRGB=121,120,115 ent=7.58) — finished white tiered temple + spires today; no crane",
+      "probe": "tiered sacred architecture — no single plane. 21.6 may be a mid tier; spire 36.8 must not paste. Low urgency if eye-level reads plausible."
+    },
+    "severity": "medium",
+    "suspected_class": "Tiered / spired landmark — canopy-guard picks a mid plane; imagery decides whether 17 or 21.6 is the occupied mass.",
+    "epoch_risk": "Low — temple predates and postdates 2014 unchanged at this site. Tier spread is architecture, not a date conflict."
+  },
+  {
+    "id": "lebon-soft-shelf-298-301",
+    "entity": "unnamed OSM pads osm:298/299/300/301 (Lebon Drive / Temple-parking corridor)",
+    "where": {"x": 1380, "z": 1260},
+    "claim": "assembleMasses ships src=osm area-guess h=9. Reject-diagnosis why=spread>1.2. Not in osmHeights / OSM_WITHHELD.",
+    "observed": "Fresh vertex-rimBase EPT: dense body already tracks the 9 m guess; roofOf rides a thin upper shelf. 298 (1987 pts) h=11.2 p50=8.8 p75=9.5 spr=1.7; 299 (1860) h=11.0 p75=9.4 spr=1.6; 300 (3833) h=11.0 p75=9.4 spr=1.6; 301 (4003) h=11.0 p75=9.4 spr=1.6. Shipping 9 ≈ p75 within ~0.5 m — not a storey-class underheight of the body. Nominatim: 298→3382 Lebon Drive; 300→San Diego California Temple parking lot. Apple osm298/300 — finished residential / parking-adjacent roofs today.",
+    "evidence": {
+      "lidar": "298:1987pts h=11.2 p75=9.5 spr=1.7 dense=0.593; 299:1860/11.0/9.4/1.6/0.613; 300:3833/11.0/9.4/1.6/0.628; 301:4003/11.0/9.4/1.6/0.595; osmHeights undefined",
+      "gis": null,
+      "osm": "unnamed shipH=9 area≈760–805; Nominatim Lebon Drive / Temple parking",
+      "apple": "Apple /tmp/gauntlet-r2c2-screen/apple/osm298.jpg osm300.jpg z19 — finished roofs today; no crane",
+      "probe": "gate refuses on spread. Guess already near dense body — shelf triage only; do not paste roofOf ~11."
+    },
+    "severity": "low",
+    "suspected_class": "Spread>1.2 pad whose area guess already tracks the dense body — multiplane shelf triage, not auto-admit.",
+    "epoch_risk": "Low. Body vs shelf is within-epoch geometry."
+  }
+]
