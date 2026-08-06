@@ -90,4 +90,26 @@ describe("readiness gate", () => {
     assert.match(SRC, /Math\.abs\(a - c\) < 0\.35/,
       "0.35 m rendered slack was widened or removed");
   });
+
+  test("...but the screen still has to show roughly that height", () => {
+    /* The branch above was first written to ignore `rendered` entirely, which
+       left a hole big enough to drive the whole census through: a building
+       whose two tables agree at 12 m while a 4.5 m fallback box stands on
+       screen would have been scored "measured" and never reported. Auditing
+       what is ON SCREEN is this gate's only job — a 7.5 m divergence is a
+       rendering bug, and absorbing it silently is precisely the failure the
+       gate exists to prevent.
+
+       1.5 m is generous against the 0.4 m of grade-sampling drift that
+       motivated the branch, and nowhere near the gap a fallback would show. */
+    assert.match(SRC, /Math\.abs\(rendered - measured\) <= TABLE_AGREE_DRIFT/,
+      "the table-agree branch stopped checking the rendered height at all");
+    const drift = num("tableAgreeDrift_m");
+    assert.ok(drift <= 1.5, `table-agree drift widened to ${drift} m`);
+    /* It runs inside page.evaluate, so it has to be passed across — a bare
+       GATES reference there is a ReferenceError in the browser context, not a
+       value. */
+    assert.match(SRC, /TABLE_AGREE_DRIFT: GATES\.tableAgreeDrift_m/,
+      "the drift bound is not passed into the browser context");
+  });
 });

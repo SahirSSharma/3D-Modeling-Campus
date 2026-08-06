@@ -99,6 +99,12 @@ const GATES = {
      because the roof map is rasterised and the terrain is sampled continuously;
      half a metre of that is sampling, and more than half a metre is a building
      buried in a hill. */
+  /* How far the rendered height may drift from two agreeing measured tables
+     before the census stops believing the screen shows the measurement. 1.5 m
+     is generous against the 0.4 m of grade-sampling drift that motivated the
+     branch (Hubbs Hall on a 9.5 m grade) and far tighter than the 7.5 m gap
+     that a building rendering at its 4.5 m fallback would show. */
+  tableAgreeDrift_m: 1.5,
   buriedSlack_m: 0.5,
   buriedMax: 0,
   /* On the real GPU (ANGLE/Metal). Still this machine and not necessarily his,
@@ -169,7 +175,7 @@ const renderer = await page.evaluate(() => {
   return gl ? gl.getParameter(d ? d.UNMASKED_RENDERER_WEBGL : gl.RENDERER) : "NO WEBGL";
 });
 
-const census = await page.evaluate(async (declared) => {
+const census = await page.evaluate(async ({ declared, TABLE_AGREE_DRIFT }) => {
   const [campus, lidar, arcgis, boundary] = await Promise.all([
     fetch("data/campus-3d.json").then((r) => r.json()),
     fetch("data/campus-lidar.json").then((r) => r.json()),
@@ -283,7 +289,7 @@ const census = await page.evaluate(async (declared) => {
        right test — half a step is. */
     const near = (a, c) => a !== null && c !== null && Math.abs(a - c) < 0.35;
     if (near(rendered, measured) || near(rendered, nearbyMass)) bucket.measured++;
-    else if (nearbyMass != null && near(measured, nearbyMass)) {
+    else if (nearbyMass != null && near(measured, nearbyMass) && Math.abs(rendered - measured) <= TABLE_AGREE_DRIFT) {
       /* Two measured tables already agree (name-level heights / osmHeights
          and the GIS mass that actually extrudes). On a steep grade the GPU
          roof map can drift past the 0.35 m slack while the extrusion is
@@ -330,7 +336,7 @@ const census = await page.evaluate(async (declared) => {
   out.buried.worst.sort((a, c) => c.under - a.under);
   out.buried.worst = out.buried.worst.slice(0, 12);
   return out;
-}, [...DECLARED_ESTIMATES]);
+}, { declared: [...DECLARED_ESTIMATES], TABLE_AGREE_DRIFT: GATES.tableAgreeDrift_m });
 
 /* ------------------------------------------------------------ landmarks ----
    A standing height for the buildings a reviewer checks first. Absence here is
