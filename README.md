@@ -294,7 +294,7 @@ audited full-ring re-sample:
 | Building | Shipped | Measured | Why it was wrong |
 |---|---|---|---|
 | La Jolla Farms estates (95 unnamed rings) | 4.5–9 m (area guesses) | **3.1–9.6 m** | the guess ran BOTH directions: one-storey ranch houses guessed at 9 m (osm:319 measures 4.4), two-storey townhouse rows guessed at 4.5 (osm:721–727 measure 7.8–7.9). Each re-sampled from the EPT, shipped only where the roof reads as ONE plane, each checked standing on its 2014 footprint in an Apple closeup. 25 more rings measured but sit under crowns — their guesses stand, stated as guesses. |
-| Extended Studies cottages F/G/X/Z/E | 4.3 m (GIS record) | **3.2–3.9 m** | hostless masses with no OSM rings at all, so nothing ever challenged the record. Five more (A–D, L) stay at 4.3: the eucalyptus rows over them defeat every percentile guard, and the record matches what the laser glimpses of the roof body. |
+| Extended Studies cottages F/G/X/Z/E/H/K/M | 4.3 m (GIS record) | **3.2–3.9 m** | hostless masses with no OSM rings at all, so nothing ever challenged the record. Five more (A–D, L) stay at 4.3: the eucalyptus rows over them defeat every percentile guard, and the record matches what the laser glimpses of the roof body. J/N keep 4.3 too — dense one-storey body under a tall crown/neighbour p98 the massHeights loop would paste. |
 | Tuolumne Apartments | one 17.3 m outline | **nine houses, 9.3–16.2 m** | the whole-complex OSM ring extruded through its nine facility masses — the Marshall/Alianza union-outline class, suppressed the same way. T House North's centroid falls in a notch OUTSIDE the concave ring, so host containment had never measured it: 13.0 m vs 12.2 of record. |
 | Spanos Athletic Performance Center | 15.8 m (the rebuild's LiDAR read) | **4.4 m** | an epoch trap: TWO buildings share the OSM name. The Performance Center broke ground June 2015 — the 11–16 m smear over its footprint is the eucalyptus row cleared for it, not a roof. The audited 4.4 is the 1988 Training Facility's plane; both render from their own GIS masses at 4.3. |
 | Muir west tennis pad | two tennis courts | **removed** | Apple (2026-08-04) shows the pad repainted for pickleball; the registered Google chunks carry the previous paint generation. The new lines can't ship until an Apple registration passes gate — better absent than stale. The east pad's four courts still fit (0.23 m, 54 %). |
@@ -537,6 +537,20 @@ The withheld: osm:513's coastal-scrub pad — Apple shows a finished low structu
 Sanford's lab-bar "mechanical overheight" — the dense 19 m deck and the 22–24 m central plant
 are both real on today's Apple; without a parts split, trading the pinned 24.5 for the deck
 would paste the other way. Pavilion stays 6.2.
+
+**The NW-campus pass-2 re-sweep (2026-08-05, r0c0).** Same Estancia / Extended Studies /
+Marshall Residence fringe. Screen had no high-severity hits; every candidate re-derived with
+`explainRoof` under the builder's all-non-ground sampling (a class-1+6 probe filter had
+manufactured one false admit).
+
+| Entity | Was shipping | Now ships | Why |
+|---|---|---|---|
+| Extended Studies cottages H / K / M | 4.3 m (GIS L1, hostless) | **3.5 / 3.6 / 3.3 m** | same class as F/G/X/Z/E — clean one-storey planes the `PRE_2014_GIS_VERIFIED` list had left off. J/N keep 4.3 (crown/neighbour p98 would paste 11.7 / 16.9). |
+
+The withheld: osm:326 — builder-sampled body 2.9 m under the 3 m floor (screener's class-1+6
+filter had read 3.2 and claimed the gate cleared). Rejected: Marshall Hall U (bimodal 6/9 dense
+0.55 — stepped, prior keep stands); low-pts one-plane residue under `STAT_MIN_PTS` (|Δ| ≤ 1.3,
+including tagged greenhouses whose extrusion identity is open).
 
 **The North-campus re-sweep (2026-08-05, r0c1).** Warren / Rady / Marshall Upper / Spanos /
 Asante — a second pass after the first r0c1 sweep closed the union-outline holes. Every

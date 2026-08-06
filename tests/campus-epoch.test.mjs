@@ -1011,18 +1011,23 @@ describe("12. the west shard sweep (r1c0, 2026-08-04)", () => {
     }
   });
 
-  test("the Extended Studies cottages measure their planes; the crowned five keep the record", () => {
+  test("the Extended Studies cottages measure their planes; the crowned keep the record", () => {
     /* Hostless GIS masses (no OSM rings at all) stood unchallenged at the
-       record's uniform 4.3 m. Five roofs read as one-storey planes 0.4-1.1
-       off that; five more sit under the eucalyptus rows (Building A: p50
-       3.2 under a p75 of 8.2) where no percentile guard reaches the roof,
-       so the record stands for them. */
+       record's uniform 4.3 m. Eight roofs read as one-storey planes
+       0.4–1.1 off that (F/G/X/Z/E from r1c0; H/K/M from r0c0 pass-2);
+       five more sit under the eucalyptus rows (Building A: p50 3.2 under
+       a p75 of 8.2) where no percentile guard reaches the roof, so the
+       record stands for them. J/N keep the record too — dense 3 m body
+       under a tall neighbour/crown p98 the massHeights loop would paste. */
     const PLANES = {
       "m:-201,-423": [3.2, "Building F"],
       "m:-217,-474": [3.5, "Building G"],
       "m:-223,-381": [3.9, "Building X"],
       "m:-206,-369": [3.4, "Building Z"],
       "m:-179,-443": [3.3, "Building E"],
+      "m:-198,-514": [3.5, "Building H"],
+      "m:-180,-497": [3.6, "Building K"],
+      "m:-179,-518": [3.3, "Building M"],
     };
     for (const [key, [h, why]] of Object.entries(PLANES)) {
       assert.equal(LIDAR.massHeights[key], h, `${why} — massHeights[${key}]`);
@@ -1031,9 +1036,17 @@ describe("12. the west shard sweep (r1c0, 2026-08-04)", () => {
       ["m:-206,-395", "Building A"], ["m:-180,-416", "Building C"],
       ["m:-198,-468", "Building D"], ["m:-173,-478", "Building L"],
       ["m:-220,-436", "Building B"],
+      ["m:-206,-494", "Building J"], ["m:-219,-506", "Building N"],
     ]) {
-      assert.equal(LIDAR.massHeights[key], undefined, `${why} shipped its eucalyptus`);
+      assert.equal(LIDAR.massHeights[key], undefined, `${why} shipped crown/neighbour`);
     }
+  });
+
+  test("osm:326 stays withheld — builder body under the 3 m floor", () => {
+    /* Pass-2 screen claimed canopy-guard 3.2 clears the statistical gate
+       under a class-1+6 filter. Builder all-non-ground sampling reads
+       2.9 (hist mode 2 m). OSM_WITHHELD pins the refusal. */
+    assert.equal(LIDAR.osmHeights?.[326], undefined, "osm:326 shipped a sub-3 m body");
   });
 
   test("Tuolumne renders as its nine measured houses, not a 17 m outline", () => {

@@ -662,3 +662,66 @@ plane." Gate stays red.
 `npm test`: 572 pass / 0 fail.
 `npm run check`: OK including `--verify` (osmHeights[1364] — → 5.4 reproduces).
 `npm run readiness`: NOT READY — named guess = Hyatt only (expected).
+
+---
+
+# FINDINGS — run `2026-08-05_165434` · shard r0c0 (pass 2)
+
+Pass 2 of the NW campus shard (Estancia / Extended Studies / Marshall Residence /
+coastal / Black Gold / LJF fringe). Screen: 5 candidates (4 medium / 1 low). Judged
+by `cursor-grok-4.5-high` (self-screen; no high-severity findings).
+
+Every candidate in `pass2-r0c0.screen.json` was re-derived before judgement with an
+independent full-depth targeted EPT re-sample (`/tmp/gauntlet-r0c0-p2j/reprobe.json`)
+using `scripts/lib/roof-measure.mjs` `explainRoof` with builder vertex rimBase and
+**builder all-non-ground sampling** (the screener's class-1+6 filter is not what the
+builder uses — see osm:326). Apple snapshots from `/tmp/gauntlet-r0c0-p2s/apple/`
+reviewed for currency only.
+
+### Fixed — heights
+
+| Entity | Was shipping | Now ships | Source | Test |
+|---|---|---|---|---|
+| Extended Studies Building H (`ext-h-k-clear-plane-no-massH`) | 4.3 m GIS L1 | **3.5 m** | `PRE_2014_GIS_VERIFIED`: hostless cottage, explainRoof rule=p98 → 3.5 (dense 0.979). Same class as F/G/X/Z/E. | epoch Ext cottages |
+| Extended Studies Building K (same id) | 4.3 m GIS L1 | **3.6 m** | canopy-guard → 3.6 (p50 3.5 / p75 3.6); crown discarded. | epoch Ext cottages |
+| Extended Studies Building M (class sibling) | 4.3 m GIS L1 | **3.3 m** | canopy-guard → 3.3; screener noted pts=324 under class filter, builder all-non-ground clears the massHeights floor. | epoch Ext cottages |
+
+### Withheld (better absent than wrong)
+
+- **`ext-j-n-crown-keep-record` (Ext J / N)**: Independent EPT matches screener
+  (J 673 pts rule=p98 → 11.7 spr 4.4; N 439 → 16.9 spr 4.4). Dense hist mode is
+  the one-storey body (3 m). massHeights would paste the tall p98. Keep GIS L1=4.3
+  (same keep-the-record as A–D/L). Pinned undefined in massHeights.
+- **`osm-326-gate-clear-underheight` (osm:326)**: Screener class-1+6 probe read
+  canopy-guard 3.2 (800 pts) and claimed the statistical gate clears. Builder
+  all-non-ground sampling: 2,195 pts, canopy-guard → **2.9** (hist mode 2 m:1354)
+  — under `STAT_MIN_HEIGHT` 3. Added to `OSM_WITHHELD`. Guess 4.5 stands. Apple
+  finished light pad today.
+
+### Rejected candidates (each re-measured; do not re-find these)
+
+- **`marsh-res-u-no-massH`** — REJECTED. 1,017 pts, rule=p98 → 9.9, dense 0.548,
+  bimodal hist 9 m:395 / 6 m:393. Prior PRE_2014 comment already named U as
+  stepped; Δ +0.8 vs GIS L3 is below a storey. Do not pin a single plane over
+  stepped wings. Hall T thin-shelf control (6.1) still matches shipped gisH.
+- **`osm-low-pts-oneplane-residue` (189 / 404 / 405 / 875 / 879 / 880 / 955 /
+  956 / 970)** — REJECTED as actionable. All fail only `STAT_MIN_PTS` 400;
+  |ship−roofOf| ≤ 1.3. Hand-admitting for sub-storey refinements is not this
+  pass's work. Greenhouses 404/405 are an identity subclass (opaque box vs
+  glazed structure) — leave until that question has a source, not a height
+  override. Prior withholds 513 / 828 / 892 / 975 untouched.
+
+### Handoffs / observations
+
+- **Screener class filter**: any probe that keeps only LAS classes 1+6 will
+  under-count vegetation and can manufacture a false `statOk` near the 3 m
+  floor (osm:326). Judge probes must match the builder (all non-ground).
+- **Ext Studies residual**: J/N stay on the record under crown; A–D/L unchanged.
+  No further Ext cottage work unless a facade/Street-View source separates the
+  eave from the crown.
+- **Marshall Hall U**: a parts split (6 m wing / 9 m wing) would be more honest
+  than a single massHeights pin — mapping pass, not height pass.
+
+### Verification
+
+See final message for `npm test` / `npm run check` paste.

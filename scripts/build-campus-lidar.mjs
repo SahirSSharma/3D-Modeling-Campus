@@ -320,12 +320,23 @@ const PRE_2014_GIS_VERIFIED = new Set([
      probed and left unchallenged: Buildings A, B, C, D and L, whose returns
      are eucalyptus crown over the roof (Building A: p50 3.2 under a p75 of
      8.2 — the discriminator would ship the tree). The laser cannot see
-     those five roofs; the record's 4.3 stands. */
+     those five roofs; the record's 4.3 stands.
+     r0c0 pass-2 (2026-08-05_165434): H / K / M join the measured set —
+     independent full-depth EPT with explainRoof (vertex rimBase, builder
+     all-non-ground sampling): H → 3.5, K canopy-guard → 3.6, M
+     canopy-guard → 3.3 (build tiling; probe within 0.1). Apple shows
+     finished one-storey cottage roofs today. NOT added: J / N — dense
+     3 m body under a tall p98 (J 11.7 / N 16.9, spread 4.4) that
+     massHeights would paste as the roof; keep GIS L1=4.3 (same
+     keep-the-record outcome as A–D/L). */
   "Extended Studies and Public Programs - Building F",
   "Extended Studies and Public Programs - Building G",
   "Extended Studies and Public Programs - Building X",
   "Extended Studies and Public Programs - Building Z",
   "Extended Studies and Public Programs - Building E",
+  "Extended Studies and Public Programs - Building H",
+  "Extended Studies and Public Programs - Building K",
+  "Extended Studies and Public Programs - Building M",
   /* Tuolumne's ninth mass (2003 complex): its centroid falls in the notch
      outside the complex's concave OSM ring, so host containment misses it
      and 12.2 m of GIS record stood for a 13.0 m measured plane (1,947
@@ -691,6 +702,13 @@ const OSM_WITHHELD = new Set([
           grove crowns (4,726 pts, dense 20%, canopy-guard 16.3). Apple
           ring overlay: finished shed under canopy, not a clean hall.
           Guess 9 stands; do not paste crown. r2c1 165434. */
+  326, /* Estancia / Torrey Pines fringe pad @-402,-697 — screener class
+          1+6 probe read canopy-guard 3.2 (800 pts) and claimed the
+          statistical gate clears; builder all-non-ground sampling
+          (explainRoof, rim base) returns 2,195 pts, canopy-guard → 2.9
+          (hist mode 2 m:1354), under STAT_MIN_HEIGHT 3. Apple finished
+          light pad today. Do not admit 2.9 as a building; guess 4.5
+          stands. r0c0 pass-2 165434. */
   825, 827, 828, 832, 833, 834, 892, 904, 907, 909, 910, 944, 975,
   982, 986, 996, 997, 999, 1002, 1007, 1008, 1013, 1017, 1022, 1023,
   1024, 1032, /* 9530 La Jolla Shores — canopy-guard 3.8 over near-grade
