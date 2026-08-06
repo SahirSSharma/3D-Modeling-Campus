@@ -1,8 +1,8 @@
 # Gauntlet progress
 
-_Generated 8/5/2026, 16:49:50 — refreshes every 30 min while the driver is up._
+_Generated 8/5/2026, 17:24:08 — refreshes every 30 min while the driver is up._
 
-**Driver:** ⚫️ not running   ·   **Run:** `2026-08-05_033905`   ·   **HEAD:** `e041e86` (56 commits ahead of `origin/main`, unpushed)   ·   **Push guard:** 🔒 armed
+**Driver:** 🟢 running   ·   **Run:** `2026-08-05_165434`   ·   **HEAD:** `f30a596` (59 commits ahead of `origin/main`, unpushed)   ·   **Push guard:** 🔒 armed
 
 ## Pass 1 — every shard swept once
 
@@ -11,17 +11,17 @@ shards  ████████████████████████
 work    ████████████████████████████  100%   1395/1395 buildings
 ```
 
-**Every shard swept.** The loop is now re-sweeping until a pass changes nothing.
+**Every shard swept.** The loop is now re-sweeping until a pass changes nothing — currently back on `r0c1`.
 
 ## Now
 
-Nothing in flight. Last driver line:
+```
+pass 1  shard r0c1 (84 buildings)
+elapsed █▋··························  6%   2m of ~25m est
+```
 
-```
-```
-[route] pass 3: 9 commit(s), ~156M spent, 22% left
-[route] done. gauntlet-loop/runs/2026-08-05_033905/STATUS.md
-```
+- phase: **screening (Grok, Cursor Models pool)** — 2m in this phase
+- shard started 17:22:36
 
 ## Budget
 
@@ -45,16 +45,19 @@ The driver runs the pass-1 tail, then `--until-clean --max-passes 3`. A clean sw
 
 | outcome | what happens | remaining | done by |
 |---|---|---|---|
-| **best** | pass-1 tail, then one sweep changes nothing | 4h08m | Wed 20:57 |
-| **likely** | pass-1 tail, one fixing sweep, one clean sweep | 8h16m | Thu 01:05 |
-| **worst** | pass-1 tail, then all 3 passes, never converges | 12h24m | Thu 05:13 |
+| **best** | pass-1 tail, then one sweep changes nothing | 4h09m | Wed 21:32 |
+| **likely** | pass-1 tail, one fixing sweep, one clean sweep | 8h17m | Thu 01:41 |
+| **worst** | pass-1 tail, then all 3 passes, never converges | 12h26m | Thu 05:50 |
 
-One full 9-shard sweep is **4h08m** at the fitted rate.
+One full 9-shard sweep is **4h09m** at the fitted rate.
 
 ## What landed
 
-56 commits ahead of `origin/main`, none pushed:
+59 commits ahead of `origin/main`, none pushed:
 
+- `f30a596` 17:22 — Gate the handover on what a walker would actually see
+- `229a032` 17:22 — Gauntlet r0c0 re-sweep: Black Gold gabled house sheds its 4.5 under-guess
+- `e9d9fe8` 16:52 — Point the loop at the 280 stepped roofs, and require the shared measurement rule
 - `e041e86` 16:49 — Retire 331 unnamed buildings from guesses to measurements, by rule
 - `c841df2` 16:27 — One definition of how tall a roof is, and withdraw nine overrides pinned on a false premise
 - `50a0b28` 12:48 — Make campus-lidar.json reproduce from its builder, and gate it so it stays that way
@@ -112,34 +115,9 @@ One full 9-shard sweep is **4h08m** at the fitted rate.
 - `5fd6586` 14:14 — Run the gauntlet on Cursor: shard the campus, ban the deploy
 - `d3ba85b` 14:08 — Gauntlet loop: Apple decides what is there, LiDAR decides how tall
 
-**26 shards judged without Fable** — these carry less judgement than the rest and should be re-audited first:
+**1 shard judged without Fable** — these carry less judgement than the rest and should be re-audited first:
 
-- pass 1 `r0c0` — judged by `cursor-grok-4.5-high` (tier 1, 4/5/0)
-- pass 1 `r0c1` — judged by `cursor-grok-4.5-high` (tier 1, 1/4/2)
-- pass 1 `r0c2` — judged by `cursor-grok-4.5-high` (tier 1, 0/6/3)
-- pass 1 `r1c0` — judged by `cursor-grok-4.5-high` (tier 1, 3/6/1)
-- pass 1 `r1c1` — judged by `cursor-grok-4.5-high` (tier 1, 3/15/1)
-- pass 1 `r1c2` — judged by `cursor-grok-4.5-high` (tier 1, 4/6/3)
-- pass 1 `r2c0` — judged by `cursor-grok-4.5-high` (tier 1, 3/8/0)
-- pass 1 `r2c1` — judged by `cursor-grok-4.5-high` (tier 1, 3/5/1)
-- pass 1 `r2c2` — judged by `cursor-grok-4.5-high` (tier 1, 6/9/1)
-- pass 2 `r0c0` — judged by `cursor-grok-4.5-high` (tier 1, 4/6/0)
-- pass 2 `r0c1` — judged by `cursor-grok-4.5-high` (tier 1, 0/5/0)
-- pass 2 `r0c2` — judged by `cursor-grok-4.5-high` (tier 1, 0/4/1)
-- pass 2 `r1c0` — judged by `cursor-grok-4.5-high` (tier 1, 1/4/2)
-- pass 2 `r1c1` — judged by `cursor-grok-4.5-high` (tier 1, 2/6/1)
-- pass 2 `r1c2` — judged by `cursor-grok-4.5-high` (tier 1, 1/5/4)
-- pass 2 `r2c0` — judged by `cursor-grok-4.5-high` (tier 1, 3/6/1)
-- pass 2 `r2c1` — judged by `cursor-grok-4.5-high` (tier 1, 5/7/1)
-- pass 2 `r2c2` — judged by `cursor-grok-4.5-high` (tier 1, 7/3/1)
-- pass 3 `r0c0` — judged by `cursor-grok-4.5-high` (tier 1, 2/3/0)
-- pass 3 `r0c1` — judged by `cursor-grok-4.5-high` (tier 1, 1/0/0)
-- pass 3 `r0c2` — judged by `cursor-grok-4.5-high` (tier 2, 1/0/0)
-- pass 3 `r1c1` — judged by `cursor-grok-4.5-high` (tier 2, 1/1/0)
-- pass 3 `r1c2` — judged by `cursor-grok-4.5-high` (tier 2, 0/3/2)
-- pass 3 `r2c0` — judged by `cursor-grok-4.5-high` (tier 2, 1/2/0)
-- pass 3 `r2c1` — judged by `cursor-grok-4.5-high` (tier 2, 7/2/0)
-- pass 3 `r2c2` — judged by `cursor-grok-4.5-high` (tier 2, 8/1/1)
+- pass 1 `r0c0` — judged by `cursor-grok-4.5-high` (tier 2, 2/4/0)
 
 ## ⚠️ Ledger integrity
 
@@ -152,13 +130,14 @@ One full 9-shard sweep is **4h08m** at the fitted rate.
 | | milestone | where it stands |
 |---|---|---|
 | ✅ | Data reproduces from its builders | `npm run check` rebuilds and compares; drift exits 1. Judgements the measurement cannot make live in `MEASURED_OVERRIDES` with their evidence. |
-| ⬜ | Unnamed buildings measured, not guessed | **604 of 1050** measured · **446 still extruded from a flat area guess**. This is the biggest thing a person walking the campus would see, and the loop retires it 6–8 per pass. |
-| ⬜ | A gauntlet pass finds nothing | pass 3 closed with **36 finding(s)** across 9/9 shards. Two mechanisms guarantee a non-empty pass: the curated epoch name-lists and the unnamed backlog above are both retired one building at a time. |
+| ⬜ | Unnamed buildings measured, not guessed | **605 of 1050** measured · **445 still extruded from a flat area guess**. This is the biggest thing a person walking the campus would see, and the loop retires it 6–8 per pass. |
+| ⬜ | A gauntlet pass finds nothing | pass 1 closed with **6 finding(s)** across 1/9 shards. Two mechanisms guarantee a non-empty pass: the curated epoch name-lists and the unnamed backlog above are both retired one building at a time. |
 | 🔸 | Independent panel passes (4 families) | not run |
-| ⬜ | Sahir walks it and signs off | the campus is judged by eye, at eye level — no gate substitutes for this |
+| ⬜ | Readiness gate passes (handover to Sahir) | blocked on named buildings on a guess (8 of 321); unnamed rings on a guess (357 of 1031); masses buried > 0.5 m in their hill (1 of 1366) — measured 0 min ago |
+| ⬜ | Sahir walks it on localhost and signs off | the campus is judged by eye, at eye level — no gate substitutes for this. `npm run serve` once the row above is ✅. |
 | ⬜ | Ship to production | **his call alone.** Push guard armed; nothing is deployed without an explicit OK. |
 
-**1 of 6 clear.** ✅ met · ⬜ not met · 🔸 could not be determined.
+**1 of 7 clear.** ✅ met · ⬜ not met · 🔸 could not be determined.
 
 Ship requires **both** a clean pass and a panel pass — a clean loop with a failing panel is not a ship, and neither is the reverse.
 
@@ -166,23 +145,23 @@ Ship requires **both** a clean pass and a panel pass — a clean loop with a fai
 
 | shard | buildings | pass 1 | tier | screen h/m/l | judge | commit | actual | fitted |
 |---|---:|---|---|---|---|---|---:|---:|
-| `r0c0` | 103 | done | 1 | 4/5/0 | `cursor-grok-4.5-high` | `144e487` | 22m | 26m |
-| `r0c1` | 84 | done | 1 | 1/4/2 | `cursor-grok-4.5-high` | `3166d5c` | 22m | 25m |
-| `r0c2` | 62 | done | 1 | 0/6/3 | `cursor-grok-4.5-high` | `7c2c046` | 15m | 24m |
-| `r1c0` | 140 | done | 1 | 3/6/1 | `cursor-grok-4.5-high` | `b75034f` | 21m | 27m |
-| `r1c1` | 162 | done | 1 | 3/15/1 | `cursor-grok-4.5-high` | `0c5cc0c` | 20m | 28m |
-| `r1c2` | 97 | done | 1 | 4/6/3 | `cursor-grok-4.5-high` | `e401a1e` | 22m | 25m |
-| `r2c0` | 182 | done | 1 | 3/8/0 | `cursor-grok-4.5-high` | `05f2c37` | 23m | 29m |
-| `r2c1` | 400 | done | 1 | 3/5/1 | `cursor-grok-4.5-high` | `4c9bccf` | 14m | 37m |
-| `r2c2` | 165 | done | 1 | 6/9/1 | `cursor-grok-4.5-high` | `9eaf041` | 14m | 28m |
+| `r0c0` | 103 | done | 2 | 2/4/0 | `cursor-grok-4.5-high` | `229a032` | 28m | 26m |
+| `r0c1` | 84 | **screen** (re-sweep) | 1 | 1/4/2 | `cursor-grok-4.5-high` | `3166d5c` | 22m | 25m |
+| `r0c2` | 62 | done · 033905 run | 1 | 0/6/3 | `cursor-grok-4.5-high` | `7c2c046` | 15m | 24m |
+| `r1c0` | 140 | done · 033905 run | 1 | 3/6/1 | `cursor-grok-4.5-high` | `b75034f` | 21m | 27m |
+| `r1c1` | 162 | done · 033905 run | 1 | 3/15/1 | `cursor-grok-4.5-high` | `0c5cc0c` | 20m | 28m |
+| `r1c2` | 97 | done · 033905 run | 1 | 4/6/3 | `cursor-grok-4.5-high` | `e401a1e` | 22m | 25m |
+| `r2c0` | 182 | done · 033905 run | 1 | 3/8/0 | `cursor-grok-4.5-high` | `05f2c37` | 23m | 29m |
+| `r2c1` | 400 | done · 033905 run | 1 | 3/5/1 | `cursor-grok-4.5-high` | `4c9bccf` | 14m | 37m |
+| `r2c2` | 165 | done · 033905 run | 1 | 6/9/1 | `cursor-grok-4.5-high` | `9eaf041` | 14m | 28m |
 
 ## How these numbers were made
 
-Fitted over **32 finished shards** from routed (screen+judge) shards:
+Fitted over **33 finished shards** from routed (screen+judge) shards:
 
 ```
-minutes ≈ 21.7 + 0.038 × buildings
-typical miss: ±27 min
+minutes ≈ 21.8 + 0.037 × buildings
+typical miss: ±26 min
 ```
 
 

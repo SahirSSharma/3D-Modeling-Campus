@@ -490,8 +490,29 @@ try {
 } catch { panel = null; }
 ship.push([tick(panel), "Independent panel passes (4 families)", panelNote]);
 
-/* 5 & 6. His calls, and nobody else's. */
-ship.push(["⬜", "Sahir walks it and signs off", "the campus is judged by eye, at eye level — no gate substitutes for this"]);
+/* 5. The handover gate. Sahir's condition, 2026-08-05: rigorous testing must
+   confirm the campus meets his criteria BEFORE a localhost is stood up for him
+   to walk. `npm run readiness` is that test, and this row is its verdict. */
+let ready = null, readyNote = "not run — `npm run readiness`";
+try {
+  const p = path.join(ROOT, "gauntlet-loop/readiness.json");
+  if (fs.existsSync(p)) {
+    const r = JSON.parse(read(p));
+    /* A readiness verdict is only true of the commit it was measured on. An
+       hours-old green over a hundred new commits is worse than no green: it
+       invites the walk this gate exists to protect. */
+    const ageMin = Math.round((Date.now() - Date.parse(r.at)) / 60000);
+    const stale = ageMin > 120;
+    ready = r.ready && !stale;
+    const failing = (r.results ?? []).filter((x) => !x.ok);
+    readyNote = (r.ready ? "**READY**" : `blocked on ${failing.map((f) => `${f.label} (${f.observed})`).join("; ")}`) +
+      ` — measured ${ageMin} min ago${stale ? ", ⚠️ **stale, re-run before trusting it**" : ""}`;
+  }
+} catch { ready = null; }
+ship.push([tick(ready), "Readiness gate passes (handover to Sahir)", readyNote]);
+
+/* 6 & 7. His calls, and nobody else's. */
+ship.push(["⬜", "Sahir walks it on localhost and signs off", "the campus is judged by eye, at eye level — no gate substitutes for this. `npm run serve` once the row above is ✅."]);
 ship.push(["⬜", "Ship to production", "**his call alone.** Push guard armed; nothing is deployed without an explicit OK."]);
 
 L.push(`## Road to ship`);

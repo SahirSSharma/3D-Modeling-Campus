@@ -1,0 +1,92 @@
+{
+  "at": "2026-08-06T00:24:08.478Z",
+  "head": null,
+  "ready": false,
+  "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)",
+  "results": [
+    {
+      "ok": false,
+      "label": "named buildings on a guess",
+      "observed": "8 of 321",
+      "gate": "<= 0"
+    },
+    {
+      "ok": false,
+      "label": "unnamed rings on a guess",
+      "observed": "357 of 1031",
+      "gate": "<= 200"
+    },
+    {
+      "ok": false,
+      "label": "masses buried > 0.5 m in their hill",
+      "observed": "1 of 1366",
+      "gate": "<= 0"
+    },
+    {
+      "ok": true,
+      "label": "first-check landmarks standing",
+      "observed": "4 of 4",
+      "gate": "all"
+    },
+    {
+      "ok": true,
+      "label": "measured on a real GPU",
+      "observed": "ANGLE (Apple, ANGLE Me",
+      "gate": "not SwiftShader"
+    },
+    {
+      "ok": true,
+      "label": "slowest eye-level frame rate",
+      "observed": "120 fps",
+      "gate": ">= 30"
+    },
+    {
+      "ok": true,
+      "label": "console errors during the walk",
+      "observed": "0",
+      "gate": "<= 0"
+    }
+  ],
+  "namedGuesses": [
+    {
+      "i": 43,
+      "n": "Eckart Building",
+      "h": 11.7
+    },
+    {
+      "i": 76,
+      "n": "Hyatt Regency La Jolla at Aventine",
+      "h": 16
+    },
+    {
+      "i": 160,
+      "n": "ERC Laundry South",
+      "h": 4.9
+    },
+    {
+      "i": 167,
+      "n": "International Center West",
+      "h": 8.1
+    },
+    {
+      "i": 174,
+      "n": "Thornton Pavilion",
+      "h": 19.8
+    },
+    {
+      "i": 414,
+      "n": "Stewart Commons Annex",
+      "h": 4.4
+    },
+    {
+      "i": 421,
+      "n": "T-31",
+      "h": 4.8
+    },
+    {
+      "i": 768,
+      "n": "Commuter & Visitor Information",
+      "h": 4.2
+    }
+  ]
+}

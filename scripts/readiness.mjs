@@ -43,7 +43,7 @@
  */
 import { chromium } from "@playwright/test";
 import { createServer } from "node:http";
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -317,6 +317,18 @@ if (process.argv.includes("--json")) {
 }
 
 const failed = results.filter((r) => !r.ok);
+
+/* The verdict, on disk, so PROGRESS.md can report it without launching a browser
+   on a 30-minute tick. Stamped, because a readiness verdict is only true of the
+   commit it was measured on and a stale green is worse than no green at all. */
+await writeFile(new URL("../gauntlet-loop/readiness.json", import.meta.url), JSON.stringify({
+  at: new Date().toISOString(),
+  head: process.env.GIT_HEAD ?? null,
+  ready: failed.length === 0,
+  renderer,
+  results: results.map((r) => ({ ok: r.ok, label: r.label, observed: r.observed, gate: r.gate })),
+  namedGuesses: census.named.examples,
+}, null, 2));
 if (failed.length) {
   console.error(`\nNOT READY — ${failed.map((f) => f.label).join("; ")}`);
   process.exit(1);
