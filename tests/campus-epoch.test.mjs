@@ -95,9 +95,10 @@
  *      lab-bar / pavilion split stands.
  *  19. The r0c1 re-sweep's measurements hold: Asante House Meeting Rooms
  *      sheds its thin 7.1 m shelf for the dense 4.0 m body (thin-shelf
- *      massHeights rule), Marshall Upper H/L keep the GIS body against
- *      canopy p98, the 2015 Spanos APC stays one storey with eucalyptus
- *      out, and Otterson / Copley keep their real upper volumes.
+ *      massHeights rule), Marshall Upper G–M keep the GIS 6.1 body
+ *      (H/L against canopy; G/J/K against a sub-storey p98 tail), the
+ *      2015 Spanos APC stays one storey with eucalyptus out, and
+ *      Otterson / Copley keep their real upper volumes.
  *  20. The r0c2 re-sweep's measurements hold: CSC Building H sheds its
  *      thin 7.0 m shelf for the dense 4.8 m body (gap cut lowered from
  *      2.5 to 2 — half a storey), Transit Trailer keeps its 5.2 (gap
@@ -1979,19 +1980,40 @@ describe("campus epoch — r0c1 re-sweep (2026-08-05)", () => {
     assert.equal(meet.h, 4.0, `meeting rooms ship ${meet.h}`);
   });
 
-  test("Marshall Upper H and L keep the GIS body, not the canopy p98", () => {
-    /* Eucalyptus tails: H roofOf 10.3 / L 10.2 over dense 6.0–6.1 bodies
-       that already match the L2 record. Neither ships a massHeights entry
-       today; the thin-shelf rule would take p75 if one were ever admitted.
-       Pin the rendered bodies so a future auto-admit cannot paste the tree. */
-    assert.equal(LIDAR.massHeights["m:27,-566"], undefined,
-      "Marshall Upper H must not auto-admit canopy");
-    assert.equal(LIDAR.massHeights["m:-70,-589"], undefined,
-      "Marshall Upper L must not auto-admit canopy");
-    const h = MASSES.find((m) => m.name === "Marshall Upper Apartments H" && m.src === "gis");
-    const l = MASSES.find((m) => m.name === "Marshall Upper Apartments L" && m.src === "gis");
-    assert.equal(h?.h, 6.1, `Marshall Upper H ships ${h?.h}`);
-    assert.equal(l?.h, 6.1, `Marshall Upper L ships ${l?.h}`);
+  test("Marshall Upper townhomes keep the GIS body, not p98 tails", () => {
+    /* H/L: eucalyptus tails (roofOf 10.2–10.3) over dense 6.0–6.1 bodies;
+       thin-shelf would take p75 if ever admitted. G/J/K: clean planes
+       (dense ≥0.91, rule=p98 → 6.8–6.9) whose dense body already IS the
+       L2 record (p50=p75=6.1); massHeights would paste a sub-storey p98
+       parapet/plant tail. M canopy-guards to 6.2. Keep the uniform 6.1
+       record across the cluster — do not admit a 0.7–0.8 m raise that
+       splits the same typology. r0c1 pass-2 165434. */
+    for (const [key, letter] of [
+      ["m:27,-604", "G"], ["m:4,-532", "J"], ["m:-59,-552", "K"],
+      ["m:27,-566", "H"], ["m:-70,-589", "L"], ["m:-37,-607", "M"],
+    ]) {
+      assert.equal(LIDAR.massHeights[key], undefined,
+        `Marshall Upper ${letter} must not ship massHeights`);
+    }
+    for (const letter of ["G", "H", "J", "K", "L", "M"]) {
+      const m = MASSES.find((x) =>
+        x.name === `Marshall Upper Apartments ${letter}` && x.src === "gis");
+      assert.equal(m?.h, 6.1, `Marshall Upper ${letter} ships ${m?.h}`);
+    }
+  });
+
+  test("Hopkins fringe pads and Wells/SDSC wing residues stay unadmitted", () => {
+    /* osm:852/853 — Apple ring overlays: one-storey fringe pads beside
+       Hopkins Parking's solar deck; short shadows. Independent EPT
+       240/265 pts (under STAT_MIN_PTS), roofOf ≈9 with a 3 m hist shelf
+       — garage/neighbour bleed, not the pad. Already GIS-suppressed;
+       do not hand-admit 9. osm:1381/1383 / 1361 — multiplane wing
+       re-traces under Wells Fargo (massH 26.1) and SDSC East Expansion
+       (massH 23.2); hosts already carry the measured planes. r0c1 pass-2. */
+    for (const bi of [852, 853, 1381, 1383, 1361]) {
+      assert.equal(LIDAR.osmHeights?.[bi], undefined,
+        `osmHeights[${bi}] must stay unadmitted`);
+    }
   });
 
   test("the 2015 Spanos APC stays one storey; LiDAR eucalyptus stays out", () => {

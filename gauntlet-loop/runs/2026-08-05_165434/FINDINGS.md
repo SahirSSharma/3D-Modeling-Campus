@@ -725,3 +725,88 @@ reviewed for currency only.
 ### Verification
 
 See final message for `npm test` / `npm run check` paste.
+
+---
+
+# FINDINGS — run `2026-08-05_165434` · shard r0c1 (pass 2)
+
+Pass 2 of the north-central shard (Warren / Rady / Marshall Upper / RIMAC
+fringe / ERC). Screen: 5 candidates (2 medium / 3 low). Judged by
+`cursor-grok-4.5-high` (self-screen; no high-severity findings).
+
+Every candidate in `pass2-r0c1.screen.json` was re-derived before judgement
+with an independent full-depth targeted EPT re-sample
+(`/tmp/gauntlet-r0c1-p2j/reprobe.json`) using `scripts/lib/roof-measure.mjs`
+`explainRoof` with builder vertex rimBase and **builder all-non-ground
+sampling** (the screener kept only LAS classes 1+6 — see ERC Laundry /
+Marshall K–M point-count gaps). Apple snapshots from
+`/tmp/gauntlet-r0c1-p2s/apple/` and ring overlays under `rings/` reviewed for
+currency / identity only (no colour sampling).
+
+### Fixed
+
+None. No builder change this pass — every candidate was a keep-record,
+withhold, or already-measured host residue.
+
+### Rejected candidates (each re-measured; do not re-find these)
+
+- **`marsh-upper-gjk-no-massH` (Marshall Upper Apartments G / J / K)** —
+  REJECTED as a height fix. Independent EPT matches the screener on G/J
+  (1,682 / 2,236 pts) and confirms K at massEmit 6.8 under builder sampling
+  (5,450 pts vs screener's class-filtered 2,195 — same answer). All three:
+  rule=p98 → 6.8–6.9, dense ≥0.91, p50=p75=**6.1** (= GIS L2). The dense
+  body already is the record; massHeights would paste a sub-storey p98
+  parapet/plant tail (+0.7–0.8 m) and split the cluster from H/L (thin-shelf
+  → 6.1) and M (canopy-guard → 6.2). Apple `marsh-upper-g.jpg`: finished
+  townhome roofs today, no crane. Same posture as MarshResU's Δ+0.8 reject
+  on r0c0 pass-2 — below a storey, and here the body already agrees.
+  Pinned: massHeights absent + render 6.1 for G–M.
+
+- **`osm-852-853-hopkins-fringe-pads`** — WITHHELD from admitting roofOf≈9.
+  Independent EPT: 240 / 265 pts (fails STAT_MIN_PTS only), rule=p98 → 9.0 /
+  8.9, hist carries a 3 m shelf beside the 7–8 m mode. Apple ring overlays:
+  one-storey fringe pads in the paved gap / west shadow of Hopkins Parking's
+  solar deck — short shadows; the ≥0.85 GIS coverage test swallows them
+  under the garage mass (already suppressed, no 4.5 render). The 9 m plane
+  is neighbour-garage bleed. Better absent than pasting 9; do not invent a
+  one-storey hand admit from nadir either. Pinned osmHeights undefined.
+  Not added to `OSM_WITHHELD` — already suppressed; a future identity split
+  that names the pad could still be honest.
+
+- **`osm-1381-1383-wells-fargo-residue`** — REJECTED as actionable.
+  Multiplane (spread 2.0 / 1.5; dense 0.71 / 0.64). Already suppressed under
+  Wells Fargo Hall (`massHeights[m:-28,-982]=26.1`, fresh massEmit 26.1).
+  Wing re-traces, not missing buildings. Leave unbuilt.
+
+- **`osm-1361-sdsc-east-residue`** — REJECTED as actionable. Multiplane
+  (spread 2.8). Already suppressed under San Diego Supercomputer East
+  Expansion (`massHeights` 23.2 = fresh massEmit 23.2). Guess-residue
+  bookkeeping only.
+
+- **`erc-laundry-east-near-grade`** — REJECTED as a height bug. The
+  screener compared GIS L1=3 / absent massHeights against a GIS-ring
+  probe (builder: 1,278 pts, rule=p98 → 1.5, SKIP). That misses the
+  already-measured named host: `heights["ERC Laundry East"]=2.6` and the
+  rendered GIS mass already ships **2.6** (pinned by the prior r1c0 epoch
+  test). The 1.5 near-grade cloud is the GIS pad's own sparse body, not a
+  reason to reopen a measured 2.6. Apple: finished ERC fabric today.
+
+### Handoffs / observations
+
+- **Screener class filter**: class 1+6 under-counts vegetation and can
+  manufacture a false sparse sample (ERC Laundry 235 vs builder 1,278;
+  Marshall K 2,195 vs 5,450). Judge probes must match the builder (all
+  non-ground). Height *answers* held here; point counts did not.
+- **Marshall Upper cluster closed**: G–M all keep GIS 6.1. No further
+  townhome massHeights work unless a facade source separates eave from a
+  real upper volume (none of these show one).
+- **Hopkins fringe identity**: osm:852/853 are real small pads the garage
+  ring swallows. Mapping pass (tighter Hopkins footprint or named pad
+  rings), not a height pass — and even then the 2014 cloud may not resolve
+  a clean eave under the deck bleed.
+- **280 stepped unnamed**: no in-box exemplar cleared imagery+plane this
+  pass; Wells/SDSC residues stay under their measured hosts.
+
+### Verification
+
+See final message for `npm test` / `npm run check` paste.
