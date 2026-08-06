@@ -150,6 +150,18 @@ function facadeTiles() {
       ctx.fillStyle = "rgba(0,0,0,0.08)";
       ctx.fillRect(0, 30, S, 2);
     }),
+    /* Two punched windows grouped per structural bay, a narrower mullion
+       between the pair than at the bay edge — Pulse Tower and Pulse Mid's
+       measured paired-bay stucco rhythm (Eighth College, WS-E4, source
+       eighth-area/r1c1-plan-00-south.png). None of the tiles above fit: the
+       pairing reads as neither a continuous band nor a single-window grid. */
+    paired: makeTile((ctx, S) => {
+      ctx.fillStyle = "#8d97a1";
+      ctx.fillRect(10, 14, 18, 30);
+      ctx.fillRect(34, 14, 18, 30);
+      ctx.fillStyle = "rgba(0,0,0,0.16)";
+      ctx.fillRect(0, 44, S, 5);
+    }),
   };
 }
 

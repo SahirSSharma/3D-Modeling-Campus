@@ -66,7 +66,7 @@ const RENDERED_MASS_KEYS = new Set(
 
 /* One shared tile per family. A style outside this set names a tile the
    renderer cannot build, which is the same silent nothing as a dead key. */
-const STYLES = new Set(["fins", "eggcrate", "glass", "ribbon", "balcony", "bands", "blank"]);
+const STYLES = new Set(["fins", "eggcrate", "glass", "ribbon", "balcony", "bands", "blank", "paired"]);
 const ACCENT_SLOTS = new Set(["roof", "trim", "glass", "panel"]);
 const HEX = /^#[0-9a-f]{6}$/;
 
@@ -192,6 +192,37 @@ describe("campus-facades.json", () => {
       }
     }
     assert.deepEqual(bad, [], bad.join("; "));
+  });
+
+  test("Eighth College tower cladding reads visibly darker than its base", () => {
+    /* Scenario 2 wants tower cladding darker than "the white blocks". Sankofa
+       Base has no measured wall colour (occluded in every frame, correctly
+       left out of masses — see the file's `_` note), so the only other
+       measured Sankofa mass stands in for "the base": Sankofa Mid, the
+       midrise directly below the tower in the same building family. Read
+       both hexes back out of the shipped JSON, not hardcoded numbers, so a
+       later edit that flattens the contrast fails this gate. */
+    const hexToLightness = (hex) => {
+      const n = parseInt(hex.slice(1), 16);
+      const r = ((n >> 16) & 0xff) / 255;
+      const g = ((n >> 8) & 0xff) / 255;
+      const b = (n & 0xff) / 255;
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      return (max + min) / 2;
+    };
+    const masses = FACADES.masses || {};
+    const tower = masses["m:-68,594"];
+    const mid = masses["m:-116,613"];
+    assert.ok(tower?.walls, "Sankofa Tower (m:-68,594) has no measured walls");
+    assert.ok(mid?.walls, "Sankofa Mid (m:-116,613) has no measured walls");
+    const towerL = hexToLightness(tower.walls);
+    const midL = hexToLightness(mid.walls);
+    assert.ok(
+      midL - towerL >= 0.12,
+      `Sankofa Tower (${tower.walls}, L=${towerL.toFixed(3)}) is not at least 0.12 darker ` +
+      `than Sankofa Mid (${mid.walls}, L=${midL.toFixed(3)})`
+    );
   });
 
   test("no building is styled without being coloured, except where only the roof was measured", () => {
