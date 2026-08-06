@@ -113,6 +113,25 @@ export function treeExclusionZones({ campus3d, arcgis, markings } = {}) {
   for (const s of campus3d?.surfaces || []) {
     if ((s.kind ?? s.k) === "water") add(s.p, "water", 0, s.n);
   }
+  /* The ArcGIS ground layer's OWN courts and water bodies — the second half of
+     the "every fitted sports pad, every fountain" contract, which used to be
+     served only by campus-markings.json.
+     WHY IT MATTERED. campus-markings.json is FITTED to the georeferenced
+     satellite chunks, so it names 11 facilities: the ones whose paint the
+     scorer could find. The university's survey carries 143 court rings and 13
+     water rings, and none of them reached this function — so a trunk could
+     stand on any court the fit missed, and did: two 2014 canopies grew out of
+     the middle of the Eighth College court, one of them 3.5 m from the centre
+     trident. Reaching for the survey rather than adding the one reported court
+     clears 17 trunks off courts and 1 out of a water body campus-wide, and a
+     court the imagery fit will never see (built after the chunks, or repainted
+     since) is covered from the day the survey knows about it.
+     Rings arrive in DECIMETRES, like the massing above. */
+  for (const s of arcgis?.ground || []) {
+    const ring = (s?.r?.[0] || []).map(([x, z]) => [x / 10, z / 10]);
+    if (s?.k === "court") add(ring, "sports", PAD_MARGIN, s.n || "arcgis court");
+    else if (s?.k === "water") add(ring, "water", 0, s.n || "arcgis water");
+  }
   return zones;
 }
 

@@ -31,6 +31,8 @@ const DRAPING_MODULES = [
   "docs/js/campus-recreation.js",
   "docs/js/campus-rimac.js",
   "docs/js/campus-markings.js",
+  "docs/js/campus-eighth.js",
+  "docs/js/campus-eighth-court.js",
 ];
 
 test("OVERLAY_RUNGS is the exact ground-upward order", () => {
@@ -278,6 +280,8 @@ test("no module outside campus-overlay.js defines a second ad-hoc HSL tone formu
     "docs/js/campus-muir-field.js",
     "docs/js/campus-recreation.js",
     "docs/js/campus-markings.js",
+    "docs/js/campus-eighth.js",
+    "docs/js/campus-eighth-court.js",
   ];
   for (const rel of OTHER_MODULES) {
     assert.doesNotMatch(src(rel), SET_HSL_RE,
