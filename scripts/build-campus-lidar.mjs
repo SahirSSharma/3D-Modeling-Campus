@@ -253,8 +253,25 @@ const POST_2014_SITES = new Set([
         returns read one near-grade plane (13,396 returns, p50 0.8 to
         p75 1.2) — a surface lot or low deck, not the structure standing
         today. The VA garage precedent (438 / 833) again: no 2014 number
-        may ship, and the ring keeps its stated area guess of 16. */
-const POST_2014_OSM_RINGS = new Set([954, 833, 718, 1354, 1345, 785]);
+        may ship, and the ring keeps its stated area guess of 16.
+   r0c2 pass-2 (2026-08-05_165434) — three Scripps-east rings the
+        OSM_UNNAMED_VERIFIED comment already named as post-2014 but that
+        never joined this set (the class hole the screener re-found):
+   772: Scripps Parking Garage D (OSM way/781452528, building=parking
+        levels=5 → declared 19.2). Apple z18: finished solar-topped
+        multi-deck with a long north shadow. Full-depth EPT 35,168 pts,
+        explainRoof canopy-guard → 1.8 (hist body at grade — foundations
+        / lot, not a five-level deck). Keep the levels-derived guess.
+   835: John R. Anderson V Medical Pavilion (opened 2016-06-01). Apple
+        z18: finished multi-tier roof with helipad H. Full-depth EPT
+        23,030 pts, canopy-guard → 4.0 (construction-site band, the same
+        return the partHeights guard already refuses). Area guess 16
+        stands — no Street-View floor count to replace it; do not invent
+        seven storeys from a press release.
+   508: small annex pad on the Scripps Memorial campus. Apple z18:
+        finished one-storey L-pad today; flight saw bare ground (877 pts,
+        rule=p98 → 0.4). Declared 4.5 stands. */
+const POST_2014_OSM_RINGS = new Set([954, 833, 718, 1354, 1345, 785, 772, 835, 508]);
 
 /* GIS masses verified PRE-2014 by hand (r0c1 sweep, 2026-08-04) whose ring
    has neither a named-OSM host nor an exact OSM name twin — the two paths
@@ -461,11 +478,11 @@ const MEASURE_MINUS_CONTAINED_HOSTS = {
    19 m off. Verified and deliberately NOT here: 503 (the main Scripps
    Memorial complex — a stepped slab whose returns have no single plane:
    p75 9.5 under towers at 32; roofOf would flatten it to 9.5, worse than
-   the 20 m guess it has), 772/835 (Prebys north wing, Anderson Pavilion —
-   post-2014 finishes; the flight saw foundations), 780 (a shed under
-   full eucalyptus crown, 67 returns, p50 10 for a one-storey structure),
-   944 (8 returns — below the trust floor), 508 (a canopy the flight saw
-   as bare ground, 0.4 m — post-2014).
+   the 20 m guess it has), 780 (a shed under full eucalyptus crown, 67
+   returns, p50 10 for a one-storey structure), 944 (8 returns — below
+   the trust floor). 772 / 835 / 508 moved to POST_2014_OSM_RINGS
+   (r0c2 pass-2 165434) — they were always post-2014; the set now names
+   them so a future gate cannot admit the construction plane.
      Campus Point offices: 0 (31.3; guessed 12), 63 (stepped — the guard
         takes the 22.8 main plane under a 27.9 core; guessed 12),
         113 (9.3), 119 (19.1), 132 (9.4), 186 (13.7), 204 (15.2).

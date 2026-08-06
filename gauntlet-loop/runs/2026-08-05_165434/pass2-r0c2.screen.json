@@ -1,0 +1,70 @@
+[
+  {
+    "id": "osm-772-post2014-parking-guess",
+    "entity": "unnamed OSM building index 772 (Scripps east campus; Overpass way/781452528 building=parking levels=5)",
+    "where": {"x": 1605.3, "z": -581.9},
+    "claim": "campus-3d still ships area-guess h=19.2. Not in lidar.osmHeights, not OSM_WITHHELD, not POST_2014_OSM_RINGS. assembleMasses extrudes it as src=osm h=19.2. Builder comment at OSM_UNNAMED_VERIFIED already called 772 a post-2014 finish whose flight saw foundations, but left the guess rendering.",
+    "observed": "Fresh full-depth EPT (builder filter: all non-ground, skip class 2 only) + explainRoof with vertex rimBase: 35,168 pts, rule=canopy-guard → 1.8 m (p50=0.8 p75=1.8 p98=10.2, dense=0.462, spr=8.4, rim=1.00). Why: 'p98-p75 = 8.4 m > 5 — crown overhang, take the roof plane'. Hist body is near-grade (0m:9450 / −1m:6805 / 1m:6330) — foundations / lot, not a five-level deck. Δ vs ship = −17.4 m. Gate refuses (spread, dense). Overpass at centroid: way/781452528 building=parking levels=5 (unnamed). Apple ring overlay osm-772-z18.png: finished solar-topped structure standing today (six panel banks; trolley to the south). No colour sampling (Apple offset unresolved).",
+    "evidence": {
+      "lidar": "35168 pts rule=canopy-guard hRel=1.8 p50=0.8 p75=1.8 p98=10.2 dense=0.462 spr=8.4 rim=1.00 hist=[0m:9450 -1m:6805 1m:6330 -2m:3931 4m:1757]; osmHeights[772]=undefined; /tmp/gauntlet-r0c2-p2s/probe2.json",
+      "gis": "no GIS mass hosts this ring — nearest in-box is East Campus Substation @1723,-573 (mh=5.3)",
+      "osm": "campus-3d h=19.2 area≈10343; Overpass way/781452528 tags building=parking building:levels=5; Nominatim reverse nearest amenity=parking",
+      "apple": "ring overlay .cache/ring-snapshots/osm-772-z18.png + apple/osm-772.jpg z17 at 32.883263,-117.224029 (3270 kB) centerRGB≈188,197,200 — finished solar-covered deck standing today; no crane. ~1 m Apple offset visible on the ring.",
+      "probe": "explainRoof imported from scripts/lib/roof-measure.mjs with rim-median base; builder all-non-ground class filter (matches morning 35168 pts). Do not admit roofOf=1.8 — that is the 2014 construction/lot plane."
+    },
+    "severity": "high",
+    "suspected_class": "Post-2014 OSM ring still extruding an area-guess mass after the flight only saw foundations — same class the builder already named for 772/835 but never added to POST_2014_OSM_RINGS. LiDAR cannot answer height; the 19.2 guess is invented.",
+    "epoch_risk": "This IS a date. Apple (today) shows a finished multi-level solar deck; 2014 LiDAR is near-grade under canopy-guard. Reading the 1.8 m plane as 'the building is only 2 m tall' would be the Eighth College mistake inverted. The bug is shipping an invented 19.2 m box for a structure the survey predates — candidate POST_2014_OSM_RINGS / estimated levels (OSM says 5) / or leave unbuilt, not a LiDAR splice."
+  },
+  {
+    "id": "osm-835-anderson-post2014-guess",
+    "entity": "unnamed OSM building index 835 (John R. Anderson V Medical Pavilion)",
+    "where": {"x": 1584.8, "z": -850.0},
+    "claim": "campus-3d still ships area-guess h=16. Not in lidar.osmHeights, not OSM_WITHHELD, not POST_2014_OSM_RINGS. assembleMasses extrudes src=osm h=16 (plus a part ring). Builder comment already names it: 'Anderson Medical Pavilion (unnamed osm:835, opened 2016) shipped a 4.1 m part — the 2014 flight's return off a construction site'.",
+    "observed": "Fresh EPT + explainRoof (rim base, all non-ground): 23,030 pts, rule=canopy-guard → 4.0 m (p50=0.8 p75=4.0 p98=10.4, dense=0.502, spr=6.4, rim=1.00). Why: 'p98-p75 = 6.3 m > 5 — crown overhang, take the roof plane'. Hist near-grade (−1m:5870 / 0m:5701) under a thin 3–4 m band — construction-site returns, not a seven-level pavilion. Δ vs ship = −12.0 m. Apple ring overlay: finished multi-tier roof with a red circular helipad 'H' on the deck today; long NE shadow. Public record: Anderson Pavilion opened to patients 2016-06-01 (seven levels / 175,000 sq ft; construction through 2014–16).",
+    "evidence": {
+      "lidar": "23030 pts rule=canopy-guard hRel=4.0 p50=0.8 p75=4.0 p98=10.4 dense=0.502 spr=6.4 rim=1.00 hist=[-1m:5870 0m:5701 3m:3211 4m:3156]; osmHeights[835]=undefined; /tmp/gauntlet-r0c2-p2s/probe2.json",
+      "gis": "null — no university GIS mass for Anderson Pavilion in campus-arcgis within 120 m",
+      "osm": "campus-3d h=16 area≈5013 with parts[]; unnamed — identity from builder comment + Apple helipad + 2016 open date, not from an OSM name tag on this ring",
+      "apple": "ring overlay .cache/ring-snapshots/osm-835-z18.png + apple/osm-835.jpg z17 at 32.885687,-117.224248 (3205 kB) centerRGB≈116,123,130 — finished pavilion roof + helipad today; no crane",
+      "probe": "explainRoof with rim base; matches the builder's own '4.1 m part' note. Do not admit 4.0 — that is the 2014 construction return the partHeights guard already refuses for unnamed unverified hosts."
+    },
+    "severity": "high",
+    "suspected_class": "Same post-2014 guess-still-extrudes class as osm:772 — documented in the lidar builder as Anderson Pavilion 2016, still missing from POST_2014_OSM_RINGS while a 16 m area guess ships.",
+    "epoch_risk": "Decisive date conflict, not a measurement error. Apple + 2016 open date = finished seven-level pavilion today; 2014 LiDAR = construction/foundations (canopy-guard 4.0). Admitting roofOf would wear the construction plane as a finished roof — the exact failure the partHeights POST_2014_OSM_RINGS / unverified-unnamed guard was written to stop. Height needs an estimated/GIS/Street-View answer or absence, never LiDAR."
+  },
+  {
+    "id": "osm-508-post2014-pad-guess",
+    "entity": "unnamed OSM building index 508 (small pad on Scripps Memorial campus)",
+    "where": {"x": 1621.1, "z": -680.8},
+    "claim": "campus-3d still ships area-guess h=4.5. Not in lidar.osmHeights, not OSM_WITHHELD, not POST_2014_OSM_RINGS. assembleMasses extrudes src=osm h=4.5. Builder comment: '508 (a canopy the flight saw as bare ground, 0.4 m — post-2014)'.",
+    "observed": "Fresh EPT + explainRoof (rim base, all non-ground): 877 pts, rule=p98 → 0.4 m (p50=0.1 p75=0.3 p98=0.4, dense=0.987, spr=0.1, rim=1.00). Hist 0m:611 / −1m:255 — bare ground / near-grade, not a one-storey box. Δ vs ship = −4.1 m. Fails STAT_MIN_HEIGHT. Apple ring overlay: finished small L-shaped / annex pad with a light roof standing today between larger hospital roofs (Nominatim reverse nearest Scripps Memorial Hospital). Structure exists now; the 2014 cloud does not see it.",
+    "evidence": {
+      "lidar": "877 pts rule=p98 hRel=0.4 p50=0.1 p75=0.3 p98=0.4 dense=0.987 spr=0.1 rim=1.00 hist=[0m:611 -1m:255]; osmHeights[508]=undefined; /tmp/gauntlet-r0c2-p2s/probe2.json",
+      "gis": "null — no GIS mass at this centroid",
+      "osm": "campus-3d h=4.5 area≈395; unnamed; Nominatim reverse → Scripps Memorial Hospital La Jolla (soft identity for the tiny pad itself)",
+      "apple": "ring overlay .cache/ring-snapshots/osm-508-z18.png + apple/osm-508.jpg z19 at 32.884157,-117.223860 (2490 kB) centerRGB≈195,192,185 — finished small roof today; no crane",
+      "probe": "explainRoof with rim base; do not admit 0.4 as a building plane — matches the builder's own 'bare ground 0.4 m' note"
+    },
+    "severity": "medium",
+    "suspected_class": "Post-2014 small pad / canopy still shipping a one-storey area guess over a 2014 near-grade cloud — sibling of 772/835 but eye-level impact is a false 4.5 m box, not a false mid-rise.",
+    "epoch_risk": "Yes — a date. Apple shows a finished pad today; 2014 LiDAR is bare ground at 0.4 m. The 4.5 guess is not a LiDAR measurement. Candidate POST_2014_OSM_RINGS / estimated one-storey / or leave unbuilt; admitting roofOf would erase a real present-day structure."
+  },
+  {
+    "id": "emf2-gis-record-unpinned",
+    "entity": "Environmental Management Facility 2 (GIS mass m:1116,-717)",
+    "where": {"x": 1116.0, "z": -716.6},
+    "claim": "assembleMasses ships src=gis h=gisH=4.3. lidar.massHeights for m:1116,-717 is undefined.",
+    "observed": "Fresh EPT + explainRoof (rim base): 651 pts, rule=p98 → 4.0 m (p50=3.6 p75=3.8 p98=4.0, dense=0.819, spr=0.2, rim=1.00). Gate clears on spread/height/rim; pts ≥400. Δ vs shipped GIS = −0.3 m — plane already matches the record within a decimetre. Apple emf2.jpg z19: finished low CSC-yard pad today; no crane.",
+    "evidence": {
+      "lidar": "651 pts rule=p98 hRel=4.0 p50=3.6 p75=3.8 p98=4.0 dense=0.819 spr=0.2 rim=1.00 hist=[3m:470 1m:81 2m:63]; massHeights[m:1116,-717]=undefined; /tmp/gauntlet-r0c2-p2s/probe.json",
+      "gis": "Environmental Management Facility 2 gisH=4.3 levels=1 area≈496; PRE_2014 CSC yard family",
+      "osm": "null — GIS-named hostless pad",
+      "apple": "apple/emf2.jpg z19 at 32.884484,-117.229263 (2380 kB) centerRGB≈236,234,231 — finished low roof today",
+      "probe": "explainRoof with rim base; missing massHeights pin only — not an eye-level height bug"
+    },
+    "severity": "low",
+    "suspected_class": "Hostless GIS pad whose measured plane already agrees with the L1 record but was never written into massHeights — documentation / pin gap, same posture as other CSC-yard L1 pads that already carry mh.",
+    "epoch_risk": "None — Apple finished and 2014 cloud agree a low pre-2014 pad stands here. Not a date conflict."
+  }
+]

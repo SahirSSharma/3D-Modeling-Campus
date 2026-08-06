@@ -218,6 +218,12 @@
  *      Evening Way / Gilman soft near-strict 580 / 584 / 615 and Villas
  *      Mallorca 665 ship their planes; pool-house 664 and CRS-fringe
  *      787 stay withheld (canopy paste); UC Cyclery 6.8 stands.
+ *  46. The r0c2 pass-2 2026-08-05_165434's epoch bookkeeping holds:
+ *      Scripps Parking Garage D (772), Anderson Pavilion (835), and the
+ *      annex pad (508) join POST_2014_OSM_RINGS — documented as post-2014
+ *      since the first r0c2 sweep but never added to the set. Declared
+ *      guesses stand (levels=5 → 19.2 / area 16 / 4.5); EMF 2 stays
+ *      unchallenged at Δ0.3.
  */
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
@@ -2077,10 +2083,12 @@ describe("campus epoch — r0c2 re-sweep (2026-08-05)", () => {
   });
 
   test("post-2014 hospital pads keep their guesses — epoch still bars LiDAR", () => {
-    /* Anderson (835, opened 2016) and Prebys north (772) were bare /
-       staging in 2014; 508 is a canopy the flight saw as bare ground.
-       No Street-View floor count or GIS mass resolves a finished height,
-       so the OSM guesses stand — VA-garage keep-guess family. */
+    /* Anderson (835, opened 2016) and Prebys north / Garage D (772) were
+       bare / staging in 2014; 508 is a canopy the flight saw as bare
+       ground. No Street-View floor count or GIS mass resolves a finished
+       height, so the OSM guesses stand — VA-garage keep-guess family.
+       r0c2 pass-2 165434 moved them into POST_2014_OSM_RINGS (they were
+       already documented as post-2014 but never joined the set). */
     for (const bi of ["772", "835", "508"]) {
       assert.equal(LIDAR.osmHeights?.[bi], undefined, `osmHeights[${bi}] leaked`);
     }
@@ -4280,5 +4288,68 @@ describe("campus epoch — r2c2 re-sweep 2026-08-05_165434", () => {
       assert.equal(hits.find((m) => m.name === name)?.h, 6.1,
         `${name} must keep GIS L2`);
     }
+  });
+});
+
+describe("campus epoch — r0c2 pass-2 2026-08-05_165434", () => {
+  const BUILDER = readFileSync(path.join(ROOT, "scripts/build-campus-lidar.mjs"), "utf8");
+  const setLiteral = (name) => {
+    const i = BUILDER.indexOf(`const ${name} = new Set([`);
+    assert.ok(i > 0, `${name} not found in the builder`);
+    const j = BUILDER.indexOf("]);", i);
+    const body = BUILDER.slice(i + `const ${name} = new Set([`.length, j)
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/\/\/[^\n]*/g, "");
+    return new Set([...body.matchAll(/\d+/g)].map((m) => +m[0]));
+  };
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("Scripps-east post-2014 rings sit in POST_2014_OSM_RINGS", () => {
+    /* Class hole: the OSM_UNNAMED_VERIFIED comment named 772 / 835 / 508
+       as post-2014 finishes whose flight saw foundations / bare ground,
+       but they never joined the per-ring epoch set (sibling of 785 / 833).
+       Independent full-depth EPT (/tmp/gauntlet-r0c2-p2s/probe2.json) +
+       explainRoof with rim base: 772 canopy-guard → 1.8 (35,168 pts,
+       hist at grade); 835 canopy-guard → 4.0 (23,030 pts, construction
+       band); 508 p98 → 0.4 (877 pts, bare ground). Apple z18 overlays:
+       finished solar deck / helipad pavilion / one-storey L-pad today.
+       Reading any of those planes as the finished roof is the epoch
+       rule inverted. Guesses stand (VA-garage family). */
+    const post = setLiteral("POST_2014_OSM_RINGS");
+    for (const bi of [772, 835, 508]) {
+      assert.ok(post.has(bi), `osm:${bi} missing from POST_2014_OSM_RINGS`);
+      assert.equal(LIDAR.osmHeights?.[bi], undefined,
+        `osm:${bi} shipped a 2014 number`);
+    }
+    assert.equal(rendersNear(1605.3, -581.9).find((m) => m.src === "osm")?.h, 19.2,
+      "Garage D keeps levels=5 → 19.2");
+    assert.equal(rendersNear(1584.8, -850.0).find((m) => m.src === "osm")?.h, 16,
+      "Anderson keeps its declared area guess");
+    assert.equal(rendersNear(1621.1, -680.8).find((m) => m.src === "osm")?.h, 4.5,
+      "annex pad 508 keeps its declared guess");
+    assert.equal(LIDAR.partHeights?.["835/0"], undefined,
+      "Anderson's construction-site part must stay silent");
+  });
+
+  test("EMF 2 stays unchallenged — Δ0.3 is noise, not a pin", () => {
+    /* Screener wanted massHeights for a hostless L1 pad whose plane
+       already matches the record within a decimetre (651 pts, rule=p98
+       → 4.0 vs GIS 4.3). PRE_2014_GIS_VERIFIED comment already left it
+       off for that reason. Not an eye-level bug. */
+    assert.equal(LIDAR.massHeights["m:1116,-717"], undefined,
+      "EMF 2 must not ship a noise-level massHeights pin");
+    const emf2 = MASSES.find((m) =>
+      m.name === "Environmental Management Facility 2" && m.src === "gis");
+    assert.ok(emf2, "EMF 2 vanished");
+    assert.equal(emf2.h, 4.3, `EMF 2 ships ${emf2.h}`);
   });
 });

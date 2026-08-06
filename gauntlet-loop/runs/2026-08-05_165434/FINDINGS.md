@@ -810,3 +810,58 @@ withhold, or already-measured host residue.
 ### Verification
 
 See final message for `npm test` / `npm run check` paste.
+
+---
+
+# FINDINGS — run `2026-08-05_165434` · shard r0c2 (pass 2)
+
+Pass 2 of the east-campus shard (CSC yard, Preuss, Scripps Memorial fringe,
+Qualcomm AA). Screen: 4 candidates (3 high / 1 low). Judged by
+`cursor-grok-4.5-high`.
+
+Every candidate in `pass2-r0c2.screen.json` was re-derived before judgement
+from the screener's full-depth EPT (`/tmp/gauntlet-r0c2-p2s/probe2.json` for
+772/835/508; `probe.json` for EMF 2) via `scripts/lib/roof-measure.mjs`
+`explainRoof` with rim-median base and the builder's all-non-ground class
+filter. Apple z18 ring overlays reviewed for currency only (no colour
+sampling). Overpass confirmed way/781452528 tags `building=parking`
+`building:levels=5` on osm:772.
+
+### Fixed — class (epoch set membership)
+
+| Entity | Was | Now | Source | Test |
+|---|---|---|---|---|
+| Scripps Parking Garage D (`osm-772-post2014-parking-guess`, osm:772) | documented post-2014 in `OSM_UNNAMED_VERIFIED` prose; **not** in `POST_2014_OSM_RINGS`; levels=5 → 19.2 still rendered | **in `POST_2014_OSM_RINGS`**; 19.2 stands | Apple: finished solar multi-deck. EPT 35,168 pts, canopy-guard → 1.8 (hist at grade — foundations). Same class as trolley-corridor garage 785. | epoch §46 |
+| Anderson Medical Pavilion (`osm-835-anderson-post2014-guess`, osm:835) | same class hole; area guess 16 rendered | **in the set**; 16 stands | Apple: finished helipad roof (opened 2016). EPT 23,030 pts, canopy-guard → 4.0 (construction band the partHeights guard already refuses). No SV floor count — do not invent seven storeys from a press release. | epoch §46 |
+| Scripps annex pad (`osm-508-post2014-pad-guess`, osm:508) | same; 4.5 rendered | **in the set**; 4.5 stands | Apple: finished one-storey L-pad. EPT 877 pts, p98 → 0.4 (bare ground). | epoch §46 |
+
+Root cause: the builder already *named* these three as post-2014 finishes the
+flight saw as foundations / bare ground, then left them out of
+`POST_2014_OSM_RINGS` while siblings 785 / 833 / 1345 joined. The statistical
+gate already refused their planes (spread / height), so rendered heights do
+not change — the fix is the epoch set so a future gate cannot admit the
+construction return. Declared guesses stay (VA-garage family): 772's 19.2 is
+OSM `building:levels=5`, not a pure area invention.
+
+### Rejected candidates (each re-measured; do not re-find these)
+
+- **`emf2-gis-record-unpinned`** — REJECTED. 651 pts, rule=p98 → 4.0 vs GIS
+  4.3 (Δ −0.3). `PRE_2014_GIS_VERIFIED` comment already left EMF 2 off for
+  that reason. Pinning `massHeights` for a decimetre of noise is not an
+  eye-level fix. Apple: finished low CSC-yard pad today. Pinned:
+  massHeights absent + render 4.3.
+
+### Handoffs / observations
+
+- **Anderson height remains a declared guess.** Public record says seven
+  levels (~26 m); the ring ships area-derived 16. A Street-View facade
+  count (or GIS mass if one appears) could replace it via the unnamed
+  equivalent of `ESTIMATED_POST_2014` — out of scope without that source.
+  Better the stated 16 than inventing 26.4 from a press release.
+- **No lidar rebuild required.** osmHeights already absent for all three;
+  membership change is source + test only.
+- **280 stepped unnamed:** none cleared in this pass's screen.
+
+### Verification
+
+See final message for `npm test` / `npm run check` paste.

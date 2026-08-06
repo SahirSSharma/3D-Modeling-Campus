@@ -613,6 +613,21 @@ Union Bank near-miss family); roofOf 6.5 stands, cut not retuned to ≥2. XIMED 
 under the 85 % cut; 41.3 plant shelf is real HVAC Apple shows today. Roof-anchor osm:502
 (Δ −2.7) and Qualcomm AA terrain apron — prior handoffs unchanged.
 
+**The east-campus pass-2 re-sweep (2026-08-05_165434, r0c2).** Epoch bookkeeping, not new
+heights. Three Scripps-east rings the first r0c2 sweep already named as post-2014 finishes
+(flight saw foundations / bare ground) but never added to `POST_2014_OSM_RINGS` — the same
+class hole as the VA garage / trolley-corridor garage entries. Independent full-depth EPT +
+`explainRoof` with rim base, Apple z18 ring overlays before judgement.
+
+| Entity | Was | Now | Why |
+|---|---|---|---|
+| Scripps Parking Garage D (unnamed osm:772) | not in `POST_2014_OSM_RINGS`; levels=5 → 19.2 guess still rendered | **in the set**; 19.2 stands | Apple: finished solar-topped multi-deck. 35,168 returns, canopy-guard → 1.8 (hist at grade — foundations, not five levels). |
+| Anderson Medical Pavilion (unnamed osm:835, opened 2016) | same class hole; area guess 16 rendered | **in the set**; 16 stands | Apple: finished helipad roof. 23,030 returns, canopy-guard → 4.0 (construction band). No Street-View floor count — do not invent seven storeys from a press release. |
+| Scripps annex pad (unnamed osm:508) | same; 4.5 guess rendered | **in the set**; 4.5 stands | Apple: finished one-storey L-pad. 877 returns, p98 → 0.4 (bare ground). |
+
+Rejected: EMF 2 (`m:1116,-717`) — plane 4.0 vs GIS 4.3, already left unchallenged at Δ0.3;
+not an eye-level bug, do not pin noise as `massHeights`.
+
 **The Muir / La Jolla Farms re-sweep (2026-08-05, r1c0).** West campus — Tenaya, Tuolumne,
 Keeling, HDH, Geisel House, LJF estates. Every candidate re-derived from the screener's
 full-depth EPT (point counts taken as the re-measurement); thin-shelf arithmetic and Apple
