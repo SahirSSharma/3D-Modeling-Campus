@@ -442,23 +442,39 @@ ship.push([tick(repro), "Data reproduces from its builders",
   : repro ? "`npm run check` rebuilds and compares; drift exits 1. Judgements the measurement cannot make live in `MEASURED_OVERRIDES` with their evidence."
   : "**no gate** — the shipped file can drift from the builder in silence"]);
 
-/* 2. The largest VISIBLE gap: buildings still extruded from an area guess. */
-let unnamed = null, measured = null;
+/* 2. The VISIBLE gap, measured the way a walker meets it.
+ *
+ * Read from gauntlet-loop/readiness.json rather than recomputed here, and that
+ * is the whole point. This row has now been wrong twice for the same reason —
+ * counting a population nobody sees.
+ *
+ * First it counted every unnamed ring campus-wide, of which 323 are Golden
+ * Triangle and Sorrento Valley office blocks that fall inside the survey box
+ * and are not campus. Rewriting it to respect the boundary then produced 105
+ * rings and 37,252 m², still nearly four times the truth, because a ring
+ * lacking an osmHeights entry usually does not render at all: the university's
+ * GIS massing covers it and the OSM copy is suppressed. Nobody ever sees its
+ * guess.
+ *
+ * Only the browser census knows what reaches the screen, so it is the source
+ * and this row reports what it found. A dashboard that recomputes its own
+ * version of a number will eventually disagree with the gate, and then both
+ * are untrustworthy. */
+let campusPct = null, onCampusGuesses = null, guessArea = null, readyAge = null;
 try {
-  const c3 = JSON.parse(read(path.join(ROOT, "docs/data/campus-3d.json")));
-  const lid = JSON.parse(read(path.join(ROOT, "docs/data/campus-lidar.json")));
-  const osm = lid.osmHeights ?? {};
-  unnamed = 0; measured = 0;
-  c3.buildings.forEach((b, i) => {
-    if (b.n) return;
-    unnamed++;
-    if (osm[String(i)] !== undefined) measured++;
-  });
-} catch { unnamed = null; }
-const backlog = unnamed === null ? null : unnamed - measured;
-ship.push([tick(backlog === null ? null : backlog === 0), "Unnamed buildings measured, not guessed",
-  backlog === null ? "unknown — could not read the campus data"
-  : `**${measured} of ${unnamed}** measured · **${backlog} still extruded from a flat area guess**. This is the biggest thing a person walking the campus would see, and the loop retires it 6–8 per pass.`]);
+  const r = JSON.parse(read(path.join(LOOP, "readiness.json")));
+  campusPct = r.campusMeasuredPct ?? null;
+  onCampusGuesses = r.onCampusGuesses ?? null;
+  guessArea = r.onCampusGuessArea_m2 ?? null;
+  readyAge = Math.round((Date.now() - Date.parse(r.at)) / 60000);
+} catch { campusPct = null; }
+ship.push([tick(campusPct === null ? null : campusPct >= 99.5), "Campus footprint measured, not guessed",
+  campusPct === null ? "unknown — run `npm run readiness`"
+  : `**${campusPct}% of the footprint inside the campus boundary is measured.** ` +
+    `${onCampusGuesses} unnamed ring(s) still render at a guess, ${guessArea.toLocaleString()} m² — ` +
+    `mostly sheds and kiosks the 2014 flight cannot resolve (under canopy, too few returns, or past the survey edge), ` +
+    `each refused for a recorded reason. Rings outside the boundary are city, not campus, and are excluded on purpose. ` +
+    `Measured ${readyAge} min ago.`]);
 
 /* 3. A clean pass: the loop's own definition of finished. */
 const lastPass = cur?.rows?.length ? Math.max(...cur.rows.map((r) => r.pass)) : null;

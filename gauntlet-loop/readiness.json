@@ -1,8 +1,12 @@
 {
-  "at": "2026-08-06T02:29:14.877Z",
+  "at": "2026-08-06T03:29:42.177Z",
   "head": null,
   "ready": false,
   "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)",
+  "onCampusGuesses": 27,
+  "offCampusGuesses": 323,
+  "onCampusGuessArea_m2": 5834,
+  "campusMeasuredPct": 99.09,
   "results": [
     {
       "ok": false,
@@ -13,7 +17,7 @@
     {
       "ok": false,
       "label": "ON-CAMPUS unnamed rings on a guess",
-      "observed": "27 (+328 off campus)",
+      "observed": "27 (+323 off campus)",
       "gate": "<= 20"
     },
     {

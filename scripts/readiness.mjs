@@ -331,6 +331,28 @@ const census = await page.evaluate(async ({ declared, TABLE_AGREE_DRIFT }) => {
       }
     }
   });
+  /* Footprint area, inside the boundary, that stands at a guess — the honest
+     answer to "how much of the campus is measured", since one 900 m² block
+     matters more than four 60 m² sheds. */
+  const areaOf = (r) => {
+    let a = 0;
+    for (let i = 0, j = r.length - 1; i < r.length; j = i++) a += (r[j][0] + r[i][0]) * (r[j][1] - r[i][1]);
+    return Math.abs(a / 2);
+  };
+  let campusArea = 0, guessArea = 0;
+  campus.buildings.forEach((b, i) => {
+    if (!b?.p || b.p.length < 3) return;
+    let cx = 0, cz = 0;
+    for (const [x, z] of b.p) { cx += x; cz += z; }
+    cx /= b.p.length; cz /= b.p.length;
+    if (!inCampus(cx, cz)) return;
+    const a = areaOf(b.p);
+    campusArea += a;
+    if (out.unnamed.onCampusIds.includes(i)) guessArea += a;
+  });
+  out.unnamed.onCampusArea = Math.round(guessArea);
+  out.unnamed.campusMeasuredPct = campusArea ? +(100 * (campusArea - guessArea) / campusArea).toFixed(2) : null;
+
   out.grade.worst.sort((a, c) => c.span - a.span);
   out.grade.worst = out.grade.worst.slice(0, 8);
   out.buried.worst.sort((a, c) => c.under - a.under);
@@ -445,6 +467,15 @@ await writeFile(new URL("../gauntlet-loop/readiness.json", import.meta.url), JSO
   head: process.env.GIT_HEAD ?? null,
   ready: failed.length === 0,
   renderer,
+  /* Explicit, because PROGRESS.md reports these and parsing them back out of a
+     formatted `observed` string is how a dashboard starts lying. They count
+     rings that actually RENDER at a guess inside the campus boundary — not
+     rings merely lacking a table entry, most of which are suppressed by the
+     GIS massing and never reach the screen. */
+  onCampusGuesses: census.unnamed.onCampusGuesses,
+  offCampusGuesses: census.unnamed.offCampusGuesses,
+  onCampusGuessArea_m2: census.unnamed.onCampusArea ?? null,
+  campusMeasuredPct: census.unnamed.campusMeasuredPct ?? null,
   results: results.map((r) => ({ ok: r.ok, label: r.label, observed: r.observed, gate: r.gate })),
   namedGuesses: census.named.examples,
 }, null, 2));
