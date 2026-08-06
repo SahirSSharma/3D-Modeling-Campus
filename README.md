@@ -1089,6 +1089,22 @@ real and standing today; needs Sahir / facilities map for identity — not a hei
 Student Center Pub stays skipped (stepped under canopy; Stage Room HAND_AUDITED answers the
 OSM name).
 
+**The academic-core pass-2 (2026-08-05_165434, r1c1).** Screen of 5 candidates (1 high /
+3 medium / 1 low). Twin coverage and host containment re-derived on the shipped rings;
+heights via screener EPT with `explainRoof` + vertex rimBase (`/tmp/gauntlet-r1c1-p2s/probe.json`:
+CanyonAdmin 736 / ExtOWest 929 / ExtOEast 615 / ExtP 598 / PepperSwitch 538 / FacClubExp 1,676 /
+AmphiKiosk 17).
+
+| Entity | Was shipping | Now ships | Why |
+|---|---|---|---|
+| Canyonview Recreation & Athletics Administration | GIS 4.3 **and** OSM 4.6 (double) | **4.6 once** | Abbreviation twin: GIS `Rec/Athletics` vs OSM `Recreation & Athletics`. Centroids 2.26 m apart, neither inside the other ring, mutual coverage 0.97 — One Miramar / SSC class that case-fold alone cannot see. `namesMatch` carries the name; GIS keeps the pad. |
+| Ext Studies cottages O-West / O-East / P | 4.3 m GIS L1 (hostless) | **4.3 / 3.3 / 4.0 m** | Same `PRE_2014_GIS_VERIFIED` cottage row as F/G/X/Z/E/H/K/M. O-East is the eye-level fix (−1.0 m); O-West pins the canopy-guarded plane at noise. |
+| Amphitheater Kiosk | 4.6 m GIS L1 | **absent** | 17 returns, roofOf 2.0. Epstein / PCW plaza is POST_2014; Apple shows plaza furniture, not a hall. `NO_SOLID_ROOF`. |
+
+Rejected: Pepper Canyon Switching Station (Δ −0.2 at the noise line — Jerboa / EMF 2 class).
+Faculty Club Expansion (spread 1.7 stepped; GIS 4.3 tracks the dense eave body — do not paste
+p98 6.6 or inherit the host HAND_AUDITED 6.5 ridge without a parts split).
+
 **The Scripps / Shores re-sweep (2026-08-05_165434, r2c0).** Screen of 7 candidates (6 medium /
 1 low) plus the readiness named-guess work-list entry for this shard (Hubbs Hall). Every claim
 re-derived from an independent full-depth EPT with `explainRoof` and the builder's vertex

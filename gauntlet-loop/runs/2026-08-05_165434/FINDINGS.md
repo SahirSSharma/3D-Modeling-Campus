@@ -865,3 +865,73 @@ OSM `building:levels=5`, not a pure area invention.
 ### Verification
 
 See final message for `npm test` / `npm run check` paste.
+
+---
+
+# FINDINGS — run `2026-08-05_165434` · shard r1c1 (pass-2)
+
+Pass 2 of the academic-core shard (Student Health / Peterson / York /
+Mandeville / Faculty Club / Canyonview / Ext Studies fringe). Screen: 5
+candidates (1 high / 3 medium / 1 low). Judged by `cursor-grok-4.5-high`.
+
+Every candidate in `pass2-r1c1.screen.json` was re-derived before judgement:
+twin coverage and host containment recomputed on the shipped rings; heights
+from the screener's full-depth EPT with `explainRoof` + vertex rimBase
+(`/tmp/gauntlet-r1c1-p2s/probe.json` — CanyonAdmin 736 / ExtOWest 929 /
+ExtOEast 615 / ExtP 598 / PepperSwitch 538 / FacClubExp 1,676 / AmphiKiosk
+17). Apple snapshots in `/tmp/gauntlet-r1c1-p2s/apple/` reviewed for
+currency only (no colour sampling). Campus rebuild after the admits pinned
+massHeights within 0.1 m tiling of the screener.
+
+### Fixed — class (renderer + lidar twin)
+
+| Entity | Was | Now | Source | Test |
+|---|---|---|---|---|
+| Canyonview Rec/Athletics Administration twin (`canyonview-admin-double`) | GIS 4.3 **and** OSM 4.6 on the same pad | **4.6 once**, OSM spelling | `namesMatch` in `docs/js/name-match.js`: abbrev (`rec`→`recreation`) + punct tokenisation. Centroids 2.26 m apart, neither inside the other ring, mutual coverage 0.97 — One Miramar / SSC class that case-fold alone cannot see. Lidar twin path uses the same helper so `massHeights[m:807,-279]=4.6`. | epoch r1c1 p2 165434 + `tests/name-match.test.mjs` |
+
+Campus-wide scan of new fuzzy-only twins within 150 m found five pairs;
+Canyonview is the only one whose centroids both miss (the rest already
+resolve via containment). `namesMatch` deliberately does **not** drop the
+stop-word "and", so "Humanities and Social Sciences" (GIS L2 wing) never
+equals "Humanities & Social Sciences" (OSM tower).
+
+### Fixed — heights
+
+| Entity | Was shipping | Now ships | Source | Test |
+|---|---|---|---|---|
+| Ext Studies O-West / O-East / P (`ext-o-p-hostless-clear`) | 4.3 m GIS L1 (no massHeights) | **4.3 / 3.3 / 4.0** | `PRE_2014_GIS_VERIFIED`. Screener: canopy-guard 4.4 / p98 3.4 / p98 4.0; rebuild tiling 4.3 / 3.3 / 4.0. O-East is the eye-level fix. Same cottage row as F/G/X/Z/E/H/K/M. | epoch r1c1 p2 165434 |
+
+### Fixed — absent
+
+| Entity | Was shipping | Now ships | Source | Test |
+|---|---|---|---|---|
+| Amphitheater Kiosk (`amphi-kiosk-sparse`) | 4.6 m GIS L1 | **absent** | `NO_SOLID_ROOF`: 17 pts, explainRoof p98 → 2.0. Epstein / PCW plaza is POST_2014; Apple shows plaza furniture / amphitheater bowl / trolley, not a hall. Foodworx / Mobile PET class. | epoch r1c1 p2 165434 |
+
+### Rejected candidates (each re-measured; do not re-find these)
+
+- **`pepper-switch-clear-plane`** — REJECTED as a height pin. 538 pts,
+  rule=p98 → 4.1 vs GIS 4.3 (Δ −0.2). Gate-clear but at the noise line —
+  same leave-unchallenged as Jerboa / EMF 2. Apple: finished one-storey
+  utility pad. massHeights stays absent; render 4.3.
+
+- **`fac-club-exp-stepped`** — REJECTED. 1,676 pts, rule=p98 → 6.6,
+  spread 1.7, dense 0.742, hist 3 m:941 + 4 m:302 + 5 m:236 + 6 m:140.
+  Stepped / pitched volumes. GIS 4.3 tracks the dense eave body; host
+  Faculty Club HAND_AUDITED 6.5 is the gable ridge. Do not paste p98 or
+  inherit the ridge without a parts split. Apple: finished multi-plane
+  Faculty Club fabric today.
+
+### Handoffs / observations
+
+- **Faculty Club Expansion parts split**: a mapping pass that separates
+  the low wing from the upper shelf could ship both honestly — height
+  pass cannot.
+- **VAF-3 co-named double** remains an open identity handoff from prior
+  r1c1 passes (coverage 0; both roofs real).
+- **280 stepped unnamed**: Fac Club Expansion is one named exemplar of
+  the same class; campus-wide residue unchanged this pass.
+
+### Verification
+
+`npm test` — 586 pass / 0 fail.
+`npm run check` — OK (lidar `--verify` identical after rebuild).

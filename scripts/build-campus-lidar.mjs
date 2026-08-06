@@ -41,6 +41,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { treeExclusionZones, pruneTrees } from "./lib/tree-rules.mjs";
 import { roofOf, denseBandFraction, explainRoof } from "./lib/roof-measure.mjs";
+import { namesMatch } from "../docs/js/name-match.js";
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const IN = path.join(REPO_ROOT, "docs/data/campus-3d.json");
@@ -431,6 +432,19 @@ const PRE_2014_GIS_VERIFIED = new Set([
      shows finished white roofs with orange courtyard umbrellas today. */
   "Student Center A - Building G",
   "Student Center A - Building EN",
+  /* r1c1 pass-2 2026-08-05_165434. Extended Studies cottages O-West /
+     O-East / P — same hostless cottage row as F/G/X/Z/E/H/K/M. Independent
+     EPT with explainRoof + vertex rimBase: O-West canopy-guard → 4.4
+     (p50 4.3 / p75 4.4 / p98 10.0, dense 0.734, bodyTight — crown
+     overhang); O-East p98 → 3.4 (dense 0.987); P p98 → 4.0 (dense 0.91).
+     Apple shows finished one-storey cottage roofs on the west edge of
+     the Ext Studies fabric today. O-East is the eye-level fix (−0.9 m);
+     O-West / P pin the plane at noise. NOT added: Pepper Canyon Switching
+     Station (Δ −0.2 at the noise line, same leave-unchallenged as Jerboa /
+     EMF 2). */
+  "Extended Studies and Public Programs - Building O - West",
+  "Extended Studies and Public Programs - Building O - East",
+  "Extended Studies and Public Programs - Building P",
 ]);
 
 /* A facilities record that models a building as a whole-footprint ring PLUS
@@ -1610,16 +1624,20 @@ async function build() {
     let hostName = host?.n ?? null;
     let hostBi = host?.bi ?? null;
     if (!hostName) {
-      /* Exact twin first; then case-insensitive (r1c2 re-sweep, 2026-08-05).
-         One Miramar Building 3/4 wear "Building N" in GIS and "building N"
-         in OSM — the exact map missed them, massHeights never emitted, and
-         the L5 storey default (15.2) shipped over a measured 13.1 plane. */
+      /* Exact twin first; then namesMatch (r1c2 case-fold, r1c1 pass-2
+         abbrev/punct). One Miramar Building 3/4 wear "Building N" in GIS
+         and "building N" in OSM — the exact map missed them. Canyonview
+         Rec/Athletics vs Recreation & Athletics is the same miss with an
+         abbreviation and punctuation in the way — both centroids miss
+         each other's rings while mutual coverage sits at 0.97, so without
+         the twin the mass never gets a host and the L1 storey default
+         ships over a measured 4.6 plane while the OSM copy extrudes
+         beside it. */
       let twin = (namedByName.get(m.n) || [])
         .find((b) => Math.hypot(b.c[0] - cx, b.c[1] - cz) < 150);
       if (!twin) {
-        const want = m.n.toLowerCase();
         for (const [n, rings] of namedByName) {
-          if (n.toLowerCase() !== want) continue;
+          if (!namesMatch(n, m.n)) continue;
           twin = rings.find((b) => Math.hypot(b.c[0] - cx, b.c[1] - cz) < 150);
           if (twin) break;
         }

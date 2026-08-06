@@ -4353,3 +4353,88 @@ describe("campus epoch — r0c2 pass-2 2026-08-05_165434", () => {
     assert.equal(emf2.h, 4.3, `EMF 2 ships ${emf2.h}`);
   });
 });
+
+describe("campus epoch — r1c1 pass-2 2026-08-05_165434", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("Canyonview admin renders once — abbrev/punct twin carries the name", () => {
+    /* GIS "Canyonview Rec/Athletics Administration" vs OSM "Canyonview
+       Recreation & Athletics Administration". Centroids 2.26 m apart,
+       neither inside the other ring, mutual coverage 0.97 — the SSC /
+       One Miramar twin class, but case-fold alone cannot see Rec/ vs
+       Recreation &. Both sources extruded the same 4.6 m pad. namesMatch
+       (abbrev + punct tokenisation) lets the carrier test fire; GIS
+       keeps the footprint and takes the OSM spelling. */
+    const all = MASSES.filter((m) =>
+      m.name && /canyonview/i.test(m.name) && /admin/i.test(m.name));
+    assert.equal(all.length, 1, `Canyonview admin renders ${all.length} times`);
+    assert.equal(all[0].src, "gis", "Canyonview admin must render from GIS");
+    assert.equal(all[0].name, "Canyonview Recreation & Athletics Administration");
+    assert.equal(all[0].h, 4.6, `Canyonview admin ships ${all[0].h}, plane is 4.6`);
+    const [cx, cz] = centroidOf(all[0].rings[0]);
+    assert.ok(Math.hypot(cx - 807.1, cz - (-279.0)) < 3,
+      `Canyonview admin drifted to (${cx},${cz})`);
+    assert.equal(LIDAR.massHeights["m:807,-279"], 4.6);
+  });
+
+  test("Ext Studies O-West / O-East / P ship their measured cottage planes", () => {
+    /* Hostless Extended Studies row — siblings F/G/X/Z/E/H/K/M already
+       in PRE_2014_GIS_VERIFIED. Screener EPT: O-West canopy-guard → 4.4,
+       O-East p98 → 3.4, P p98 → 4.0. Campus rebuild ships within 0.1 m
+       tiling (4.3 / 3.3 / 4.0). */
+    assert.equal(LIDAR.massHeights["m:-145,-455"], 4.3, "O-West plane");
+    assert.equal(LIDAR.massHeights["m:-129,-464"], 3.3, "O-East plane");
+    assert.equal(LIDAR.massHeights["m:-131,-457"], 4.0, "P plane");
+    assert.equal(
+      rendersNear(-145.3, -454.6).find((m) => /O - West/i.test(m.name || ""))?.h,
+      4.3,
+    );
+    assert.equal(
+      rendersNear(-129.2, -464.1).find((m) => /O - East/i.test(m.name || ""))?.h,
+      3.3,
+    );
+    assert.equal(
+      rendersNear(-130.9, -457.0).find((m) => /Building P/i.test(m.name || ""))?.h,
+      4.0,
+    );
+  });
+
+  test("Amphitheater Kiosk stays absent; Pepper Switch / Fac Club Expansion stand as judged", () => {
+    /* Amphitheater Kiosk: 17 pts, roofOf 2.0 — no 2014 plane. Epstein /
+       PCW plaza is POST_2014 fabric; Apple shows plaza furniture, not a
+       hall. NO_SOLID_ROOF (Foodworx / Mobile PET class).
+       Pepper Canyon Switching Station: gate-clear 4.1 vs GIS 4.3 (Δ 0.2)
+       — noise line, leave unchallenged (Jerboa / EMF 2 class).
+       Faculty Club Expansion: spread 1.7 stepped (hist 3–6 m); GIS 4.3
+       tracks the dense eave body; do not paste p98 6.6 or inherit the
+       host HAND_AUDITED 6.5 ridge without a parts split. */
+    assert.equal(
+      MASSES.find((m) => m.name === "Amphitheater Kiosk"),
+      undefined,
+      "Amphitheater Kiosk extrudes again",
+    );
+    assert.equal(LIDAR.massHeights["m:807,-111"], undefined,
+      "Amphi kiosk must not ship a plane");
+    assert.equal(LIDAR.massHeights["m:840,-381"], undefined,
+      "Pepper Switch must stay unchallenged at GIS 4.3");
+    assert.equal(
+      rendersNear(839.8, -380.9).find((m) => /Pepper Canyon Switching/i.test(m.name || ""))?.h,
+      4.3,
+    );
+    assert.equal(LIDAR.massHeights["m:147,-173"], undefined,
+      "Faculty Club Expansion must not paste a stepped plane");
+    assert.equal(
+      rendersNear(147.2, -172.8).find((m) => /Faculty Club Expansion/i.test(m.name || ""))?.h,
+      4.3,
+    );
+  });
+});

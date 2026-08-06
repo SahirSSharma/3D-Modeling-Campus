@@ -209,10 +209,16 @@ const UNDER_RECONSTRUCTION = [
    every one in the −1 m bin (explainRoof rule=p98 → −0.6); Apple shows
    temporary white gabled trailers/tents and a van in the Sulpizio /
    Altman courtyard, not a solid clinic. Sibling Mobile CT keeps its
-   L1=3 for now (360 pts, half a real 2.1 m trailer plane). */
+   L1=3 for now (360 pts, half a real 2.1 m trailer plane).
+   r1c1 pass-2 2026-08-05_165434: Amphitheater Kiosk — 17 non-ground
+   returns inside the ring (explainRoof p98 → 2.0). Epstein Family
+   Amphitheater is POST_2014 (opened 2022); Apple shows plaza furniture /
+   umbrellas / amphitheater bowl / Mid-Coast trolley today, not a hall-
+   scale roof. Extruding the L1=4.6 invents a box on a plaza. */
 const NO_SOLID_ROOF = [
   { n: "Foodworx Dining Room", near: [1001.5, -109.3] },
   { n: "Mobile PET/CT Scanner", near: [1351.4, -42.2] },
+  { n: "Amphitheater Kiosk", near: [806.6, -110.8] },
 ];
 
 /* NESTED PLAZA PADS (r1c1 pass-2, 2026-08-05). The facilities extrusion

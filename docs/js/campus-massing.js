@@ -22,6 +22,7 @@
 // measurement); GIS far taller -> GIS (built after the survey); LiDAR far
 // taller -> LiDAR (the GIS record is a generic 14 ft placeholder — Peterson).
 import * as THREE from "../vendor/three/three.module.min.js";
+import { namesMatch } from "./name-match.js";
 
 const STOREY = 3.6;
 const BAY = 3.2;
@@ -442,20 +443,14 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
      massing when its own ring does NOT render (r2c1 judge sweep). */
   const renderedOsm = new Set();
   const gisCentroids = covered.map((r) => centroidOf(r));
-  /* Case-folded twin index (r1c2 re-sweep, 2026-08-05): OSM and the
-     facilities inventory disagree on capitalisation for the same identity
-     ("One Miramar Street, building 3" vs "Building 3"). An exact-string
-     map missed those twins, the ≥0.85 area test never ran, and both
-     sources extruded the same pad. Matching ignores case; the rename
-     below still prefers OSM's spelling as the name a student uses. */
-  const namesEqual = (a, b) => !!a && !!b && a.toLowerCase() === b.toLowerCase();
-  const gisNameCentroids = new Map();
-  gis.forEach((m, i) => {
-    if (!m.n) return;
-    const key = m.n.toLowerCase();
-    if (!gisNameCentroids.has(key)) gisNameCentroids.set(key, []);
-    gisNameCentroids.get(key).push(gisCentroids[i]);
-  });
+  /* Twin identity (r1c2 case-fold, r1c1 pass-2 abbrev/punct): OSM and the
+     facilities inventory disagree on capitalisation ("building 3" vs
+     "Building 3") and on abbreviations / punctuation ("Canyonview
+     Rec/Athletics Administration" vs "Canyonview Recreation & Athletics
+     Administration"). An exact-string map missed those twins, the ≥0.85
+     area test never ran, and both sources extruded the same pad.
+     namesMatch covers case + a narrow abbrev/punct tokenisation; the
+     rename below still prefers OSM's spelling as the name a student uses. */
   campus.buildings.forEach((b, i) => {
     if (b.n && skipOsm.has(b.n)) return;
     /* Wing-prefix outline: ≥2 facilities masses whose names are the OSM
@@ -479,20 +474,23 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
       if (skipOsmAnchors.some(([ax, az]) => Math.hypot(cx - ax, cz - az) < 12)) return;
     }
     /* A name is carried when a mass centroid stands inside the ring — or
-       when a mass wearing EXACTLY this name stands within 150 m, the same
-       twin rule the LiDAR build uses to key epoch guards. The facilities
-       ring for the Student Services Center is drawn offset enough that
-       its centroid misses the OSM ring (CMRR too), so the name test
-       failed, the ≥0.85 area test never ran, and both rendered twice —
-       the OSM copy extruded through the massing that already IS the
-       building and already SAYS its name. Case is not identity: One
-       Miramar 3/4 failed the exact-string form of this test while
-       sampling ≥0.85 under their GIS twins. */
+       when a mass wearing this name (namesMatch) stands within 150 m, the
+       same twin rule the LiDAR build uses to key epoch guards. The
+       facilities ring for the Student Services Center is drawn offset
+       enough that its centroid misses the OSM ring (CMRR too), so the
+       name test failed, the ≥0.85 area test never ran, and both rendered
+       twice — the OSM copy extruded through the massing that already IS
+       the building and already SAYS its name. Case is not identity: One
+       Miramar 3/4 failed the exact-string form while sampling ≥0.85 under
+       their GIS twins. Abbreviations are not identity either: Canyonview
+       Rec/ vs Recreation & failed case-fold while mutual coverage sat at
+       0.97 and both centroids missed each other's rings. */
     const [bcx, bcz] = centroidOf(b.p);
     const nameCarried = !b.n ||
       gisCentroids.some(([x, z]) => inRing(x, z, b.p)) ||
-      (gisNameCentroids.get(b.n.toLowerCase()) || []).some(([x, z]) => Math.hypot(x - bcx, z - bcz) < 150) ||
-      gis.some((m, gi) => m.n && !namesEqual(m.n, b.n) &&
+      gis.some((m, gi) => m.n && namesMatch(m.n, b.n) &&
+        Math.hypot(gisCentroids[gi][0] - bcx, gisCentroids[gi][1] - bcz) < 150) ||
+      gis.some((m, gi) => m.n && !namesMatch(m.n, b.n) &&
         (m.n.toLowerCase().endsWith(` - ${b.n.toLowerCase()}`) ||
           m.n.toLowerCase().endsWith(` ${b.n.toLowerCase()}`)) &&
         Math.hypot(gisCentroids[gi][0] - bcx, gisCentroids[gi][1] - bcz) < 150);
@@ -621,18 +619,20 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
        (Cala's does, the same trick Rya and Vela play on the centroid test
        above). */
     if (!m._host && m.name) {
-      /* Case-insensitive exact twin: GIS "Building 3" IS OSM "building 3"
-         within 150 m. Take the OSM spelling so suppression does not orphan
-         the name the student (and the orphan test) look for. */
+      /* namesMatch twin: GIS "Building 3" IS OSM "building 3", and GIS
+         "Canyonview Rec/Athletics Administration" IS OSM "Canyonview
+         Recreation & Athletics Administration", within 150 m. Take the
+         OSM spelling so suppression does not orphan the name the student
+         (and the orphan test) look for. */
       const caseTwin = namedRings.find((b) => {
-        if (!namesEqual(b.n, m.name) || b.n === m.name) return false;
+        if (!namesMatch(b.n, m.name) || b.n === m.name) return false;
         const [rcx, rcz] = centroidOf(b.p);
         return Math.hypot(rcx - m._c[0], rcz - m._c[1]) < 150;
       });
       if (caseTwin) { m._host = caseTwin; m._hostNameOnly = true; }
       else {
         const nameHost = namedRings.find((b) => {
-          if (b.n.length < 3 || namesEqual(b.n, m.name)) return false;
+          if (b.n.length < 3 || namesMatch(b.n, m.name)) return false;
           const ml = m.name.toLowerCase();
           const bl = b.n.toLowerCase();
           if (!ml.endsWith(` - ${bl}`) && !ml.endsWith(` ${bl}`)) return false;
