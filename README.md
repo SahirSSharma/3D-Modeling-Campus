@@ -224,17 +224,20 @@ absent than wrong. Alianza and Umoja also stopped extruding their OSM outer OUTL
 included) through their own quads; the university's per-wing masses, which the outlines merely
 circumscribe, are what render.
 
-The sweep also quantified a render-side class it did not change: the extruder anchors a roof at
-*centroid* ground + measured height, while the measurement defines height against the footprint
-*rim median* — under a hole-filled interior on a grade the two diverge, and four masses in this
-shard render their roofs >2 m off the surveyed elevation (Hopkins Parking worst at +3.2 m on its
-15.7 m grade span). Every base is per-vertex safe (`lowest − 1.5 m`); this is roof elevation
-only. Re-anchoring at the rim median matches the measurement's own definition but moves every
-building on campus, so it is logged for a dedicated cross-shard pass rather than smuggled into
-this one. In-shard markings (Triton Track & Field, the RIMAC pitches, Northview tennis) verified
-within their declared gates; Marshall Upper Apartments' townhomes keep the university's 6.1 m —
-their p98s read eucalyptus tails (up to 10.3 m) that stay under the canopy guard's 5 m firing
-threshold, and the GIS figure matches the measured plane's body.
+The sweep also quantified a render-side class it did not then change: the extruder
+anchored a roof at *centroid* ground + measured height, while the measurement defines
+height against the footprint *rim median* — under a hole-filled interior on a grade the
+two diverge, and four masses in this shard rendered their roofs >2 m off the surveyed
+elevation (Hopkins Parking worst at +3.2 m on its 15.7 m grade span). Every base was
+per-vertex safe (`lowest − 1.5 m`); this was roof elevation only. The r0c1 re-sweep of
+2026-08-05 closed it: `roofElevation` now places every roof at rimMedian + h
+(never below the highest footprint ground — the flat-extrusion hillside
+limit, Eckart's SIO bluff), matching the measurement's own definition, and
+readiness reads height the same way. In-shard
+markings (Triton Track & Field, the RIMAC pitches, Northview tennis) verified within
+their declared gates; Marshall Upper Apartments' townhomes keep the university's 6.1 m —
+their p98s read eucalyptus tails (up to 10.3 m) that stay under the canopy guard's 5 m
+firing threshold, and the GIS figure matches the measured plane's body.
 
 **The east-campus shard sweep (2026-08-04, r0c2).** Campus Point, the Scripps Memorial /
 Prebys hospital campus, the CSC service yard, the Biology Field Station and the Preuss School —
@@ -272,9 +275,10 @@ footprint anchor instead; nothing extrudes, the ring stays for the day something
 stands. And two wayfinding anchors nobody could navigate without — "Scripps Memorial Hospital
 La Jolla" and "The Preuss School" — existed only as OSM *site* ways wrapping unnamed buildings,
 so neither ever survived the name pass; both are now seeded at their site ways' centroids.
-The roof-anchor render class r0c1 quantified gets two more data points here (the 34 m tower
-renders 2.7 m below its surveyed elevation over a hole-filled interior; a canyon-edge wing
-1.9 m above) — still logged for the dedicated cross-shard pass, still not smuggled in.
+The roof-anchor render class r0c1 quantified got two more data points here (the 34 m tower
+rendered 2.7 m below its surveyed elevation over a hole-filled interior; a canyon-edge wing
+1.9 m above). The r0c1 re-sweep of 2026-08-05 closed the class campus-wide — roofs now
+anchor at rimMedian + h.
 
 **The west shard sweep (2026-08-04, r1c0).** La Jolla Farms and Muir's residential edge — the
 shard where 131 of 140 buildings are nameless private estates, and where rebuilding the heights

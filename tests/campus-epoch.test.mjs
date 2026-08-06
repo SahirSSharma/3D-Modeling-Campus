@@ -200,9 +200,19 @@ const LIDAR = read("docs/data/campus-lidar.json");
 const ARCGIS = read("docs/data/campus-arcgis.json");
 const COLORS = read("docs/data/campus-colors.json");
 
-const { assembleMasses } = await import(path.join(ROOT, "docs/js/campus-massing.js"));
+const { assembleMasses, roofElevation } = await import(path.join(ROOT, "docs/js/campus-massing.js"));
 const MASSES = assembleMasses({ campus: CAMPUS, lidar: LIDAR, arcgis: ARCGIS, colors: COLORS });
 const tallest = (n) => Math.max(...MASSES.filter((m) => m.name === n).map((m) => m.h), 0);
+
+/* Terrain lookup matching the renderer's heightAt — used to pin roofElevation
+   against the same ground the extruder sees. */
+const heightAt = (x, z) => {
+  const T = LIDAR.terrain;
+  const c = Math.round((x - T.x0) / T.cell);
+  const r = Math.round((z - T.z0) / T.cell);
+  if (c < 0 || c >= T.cols || r < 0 || r >= T.rows) return null;
+  return LIDAR.datum + T.z[r * T.cols + c] / 10;
+};
 
 const inRing = (pt, ring) => {
   let ins = false;
@@ -2727,17 +2737,21 @@ describe("campus epoch — r1c0 pass-2 re-sweep (2026-08-05)", () => {
     assert.equal(rendersNear(-630.2, -392.2, 4).find((m) => m.src === "osm")?.h, 4.5);
   });
 
-  test("Tuolumne S House Laundry height stands; roof-anchor is a renderer handoff", () => {
+  test("Tuolumne S House Laundry height stands; roof now anchors at the rim", () => {
     /* massHeights 15.8 tracks the EPT plane (281 pts, roofOf 15.8). Grade
-       audit: centroid ground 123.3 vs rim-median 126.2, Δ −2.9 m on 3.0 m
-       of span — only in-box mass past the 2 m roof-anchor gate. Bases
-       per-vertex safe. Renderer change (roofY = rimMedian + h) is
-       cross-shard — same handoff as Hopkins Parking / Canyon Vista /
-       osm:502. */
+       audit used to show centroid ground 123.3 vs rim-median 126.2
+       (Δ −2.9 m) — the roof-anchor class. The extruder now places the roof
+       at rimMedian + h, so that Δ no longer moves the surveyed elevation. */
     assert.equal(LIDAR.massHeights["m:-196,-34"], 15.8);
     const laundry = rendersNear(-195.8, -33.7, 3).find((m) => m.src === "gis");
     assert.ok(laundry, "Tuolumne S House Laundry vanished");
     assert.equal(laundry.h, 15.8, `Laundry ships ${laundry.h}`);
+    const roof = roofElevation(laundry.rings[0], laundry.h, heightAt);
+    const rim = (() => {
+      const gs = laundry.rings[0].map(([x, z]) => heightAt(x, z)).filter((g) => g != null).sort((a, b) => a - b);
+      return gs[Math.floor(gs.length / 2)];
+    })();
+    assert.ok(Math.abs(roof - (rim + laundry.h)) < 1e-9, "Laundry roof must sit on rimMedian + h");
   });
 
   test("named Muir landmarks still track their shipped planes", () => {
@@ -3712,5 +3726,107 @@ describe("campus epoch — r2c2 pass-3 re-sweep (2026-08-05)", () => {
       const rendered = rendersNear(cx, cz, 4).find((r) => r.src === "osm");
       assert.equal(rendered?.h, 9, `osm:${i} keeps the 9 m guess`);
     }
+  });
+});
+
+describe("campus epoch — r0c1 re-sweep 2026-08-05_165434", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rimMed = (ring) => {
+    const gs = ring.map(([x, z]) => heightAt(x, z)).filter((g) => g != null).sort((a, b) => a - b);
+    return gs.length ? gs[Math.floor(gs.length / 2)] : null;
+  };
+
+  test("roofElevation anchors at the rim median, not the centroid", () => {
+    /* Synthetic grade: three vertices at 100, one at 110. Vertex-mean
+       drifts high; the rim median stays on the dense low side. Placing
+       at mean + h was the roof-anchor bug — this is the rule that would
+       have caught Village West Building 2's 3 m sink. Surveyed roof
+       (100+15=115) clears the high corner (110), so no hillside clamp. */
+    const ring = [[0, 0], [10, 0], [10, 10], [0, 10]];
+    const g = new Map([["0,0", 100], ["10,0", 100], ["10,10", 100], ["0,10", 110]]);
+    const at = (x, z) => g.get(`${x},${z}`);
+    const meanG = [...g.values()].reduce((a, b) => a + b, 0) / g.size;
+    assert.equal(roofElevation(ring, 15, at), 115); // median 100 + 15
+    assert.equal(meanG + 15, 117.5);
+    assert.notEqual(roofElevation(ring, 15, at), meanG + 15);
+  });
+
+  test("roofElevation clears the high corner when survey would bury the mass", () => {
+    /* Eckart class: uphill grade from the rim exceeds h. Surveyed roof
+       (100+8=108) sits under the high corner (110); the flat extrusion
+       must lift to 110 rather than ship a buried building. */
+    const ring = [[0, 0], [10, 0], [10, 10], [0, 10]];
+    const g = new Map([["0,0", 100], ["10,0", 100], ["10,10", 100], ["0,10", 110]]);
+    const at = (x, z) => g.get(`${x},${z}`);
+    assert.equal(roofElevation(ring, 8, at), 110);
+  });
+
+  test("Village West Building 2's roof sits on its surveyed elevation", () => {
+    /* Screener claimed massHeights 13 was 2.6 m under a fresh roofOf.
+       Independent EPT with the builder's vertex rimBase reproduces 12.9 —
+       the "under-read" was the screener's dense-edge rim (base 120.2 vs
+       vertex 122.9 on a 2.9 m grade). Absolute roof is the same either
+       way (135.8). The REAL bug: extruder used centroid(119.9)+13 = 132.9
+       while surveyed absolute roof is rimMed(122.9)+13 = 135.9. Anchoring
+       at the rim closes the 3.0 m gap. Surveyed roof clears the high
+       corner (122.9), so no hillside clamp fires. */
+    const m = MASSES.find((x) => x.name === "Village West Building 2" && x.src === "gis");
+    assert.ok(m, "Village West Building 2 vanished");
+    assert.equal(m.h, 13);
+    assert.equal(LIDAR.massHeights["m:-125,-1108"], 13);
+    const rim = rimMed(m.rings[0]);
+    const [cx, cz] = centroidOf(m.rings[0]);
+    const roof = roofElevation(m.rings[0], m.h, heightAt);
+    assert.ok(Math.abs(roof - (rim + m.h)) < 1e-9, "VW2 must sit on surveyed rim+h, not the hillside clamp");
+    assert.ok(Math.abs((heightAt(cx, cz) + m.h) - roof) >= 2,
+      `centroid formula only drifted ${Math.abs((heightAt(cx, cz) + m.h) - roof).toFixed(2)} m — expected the known ≥2 m class`);
+  });
+
+  test("Eckart's bluff roof clears its high corner rather than burying", () => {
+    /* 15.2 m grade span, h 11.3 — surveyed rim+h sits ~1 m under the
+       high corner. The hillside clamp lifts to highest so readiness's
+       buried gate stays honest. */
+    const m = MASSES.find((x) => x.name === "Eckart Building" && x.src === "gis");
+    assert.ok(m, "Eckart vanished");
+    const gs = m.rings[0].map(([x, z]) => heightAt(x, z)).filter((g) => g != null);
+    const hi = Math.max(...gs);
+    const rim = rimMed(m.rings[0]);
+    const surveyed = rim + m.h;
+    assert.ok(surveyed < hi, `Eckart survey ${surveyed.toFixed(1)} should sit under high ${hi.toFixed(1)}`);
+    assert.equal(roofElevation(m.rings[0], m.h, heightAt), hi);
+  });
+
+  test("Village East 4 and 5 keep their measured planes; roofs follow the rim", () => {
+    /* Screener dense-rim "underheights" (14.0 / 15.0) collapse to the
+       shipped 12.1 / 12.4 under builder-identical vertex rimBase. Heights
+       were never wrong; placement was. */
+    const ve4 = MASSES.find((m) => m.name === "Village East Building 4");
+    const ve5 = MASSES.find((m) => m.name === "Village East Building 5");
+    assert.equal(ve4.h, 12.1);
+    assert.equal(ve5.h, 12.4);
+    for (const m of [ve4, ve5]) {
+      const rim = rimMed(m.rings[0]);
+      assert.ok(Math.abs(roofElevation(m.rings[0], m.h, heightAt) - (rim + m.h)) < 1e-9);
+    }
+  });
+
+  test("Canyon Vista Restaurant keeps its upper dining plane", () => {
+    /* Bimodal hist (4 m terrace vs 8 m dining); explainRoof rule=p98 → 8.6
+       matches the shipped plane. Apple shows both decks today — the upper
+       dining volume is the extrusion; do not drop to the terrace. */
+    const rest = MASSES.find((m) => m.name === "Canyon Vista Restaurant");
+    assert.equal(rest.h, 8.6);
+    assert.equal(LIDAR.heights["Canyon Vista Restaurant"], 8.6);
+  });
+
+  test("the multiplane Warren unnamed ring stays unbuilt", () => {
+    /* osm:57: spread 3.00, dense 27.6%, multimodal 5/10/13/15 — gate
+       refuses. Currently suppressed under Douglas/Brown/Brennan GIS.
+       Better absent than pasting roofOf=16 onto a stepped outline. */
+    assert.equal(LIDAR.osmHeights?.[57], undefined, "osm:57 must stay out of osmHeights");
   });
 });

@@ -63,3 +63,81 @@ with rim-median base on every target.
 - **Remaining multi-plane unnamed in-box**: ~25 still ship area guesses after
   this pass's one admission + one withhold. Imagery triage of the next |Δ| ≥ 2
   standouts beats more EPT.
+
+---
+
+# FINDINGS — run `2026-08-05_165434` · shard r0c1 (re-sweep)
+
+Pass 1 re-sweep of the north-central shard (Village East/West, Canyon Vista,
+Warren residential, RIMAC fringe). Screen: 5 candidates (2 high / 2 medium /
+1 low). Judged by `cursor-grok-4.5-high`.
+
+Every candidate in `pass1-r0c1.screen.json` was re-derived before judgement
+with an independent full-depth targeted EPT re-sample
+(`/tmp/gauntlet-r0c1-judge/reprobe.json`) that ran BOTH rim bases side by
+side: the builder's vertex-only `rimBase` and the screener's dense-edge
+sampling. Measurement via `scripts/lib/roof-measure.mjs` `explainRoof` with
+rim base on every target. Apple snapshots from the screener's `/tmp/gauntlet-r0c1-screen/apple/`
+were reviewed for currency only (no colour sampling).
+
+### Fixed — class (renderer)
+
+| Entity | Was | Now | Source | Test |
+|---|---|---|---|---|
+| Roof-anchor class (campus-wide) | `roofY = heightAt(centroid) + h` | **`roofY = max(rimMedian + h, highestGround)`** via exported `roofElevation` | LiDAR heights are defined as roof − rimMedian; the extruder used a different base. On grade the two diverge: Village West Building 2 sank 3.0 m (centroid 119.9 vs rim 122.9 on a 2.9 m span); Canyon Vista Administration rose 4.6 m; osm:893's high corner stood 0.6 m above its own roof under the old formula. The `highestGround` floor covers the flat-extrusion hillside limit (Eckart: surveyed roof 1 m under its high corner on a 15.2 m bluff). `scripts/readiness.mjs` now reads rendered height against the same rim median. | epoch r0c1 165434 |
+
+### Rejected candidates (each re-measured; do not re-find these)
+
+- **`vw2-underheight`** — REJECTED as a height bug. Independent EPT of the GIS
+  ring: 5,031 pts, `explainRoof` rule=p98 → **12.9** under builder vertex
+  rimBase (base 122.9) — matches shipped `massHeights[m:-125,-1108]=13`
+  within 0.1 m. The screener's "15.6" used dense-edge rim (base 120.2), which
+  manufactures a 2.6 m under-read on the 2.9 m grade. Absolute roof is the
+  same either way (135.8). The real defect was the roof-anchor class above
+  (centroid placement put the roof at 132.9). Host `heights['Village West
+  Building 2']=15.8` is the OSM ring's own plane under a different rim
+  (base 120.0) — also consistent with absolute 135.8; own massHeights correctly
+  wins for the rendered GIS mass.
+
+- **`ve5-underheight`** — REJECTED as a height bug. Vertex rimBase → **12.3**
+  (shipped 12.4); dense rim → 15.0. Same grade artefact (span 4.5 m). Plane
+  pin in epoch §10 stands. Roof now follows the rim.
+
+- **`ve4-underheight`** — REJECTED as a height bug. Vertex rimBase → **12.2**
+  (shipped 12.1); dense rim → 14.0. Same class. Epoch §10 pin stands.
+
+- **`cvr-bimodal-planes`** — REJECTED. Ship = fresh roofOf = **8.6**
+  (rule=p98, spread 0.25, admissible). Histogram is bimodal (4 m terrace /
+  8 m dining) but Apple shows both decks of one pre-2014 complex; the upper
+  dining volume is the correct extrusion. Prior epoch pin stands. Do not
+  drop to p50 4.6.
+
+- **`osm57-multiplane-suppressed`** — REJECTED as actionable. 1,976 pts,
+  spread 3.00, dense 0.276, multimodal — gate refuses. Already suppressed
+  under Douglas/Brown/Brennan GIS; no render. Leave unbuilt (better absent
+  than pasting roofOf=16 onto a stepped outline). Not added to OSM_WITHHELD
+  — a future parts split could still be honest.
+
+### Named OSM-tag buildings (readiness work-list)
+
+None of the eight named buildings still on their OSM tag sit inside this
+shard (Stewart Commons Annex @ z≈−154 and T-31 @ coastal fringe are outside
+the r0c1 box). No action.
+
+### Handoffs / observations
+
+- **Screener rim methodology**: any future screen that reports |ship − roofOf|
+  on a graded footprint MUST quote the builder's vertex rimBase, or it will
+  re-find the VW2/VE4/VE5 false underheights. Dense-edge sampling is a
+  different base, not a better measurement of the same one.
+- **osm:893 burial**: was the roof-anchor class (centroid placement left the
+  high corner 1.9 m above the roof). Closed by the rim anchor. Eckart's
+  residual (surveyed roof 1 m under its high corner on a 15.2 m bluff) is
+  the flat-extrusion hillside limit — the `highestGround` floor in
+  `roofElevation` clears it without inventing height on every other mass.
+- **280 stepped unnamed rings**: osm:57 is one in-box exemplar; still the
+  highest-value residual class campus-wide, unchanged this pass.
+
+### Verification
+
+See final message for `npm test` / `npm run check` paste.

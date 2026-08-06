@@ -193,6 +193,43 @@ const centroidOf = (ring) => {
   return [x / ring.length, z / ring.length];
 };
 
+/** Absolute roof elevation for a mass: rim-median ground + measured height,
+ *  never below the highest footprint ground. Exported so the readiness
+ *  census and the epoch tests pin the same rule the extruder uses.
+ *
+ *  Why not centroid + h: the LiDAR builder defines h against the rim median,
+ *  and on a grade those two bases diverge (Village West Building 2 sank
+ *  3.0 m; Canyon Vista Administration rose 4.6 m; osm:893's high corner
+ *  stood 0.6 m above its own roof).
+ *
+ *  Why the highest-ground floor: a FLAT extrusion cannot sit at the surveyed
+ *  elevation when the uphill grade from the rim median exceeds h (Eckart's
+ *  SIO bluff: 12.3 m of grade above the rim, 11.3 m of building). Lifting
+ *  to the high corner keeps the mass out of its own hill — the forbidden
+ *  failure mode outranks a one-metre absolute drift on a site the flat-slab
+ *  model cannot describe. */
+export function roofElevation(ring, h, heightAt) {
+  let highest = -Infinity;
+  const gs = [];
+  for (const [x, z] of ring) {
+    const g = heightAt(x, z);
+    if (g != null && Number.isFinite(g)) {
+      gs.push(g);
+      if (g > highest) highest = g;
+    }
+  }
+  let surveyed;
+  if (gs.length) {
+    gs.sort((a, b) => a - b);
+    surveyed = gs[Math.floor(gs.length / 2)] + h;
+  } else {
+    const [cx, cz] = centroidOf(ring);
+    surveyed = heightAt(cx, cz) + h;
+  }
+  if (highest > -Infinity && surveyed < highest) return highest;
+  return surveyed;
+}
+
 /** Is this OSM ring already represented by the university's massing?
  *
  *  Centroid-in-one-ring alone is not enough: a courtyard building's centroid
@@ -730,7 +767,9 @@ export function createBuildings(scene, { campus, lidar, arcgis, colors, facades,
     let lowest = Infinity;
     for (const [x, z] of outer) lowest = Math.min(lowest, heightAt(x, z));
     const [cx, cz] = centroidOf(outer);
-    const roofY = heightAt(cx, cz) + m.h;
+    /* Roof sits at rimMedian + h — matching how h was measured — never
+       below the highest footprint ground. See roofElevation. */
+    const roofY = roofElevation(outer, m.h, heightAt);
     const baseY = lowest - 1.5;
     const depth = Math.max(1, roofY - baseY);
 

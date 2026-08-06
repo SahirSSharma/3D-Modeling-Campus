@@ -140,18 +140,21 @@ const renderer = await page.evaluate(() => {
 });
 
 const census = await page.evaluate(async (declared) => {
-  const [campus, lidar] = await Promise.all([
+  const [campus, lidar, arcgis] = await Promise.all([
     fetch("data/campus-3d.json").then((r) => r.json()),
     fetch("data/campus-lidar.json").then((r) => r.json()),
+    fetch("data/campus-arcgis.json").then((r) => r.json()).catch(() => null),
   ]);
   const { pointInRings } = await import("./js/campus-terrain.js");
 
   /* The vertex-average of an L-shaped ring lies outside it. Walk the ring for a
      point that is genuinely inside, or the probe answers about the courtyard. */
-  const interiorOf = (ring) => {
+  const centroidOf = (ring) => {
     let sx = 0, sz = 0;
     for (const [x, z] of ring) { sx += x; sz += z; }
-    const c = [sx / ring.length, sz / ring.length];
+    return [sx / ring.length, sz / ring.length];
+  };
+  const interiorOf = (ring, c) => {
     if (pointInRings(c[0], c[1], [ring])) return c;
     for (const [vx, vz] of ring) {
       for (const t of [0.25, 0.5, 0.75]) {
@@ -174,14 +177,35 @@ const census = await page.evaluate(async (declared) => {
     const ring = b?.p;
     if (!Array.isArray(ring) || ring.length < 3) return;
     const bucket = b.n ? out.named : out.unnamed;
-    const inside = interiorOf(ring);
+    const [cx, cz] = centroidOf(ring);
+    const inside = interiorOf(ring, [cx, cz]);
     if (!inside) { out.unprobeable++; return; }
 
-    const { ground, roof } = window.__campusWalk.probe(inside[0], inside[1]);
-    if (roof === null || ground === null) { bucket.absent++; return; }
-    const rendered = roof - ground;
+    /* The mass height, derived the way the renderer derived it. campus-massing
+       sets `roofY = rimMedian(ring) + m.h` — the same rim median the LiDAR
+       builder subtracts when it defines h. (It used to use the centroid; on a
+       grade those diverge and readiness then compared a drifted roof to a
+       drifted base, laundering the error. Village West Building 2's 3 m sink
+       was invisible to that census.)
 
-    const measured = lidar.osmHeights?.[i] ?? (b.n ? lidar.heights?.[b.n] : null);
+       The roof plane is still read at an interior point (where the sampler can
+       see the mass). The ground base is the rim median — never the centroid,
+       never an interior hole-fill. */
+    const at = window.__campusWalk.probe(inside[0], inside[1]);
+    const rimGs = ring.map(([x, z]) => window.__campusWalk.probe(x, z).ground).filter((g) => g !== null);
+    if (at.roof === null || rimGs.length < 3) { bucket.absent++; return; }
+    rimGs.sort((a, c) => a - c);
+    const rimMed = rimGs[Math.floor(rimGs.length / 2)];
+    const rendered = at.roof - rimMed;
+
+    /* Two sources count as measured, because the renderer accepts two: the 2014
+       LiDAR plane, and the university's own GIS survey height — which outranks
+       LiDAR outright when the record is newer than the flight. A census that
+       only recognised LiDAR would report every GIS-surveyed building as a
+       guess. */
+    const fac = arcgis?.buildings?.[b.n];
+    const measured = fac?.newer ? fac.height
+      : (lidar.osmHeights?.[i] ?? (b.n ? lidar.heights?.[b.n] : null) ?? fac?.height ?? null);
     /* 0.35 m of slack: the world's roof is sampled off a rasterised map and the
        mass sits on its own reconciled base, so an exact float match is not the
        right test — half a step is. */
@@ -206,10 +230,10 @@ const census = await page.evaluate(async (declared) => {
       out.grade.checked++;
       if (hi - lo > 1.5) { out.grade.steep++; out.grade.worst.push({ i, n: b.n || null, span: +(hi - lo).toFixed(1) }); }
       out.buried.checked++;
-      const submerged = hi - roof;
+      const submerged = hi - at.roof;
       if (submerged > 0.5) {
         out.buried.count++;
-        out.buried.worst.push({ i, n: b.n || null, under: +submerged.toFixed(1), roof: +roof.toFixed(1) });
+        out.buried.worst.push({ i, n: b.n || null, under: +submerged.toFixed(1), roof: +at.roof.toFixed(1) });
       }
     }
   });
