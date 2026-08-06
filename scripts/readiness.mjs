@@ -59,12 +59,42 @@ const GATES = {
      estimates do not count — a stated estimate is a different object from an
      untagged fallback, and POST_2014_SITES exists precisely to declare them. */
   namedGuessesMax: 0,
-  /* Unnamed rings on guesses. 777 on the morning of 2026-08-05, 446 after the
-     statistical gate. The 280 stepped roofs are the loop's current target; this
-     number is the loop's own scoreboard and the reason the walk is worth doing
-     at all. Set at the level the loop must reach before a walkthrough is a fair
-     test of the campus rather than a tour of its backlog. */
-  unnamedGuessesMax: 200,
+  /* Unnamed rings that RENDER at a guess, INSIDE THE CAMPUS BOUNDARY.
+   *
+   * This gate used to count all 358 unnamed guesses and sit at 200. That number
+   * was picked before anyone had measured what the backlog was made of, and
+   * every part of it was wrong.
+   *
+   * Measured 2026-08-05 by instrumenting the builder to record each refusal,
+   * classifying each ring against the campus boundary, and then — the step that
+   * mattered — intersecting that with the rings that actually reach the screen.
+   * Most of the backlog never renders: the university's GIS massing already
+   * covers it, so the OSM ring is suppressed and nobody ever sees its guess.
+   *
+   *   358  unnamed rings render at a guess
+   *   329  of those are outside the campus boundary — Golden Triangle and
+   *        Sorrento Valley office blocks on Nobel Drive and Genesee Avenue that
+   *        fall inside the survey box. The single largest ring in the whole
+   *        backlog is on La Jolla Village Drive. No amount of work on them
+   *        changes a campus walk.
+   *    29  are inside the boundary. THIS is the number a walker meets, and it
+   *        breaks down as:
+   *           9  refused on spread alone → a photograph can settle these
+   *           6  hand-withheld — a person looked and said no. Correct outcome.
+   *           4  too few returns / past the survey edge / pre-dates the flight
+   *           9  never reached the gate at all (under 25 returns, or no rim
+   *              base). Unanswered rather than proven unanswerable.
+   *
+   * So the gate is 20: the nine a photograph can settle must be settled, and the
+   * rest remain at a declared guess because no source this project trusts can
+   * answer them. It may fall further once the nine unclassified rings are
+   * diagnosed — it must never rise.
+   *
+   * It cannot be satisfied by loosening the builder's statistics. Raising the
+   * spread cut to 2.0 readmits 14 of the 67 rings a human refused; at the
+   * current cut of 1.2, six of them would already pass on statistics alone and
+   * are held out only by the explicit OSM_WITHHELD list. */
+  onCampusGuessesMax: 20,
   /* A roof that sits below the ground at one of its own corners. 0.5 m of slack
      because the roof map is rasterised and the terrain is sampled continuously;
      half a metre of that is sampling, and more than half a metre is a building
@@ -140,11 +170,27 @@ const renderer = await page.evaluate(() => {
 });
 
 const census = await page.evaluate(async (declared) => {
-  const [campus, lidar, arcgis] = await Promise.all([
+  const [campus, lidar, arcgis, boundary] = await Promise.all([
     fetch("data/campus-3d.json").then((r) => r.json()),
     fetch("data/campus-lidar.json").then((r) => r.json()),
     fetch("data/campus-arcgis.json").then((r) => r.json()).catch(() => null),
+    fetch("data/campus-boundary.json").then((r) => r.json()).catch(() => null),
   ]);
+
+  /* Inside the campus boundary or not. A ring on Nobel Drive renders, and its
+     height may well be wrong, but it is not what "walk the campus" means and
+     counting it drowns the number that matters. Ray casting against the closed
+     outer ring, same local frame, no conversion. */
+  const CAMPUS_RING = boundary?.points ?? boundary?.rings?.[0] ?? null;
+  const inCampus = (x, z) => {
+    if (!CAMPUS_RING) return true; // no boundary: count everything rather than silently pass
+    let inside = false;
+    for (let i = 0, j = CAMPUS_RING.length - 1; i < CAMPUS_RING.length; j = i++) {
+      const [xi, zi] = CAMPUS_RING[i], [xj, zj] = CAMPUS_RING[j];
+      if ((zi > z) !== (zj > z) && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) inside = !inside;
+    }
+    return inside;
+  };
   const { pointInRings } = await import("./js/campus-terrain.js");
 
   /* The vertex-average of an L-shaped ring lies outside it. Walk the ring for a
@@ -167,7 +213,9 @@ const census = await page.evaluate(async (declared) => {
 
   const out = {
     named: { measured: 0, guessed: 0, estimated: 0, unclassified: 0, absent: 0, examples: [] },
-    unnamed: { measured: 0, guessed: 0, estimated: 0, unclassified: 0, absent: 0, examples: [] },
+    unnamed: { measured: 0, guessed: 0, estimated: 0, unclassified: 0, absent: 0, examples: [],
+               onCampusGuesses: 0, offCampusGuesses: 0, onCampusIds: [] },
+    boundaryFound: !!CAMPUS_RING,
     buried: { checked: 0, count: 0, worst: [] },
     grade: { checked: 0, steep: 0, worst: [] },
     unprobeable: 0,
@@ -215,6 +263,10 @@ const census = await page.evaluate(async (declared) => {
       if (b.n && declared.includes(b.n)) bucket.estimated++;
       else {
         bucket.guessed++;
+        if (!b.n) {
+          if (inCampus(cx, cz)) { out.unnamed.onCampusGuesses++; out.unnamed.onCampusIds.push(i); }
+          else out.unnamed.offCampusGuesses++;
+        }
         if (bucket.examples.length < 12) bucket.examples.push({ i, n: b.n || null, h: +rendered.toFixed(1) });
       }
     } else bucket.unclassified++;
@@ -294,7 +346,7 @@ const line = (ok, label, observed, gate) =>
 
 const results = [
   { ok: census.named.guessed <= GATES.namedGuessesMax, label: "named buildings on a guess", observed: `${census.named.guessed} of ${namedTotal}`, gate: `<= ${GATES.namedGuessesMax}` },
-  { ok: census.unnamed.guessed <= GATES.unnamedGuessesMax, label: "unnamed rings on a guess", observed: `${census.unnamed.guessed} of ${unnamedTotal}`, gate: `<= ${GATES.unnamedGuessesMax}` },
+  { ok: census.unnamed.onCampusGuesses <= GATES.onCampusGuessesMax, label: "ON-CAMPUS unnamed rings on a guess", observed: `${census.unnamed.onCampusGuesses} (+${census.unnamed.offCampusGuesses} off campus)`, gate: `<= ${GATES.onCampusGuessesMax}` },
   { ok: census.buried.count <= GATES.buriedMax, label: `masses buried > ${GATES.buriedSlack_m} m in their hill`, observed: `${census.buried.count} of ${census.buried.checked}`, gate: `<= ${GATES.buriedMax}` },
   { ok: landmarks.every((l) => l.found && l.h !== null), label: "first-check landmarks standing", observed: `${landmarks.filter((l) => l.found && l.h !== null).length} of ${LANDMARKS.length}`, gate: "all" },
   { ok: !/SwiftShader|Software/i.test(renderer), label: "measured on a real GPU", observed: renderer.slice(0, 22), gate: "not SwiftShader" },
@@ -312,6 +364,7 @@ if (process.argv.includes("--json")) {
   console.log(`\nheights on screen`);
   console.log(`  named    ${census.named.measured} measured · ${census.named.guessed} guessed · ${census.named.estimated} declared post-2014 estimates · ${census.named.unclassified} neither · ${census.named.absent} not extruded`);
   console.log(`  unnamed  ${census.unnamed.measured} measured · ${census.unnamed.guessed} guessed · ${census.unnamed.unclassified} neither · ${census.unnamed.absent} not extruded`);
+  console.log(`           of the guesses, ${census.unnamed.onCampusGuesses} are inside the campus boundary and ${census.unnamed.offCampusGuesses} are outside it${census.boundaryFound ? "" : "  (NO BOUNDARY DATA — everything counted as campus)"}`);
   if (census.unprobeable) console.log(`  ${census.unprobeable} footprints had no interior point to probe`);
   if (census.named.examples.length) {
     console.log(`  named buildings still on their tag:`);

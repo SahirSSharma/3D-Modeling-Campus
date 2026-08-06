@@ -1,5 +1,5 @@
 {
-  "at": "2026-08-06T01:38:14.995Z",
+  "at": "2026-08-06T01:44:14.181Z",
   "head": null,
   "ready": false,
   "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)",
@@ -12,9 +12,9 @@
     },
     {
       "ok": false,
-      "label": "unnamed rings on a guess",
-      "observed": "358 of 1031",
-      "gate": "<= 200"
+      "label": "ON-CAMPUS unnamed rings on a guess",
+      "observed": "29 (+329 off campus)",
+      "gate": "<= 20"
     },
     {
       "ok": true,
@@ -37,7 +37,7 @@
     {
       "ok": true,
       "label": "slowest eye-level frame rate",
-      "observed": "120.1 fps",
+      "observed": "120 fps",
       "gate": ">= 30"
     },
     {

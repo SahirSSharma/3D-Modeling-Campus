@@ -98,6 +98,34 @@ const areaOf = (ring) => {
   return Math.abs(a / 2);
 };
 
+/* ON CAMPUS OR NOT — the question that reorders this entire list.
+ *
+ * Reverse-geocoding the twenty largest rings returned Nobel Drive, Genesee
+ * Avenue, Regents Road: Golden Triangle and Sorrento Valley office blocks that
+ * fall inside the survey box but are not campus. The largest ring of all
+ * (6,845 m², osm:1359) is on La Jolla Village Drive.
+ *
+ * Ranking by raw area therefore points the work at the city. The standing goal
+ * is a walkable campus as accurate as Apple's satellite view, and the measure
+ * of a fix is how much of what a person walking CAMPUS sees it corrects — so a
+ * 1,072 m² building on Ridge Walk outranks a 6,845 m² one on a arterial road
+ * nobody on this walk will stand next to. */
+const boundary = JSON.parse(readFileSync(path.join(ROOT, "docs/data/campus-boundary.json"), "utf8"));
+const CAMPUS_RING = boundary.points ?? boundary.rings?.[0] ?? null;
+
+/* Ray casting. The boundary ring is closed (first == last) and in the same
+   local frame, so no conversion is needed — which is also why this is the
+   cheapest reliable membership test available here. */
+const inCampus = (x, z) => {
+  if (!CAMPUS_RING) return null;
+  let inside = false;
+  for (let i = 0, j = CAMPUS_RING.length - 1; i < CAMPUS_RING.length; j = i++) {
+    const [xi, zi] = CAMPUS_RING[i], [xj, zj] = CAMPUS_RING[j];
+    if ((zi > z) !== (zj > z) && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) inside = !inside;
+  }
+  return inside;
+};
+
 /* Only the rings a photograph can settle. The other refusals are closed
    questions and putting them on a work-list wastes the looking. */
 const answerable = diag.filter((r) => r.why === "spread>1.2");
@@ -109,6 +137,7 @@ const rows = answerable.map((r) => {
   const { lat, lng } = toLatLng(cx, cz);
   return {
     bi: r.bi,
+    onCampus: inCampus(cx, cz),
     lat: +lat.toFixed(6),
     lng: +lng.toFixed(6),
     area_m2: Math.round(areaOf(ring)),
@@ -130,9 +159,10 @@ const rows = answerable.map((r) => {
   };
 });
 
-/* Biggest first. If this list is only ever half worked, the half that gets done
-   should be the half a person actually walks past. */
-rows.sort((a, b) => b.area_m2 - a.area_m2);
+/* On campus first, then biggest first inside each group. If this list is only
+   ever half worked, the half that gets done must be the half a person on this
+   walk actually stands next to. */
+rows.sort((a, b) => (b.onCampus === true) - (a.onCampus === true) || b.area_m2 - a.area_m2);
 const selected = rows.slice(0, LIMIT);
 
 if (GEOCODE) {
@@ -163,6 +193,8 @@ const payload = {
   rule: "A storey count read from a photograph is a DECLARED ESTIMATE, never a measurement. Ship it labeled.",
   generated_from: path.relative(ROOT, DIAG),
   answerable_total: answerable.length,
+  on_campus: rows.filter((r) => r.onCampus).length,
+  off_campus: rows.filter((r) => !r.onCampus).length,
   listed: selected.length,
   closed_questions: {
     "under 400 returns": diag.filter((r) => r.why?.includes("pts<400")).length,
@@ -177,5 +209,8 @@ console.log(`\n${selected.length} ring(s) written to ${path.relative(ROOT, OUT)}
 console.log(`  of ${answerable.length} a photograph could settle`);
 console.log(`  largest: ${selected.slice(0, 5).map((r) => `osm:${r.bi} (${r.area_m2} m²)`).join(", ")}`);
 const totalArea = selected.reduce((t, r) => t + r.area_m2, 0);
-console.log(`  ${Math.round(totalArea).toLocaleString()} m² of campus currently standing at an invented height`);
+const onC = selected.filter((r) => r.onCampus);
+const onArea = onC.reduce((t, r) => t + r.area_m2, 0);
+console.log(`  ${onC.length} inside the campus boundary (${Math.round(onArea).toLocaleString()} m²), ${selected.length - onC.length} outside it (${Math.round(totalArea - onArea).toLocaleString()} m²)`);
+console.log(`  the on-campus rings are the ones that change what a walker sees`);
 if (!GEOCODE) console.log(`\n  (no addresses — re-run with --geocode to reverse-geocode each centroid)`);

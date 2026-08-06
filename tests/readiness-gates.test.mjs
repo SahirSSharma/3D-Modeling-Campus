@@ -29,12 +29,23 @@ describe("readiness gate", () => {
     assert.equal(num("namedGuessesMax"), 0);
   });
 
-  test("the unnamed backlog target is the loop's real scoreboard", () => {
-    /* 777 on the morning of 2026-08-05, 446 after the statistical gate, 357 as
-       the stepped-roof work landed. The gate sits at 200 — below where the loop
-       stood when it was written, so it cannot be satisfied by standing still. */
-    const target = num("unnamedGuessesMax");
-    assert.ok(target <= 200, `unnamed target loosened to ${target}`);
+  test("the unnamed target counts ON-CAMPUS rings only, and may never rise", () => {
+    /* Redefined 2026-08-05 with evidence, at Sahir's direction. The old gate
+       counted all 358 unnamed guesses against a target of 200 — a number picked
+       before anyone measured what the backlog contained. 329 of those 358 are
+       outside the campus boundary (Nobel Drive and Genesee Avenue office
+       blocks), and of the 29 that are campus, only 9 can be answered at all.
+
+       20 is therefore "every ring a photograph could settle, settled". It is
+       allowed to FALL as the nine unclassified rings get diagnosed. It is never
+       allowed to rise: raising it is how a gate stops meaning anything, and the
+       whole point of redefining it was that the previous number meant nothing. */
+    const target = num("onCampusGuessesMax");
+    assert.ok(target <= 20, `on-campus target loosened to ${target}`);
+    assert.doesNotMatch(SRC, /unnamedGuessesMax/,
+      "the old campus-wide count is back — it counts the city, not the campus");
+    assert.match(SRC, /campus-boundary\.json/,
+      "the boundary test was dropped, so every off-campus ring counts again");
   });
 
   test("no mass may be buried in its own hill", () => {
