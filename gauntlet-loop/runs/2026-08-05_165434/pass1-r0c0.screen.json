@@ -1,0 +1,104 @@
+[
+  {
+    "id": "osm-892-underheight-multiplane",
+    "entity": "unnamed OSM building index 892 (Overpass way/1124225191, building=yes)",
+    "where": {"x": -415.3, "z": -923.4},
+    "claim": "assembleMasses ships src=osm area-guess h=4.5 (area≈157 m²). Not in lidar.osmHeights; not OSM_WITHHELD; 0% GIS coverage so the ring still renders.",
+    "observed": "Fresh EPT of the OSM ring: 1,093 non-ground returns, rimCoverage=1.00, gradeSpread=0.8 m. explainRoof → rule=p98, roofOf−base=9.0 m (p50=2.9, p75=4.7, p98=9.0, dense=0.469). Spread p98−p75=4.28 m (> STAT_MAX_SPREAD 1.2) — gate correctly refuses auto-admit. Histogram multimodal: 2 m:462 / 4 m:225 / 8 m:142. Shipped guess is 4.5 m under roofOf (Δ = −4.5 m, ~1.5 storeys).",
+    "evidence": {
+      "lidar": "osm:892 1093 pts rule=p98 why='no guard fired; p98 is the roof' h=9.0 p50=2.9 p75=4.7 p98=9.0 dense=0.469 spread=4.28 hist=[2m:462 4m:225 8m:142]; lidar.osmHeights[892]=undefined; gate maxSpread=false",
+      "gis": "null — nearest GIS ERC Pump House / Africa Hall ~200 m east; ringCoveredBy coverage 0%",
+      "osm": "unnamed way index 892, campus-3d h=4.5, area≈157 m², centroid (−415.3,−923.4); Overpass way/1124225191 tags={building:yes}; Nominatim reverse 32.886351,-117.245642 → house at 10010 North Torrey Pines Road",
+      "apple": "Apple Maps Web Snapshot z19 at 32.886351,-117.245642 (osm892.jpg, 2522 kB) — finished house footprint standing today among Torrey Pines Rd / Salk fringe landscaping; center RGB≈220,211,204; no crane",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Unnamed OSM area-guess UNDERHEIGHT on a multi-plane (spread>1.2) ring the statistical gate cannot admit — imagery must pick the plane; inverse of the retired one-plane overheight backlog.",
+    "epoch_risk": "Low for existence — Apple + Nominatim agree a finished house sits here today. The 4.5 vs 9 split is guess magnitude vs a stepped 2014 return set (dense low bins + 8 m shelf), not a missing post-2014 rebuild. Do not admit roofOf=9 blindly; the dense 2–4 m body could be the real one-storey plane with an upper wing/plant — Apple identity on the exact ring decides."
+  },
+  {
+    "id": "osm-876-underheight-gabled",
+    "entity": "unnamed OSM building index 876 (Overpass way/1112137808, building=yes, roof:shape=gabled)",
+    "where": {"x": -511.4, "z": -714.4},
+    "claim": "assembleMasses ships src=osm area-guess h=4.5 (area≈123 m²). Not in lidar.osmHeights; not OSM_WITHHELD; 0% GIS coverage so the ring still renders.",
+    "observed": "Fresh EPT: 846 pts, rim=1.00, gradeSpread=0.2 m. explainRoof → rule=p98, roofOf−base=8.0 m (p50=3.7, p75=4.3, p98=8.0, dense=0.748). Spread=3.70 m — gate refuses. Histogram mode 3 m:376 + 4 m:257 (75% in 3–4 m) with a thin upper tail to 8 m. Shipped guess equals the dense body (~4.5) but is 3.5 m under roofOf/ridge.",
+    "evidence": {
+      "lidar": "osm:876 846 pts rule=p98 h=8.0 p50=3.7 p75=4.3 p98=8.0 dense=0.748 spread=3.70 hist=[3m:376 4m:257 2m:71]; osmHeights[876]=undefined",
+      "gis": "null — ~300 m west of ERC halls; ringCoveredBy 0%",
+      "osm": "unnamed way index 876, h=4.5, area≈123 m², centroid (−511.4,−714.4); Overpass way/1112137808 tags={building:yes, roof:colour:grey, roof:orientation:along, roof:shape:gabled}; Nominatim reverse 32.884461,-117.246670 → building at 9760 Black Gold Road, La Jolla Farms",
+      "apple": "Apple snapshot osm876.jpg z19 at 32.884461,-117.246670 (2848 kB) — finished Black Gold / Estancia-adjacent house with grey roof present today; center RGB≈39,44,52; no crane",
+      "probe": null
+    },
+    "severity": "high",
+    "suspected_class": "Unnamed area-guess under a gabled multi-plane roof — OSM itself tags roof:shape=gabled; statistics see a tight eave body (~4 m) and a ridge/tail at ~8 m and cannot pick; guess stuck at the body.",
+    "epoch_risk": "Low for existence (Apple + gabled tag + Nominatim address). The disagreement is which vertical of a pitched 2014 roof the extrusion should wear — eave-ish 4.5 vs ridge roofOf 8 — not a date conflict. Judge needs the Apple close-up to choose; do not auto-admit either number from spread alone."
+  },
+  {
+    "id": "osm-482-multiplane-house",
+    "entity": "unnamed OSM building index 482 (Overpass way/558916458, building=house)",
+    "where": {"x": -898.0, "z": -683.5},
+    "claim": "assembleMasses ships src=osm area-guess h=9 (area≈1087 m²). Not in lidar.osmHeights; renders (0% GIS coverage).",
+    "observed": "Fresh EPT: 5,182 pts, rim=1.00. explainRoof → rule=p98, roofOf−base=11.0 m (p50=6.4, p75=9.4, p98=11.0). Spread=1.58 m — just over the 1.2 m gate. Histogram bimodal 9 m:1200 + 6 m:987 with a near-grade tail (−1 m:651). Δ = −2.0 m vs shipped guess.",
+    "evidence": {
+      "lidar": "osm:482 5182 pts rule=p98 h=11.0 p50=6.4 p75=9.4 p98=11.0 spread=1.58 hist=[9m:1200 6m:987 -1m:651 10m:561]; osmHeights[482]=undefined; gate maxSpread=false",
+      "gis": "null — coastal La Jolla Farms fringe, nearest campus GIS ~680 m east",
+      "osm": "unnamed way index 482, h=9, area≈1087 m², centroid (−898.0,−683.5); Overpass way/558916458 tags={building:house}; Nominatim reverse 32.884181,-117.250805 → house at 9826 La Jolla Farms Road",
+      "apple": "Apple snapshot osm482.jpg z18 at 32.884181,-117.250805 (3146 kB) — finished cliffside LJF residence present today among scrub/estate lots; center RGB≈32,39,40; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Large multi-plane (spread>1.2) unnamed ring still on an area guess — gate residue the prompt calls out; imagery picks the plane in seconds.",
+    "epoch_risk": "Low for existence. Grade/cliff + bimodal 6/9 m bins could be stepped wings of one house the flight already saw — not evidence the lot was empty in 2014. Δ only 2 m, so eye-level impact is smaller than 892/876."
+  },
+  {
+    "id": "osm-985-multiplane-idlehour",
+    "entity": "unnamed OSM building index 985 (Overpass way/1339938132, 2681 Idle Hour Lane)",
+    "where": {"x": -480.7, "z": -486.4},
+    "claim": "assembleMasses ships src=osm area-guess h=9 (area≈1190 m²). Not in lidar.osmHeights; renders.",
+    "observed": "Fresh EPT: 7,109 pts, rim=1.00. explainRoof → rule=canopy-guard, roofOf−base=8.0 m (p50=6.6, p75=8.0, p98=19.2, why: p98−p75=11.2 m > 5). Guarded body spread p75−p50=1.40 m — just over 1.2, so gate refuses. Histogram multimodal 3 m:1401 / 7 m:1252 / 6 m:1104 / 4 m:860. Δ = +1.0 m vs roofOf (guess nearly matches guarded plane).",
+    "evidence": {
+      "lidar": "osm:985 7109 pts rule=canopy-guard h=8.0 p50=6.6 p75=8.0 p98=19.2 spread=1.40 hist=[3m:1401 7m:1252 6m:1104 4m:860]; osmHeights[985]=undefined",
+      "gis": "null — Idle Hour / Estancia north fringe; nearest Ext Studies ~260 m east",
+      "osm": "unnamed way index 985, h=9, area≈1190 m², centroid (−480.7,−486.4); Overpass way/1339938132 tags={building:yes, addr:housenumber:2681, addr:street:Idle Hour Lane, source:esri/SanGIS_Buildings}",
+      "apple": "Apple snapshot osm985.jpg z18 at 32.882399,-117.246342 (3214 kB) — finished Idle Hour Lane structure among Estancia/LJF landscaping today; center RGB≈55,67,77; no crane",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Multi-plane / canopy-guarded unnamed residue — guess happens to sit within 1 m of the guarded body, but the ring is still unmeasured and the 3 m hist mode may be a lower wing imagery should confirm.",
+    "epoch_risk": "Low-to-moderate — Apple shows occupation today; tall p98=19.2 is crown overhang (guard already discarded it), not a post-2014 tower. Multimodal 3 vs 6–7 m still needs an Apple plane call before admitting 8.0."
+  },
+  {
+    "id": "osm-964-960-959-multiplane-cluster",
+    "entity": "unnamed OSM buildings 964 / 960 / 959 (Estancia / Black Gold large rings)",
+    "where": {"x": -527.7, "z": -833.2},
+    "claim": "Three large unnamed rings still ship area-guess h=9 (areas ≈1040 / 739 / 682 m²). None in lidar.osmHeights; all render (0% GIS).",
+    "observed": "Fresh EPT: osm:964 → 5,822 pts, roofOf=8.5 (p98), spread=2.15, hist mode 4 m:1623 + 5 m:1088 + 3 m:950 + 6 m:906 (stepped); Δ=+0.5. osm:960 → 5,357 pts, roofOf=9.6, spread=2.73, hist 4/3/6/7 m mixed; Δ=−0.6. osm:959 → 1,841 pts, roofOf=9.9, spread=2.93, hist mode 6 m:906; Δ=−0.9. All fail STAT_MAX_SPREAD only — pts/rim/height pass.",
+    "evidence": {
+      "lidar": "964: 5822 pts h=8.5 spread=2.15; 960: 5357 pts h=9.6 spread=2.73; 959: 1841 pts h=9.9 spread=2.93; all osmHeights undefined; all maxSpread=false",
+      "gis": "null — Estancia-adjacent LJF pads west of hotel outline",
+      "osm": "indexes 964/960/959, campus-3d h=9, centroids (−497.1,−781.2) / (−513.8,−851.6) / (−572.2,−866.8)",
+      "apple": "Apple snapshots osm964.jpg / osm960.jpg / osm959.jpg z18 — finished residential/hospitality pads among Estancia landscaping and courts today; no crane on any of the three",
+      "probe": null
+    },
+    "severity": "medium",
+    "suspected_class": "Multi-plane gate residue (spread>1.2) where the 9 m guess is accidentally close to roofOf — still unmeasured; imagery should lock the plane before a future rebuild of either source drifts the guess.",
+    "epoch_risk": "Low — Apple shows finished roofs today and the 2014 cloud already has dense mid-height bodies. Disagreement is plane selection inside one epoch, not a date conflict. Severity is medium because |Δ|≤1 m at eye level."
+  },
+  {
+    "id": "osm-multiplane-guess-residue",
+    "entity": "remaining multi-plane unnamed guesses in shard r0c0 (963, 967, 736, 743, 729, 492, 965, 227, 957, 872)",
+    "where": {"x": -500.0, "z": -800.0},
+    "claim": "After statistical admission of one-plane rings, 17 unnamed r0c0 rings still ship campus-3d area guesses because spread>1.2 (or pts<400). Prior pass highs 496/874/962 are now in osmHeights (9 / 4.7 / 6.4). Withheld 513/828/975 left untouched (no new evidence).",
+    "observed": "Targeted EPT of all 31 non-withheld unnamed guesses in-box: 2 GIS-suppressed (osm:20 Ext Studies J, osm:140 Ext Studies M — ringCoveredBy true, do not render). Of the rest, standouts with |Δ|≥2 already listed; residual multi-plane with |ship−roofOf|<2: osm:963 Δ−0.4 spread 1.53; 967 Δ−0.3 spread 1.37; 736 Δ+0.2 spread 1.44; 743 Δ0 spread 1.75; 729 Δ+0.6 spread 1.34; 492 Δ−1.9 spread 2.53 (hist mode 3 m:716 — body ~3–4 m under 4.5 guess); 965 Δ−1.9 spread 3.84 pts 551; 227 Δ−2.4 spread 1.76 (Cliff Hanger / Gliderport — dense 3 m:539, prior pass left as not a height bug); 957 Δ−2.2 pts only 196; 872 canopy-guarded pts 198. Named landmarks in-box (ERC halls, Village West 4–6, Salk both wings, Sanford host, Estancia 9.5, Middle Earth 4.7, Torrey Pines South massH 11.5, Marshall Lower outline) track measured planes; Marshall Lower OSM hull is GIS-suppressed at 93.9% coverage by halls N/O/P/Q/R/S.",
+    "evidence": {
+      "lidar": "/tmp/gauntlet-r0c0-screen/probe.json 57 targets; osmHeights count campus-wide 617; r0c0 unnamedMeasured=53 unnamedGuess shipping≈29 (+3 withheld); named 16/16 have heights or osmHeights",
+      "gis": "Marshall Lower outline suppressed under Residence Halls N/O/P/Q/R/S; Ext Studies K/M/H ship gisH≈3.4–3.6 (massHeights absent where multi-plane neighbor contamination would pollute); Sanford east pavilion massHeights m:-232,-1258=6.2 vs gisH 17.1 already overridden; Torrey Pines South massHeights 11.5 vs gisH 17.1 already overridden",
+      "osm": "enumerate: 103 buildings in local box; 53 measured unnamed; 3 withheld; 2 GIS-suppressed guesses; ~29 guesses still extruded",
+      "apple": "Spot checks on 892/876/482/985/964/960/959/estancia/marshall-lower/sanford-east — finished campus/LJF fabric today; no post-2014 crane sites among the guess residue",
+      "probe": "explainRoof imported from scripts/lib/roof-measure.mjs with rim-median base on every target"
+    },
+    "severity": "medium",
+    "suspected_class": "Shard-level multi-plane / low-pts gate residue — the 280-campus class the prompt names; not one-offs. Imagery triage beats more EPT.",
+    "epoch_risk": "Mostly low — Apple currency checks on the sampled pads show finished buildings the 2014 flight also saw. Secondary risk only where hist is near-grade dominant (512-like pads) or Nominatim leisure; those stay better-absent until identity is clear. Do not re-file OSM_WITHHELD 513/828/975 without new Apple/identity evidence."
+  }
+]

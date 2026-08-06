@@ -939,6 +939,22 @@ putting green / canopy), not a clear tall roof. Do not invent a 6.8 m plane; the
 stands. osm:513's coastal-scrub withhold still stands. Class-hole rejected as scoped —
 remaining unnamed guesses need per-ring Apple + EPT, not a blanket admit.
 
+**The NW-campus re-sweep (2026-08-05_165434, r0c0).** Same Estancia / Black Gold / LJF
+shard after pass 3 closed three more unnamed admissions. Screen residual was the
+multi-plane unnamed set the statistical gate cannot auto-admit (spread > 1.2). Every
+candidate re-derived from an independent full-depth EPT (point counts matched the
+screener exactly); Apple currency and Overpass tags re-checked per site.
+
+| Entity | Was shipping | Now ships | Why |
+|---|---|---|---|
+| Black Gold Rd gabled house (unnamed, osm:876) | 4.5 m area guess | **8.0 m** | OSM tags `roof:shape=gabled` + `roof:colour=grey` (way/1112137808); 846 returns, eave body at 3–4 m and ridge at p98 8.0 (spread 3.70 — gate correctly refuses). Apple shows the finished dark gabled roof with skylights; an extrusion wears the ridge, not the eave. |
+
+Withheld: osm:892 — low-dominant multimodal (2 m:462 / 4 m:225 / 8 m:142); roofOf would
+paste the 9.0 shelf over a one-storey body. osm:482 — cliffside multi-level terraces
+(gradeSpread 12.9 m, dense 34%); no single plane. Rejected as not bugs: osm:985 / 964 /
+960 / 959 and the residual multi-plane cluster (|Δ| ≤ 1 m or pts < 400). Prior withholds
+513 / 828 / 975 untouched.
+
 **The north-campus pass-3 re-sweep (2026-08-05, r0c1).** One high candidate: Geneva Hall's
 OSM union outline still extruded at 11.7 m through the plaza between Geneva Hall West and
 East. `ringCoveredBy`'s ≥0.85 area floor is deliberately above courtyard cases — interior

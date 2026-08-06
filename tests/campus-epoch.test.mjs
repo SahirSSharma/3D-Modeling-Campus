@@ -3238,6 +3238,51 @@ describe("campus epoch — r0c0 pass-3 re-sweep (2026-08-05)", () => {
   });
 });
 
+describe("campus epoch — r0c0 re-sweep 2026-08-05_165434", () => {
+  const centroidOf = (ring) => {
+    let x = 0, z = 0;
+    for (const p of ring) { x += p[0]; z += p[1]; }
+    return [x / ring.length, z / ring.length];
+  };
+  const rendersNear = (x, z, tol = 3) =>
+    MASSES.filter((m) => {
+      const [cx, cz] = centroidOf(m.rings[0]);
+      return Math.hypot(cx - x, cz - z) < tol;
+    });
+
+  test("the Black Gold gabled under-guess ships its ridge", () => {
+    /* Independent full-depth EPT (846 pts — matched the screener exactly).
+       explainRoof rule=p98 → 8.0 (p50 3.7 / p75 4.3 / p98 8.0, dense 74.8%
+       in the 3–4 m eave band, spread 3.70). Overpass way/1112137808 tags
+       roof:shape=gabled + roof:colour=grey; Apple z19 shows the finished
+       dark gabled roof with skylights today. The statistical gate correctly
+       refuses (eave vs ridge), but the tag + imagery pick the ridge for the
+       extrusion — was 4.5 area guess. */
+    assert.equal(LIDAR.osmHeights?.[876], 8.0, "osm:876's ridge");
+    assert.equal(rendersNear(-511.4, -714.4, 4).find((m) => m.src === "osm")?.h, 8.0,
+      "osm:876 renders at its ridge");
+  });
+
+  test("the low-dominant multiplane pad stays withheld", () => {
+    /* osm:892: hist 2 m:462 / 4 m:225 / 8 m:142 (dense 46.9%). roofOf
+       would paste the 9.0 shelf over a one-storey body; Apple ring sits
+       on a light roof section beside taller neighbours. OSM_WITHHELD —
+       the 4.5 guess ≈ p75 4.7 stands. */
+    assert.equal(LIDAR.osmHeights?.[892], undefined, "a 2014 number shipped for osm:892");
+    assert.equal(rendersNear(-415.3, -923.4, 4).find((m) => m.src === "osm")?.h, 4.5,
+      "the low-dominant pad keeps its declared guess");
+  });
+
+  test("the cliffside multiplane house keeps its declared guess", () => {
+    /* osm:482: gradeSpread 12.9 m, dense 34%, bimodal 6/9 m — real
+       multi-level terraces on Apple, no single plane to admit. Guess 9
+       sits between the wings. */
+    assert.equal(LIDAR.osmHeights?.[482], undefined, "a 2014 number shipped for osm:482");
+    assert.equal(rendersNear(-898.0, -683.5, 4).find((m) => m.src === "osm")?.h, 9,
+      "the cliffside house keeps its declared guess");
+  });
+});
+
 describe("campus epoch — r0c1 pass-3 wing-prefix outlines (2026-08-05)", () => {
   const centroidOf = (ring) => {
     let x = 0, z = 0;

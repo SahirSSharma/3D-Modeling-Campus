@@ -645,7 +645,7 @@ const OSM_WITHHELD = new Set([
   39, 42, 83, 171, 216, 233, 245, 246, 248, 289, 294, 322,
   438, 441, 465, 479, 480, 485, 497, 503, 513, 520, 656, 658,
   661, 695, 707, 708, 718, 762, 765, 769, 780, 785, 805, 806,
-  825, 827, 828, 832, 833, 834, 904, 907, 909, 910, 944, 975,
+  825, 827, 828, 832, 833, 834, 892, 904, 907, 909, 910, 944, 975,
   982, 986, 996, 997, 999, 1002, 1007, 1008, 1013, 1017, 1022, 1023,
   1024, 1033, 1062, 1068, 1075, 1089, 1120, 1127, 1144, 1146, 1160, 1218,
   1339, 1345, 1352, 1354, 1392,
@@ -977,6 +977,35 @@ const OSM_UNNAMED_VERIFIED = new Set([
             a 6.8 m plane; keep the 9 m guess.
        513: already withheld pass 1 (bodyTight=false coastal-scrub mix). */
   496, 874, 962,
+  /* r0c0 re-sweep 2026-08-05_165434 — Black Gold gabled under-guess.
+     Independent full-depth EPT (point count matched the screener: 846);
+     Apple z19 + Overpass tags confirm a finished grey gabled roof today:
+       876: 846 returns, rule=p98 → 8.0 (p50 3.7 / p75 4.3 / p98 8.0,
+            dense 74.8% in the 3–4 m eave band, spread 3.70). OSM tags
+            roof:shape=gabled + roof:colour=grey (way/1112137808). The
+            statistical gate correctly refuses (spread > 1.2) — eave body
+            vs ridge is exactly the multi-plane shape it cannot pick —
+            but the tag + Apple close-up resolve the plane: an extrusion
+            wears the ridge, not the eave. Was 4.5 area guess (~1 storey
+            under). Nominatim reverse → 9760 Black Gold Road.
+     Deliberately NOT admitted this pass:
+       892: low-dominant multimodal (2 m:462 / 4 m:225 / 8 m:142,
+            dense 46.9%). roofOf would paste the 9.0 shelf over a pad
+            whose dense body is one-storey; Apple ring sits on a light
+            roof section beside taller neighbours. WITHHELD — do not
+            ship roofOf 9.0; the 4.5 guess ≈ p75 4.7 stands.
+       482: cliffside modernist (gradeSpread 12.9 m, dense 34%,
+            bimodal 6/9 m). Real multi-level terraces on Apple; no
+            single plane. Guess 9 sits between the wings — keep it.
+       985 / 964 / 960 / 959: |ship−roofOf| ≤ 1 m on stepped /
+            canopy-guarded estates. Guess already near the measurable
+            plane; locking roofOf does not change eye-level and risks
+            pasting the wrong wing of a real multi-plane. Leave.
+       Residual multi-plane / low-pts guesses (963, 967, 736, 743, 729,
+            492, 965, 227, 957, 872): |Δ|<2 or pts<400 / canopy-
+            smeared — not this pass's work. Prior withholds 513 / 828 /
+            975 untouched. */
+  876,
   /* r2c0 pass-3 re-sweep 2026-08-05 — residual Poole Street unnamed pad
      after pass-2's 1097 / 1147 admissions. Independent full-depth EPT
      (point counts matched the screener exactly: 485 / 512 / 441 control);
