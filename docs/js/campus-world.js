@@ -37,6 +37,9 @@ import {
   SPECIES, treeSpecies, treeTint, treeExclusionZones, solidZones, clearanceFor, crownFor,
 } from "./campus-species.js";
 import { OVERLAY, overlayLift, applyOverlayDepth } from "./campus-overlay.js";
+import {
+  regionSampler, buildRegionMesh, buildOcean, SEA_LEVEL_M,
+} from "./campus-region.js";
 
 /* Campus on a clear November noon, as the 4K footage measures it: the big
    pavement family is neutral-to-cool light grey, NOT the beige the first
@@ -127,10 +130,52 @@ let ground = null;
  * real patchwork of chaparral, lawns and lots — and the chunks inside the
  * campus boundary swap to the real photograph as it loads.
  */
-export function createTerrain(scene, lidar, colors) {
+export function createTerrain(scene, lidar, colors, region) {
   const terrain = lidar.terrain;
   ground = makeHeightSampler(terrain);
-  const { heightAt } = ground;
+  const campusHeightAt = ground.heightAt;
+
+  /* The regional grid, when it is there. Int16 decimetres relative to the same
+     datum, read straight out of the downloaded buffer — no copy, no parse. */
+  let regionMesh = null;
+  let regionSample = null;
+  if (region) {
+    const h = region.header;
+    const bytes = region.heights;
+    const heights = new Int16Array(
+      bytes.buffer,
+      bytes.byteOffset,
+      Math.floor(bytes.byteLength / 2)
+    );
+    if (heights.length >= h.cols * h.rows) {
+      regionSample = regionSampler(h, heights);
+      regionMesh = { header: h, heights };
+    }
+  }
+
+  /* Height, resolved by who actually measured the ground under the query.
+     Inside the campus grid the 3 m sampler answers, exactly as before —
+     nothing about the walk changes. Outside it, the regional grid answers
+     where it has land. Past both, the campus sampler's edge-clamp still
+     answers, so there is never a null and never a hole to fall through.
+
+     Over open water the regional grid says "no land", and the honest height
+     there is the sea, not the nearest cliff top. */
+  const seaY = region ? SEA_LEVEL_M - lidar.datum : 0;
+  const heightAt = !regionSample
+    ? campusHeightAt
+    : (x, z) => {
+        const b = ground.bounds;
+        if (x >= b.x0 && x <= b.x1 && z >= b.z0 && z <= b.z1) return campusHeightAt(x, z);
+        const rb = regionSample.bounds;
+        if (x >= rb.x0 && x <= rb.x1 && z >= rb.z0 && z <= rb.z1) {
+          const v = regionSample.heightAt(x, z);
+          if (v != null) return v;
+          /* In the region and not land: this is the ocean. */
+          return seaY;
+        }
+        return campusHeightAt(x, z);
+      };
   const { x0, z0, cell, cols, rows, z: heights } = terrain;
   const clampIdx = (v, hi) => (v < 0 ? 0 : v > hi ? hi : v);
   const h = (r, c) => heights[clampIdx(r, rows - 1) * cols + clampIdx(c, cols - 1)] / 10;
@@ -214,14 +259,37 @@ export function createTerrain(scene, lidar, colors) {
     group.add(mesh);
   }
 
-  group.add(buildApron(terrain, h));
+  /* The apron is a flat skirt at the clamped edge height. It exists for one
+     reason: past the campus grid there was no measurement, and a skirt is a
+     more honest end to the world than a cliff into the void.
+     Where the region IS measured, that reason is gone — and the skirt is now
+     actively wrong, because it would hang a flat plate at mesa height straight
+     across the Torrey Pines bluff, hiding the single biggest landform the
+     expansion exists to show. So the apron retires wherever real land
+     replaces it, and survives only where the region is absent. */
+  let regionInfo = null;
+  if (regionMesh) {
+    const built = buildRegionMesh(regionMesh.header, regionMesh.heights, terrain);
+    group.add(built.group);
+    group.add(buildOcean(lidar.datum));
+    regionInfo = { chunks: built.chunks, quads: built.quads, seaY };
+  } else {
+    group.add(buildApron(terrain, h));
+  }
+
   scene.add(group);
 
   addBoundaryLine(scene, heightAt);
 
-  /* `coverage` is the rect that actually has ground mesh under it (grid +
-     apron); free roam clamps INSIDE the grid itself, tighter still. */
-  return { mesh: group, heightAt, coverage: ground.coverage };
+  /* `coverage` is the rect that actually has ground mesh under it. With the
+     region present that is the region's own extent, which is what free roam
+     must clamp to — otherwise the walk still stops at the old campus wall
+     with measured land visibly continuing past it. */
+  const coverage = regionSample
+    ? { ...regionSample.bounds }
+    : ground.coverage;
+
+  return { mesh: group, heightAt, coverage, region: regionInfo };
 }
 
 /**

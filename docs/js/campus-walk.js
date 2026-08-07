@@ -54,6 +54,14 @@ const DATA = [
   { key: "boundary", file: "campus-boundary.json", required: false, what: "campus boundary" },
   { key: "markings", file: "campus-markings.json", required: false, what: "sports markings" },
   { key: "eighth", file: "campus-eighth.json", required: false, what: "Eighth College survey" },
+  { key: "region", file: "region.json", required: false, what: "region outline" },
+  { key: "regionTerrain", file: "region-terrain.json", required: false, what: "regional terrain" },
+  /* The regional heights are 1.5 million samples. As JSON that is ~30 MB of
+     text to parse on the main thread; as Int16 it is a 2.8 MB buffer the
+     renderer can read straight through. Everything else here stays JSON
+     because everything else here is small enough for that to be free. */
+  { key: "regionHeights", file: "region-terrain.bin", required: false, binary: true,
+    what: "regional heights" },
 ];
 const urlOf = (file) => new URL(`../data/${file}`, import.meta.url);
 
@@ -300,6 +308,12 @@ async function download(rep) {
     /* No streams (an old Safari, or a test double): take it in one lump. The
        bar simply steps once per file instead of gliding. */
     if (!r.body?.getReader) {
+      if (DATA[i].binary) {
+        const buf = new Uint8Array(await r.arrayBuffer());
+        bytes[i] = buf.length;
+        announce();
+        return buf;
+      }
       const text = await r.text();
       bytes[i] = text.length;
       announce();
@@ -319,6 +333,7 @@ async function download(rep) {
     const buf = new Uint8Array(size);
     let at = 0;
     for (const c of chunks) { buf.set(c, at); at += c.length; }
+    if (DATA[i].binary) return buf;
     return JSON.parse(new TextDecoder().decode(buf));
   };
 
@@ -383,9 +398,28 @@ export async function boot({ report } = {}) {
   /* ------------------------------------------------------------- terrain */
   rep.phase("terrain");
   await rep.paint();
-  const terrain = world.createTerrain(scene, lidar, colors);
+  /* The region is all-or-nothing: a header without its heights, or heights
+     without the outline, is not a partial region — it is a broken one, and
+     drawing half of it would put a plane of sea over a campus with no coast
+     to justify it. Any missing piece and the world falls back to exactly what
+     it was before the expansion. */
+  const regionData =
+    data.region && data.regionTerrain && data.regionHeights
+      ? { outline: data.region, header: data.regionTerrain, heights: data.regionHeights }
+      : null;
+  if (!regionData && (data.region || data.regionTerrain || data.regionHeights)) {
+    rep.log("region — incomplete, going without");
+  }
+  const terrain = world.createTerrain(scene, lidar, colors, regionData);
   heightAt = terrain.heightAt;
   rep.facts(geometryFacts({ terrain: terrain.mesh }));
+  if (terrain.region) {
+    rep.log(
+      `region — ${terrain.region.chunks} chunks, ` +
+        `${terrain.region.quads.toLocaleString()} quads of land, sea at ${
+          terrain.region.seaY.toFixed(1)} m`
+    );
+  }
   await rep.paint();
 
   /* ------------------------------------------------------------- massing */
@@ -591,6 +625,18 @@ export async function boot({ report } = {}) {
        Q sends you up at thirty metres a second over a building the sampler could
        not see — so the coverage has to be checkable from the console. */
     probe: (x, z) => ({ ground: heightAt(x, z), roof: solidAt(x, z) }),
+    /* What the region actually put in the scene, and where the world now ends.
+       Exposed for the same reason `probe` is: from a screenshot you cannot
+       tell a regional hillside from the campus grid's own west edge draped in
+       satellite imagery, and "it looked right" is not a measurement. */
+    region: () => (terrain.region
+      ? {
+          ...terrain.region,
+          coverage: terrain.coverage,
+          /* Is there land here, sea here, or nothing at all? */
+          landAt: (x, z) => heightAt(x, z),
+        }
+      : null),
   };
 
   /* --------------------------------------------------------- first frame */
