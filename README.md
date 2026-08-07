@@ -65,6 +65,57 @@ colours wherever the fine imagery could answer. The official campus boundary is 
 and on the minimap as a dashed dark-navy line, so the surveyed edge of campus is visible, not
 implied.
 
+### Past the campus: the coastal region
+
+For most of this project the world was the campus box — 8.4 km², bounded by North Torrey Pines
+Road, La Jolla Village Drive, Genesee and I-5. Past its edge the renderer laid a flat apron at
+mesa height and then a wall, because that is honestly where the measurements stopped. It also
+meant the Torrey Pines bluff, the beach it falls to, Rose Canyon and University City did not
+exist, and you were standing on a mesa that ended in mid-air.
+
+The world now runs to a hand-drawn outline (`docs/data/region.json`) covering **30.0 km²** — the
+Torrey Pines reserve down to the Village of La Jolla, west to the waterline, east to I-805:
+
+| | campus | region |
+|---|---|---|
+| area | 8.4 km² | 30.0 km² inside the outline (52.7 km² bbox) |
+| terrain sampling | 3 m | 6 m |
+| elevation range | — | 0.2 m at the waterline to 137.5 m on the Carmel mesas |
+| storage | JSON | `region-terrain.bin`, Int16 decimetres, 2.8 MB |
+
+The outline is the one place here that is not surveyed: Sahir drew it freehand on a screenshot.
+That is recorded rather than dressed up. `build-region.mjs` georeferences the trace from two
+landmarks in the same screenshot, then **checks the fit against a third it was not fitted to** —
+the I-5/I-805 merge — and refuses to write the file if that check is worse than 400 m (it is
+247 m). The outline decides which square kilometres get built; everything inside it is measured
+from the same LiDAR as the campus.
+
+**The seam is exact, not close.** The campus keeps its 3 m grid untouched. The regional grid is
+phase-aligned to it, and inside the campus box it carries the campus's own heights *verbatim*.
+This was not the first design: originally the two grids were built independently and compared,
+and they disagreed on 0.12% of the overlap by up to 3.3 m — nearly all of it ground under a roof
+that neither laser could see, where both surveys were averaging a guess. A tolerance would have
+buried that behind a threshold someone would later have to defend. Deferring makes a step at the
+campus edge *unrepresentable*.
+
+**Water is decided by elevation, not by size.** A void in the ground data stays open — and the sea
+plane shows through it — only where the land around its rim stands at sea level. The first rule
+tried was a size cap, which is a correlation rather than a discriminator, and it broke exactly
+where correlations break: a big-box roof in University City returns no ground over more than
+9,000 m², so the Pacific rendered up through a warehouse four kilometres inland. Elevation fixed
+~47,000 cells of phantom ocean.
+
+Two things the expansion exposed that were never about the region:
+
+- `scripts/lib/ept.mjs` — the octree walk and LAZ decode, extracted so the campus and regional
+  builders share **one** point-cloud decoder. Two copies would eventually disagree about where the
+  ground is, at the seam, which is the one place anyone would notice. Proven safe by re-measuring
+  all 41 million campus returns: 1,225 heights identical.
+- `HOVER_MAX` 900 m → 3,600 m. That ceiling was never a taste call — it was *derived* from "the
+  measured world is ~3 km across". At 900 m over a 7.2 km world the new land is not merely hard to
+  see, it is unreachable. The camera's near plane now rises with altitude too, so the far/near
+  ratio the decal ladder depends on holds at the new ceiling.
+
 ### The painted lines, as geometry
 
 Every sports surface carries its real markings, drawn as vectors, not photographed:
@@ -1519,6 +1570,28 @@ Kept because each one cost real time and none of them announced itself:
   generations 18.1 m apart. The older one fits at 0.90 coverage, the current one at 0.84, and
   no fit-quality metric will ever prefer the right one. What tells them apart is that the pitch
   has to line up with its own row — a fact about the layout, not about the paint.
+- **A correlation is not a discriminator, and it breaks where you cannot see it.** Voids in the
+  regional ground data had to be sorted into "roof the laser could not see under" (fill it) and
+  "ocean" (leave it). Size looked like the obvious test — roofs are small, the Pacific is not —
+  and it was right for every case anyone looked at, because every case anyone looked at was on
+  the coast. A big-box roof in University City is larger than the 9,000 m² cap, so the sea
+  rendered up through a warehouse four kilometres inland. The property that actually separates
+  water from roof is that **water is at sea level**, which is true of the Pacific, true of the
+  lagoon, and false of every roof in the county. ~47,000 cells of phantom ocean.
+- **Two grids that merely AGREE still meet in a step.** The regional and campus terrain were
+  first built independently and compared; they matched to 0.166 m on average, which reads like
+  success. The 0.12% that did not match were up to 3.3 m apart, on flat ground, under roofs —
+  and no tolerance makes that go away, it only chooses how big the step at the campus edge is
+  allowed to be. The fix is not a tighter threshold but a single source of truth: inside the
+  campus box the regional grid now carries the campus's own values verbatim, and the seam is
+  exact by construction.
+- **A constant justified by a fact expires when the fact does.** `HOVER_MAX = 900` carried the
+  comment "the measured world is ~3 km across and the whole of it already fits in frame from
+  here". That reasoning was sound and the number was right — until the world became 7.2 km
+  across, at which point the ceiling silently made the new land unreachable. Worth grepping for
+  the *premises* in comments, not just the values, whenever a scale changes. A test had the same
+  disease: it pinned the climb-rate curve at `[HOVER_MAX, 496.5]`, tying the shape of the curve
+  to the height of the ceiling, so raising the ceiling failed a test about something else.
 - **A test that checks a different quantity from the one its message names is worse than no
   test.** `assert(bar.at[1] === 2.44, "the crossbar's lower edge is not at 2.44 m")` reads a box
   CENTRE, so it passed while the goal's mouth was 2.38 m tall and the bar ran through the top of
@@ -1535,7 +1608,10 @@ geometry). It will fold back into TritonPlan once it stands up on its own.
 ## Data licences
 
 - Building outlines, paths, plazas and the campus boundary: © OpenStreetMap contributors, **ODbL**.
-- Heights, terrain and trees: **USGS 3DEP** LiDAR (`CA_SanDiegoQL2_2014`), public domain.
+- Heights, terrain and trees: **USGS 3DEP** LiDAR (`CA_SanDiegoQL2_2014`), public domain. The
+  regional terrain outside the campus box comes from the same survey, read at a shallower octree
+  depth (chosen by measurement — see `build-region-terrain.mjs --probe`) because a 6 m grid
+  averages away everything the deeper levels buy.
 - Measured colours and fitted markings derive at build time from the imagery source named in
   `docs/data/textures/manifest.json` — today **Imagery © Google** (Map Tiles API), current
   epoch; **Imagery © Apple** (Maps Web Snapshot) is the selectable alternative and carries its
