@@ -203,18 +203,76 @@ export function coastMask(header, heights) {
 }
 
 /**
- * Is this sample inside the campus box, where the campus mesh already draws?
- *
- * Inclusive of the boundary: the region must not draw ON the campus edge
- * either, or two coincident triangles z-fight along the most-looked-at line in
- * the world.
+ * The rectangle the campus mesh already draws, in local metres — or null when
+ * there is no campus, in which case the region owns everything.
  */
-function makeInCampus(campusTerrain) {
-  if (!campusTerrain) return () => false;
+export function campusRect(campusTerrain) {
+  if (!campusTerrain) return null;
   const { x0, z0, cell, cols, rows } = campusTerrain;
-  const x1 = x0 + (cols - 1) * cell;
-  const z1 = z0 + (rows - 1) * cell;
-  return (x, z) => x >= x0 && x <= x1 && z >= z0 && z <= z1;
+  return { x0, z0, x1: x0 + (cols - 1) * cell, z1: z0 + (rows - 1) * cell };
+}
+
+/**
+ * Trim a region quad back to the edge of the campus rectangle.
+ *
+ * WHY THIS EXISTS, because the obvious thing was wrong and shipped. The first
+ * version simply skipped any quad with a corner inside the campus, on the
+ * sound reasoning that two coincident triangles z-fight along the most
+ * looked-at line in the world. But the region grid is 6 m and the campus
+ * boundary does not land on a 6 m line, so "skip the whole quad" threw away up
+ * to a full quad span of ground OUTSIDE the campus as well — an unbroken gap
+ * around the entire campus perimeter, measured at ~2 m of open sky at the east
+ * edge and up to 12 m at region step. A hole you can see the sky through, and
+ * at eye level a chasm.
+ *
+ * Trimming keeps both properties: the region still never draws on ground the
+ * campus owns, and the two meshes now meet exactly instead of nearly.
+ *
+ * Returns null when the quad is entirely inside the campus (skip it), the
+ * quad unchanged when it does not touch the campus at all, or a trimmed
+ * rectangle. Heights and colours at a moved corner are bilinearly interpolated
+ * within the original quad, which is exact for the plane the quad already is.
+ *
+ * The one case this does not resolve exactly is a quad straddling a CORNER of
+ * the campus rectangle, where the outside region is an L and no single
+ * rectangle covers it. There we trim on both axes, which covers the diagonal
+ * arm and leaves the two thin arms — four sub-quad gaps in the world instead
+ * of a continuous perimeter one. Stated rather than hidden.
+ */
+export function trimQuadToCampus(q, rect) {
+  if (!rect) return q;
+  const { x0, z0, x1, z1 } = rect;
+  /* No overlap at all: the common case, and it must stay cheap. */
+  if (q.xe <= x0 || q.x >= x1 || q.ze <= z0 || q.z >= z1) return q;
+  /* Entirely inside: the campus draws all of it. */
+  if (q.x >= x0 && q.xe <= x1 && q.z >= z0 && q.ze <= z1) return null;
+
+  let nx = q.x, nxe = q.xe, nz = q.z, nze = q.ze;
+  const spansZ = z0 <= q.z && z1 >= q.ze;
+  const spansX = x0 <= q.x && x1 >= q.xe;
+  if (!spansZ || spansX) {
+    /* Trim in z: the campus covers this quad's full width, or the corner case. */
+    if (z0 <= q.z && z1 > q.z && z1 < q.ze) nz = z1;
+    else if (z1 >= q.ze && z0 > q.z && z0 < q.ze) nze = z0;
+  }
+  if (!spansX || spansZ) {
+    if (x0 <= q.x && x1 > q.x && x1 < q.xe) nx = x1;
+    else if (x1 >= q.xe && x0 > q.x && x0 < q.xe) nxe = x0;
+  }
+  if (nxe - nx <= 0 || nze - nz <= 0) return null;
+  if (nx === q.x && nxe === q.xe && nz === q.z && nze === q.ze) return q;
+  return { x: nx, xe: nxe, z: nz, ze: nze };
+}
+
+/**
+ * Bilinear value at (x, z) inside the quad the four corner values describe.
+ * a = (x,z), b = (xe,z), d = (x,ze), e = (xe,ze) — the order buildRegionMesh
+ * samples them in.
+ */
+export function bilinear(q, a, b, d, e, x, z) {
+  const u = q.xe === q.x ? 0 : (x - q.x) / (q.xe - q.x);
+  const v = q.ze === q.z ? 0 : (z - q.z) / (q.ze - q.z);
+  return a * (1 - u) * (1 - v) + b * u * (1 - v) + d * (1 - u) * v + e * u * v;
 }
 
 /**
@@ -230,7 +288,7 @@ export function buildRegionMesh(
   header, heights, campusTerrain, { color = REGION_GROUND_COLOR, colorAt = null } = {}
 ) {
   const s = regionSampler(header, heights);
-  const inCampus = makeInCampus(campusTerrain);
+  const rect = campusRect(campusTerrain);
   const coast = coastMask(header, heights);
   const { cols, rows, cell } = header;
   const CHUNK = 96; // samples per chunk edge
@@ -273,13 +331,7 @@ export function buildRegionMesh(
           const cc = Math.min(c + step, c1);
           const rr = Math.min(r + step, r1);
           if (cc === c || rr === r) continue;
-          const x = s.xOf(c);
-          const z = s.zOf(r);
-          const xe = s.xOf(cc);
-          const ze = s.zOf(rr);
-          /* Skip anything the campus already draws — including the boundary,
-             so no two triangles are ever coincident. */
-          if (inCampus(x, z) || inCampus(xe, ze) || inCampus(x, ze) || inCampus(xe, z)) continue;
+          const full = { x: s.xOf(c), z: s.zOf(r), xe: s.xOf(cc), ze: s.zOf(rr) };
 
           const a = s.at(c, r);
           const b = s.at(cc, r);
@@ -290,6 +342,18 @@ export function buildRegionMesh(
              out. */
           if (a == null || b == null || d == null || e == null) continue;
 
+          /* Give back whatever the campus owns, and keep the rest. Trimming
+             rather than skipping is what makes the two meshes meet exactly;
+             see trimQuadToCampus for the perimeter gap that taught us. */
+          const q = trimQuadToCampus(full, rect);
+          if (q === null) continue;
+          const { x, z, xe, ze } = q;
+          const trimmed = q !== full;
+          const hA = trimmed ? bilinear(full, a, b, d, e, x, z) : a;
+          const hB = trimmed ? bilinear(full, a, b, d, e, xe, z) : b;
+          const hD = trimmed ? bilinear(full, a, b, d, e, x, ze) : d;
+          const hE = trimmed ? bilinear(full, a, b, d, e, xe, ze) : e;
+
           const span = step * cell;
           const nA = [-(b - a) / span, 1, -(d - a) / span];
           const inv = 1 / Math.hypot(nA[0], 1, nA[2]);
@@ -297,17 +361,26 @@ export function buildRegionMesh(
           const ny = inv;
           const nz = nA[2] * inv;
 
-          position.push(x, a, z, x, d, ze, xe, b, z);
-          position.push(xe, b, z, x, d, ze, xe, e, ze);
+          position.push(x, hA, z, x, hD, ze, xe, hB, z);
+          position.push(xe, hB, z, x, hD, ze, xe, hE, ze);
           for (let k = 0; k < 6; k++) normal.push(nx, ny, nz);
           if (colorAt) {
             /* One colour per CORNER, so a road crossing a cell reads as a
                gradient rather than snapping at the cell boundary. The two
                triangles share corners in the order pushed above. */
-            const cA = colorAt(c, r);
-            const cB = colorAt(cc, r);
-            const cD = colorAt(c, rr);
-            const cE = colorAt(cc, rr);
+            const c00 = colorAt(c, r);
+            const c10 = colorAt(cc, r);
+            const c01 = colorAt(c, rr);
+            const c11 = colorAt(cc, rr);
+            /* A trimmed corner sits between grid samples, so its colour is
+               interpolated for the same reason its height is. */
+            const pick = (X, Z) => (trimmed
+              ? [0, 1, 2].map((k) => bilinear(full, c00[k], c10[k], c01[k], c11[k], X, Z))
+              : null);
+            const cA = pick(x, z) ?? c00;
+            const cB = pick(xe, z) ?? c10;
+            const cD = pick(x, ze) ?? c01;
+            const cE = pick(xe, ze) ?? c11;
             rgb.push(...cA, ...cD, ...cB);
             rgb.push(...cB, ...cD, ...cE);
           }
