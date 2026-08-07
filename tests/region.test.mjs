@@ -289,3 +289,106 @@ test("the header's own arithmetic holds", () => {
     "most of the region should be measured out here, not inherited from campus"
   );
 });
+
+/* --------------------------------- the seam the campus and region share */
+
+/* THE BUG THESE PIN. buildRegionMesh used to drop any quad with a corner
+   inside the campus box. The campus boundary does not land on the region's 6 m
+   lattice, so that threw away ground OUTSIDE the campus too — an unbroken gap
+   around the whole perimeter, measured at ~2 m of open sky straight down over
+   the east edge and up to a full 12 m quad span elsewhere. Every test here
+   fails against that version. */
+
+const { trimQuadToCampus, bilinear } = await import("../docs/js/campus-region.js");
+
+/* The real campus box in local metres, from docs/data/region.json's core. */
+const RECT = { x0: -1197, z0: -1382, x1: 1842, z1: 1382 };
+const quad = (x, z, span) => ({ x, z, xe: x + span, ze: z + span });
+
+test("a quad well outside the campus is handed back untouched", () => {
+  const q = quad(2400, 0, 12);
+  assert.equal(trimQuadToCampus(q, RECT), q, "an untouched quad must not even be copied");
+});
+
+test("a quad wholly inside the campus is dropped — the campus draws it", () => {
+  assert.equal(trimQuadToCampus(quad(0, 0, 12), RECT), null);
+});
+
+test("with no campus at all the region keeps everything", () => {
+  const q = quad(0, 0, 12);
+  assert.equal(trimQuadToCampus(q, null), q);
+});
+
+test("a quad straddling an edge is TRIMMED to it, not thrown away", () => {
+  /* Straddles the east edge: 4 m inside, 8 m outside. The 8 m outside is
+     ground nobody else draws, and dropping it is the perimeter gap. */
+  const q = quad(RECT.x1 - 4, 0, 12);
+  const t = trimQuadToCampus(q, RECT);
+  assert.notEqual(t, null, "the outside part was thrown away — this is the gap");
+  assert.equal(t.x, RECT.x1, "the trimmed quad must start exactly on the campus edge");
+  assert.equal(t.xe, q.xe, "the outside edge must not move");
+  assert.equal(t.ze - t.z, 12, "an edge trim must not shrink the other axis");
+});
+
+test("every edge of the campus is trimmed, not just the one we looked at", () => {
+  const cases = [
+    ["east",  quad(RECT.x1 - 4, 0, 12), (t) => t.x === RECT.x1 && t.xe > RECT.x1],
+    ["west",  quad(RECT.x0 - 8, 0, 12), (t) => t.xe === RECT.x0 && t.x < RECT.x0],
+    ["south", quad(0, RECT.z1 - 4, 12), (t) => t.z === RECT.z1 && t.ze > RECT.z1],
+    ["north", quad(0, RECT.z0 - 8, 12), (t) => t.ze === RECT.z0 && t.z < RECT.z0],
+  ];
+  for (const [name, q, ok] of cases) {
+    const t = trimQuadToCampus(q, RECT);
+    assert.notEqual(t, null, `the ${name} edge still drops its straddling quad`);
+    assert.ok(ok(t), `the ${name} edge trimmed to the wrong side: ${JSON.stringify(t)}`);
+  }
+});
+
+test("no trimmed quad ever reaches back inside the campus", () => {
+  /* The other half of the contract. Trimming closed the gap; this is what
+     stops the fix from re-introducing the coincident triangles the original
+     skip existed to prevent. Swept along the whole east edge at sub-cell
+     offsets so no phase of the lattice is special. */
+  for (let off = 0; off < 12; off += 0.5) {
+    for (let z = -1400; z <= 1400; z += 97) {
+      const q = quad(RECT.x1 - off, z, 12);
+      const t = trimQuadToCampus(q, RECT);
+      if (t === null) continue;
+      const inside = t.x < RECT.x1 && t.xe > RECT.x0 && t.z < RECT.z1 && t.ze > RECT.z0;
+      assert.ok(!inside, `quad at off=${off} z=${z} overlaps the campus: ${JSON.stringify(t)}`);
+    }
+  }
+});
+
+test("the perimeter is left with no gap a quad wide", () => {
+  /* The measurement that matters, stated as a property: sweep the east edge
+     and confirm the region's ground reaches the campus edge exactly. Under the
+     old skip rule the nearest region ground sat up to a full span away. */
+  let worst = 0;
+  for (let off = 0.5; off < 12; off += 0.5) {
+    const t = trimQuadToCampus(quad(RECT.x1 - off, 0, 12), RECT);
+    assert.notEqual(t, null, `off=${off} leaves nothing outside the campus`);
+    worst = Math.max(worst, t.x - RECT.x1);
+  }
+  assert.equal(worst, 0, `region ground stops ${worst} m short of the campus edge`);
+});
+
+test("a moved corner takes the height the surface already had there", () => {
+  /* Trimming moves a vertex, so its height must be resampled or the seam
+     steps. Bilinear is exact for the bilinear patch the quad already is —
+     which is what makes this a re-read of the surface and not an invention. */
+  const q = quad(0, 0, 12);
+  const [a, b, d, e] = [10, 22, 16, 28];
+  assert.equal(bilinear(q, a, b, d, e, 0, 0), a);
+  assert.equal(bilinear(q, a, b, d, e, 12, 0), b);
+  assert.equal(bilinear(q, a, b, d, e, 0, 12), d);
+  assert.equal(bilinear(q, a, b, d, e, 12, 12), e);
+  assert.equal(bilinear(q, a, b, d, e, 6, 0), 16, "midpoint of a linear edge");
+  assert.equal(bilinear(q, a, b, d, e, 6, 6), 19, "centre of the patch");
+});
+
+test("a degenerate quad interpolates rather than dividing by zero", () => {
+  const q = { x: 5, xe: 5, z: 5, ze: 5 };
+  assert.equal(bilinear(q, 1, 2, 3, 4, 5, 5), 1);
+  assert.ok(Number.isFinite(bilinear(q, 1, 2, 3, 4, 9, 9)));
+});

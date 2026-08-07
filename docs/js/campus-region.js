@@ -55,24 +55,33 @@ export const OCEAN_COLOR_PROVENANCE = {
   geometry: "top-down; not corrected for grazing-angle sky reflection",
 };
 
-/* INHERITED, NOT MEASURED — and flagged as such because that distinction is
-   the whole discipline of this repo.
-   Every other colour in this world came off a frame with a stated provenance.
-   There is no registered aerial of Rose Canyon or the Torrey Pines bluff here,
-   so there is nothing to measure yet, and inventing a plausible sage-green
-   would put an unsourced number next to a hundred sourced ones.
-   So this borrows the one measurement that genuinely applies: the Eighth
-   College survey's `dryLawn`, read off ref3 as the only clean unshaded sample
-   of UNIRRIGATED ground in full sun — tan, never green. Coastal sage scrub in
-   San Diego is the same dry tan for most of the year, and almost all of this
-   region is that. It is a defensible stand-in, it is not a measurement of the
-   region, and the moment a registered regional frame exists it should be
-   replaced by one. */
+/* THE FALLBACK, not the ground colour. region-colors.json now measures the
+   ground per 6 m cell from Google satellite z19 (0.25 m/px), on this grid's own
+   lattice, and buildRegionMesh paints those as vertex colours. This constant is
+   what a cell gets when the sampler has nothing for it — and the mesh falls
+   back to it rather than rendering black, because a hole in the world is worse
+   than a flat colour.
+   It stays inherited: EIGHTH_COLORS.dryLawn, read off Eighth College ref3 as
+   the only clean unshaded sample of UNIRRIGATED ground in full sun.
+   Worth recording that the measurement overturned the reasoning behind this
+   value. The note here used to argue coastal sage scrub reads dry tan for most
+   of the year, so a tan stand-in was safe. Sampled, the region's median cell is
+   green — hue 120°, #76817a — because the imagery caught canyon chaparral and
+   irrigated University City, not the dry lawn this was borrowed from. The
+   stand-in was defensible and it was also wrong, which is the argument for
+   measuring rather than reasoning about colour. */
 export const REGION_GROUND_COLOR = 0xab9d83;
 export const REGION_GROUND_PROVENANCE = {
-  inherited: "EIGHTH_COLORS.dryLawn",
-  source: "Eighth College ref3, unshaded unirrigated ground in full sun",
-  measuredForRegion: false,
+  measuredForRegion: true,
+  measured: "region-colors.json `terrain`, Google satellite z19, per 6 m cell, 601,874 cells",
+  fallback: {
+    inherited: "EIGHTH_COLORS.dryLawn",
+    source: "Eighth College ref3, unshaded unirrigated ground in full sun",
+    appliesTo: "cells with no sample, and every cell if the colour file is absent or fails its grid check",
+  },
+  limitation:
+    "top-down colour, so it describes ground cover and not the side of anything; " +
+    "and a 6 m cell is one colour for 36 m² of world, which blurs a kerb into its lawn",
 };
 
 /**
@@ -105,6 +114,56 @@ export function regionSampler(header, heights) {
       x1: x0 + (cols - 1) * cell,
       z1: z0 + (rows - 1) * cell,
     },
+  };
+}
+
+/**
+ * Measured ground colour, as a lookup by terrain-grid cell.
+ *
+ * region-colors.json ships a quantised palette plus one index per cell —
+ * exactly the shape campus-colors.json uses, because it is solving the same
+ * problem: 1.47 million colours as text would be tens of megabytes to parse on
+ * the main thread, and as a palette index it is one byte a cell.
+ *
+ * THE JOIN IS POSITIONAL, so it is checked. The colour grid and the height
+ * grid are produced by different builders, and the only thing making index i
+ * mean the same patch of ground in both is that they were cut on the same
+ * lattice. If that ever stops being true the world gets its ground colours
+ * offset by some number of cells — which looks like nothing at all until you
+ * notice a road running through a field beside the road. So a mismatch refuses
+ * the whole file and the region falls back to its honest inherited tan.
+ *
+ * Returns null when there is no usable colour, which callers must treat as
+ * "use the flat colour" rather than as black.
+ */
+export function regionColorLookup(colors, header) {
+  const g = colors?.terrain;
+  if (!g || !g.idx || !Array.isArray(g.palette)) return null;
+  if (g.x0 !== header.x0 || g.z0 !== header.z0 || g.cell !== header.cell ||
+      g.cols !== header.cols || g.rows !== header.rows) {
+    return null;
+  }
+  const idx = Uint8Array.from(atob(g.idx), (ch) => ch.charCodeAt(0));
+  if (idx.length !== header.cols * header.rows) return null;
+
+  /* Palette decoded once into linear float triples: doing the hex parse per
+     vertex would run it a million times for a few dozen distinct answers. */
+  const none = g.none ?? 255;
+  const table = g.palette.map((hex) => {
+    const c = new THREE.Color(hex);
+    return [c.r, c.g, c.b];
+  });
+  const fallback = (() => {
+    const c = new THREE.Color(REGION_GROUND_COLOR);
+    return [c.r, c.g, c.b];
+  })();
+
+  const { cols, rows } = header;
+  return (c, r) => {
+    if (c < 0 || c >= cols || r < 0 || r >= rows) return fallback;
+    const k = idx[r * cols + c];
+    if (k === none) return fallback;
+    return table[k] || fallback;
   };
 }
 
@@ -144,18 +203,76 @@ export function coastMask(header, heights) {
 }
 
 /**
- * Is this sample inside the campus box, where the campus mesh already draws?
- *
- * Inclusive of the boundary: the region must not draw ON the campus edge
- * either, or two coincident triangles z-fight along the most-looked-at line in
- * the world.
+ * The rectangle the campus mesh already draws, in local metres — or null when
+ * there is no campus, in which case the region owns everything.
  */
-function makeInCampus(campusTerrain) {
-  if (!campusTerrain) return () => false;
+export function campusRect(campusTerrain) {
+  if (!campusTerrain) return null;
   const { x0, z0, cell, cols, rows } = campusTerrain;
-  const x1 = x0 + (cols - 1) * cell;
-  const z1 = z0 + (rows - 1) * cell;
-  return (x, z) => x >= x0 && x <= x1 && z >= z0 && z <= z1;
+  return { x0, z0, x1: x0 + (cols - 1) * cell, z1: z0 + (rows - 1) * cell };
+}
+
+/**
+ * Trim a region quad back to the edge of the campus rectangle.
+ *
+ * WHY THIS EXISTS, because the obvious thing was wrong and shipped. The first
+ * version simply skipped any quad with a corner inside the campus, on the
+ * sound reasoning that two coincident triangles z-fight along the most
+ * looked-at line in the world. But the region grid is 6 m and the campus
+ * boundary does not land on a 6 m line, so "skip the whole quad" threw away up
+ * to a full quad span of ground OUTSIDE the campus as well — an unbroken gap
+ * around the entire campus perimeter, measured at ~2 m of open sky at the east
+ * edge and up to 12 m at region step. A hole you can see the sky through, and
+ * at eye level a chasm.
+ *
+ * Trimming keeps both properties: the region still never draws on ground the
+ * campus owns, and the two meshes now meet exactly instead of nearly.
+ *
+ * Returns null when the quad is entirely inside the campus (skip it), the
+ * quad unchanged when it does not touch the campus at all, or a trimmed
+ * rectangle. Heights and colours at a moved corner are bilinearly interpolated
+ * within the original quad, which is exact for the plane the quad already is.
+ *
+ * The one case this does not resolve exactly is a quad straddling a CORNER of
+ * the campus rectangle, where the outside region is an L and no single
+ * rectangle covers it. There we trim on both axes, which covers the diagonal
+ * arm and leaves the two thin arms — four sub-quad gaps in the world instead
+ * of a continuous perimeter one. Stated rather than hidden.
+ */
+export function trimQuadToCampus(q, rect) {
+  if (!rect) return q;
+  const { x0, z0, x1, z1 } = rect;
+  /* No overlap at all: the common case, and it must stay cheap. */
+  if (q.xe <= x0 || q.x >= x1 || q.ze <= z0 || q.z >= z1) return q;
+  /* Entirely inside: the campus draws all of it. */
+  if (q.x >= x0 && q.xe <= x1 && q.z >= z0 && q.ze <= z1) return null;
+
+  let nx = q.x, nxe = q.xe, nz = q.z, nze = q.ze;
+  const spansZ = z0 <= q.z && z1 >= q.ze;
+  const spansX = x0 <= q.x && x1 >= q.xe;
+  if (!spansZ || spansX) {
+    /* Trim in z: the campus covers this quad's full width, or the corner case. */
+    if (z0 <= q.z && z1 > q.z && z1 < q.ze) nz = z1;
+    else if (z1 >= q.ze && z0 > q.z && z0 < q.ze) nze = z0;
+  }
+  if (!spansX || spansZ) {
+    if (x0 <= q.x && x1 > q.x && x1 < q.xe) nx = x1;
+    else if (x1 >= q.xe && x0 > q.x && x0 < q.xe) nxe = x0;
+  }
+  if (nxe - nx <= 0 || nze - nz <= 0) return null;
+  if (nx === q.x && nxe === q.xe && nz === q.z && nze === q.ze) return q;
+  return { x: nx, xe: nxe, z: nz, ze: nze };
+}
+
+/**
+ * Bilinear value at (x, z) inside the quad the four corner values describe.
+ * a = (x,z), b = (xe,z), d = (x,ze), e = (xe,ze) — the order buildRegionMesh
+ * samples them in.
+ */
+export function bilinear(q, a, b, d, e, x, z) {
+  const u = q.xe === q.x ? 0 : (x - q.x) / (q.xe - q.x);
+  const v = q.ze === q.z ? 0 : (z - q.z) / (q.ze - q.z);
+  return a * (1 - u) * (1 - v) + b * u * (1 - v) + d * (1 - u) * v + e * u * v;
 }
 
 /**
@@ -167,16 +284,29 @@ function makeInCampus(campusTerrain) {
  * metres of this, and paying to transform 30 km² of it every frame to look at
  * a courtyard is the kind of cost that makes a walk stutter.
  */
-export function buildRegionMesh(header, heights, campusTerrain, color = REGION_GROUND_COLOR) {
+export function buildRegionMesh(
+  header, heights, campusTerrain, { color = REGION_GROUND_COLOR, colorAt = null } = {}
+) {
   const s = regionSampler(header, heights);
-  const inCampus = makeInCampus(campusTerrain);
+  const rect = campusRect(campusTerrain);
   const coast = coastMask(header, heights);
   const { cols, rows, cell } = header;
   const CHUNK = 96; // samples per chunk edge
 
   const group = new THREE.Group();
   group.name = "region-terrain";
-  const material = new THREE.MeshLambertMaterial({ color });
+  /* MEASURED colour when there is any, the inherited tan when there is not.
+     Per-vertex rather than per-chunk, for the same reason the campus terrain
+     carries NAIP vertex colours: the interesting thing about this ground is
+     that it is NOT uniform — asphalt, chaparral, irrigated turf and parking
+     lots all meet inside a single 500 m chunk, and a per-chunk colour would
+     average exactly the variation worth showing.
+     Note this is still a MEASUREMENT, not a texture: the imagery was sampled
+     at build time into one colour per terrain cell and the photograph itself
+     never reaches the browser. */
+  const material = colorAt
+    ? new THREE.MeshLambertMaterial({ vertexColors: true })
+    : new THREE.MeshLambertMaterial({ color });
   let quads = 0;
 
   const nearCoast = (c, r) => coast[r * cols + c] !== 255;
@@ -185,6 +315,7 @@ export function buildRegionMesh(header, heights, campusTerrain, color = REGION_G
     for (let c0 = 0; c0 < cols - 1; c0 += CHUNK) {
       const position = [];
       const normal = [];
+      const rgb = [];
       const r1 = Math.min(r0 + CHUNK, rows - 1);
       const c1 = Math.min(c0 + CHUNK, cols - 1);
 
@@ -200,13 +331,7 @@ export function buildRegionMesh(header, heights, campusTerrain, color = REGION_G
           const cc = Math.min(c + step, c1);
           const rr = Math.min(r + step, r1);
           if (cc === c || rr === r) continue;
-          const x = s.xOf(c);
-          const z = s.zOf(r);
-          const xe = s.xOf(cc);
-          const ze = s.zOf(rr);
-          /* Skip anything the campus already draws — including the boundary,
-             so no two triangles are ever coincident. */
-          if (inCampus(x, z) || inCampus(xe, ze) || inCampus(x, ze) || inCampus(xe, z)) continue;
+          const full = { x: s.xOf(c), z: s.zOf(r), xe: s.xOf(cc), ze: s.zOf(rr) };
 
           const a = s.at(c, r);
           const b = s.at(cc, r);
@@ -217,6 +342,18 @@ export function buildRegionMesh(header, heights, campusTerrain, color = REGION_G
              out. */
           if (a == null || b == null || d == null || e == null) continue;
 
+          /* Give back whatever the campus owns, and keep the rest. Trimming
+             rather than skipping is what makes the two meshes meet exactly;
+             see trimQuadToCampus for the perimeter gap that taught us. */
+          const q = trimQuadToCampus(full, rect);
+          if (q === null) continue;
+          const { x, z, xe, ze } = q;
+          const trimmed = q !== full;
+          const hA = trimmed ? bilinear(full, a, b, d, e, x, z) : a;
+          const hB = trimmed ? bilinear(full, a, b, d, e, xe, z) : b;
+          const hD = trimmed ? bilinear(full, a, b, d, e, x, ze) : d;
+          const hE = trimmed ? bilinear(full, a, b, d, e, xe, ze) : e;
+
           const span = step * cell;
           const nA = [-(b - a) / span, 1, -(d - a) / span];
           const inv = 1 / Math.hypot(nA[0], 1, nA[2]);
@@ -224,9 +361,29 @@ export function buildRegionMesh(header, heights, campusTerrain, color = REGION_G
           const ny = inv;
           const nz = nA[2] * inv;
 
-          position.push(x, a, z, x, d, ze, xe, b, z);
-          position.push(xe, b, z, x, d, ze, xe, e, ze);
+          position.push(x, hA, z, x, hD, ze, xe, hB, z);
+          position.push(xe, hB, z, x, hD, ze, xe, hE, ze);
           for (let k = 0; k < 6; k++) normal.push(nx, ny, nz);
+          if (colorAt) {
+            /* One colour per CORNER, so a road crossing a cell reads as a
+               gradient rather than snapping at the cell boundary. The two
+               triangles share corners in the order pushed above. */
+            const c00 = colorAt(c, r);
+            const c10 = colorAt(cc, r);
+            const c01 = colorAt(c, rr);
+            const c11 = colorAt(cc, rr);
+            /* A trimmed corner sits between grid samples, so its colour is
+               interpolated for the same reason its height is. */
+            const pick = (X, Z) => (trimmed
+              ? [0, 1, 2].map((k) => bilinear(full, c00[k], c10[k], c01[k], c11[k], X, Z))
+              : null);
+            const cA = pick(x, z) ?? c00;
+            const cB = pick(xe, z) ?? c10;
+            const cD = pick(x, ze) ?? c01;
+            const cE = pick(xe, ze) ?? c11;
+            rgb.push(...cA, ...cD, ...cB);
+            rgb.push(...cB, ...cD, ...cE);
+          }
           quads++;
         }
         r += step;
@@ -236,6 +393,9 @@ export function buildRegionMesh(header, heights, campusTerrain, color = REGION_G
       const geo = new THREE.BufferGeometry();
       geo.setAttribute("position", new THREE.Float32BufferAttribute(position, 3));
       geo.setAttribute("normal", new THREE.Float32BufferAttribute(normal, 3));
+      if (rgb.length === position.length) {
+        geo.setAttribute("color", new THREE.Float32BufferAttribute(rgb, 3));
+      }
       geo.computeBoundingSphere();
       group.add(new THREE.Mesh(geo, material));
     }

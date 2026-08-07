@@ -25,14 +25,21 @@
 // stops at the campus edge: two sources describing one building is not twice
 // the detail, it is a z-fight, and the source that measured it wins.
 //
-// THE COLOUR PROBLEM, STATED UP FRONT. There is no registered aerial imagery
-// for this region (campus-region.js's REGION_GROUND_COLOR records the same
-// gap). So NOTHING in this module's palette is a measurement OF THE REGION.
-// Every colour here is inherited from a constant that was measured somewhere
-// else in this repo, each one named with the constant it came from and what
-// makes the transfer defensible or not — see REGION_MASSING_PROVENANCE, which
-// is the honest ledger of that, not a decoration. The moment a registered
-// regional frame exists, these are the four values to replace.
+// THE COLOUR PROBLEM, AND WHAT IS NOW MEASURED. Registered aerial imagery for
+// this region DOES exist as of region-colors.json: Google 2D satellite at zoom
+// 19 (0.25 m/px), read as a BUILD-TIME SOURCE only — no imagery ships and no
+// photograph is draped on the world. That file measures a roof colour for 5,460
+// of this module's 5,551 footprints, joined BY INDEX and guarded by a footprint
+// fingerprint; roofColorsFor() below refuses the join outright rather than
+// paint one building with another's colour.
+//
+// What that imagery does NOT settle is the part of a building you actually walk
+// past. It looks straight down, so it measures roofs and says nothing whatever
+// about facades — WALL_COLOR below is still inherited, and so is every colour
+// for a footprint the sampler held back. Those stand-ins remain named with the
+// constant they came from and what makes the transfer defensible or not; see
+// REGION_MASSING_PROVENANCE, which is the honest ledger of which of these four
+// values is now measured and which is still borrowed, not a decoration.
 //
 // WHY NO FACADE TEXTURE. campus-massing.js gives every campus building a
 // facade tile chosen from campus-facades.json's researched `styles`. Nothing
@@ -86,14 +93,19 @@ const BASE_SINK_M = 1.5;
    the tone. */
 export const REGION_WALL_COLOR = 0xd0cec6;
 
-/* INHERITED, NOT MEASURED. Source: campus-massing.js's ROOF_FALLBACK
-   (#d9dbd5), whose note reads "nearly every flat roof the drone saw is white
-   TPO membrane".
-   THE LIMITATION: that is a claim about FLAT commercial roofs. The region is
-   mostly pitched shingle and Spanish tile, which is darker and much warmer. So
-   this is the weakest transfer in the module and is flagged as such. It is
-   still preferred over a guess at "tile red", which would be an unsourced
-   number presented as a fact about five thousand roofs. */
+/* FALLBACK ONLY, and now a narrow one. region-colors.json measures a roof
+   colour for 5,460 of 5,551 footprints; this value is what the remaining 91
+   get — the ones the sampler deliberately held back because they read as bare
+   earth or because no single colour described the surface (mid-construction
+   sites, mostly). Source: campus-massing.js's ROOF_FALLBACK (#d9dbd5), whose
+   note reads "nearly every flat roof the drone saw is white TPO membrane".
+   THE LIMITATION was called correctly before the measurement existed: that is
+   a claim about FLAT commercial roofs, and the region was predicted to be
+   warmer and darker pitched tile. The measured population bears that out —
+   2,259 of the sampled roofs fall in the red/terracotta band against 1,672
+   neutral — which is exactly why this constant now covers 91 roofs instead of
+   5,551. Keeping the light neutral for the held-back few is deliberate: an
+   unresolved roof should read as blank, not as a confident tile red. */
 export const REGION_ROOF_COLOR = 0xd9dbd5;
 
 /* INHERITED, and the strongest transfer here. Source: campus-world.js's
@@ -162,11 +174,15 @@ export function roadHalfWidth(k) {
 
 /**
  * The ledger. Every colour and every width this module ships, with where it
- * came from and whether it is a measurement of this region (it never is).
+ * came from and whether it is a measurement of this region. Roofs now are;
+ * walls, roads and widths still are not, and the difference is the point of
+ * keeping this table.
  */
 export const REGION_MASSING_PROVENANCE = {
-  measuredForRegion: false,
-  reason: "no registered aerial imagery exists for this region — see campus-region.js REGION_GROUND_COLOR",
+  measuredForRegion: "roofs only",
+  reason:
+    "region-colors.json measures roof colour from Google satellite z19 (0.25 m/px) for 5,460 of 5,551 footprints. " +
+    "That imagery looks straight down: it settles roofs and says nothing about facades, so walls stay inherited.",
   wall: {
     value: "#d0cec6",
     inherited: "campus-massing.js WALL_PALETTE[4]",
@@ -175,11 +191,16 @@ export const REGION_MASSING_PROVENANCE = {
     copied: "campus-massing.js does not export WALL_PALETTE and may not be edited here",
   },
   roof: {
-    value: "#d9dbd5",
-    inherited: "campus-massing.js ROOF_FALLBACK",
-    source: "white TPO membrane, the roof the drone footage saw on nearly every campus building",
-    limitation: "the weakest transfer here — regional roofs are mostly pitched shingle and tile, darker and warmer than flat TPO",
-    copied: "campus-massing.js does not export ROOF_FALLBACK and may not be edited here",
+    measured: true,
+    source: "region-colors.json `roofs`, Google satellite z19, per footprint, joined by index under a fingerprint guard",
+    coverage: "5,460 of 5,551; 5,099 distinct colours",
+    fallback: {
+      value: "#d9dbd5",
+      appliesTo: "the 91 footprints the sampler held back as bare earth or too heterogeneous to describe",
+      inherited: "campus-massing.js ROOF_FALLBACK",
+      copied: "campus-massing.js does not export ROOF_FALLBACK and may not be edited here",
+    },
+    limitation: "a roof colour is not a roof: pitch, ridge line and eaves are still unmodelled, and these caps stay flat",
   },
   road: {
     value: "#5e6163",
@@ -187,6 +208,12 @@ export const REGION_MASSING_PROVENANCE = {
     source: "footage-measured San Diego street asphalt, #5a5a5c–#6b6f70",
     limitation: "no per-street variation, no wear, no concrete freeway sections",
     copied: "the DEFAULTS table is local to createSurfaces and may not be edited here",
+    notReplacedBecause:
+      "region-colors.json's terrain grid reads the motorway centrelines at #a8a6a4 and residential streets at " +
+      "#8e9396 — both far lighter than this. That is not evidence this constant is wrong: a 6 m colour cell " +
+      "straddling a road swallows shoulder, lane paint and concrete, and top-down noon imagery reads asphalt " +
+      "lighter than the grazing-angle footage this value came from. Two disagreeing measurements of different " +
+      "things do not average into a better one, so the ribbon keeps the value measured at eye level.",
   },
   water: {
     inherited: "campus-region.js OCEAN_COLOR (imported, not copied)",
@@ -264,7 +291,7 @@ const OUTWARD_SIGN = -1;
  */
 export function placeRegionBuildings(
   buildings,
-  { heightAt, campusTerrain, chunkM = CHUNK_M, measured = null } = {}
+  { heightAt, campusTerrain, chunkM = CHUNK_M, measured = null, roofColors = null } = {}
 ) {
   const placed = [];
   const dropped = { inCampus: 0, tiny: 0, degenerate: 0, noHeight: 0 };
@@ -289,6 +316,10 @@ export function placeRegionBuildings(
     const m = measured ? Number(measured[i]) : NaN;
     const h = Number.isFinite(m) && m > 0 ? m : Number(b.h);
     const src = Number.isFinite(m) && m > 0 ? "lidar" : (b.src || null);
+    /* A MEASURED roof colour where the imagery could give one. Null means the
+       inherited tone, which is the honest answer for a roof nothing sampled —
+       never a black or a guess dressed up as a sample. */
+    const roofColor = roofColors ? roofColors[i] || null : null;
     /* No height is not "height zero": a footprint with no measurement is a
        building this module cannot describe, and a 0 m extrusion is a flake of
        z-fighting roof lying on the terrain. */
@@ -314,6 +345,7 @@ export function placeRegionBuildings(
       ring: wound,
       name: b.n || null,
       src,
+      roofColor,
       h,
       baseY,
       roofY,
@@ -429,10 +461,35 @@ export function measuredHeightsFor(osm, heights) {
   return heights.h;
 }
 
+/**
+ * Measured roof colours, but only if they were sampled from THIS pull.
+ *
+ * Same index-keyed join as the measured heights, and guarded the same way and
+ * for the same reason — a re-pull reorders the array and a stale table would
+ * paint La Jolla's roof onto a house in Sorrento Valley without anything
+ * looking wrong in code. Values arrive as hex strings and leave as linear
+ * float triples, converted once here rather than per vertex.
+ */
+export function roofColorsFor(osm, colors) {
+  const roofs = colors?.roofs;
+  if (!roofs) return null;
+  const n = Array.isArray(osm?.buildings) ? osm.buildings.length : 0;
+  if (!n || colors.footprints?.count !== n) return null;
+  const out = new Array(n).fill(null);
+  for (const [k, hex] of Object.entries(roofs)) {
+    const i = Number(k);
+    if (!Number.isInteger(i) || i < 0 || i >= n || typeof hex !== "string") continue;
+    const c = new THREE.Color(hex);
+    out[i] = [c.r, c.g, c.b];
+  }
+  return out;
+}
+
 export function placeRegionMassing(osm, opts = {}) {
   const buildings = placeRegionBuildings(osm?.buildings, {
     ...opts,
     measured: measuredHeightsFor(osm, opts.measuredHeights),
+    roofColors: roofColorsFor(osm, opts.regionColors),
   });
   const roads = placeRegionRoads(osm?.roads, opts);
   const water = placeRegionWater(osm?.water, opts);
@@ -517,10 +574,24 @@ export function buildingMeshes(placed, materials) {
   let triangles = 0;
   for (const b of placed) {
     if (!chunks.has(b.chunk)) {
-      chunks.set(b.chunk, { cap: { pos: [], nor: [] }, wall: { pos: [], nor: [] } });
+      chunks.set(b.chunk, { cap: { pos: [], nor: [], col: [] }, wall: { pos: [], nor: [] } });
     }
     const c = chunks.get(b.chunk);
+    const capBefore = c.cap.pos.length;
     triangles += extrudeBuilding(b, c.cap, c.wall);
+    /* Roof colour rides as a VERTEX attribute rather than as a material,
+       because these buildings are merged by the hundred into one geometry per
+       chunk — five thousand roof materials would be five thousand draw calls
+       and would undo the merging entirely. Walls are deliberately left on the
+       flat inherited tone: this colour was sampled from imagery looking
+       straight down, which measures roofs and says nothing whatever about the
+       side of a building. */
+    const rc = b.roofColor || null;
+    const added = c.cap.pos.length - capBefore;
+    for (let k = 0; k < added; k += 3) {
+      if (rc) c.cap.col.push(rc[0], rc[1], rc[2]);
+      else c.cap.col.push(-1, -1, -1); // sentinel: "no sample" — resolved below
+    }
   }
   const out = [];
   for (const c of chunks.values()) {
@@ -537,6 +608,26 @@ export function buildingMeshes(placed, materials) {
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
     geo.setAttribute("normal", new THREE.BufferAttribute(nor, 3));
+
+    /* The colour buffer spans the WHOLE geometry, cap and wall alike, because
+       an attribute cannot cover only one material group. The wall half is
+       filled with white, which is the identity for the multiply three.js does
+       against a material colour — so the wall material's flat tone survives
+       untouched while the roof material reads its per-building sample.
+       Unsampled roofs carry the -1 sentinel written above and are resolved to
+       white here for exactly the same reason: they fall back to the material's
+       inherited tone rather than rendering as a colour nobody measured. */
+    if (materials.roofVertexColors && c.cap.col.length === c.cap.pos.length) {
+      const col = new Float32Array(n).fill(1);
+      for (let i = 0; i < c.cap.col.length; i += 3) {
+        if (c.cap.col[i] < 0) continue; // no sample -> leave white
+        col[i] = c.cap.col[i];
+        col[i + 1] = c.cap.col[i + 1];
+        col[i + 2] = c.cap.col[i + 2];
+      }
+      geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
+    }
+
     geo.addGroup(0, c.cap.pos.length / 3, 0);
     geo.addGroup(c.cap.pos.length / 3, c.wall.pos.length / 3, 1);
     geo.computeBoundingSphere();
@@ -617,7 +708,7 @@ function flatMeshes(chunks, material, rung) {
  * today when region-osm is absent, and "exactly" includes not throwing.
  */
 export function createRegionMassing(
-  _scene, { regionOsm, regionHeights, heightAt, campusTerrain } = {}
+  _scene, { regionOsm, regionHeights, regionColors, heightAt, campusTerrain } = {}
 ) {
   const group = new THREE.Group();
   group.name = "region-massing";
@@ -630,19 +721,30 @@ export function createRegionMassing(
   if (!regionOsm || typeof heightAt !== "function") return { group, counts };
 
   const p = placeRegionMassing(regionOsm, {
-    heightAt, campusTerrain, measuredHeights: regionHeights,
+    heightAt, campusTerrain, measuredHeights: regionHeights, regionColors,
   });
   counts.buildings = p.buildings.length;
   /* How much of this skyline is measured rather than inferred — the single
      most useful number about it, and invisible from the screen. */
   counts.lidarRoofs = p.buildings.filter((b) => b.src === "lidar").length;
+  counts.colouredRoofs = p.buildings.filter((b) => b.roofColor).length;
   counts.roads = p.roads.length;
   counts.water = p.water.length;
   counts.dropped = p.dropped;
 
+  /* The roof material multiplies its base colour by the per-vertex sample, so
+     the base has to be WHITE when samples exist or every measured roof would
+     be tinted by the inherited stand-in it is meant to replace. With no
+     samples at all it stays the inherited tone and the attribute is never
+     built. */
+  const anyRoofColour = p.buildings.some((b) => b.roofColor);
   const materials = {
     wall: new THREE.MeshLambertMaterial({ color: REGION_WALL_COLOR }),
-    roof: new THREE.MeshLambertMaterial({ color: REGION_ROOF_COLOR }),
+    roof: new THREE.MeshLambertMaterial({
+      color: anyRoofColour ? 0xffffff : REGION_ROOF_COLOR,
+      vertexColors: anyRoofColour,
+    }),
+    roofVertexColors: anyRoofColour,
   };
   const built = buildingMeshes(p.buildings, materials);
   for (const m of built.meshes) group.add(m);
