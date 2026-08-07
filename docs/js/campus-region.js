@@ -245,24 +245,76 @@ export function buildRegionMesh(header, heights, campusTerrain, color = REGION_G
 }
 
 /**
+ * How far east the sea is allowed to reach, measured from the data.
+ *
+ * THE BUG THIS EXISTS TO FIX. The first sea was one 9 km plane centred on the
+ * origin, on the reasoning that it sits below every piece of land so it can
+ * only ever show through where there is no land. That reasoning is sound and
+ * the conclusion was still wrong, because "no land" is not the same as "water":
+ * roughly 43% of the terrain grid's bounding box lies OUTSIDE the region
+ * outline and was never built. Standing in University City and looking south,
+ * past the edge of the outline, you saw open ocean four kilometres inland.
+ *
+ * So the sea is bounded by where water actually is. Every unmeasured cell
+ * INSIDE the outline is water (that is what the builder's elevation test
+ * decided), and the easternmost of them is the true inland limit of the
+ * Pacific in this region. Out-of-scope cells are excluded, which is the whole
+ * point: they are not sea, they are not anything.
+ */
+export function oceanEastLimit(header, heights, outlineLocal) {
+  const { x0, z0, cell, cols, rows, nodata } = header;
+  if (!Array.isArray(outlineLocal) || outlineLocal.length < 3) return null;
+  const ring = outlineLocal;
+  const inPoly = (px, pz) => {
+    let inside = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const [xi, zi] = ring[i];
+      const [xj, zj] = ring[j];
+      if (zi > pz !== zj > pz && px < ((xj - xi) * (pz - zi)) / (zj - zi) + xi) inside = !inside;
+    }
+    return inside;
+  };
+  /* Column-major from the EAST, breaking on the first column that holds any
+     in-scope water: the answer is a maximum, so there is nothing to learn from
+     the rest of the grid once one is found. In practice this touches a few
+     percent of the cells rather than all 1.5 million. */
+  for (let c = cols - 1; c >= 0; c--) {
+    const x = x0 + c * cell;
+    for (let r = 0; r < rows; r++) {
+      if (heights[r * cols + c] !== nodata) continue;
+      if (!inPoly(x, z0 + r * cell)) continue;
+      return x + cell;
+    }
+  }
+  return null;
+}
+
+/**
  * The sea.
  *
- * One plane at mean sea level, big enough to run past the region on every
- * side and out to the fog. It is drawn UNLIT: a Lambert surface at this size
- * takes the scene's single directional light and reads as one flat tone that
- * shifts as you turn, which looks like a mistake. Unlit at a measured colour
- * reads as water.
+ * A single quad at mean sea level, running west from the measured inland limit
+ * of the water and far enough in the other three directions to reach the fog.
+ * It is drawn UNLIT: a Lambert surface at this size takes the scene's one
+ * directional light and reads as a flat tone that shifts as you turn, which
+ * looks like a mistake. Unlit at a measured colour reads as water.
  */
-export function buildOcean(datum, extentM = 9000) {
+export function buildOcean(datum, { eastX = null, reachM = 9000 } = {}) {
   const y = SEA_LEVEL_M - datum;
-  const geo = new THREE.PlaneGeometry(extentM, extentM);
+  /* No measured limit means no way to say where the sea stops, and a sea of
+     unknown extent is worse than none — it would be drawn under land the
+     renderer simply has not got round to. */
+  if (eastX == null) return null;
+
+  const west = eastX - reachM;
+  const geo = new THREE.PlaneGeometry(reachM, reachM * 2);
   geo.rotateX(-Math.PI / 2);
   const mesh = new THREE.Mesh(
     geo,
     new THREE.MeshBasicMaterial({ color: OCEAN_COLOR })
   );
-  mesh.position.set(0, y, 0);
+  mesh.position.set((west + eastX) / 2, y, 0);
   mesh.name = "ocean";
+  mesh.userData.eastX = eastX;
   /* Behind everything: the sea must never win a depth tie against a beach
      drawn at almost the same height. */
   mesh.renderOrder = -1;

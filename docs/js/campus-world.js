@@ -38,7 +38,7 @@ import {
 } from "./campus-species.js";
 import { OVERLAY, overlayLift, applyOverlayDepth } from "./campus-overlay.js";
 import {
-  regionSampler, buildRegionMesh, buildOcean, SEA_LEVEL_M,
+  regionSampler, buildRegionMesh, buildOcean, oceanEastLimit, SEA_LEVEL_M,
 } from "./campus-region.js";
 
 /* Campus on a clear November noon, as the 4K footage measures it: the big
@@ -149,7 +149,7 @@ export function createTerrain(scene, lidar, colors, region) {
     );
     if (heights.length >= h.cols * h.rows) {
       regionSample = regionSampler(h, heights);
-      regionMesh = { header: h, heights };
+      regionMesh = { header: h, heights, outline: region.outline?.polygon?.local || null };
     }
   }
 
@@ -271,8 +271,13 @@ export function createTerrain(scene, lidar, colors, region) {
   if (regionMesh) {
     const built = buildRegionMesh(regionMesh.header, regionMesh.heights, terrain);
     group.add(built.group);
-    group.add(buildOcean(lidar.datum));
-    regionInfo = { chunks: built.chunks, quads: built.quads, seaY };
+    /* The sea stops where the water does. See oceanEastLimit: an unbounded
+       plane sits below every piece of land and is still wrong, because the
+       43% of the grid outside the outline is not land AND not water. */
+    const eastX = oceanEastLimit(regionMesh.header, regionMesh.heights, regionMesh.outline);
+    const ocean = buildOcean(lidar.datum, { eastX });
+    if (ocean) group.add(ocean);
+    regionInfo = { chunks: built.chunks, quads: built.quads, seaY, oceanEastX: eastX };
   } else {
     group.add(buildApron(terrain, h));
   }

@@ -33,6 +33,10 @@ const DRAPING_MODULES = [
   "docs/js/campus-markings.js",
   "docs/js/campus-eighth.js",
   "docs/js/campus-eighth-court.js",
+  /* The regional roads and water bodies drape too. A draping module that is
+     not on this list is a module the local-lift-constant guard below cannot
+     see, which is the whole failure mode this list exists to prevent. */
+  "docs/js/campus-region-massing.js",
 ];
 
 test("OVERLAY_RUNGS is the exact ground-upward order", () => {

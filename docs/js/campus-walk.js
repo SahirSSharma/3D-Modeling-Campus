@@ -29,6 +29,7 @@ import { createAthletics } from "./campus-athletics.js";
 import { createRecreation } from "./campus-recreation.js";
 import { createEighth } from "./campus-eighth.js";
 import { createEighthFurniture } from "./campus-eighth-furniture.js";
+import { createRegionMassing } from "./campus-region-massing.js";
 import { createMuirField } from "./campus-muir-field.js";
 import { createRimac } from "./campus-rimac.js";
 import { createMinimap } from "./campus-minimap.js";
@@ -62,6 +63,17 @@ const DATA = [
      because everything else here is small enough for that to be free. */
   { key: "regionHeights", file: "region-terrain.bin", required: false, binary: true,
     what: "regional heights" },
+  /* The region's buildings, roads and water. Optional like everything else out
+     there: absent, the regional terrain still renders and the campus is
+     untouched — it just stands in an unbuilt landscape, which is exactly what
+     it did before this file existed. */
+  { key: "regionOsm", file: "region-osm.json", required: false, what: "regional buildings and roads" },
+  /* Measured regional roofs, as a SIDECAR keyed by index into region-osm.json.
+     Separate for the same reason campus-lidar.json is separate from
+     campus-3d.json: a fresh Overpass pull regenerates the footprints, and
+     folding measurements into that file would erase them — or, worse, keep
+     them attached to the wrong buildings. The join is checked before use. */
+  { key: "regionRoofs", file: "region-heights.json", required: false, what: "measured regional roofs" },
 ];
 const urlOf = (file) => new URL(`../data/${file}`, import.meta.url);
 
@@ -426,6 +438,32 @@ export async function boot({ report } = {}) {
   rep.phase("massing");
   await rep.paint();
   const built = createBuildings(scene, { campus, lidar, arcgis, colors, facades, heightAt });
+
+  /* The REGION's buildings, roads and water — everything outside the campus
+     box, which the campus's own sources say nothing about. Its own layer, like
+     Eighth's: it is 5,551 footprints on inherited (never measured) colour,
+     and being able to drop the whole lot is how you see what the regional
+     terrain underneath actually looks like. Only built when the regional
+     terrain is up — massing a town onto a world with no land under it would
+     hang 10,000 buildings on the campus sampler's edge clamp. */
+  const regionZone = new THREE.Group();
+  if (regionData) {
+    const regionBuilt = createRegionMassing(scene, {
+      regionOsm: data.regionOsm, regionHeights: data.regionRoofs,
+      heightAt, campusTerrain: lidar.terrain,
+    });
+    if (regionBuilt.counts.buildings || regionBuilt.counts.roads || regionBuilt.counts.water) {
+      regionZone.add(regionBuilt.group);
+      const c = regionBuilt.counts;
+      rep.log(
+        `region built — ${c.buildings.toLocaleString()} buildings, ` +
+          `${c.roads.toLocaleString()} road runs, ${c.water} water bodies · ` +
+          `${c.lidarRoofs.toLocaleString()} roofs measured · ` +
+          `${c.triangles.toLocaleString()} triangles in ${c.drawCalls} draw calls`
+      );
+    }
+  }
+  scene.add(regionZone);
   massInfo = built.info;
   /* Which roof, if any, is under the camera. Free roam's climb rate is scaled
      by the clearance to it, so hovering over Geisel is as finely controllable
@@ -683,6 +721,7 @@ export async function boot({ report } = {}) {
       details: details.group,
       athletics: athleticsZone,
       eighth: eighthZone,
+      regionMassing: regionZone,
       labels: labels.group,
       ...(landmarksGroup ? { landmarks: landmarksGroup } : {}),
     },

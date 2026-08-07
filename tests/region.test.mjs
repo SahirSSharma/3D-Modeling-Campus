@@ -120,6 +120,32 @@ test("the campus box is fully carried by the region grid", () => {
   assert.equal(missing, 0, `${missing} campus cells are nodata in the region grid`);
 });
 
+test("every DATA key is unique — a collision silently deletes a layer", () => {
+  /* THE BUG THIS PINS, which cost three screenshots to find.
+     The loader builds its result as `out[d.key] = parsed[i]`, so two entries
+     sharing a key means the second quietly overwrites the first. Adding the
+     measured-roofs sidecar under the key `regionHeights` — already taken by
+     region-terrain.bin — replaced a 2.8 MB Int16 buffer with a JSON object.
+     Nothing threw. `new Int16Array(someObject)` is a zero-length array, not an
+     error, so the terrain sampler simply went null, the world fell back to the
+     campus apron it had before the region existed, and it all still rendered:
+     green ground, blue sky, no console errors, no failing test.
+     That is the failure mode worth a test — not the crash, the plausible
+     picture of the wrong world. */
+  const src = readFileSync(path.join(ROOT, "docs/js/campus-walk.js"), "utf8");
+  const table = src.slice(src.indexOf("const DATA = ["), src.indexOf("const urlOf"));
+  const keys = [...table.matchAll(/key:\s*"([^"]+)"/g)].map((m) => m[1]);
+  const files = [...table.matchAll(/file:\s*"([^"]+)"/g)].map((m) => m[1]);
+
+  assert.ok(keys.length >= 10, `only found ${keys.length} DATA keys — the parse is wrong`);
+  assert.equal(keys.length, files.length, "every entry needs both a key and a file");
+
+  const dupKeys = keys.filter((k, i) => keys.indexOf(k) !== i);
+  assert.deepEqual(dupKeys, [], `duplicate DATA keys: ${dupKeys.join(", ")}`);
+  const dupFiles = files.filter((f, i) => files.indexOf(f) !== i);
+  assert.deepEqual(dupFiles, [], `the same file is downloaded twice: ${dupFiles.join(", ")}`);
+});
+
 test("free roam can actually reach the region, not just see it", () => {
   /* The wall has to move with the measurements. Until the region existed,
      createExplore derived its clamp from the campus grid alone; leaving it
