@@ -98,6 +98,56 @@ that neither laser could see, where both surveys were averaging a guess. A toler
 buried that behind a threshold someone would later have to defend. Deferring makes a step at the
 campus edge *unrepresentable*.
 
+Heights agreeing, though, was not the same as the two meshes touching. The region skipped any quad
+with a corner inside the campus box, so that no region triangle could z-fight a campus one along
+the most looked-at line in the world — correct as far as it goes, but the campus boundary does not
+land on the region's 6 m lattice, so a quad straddling the edge is mostly *outside* the campus and
+skipping it threw that ground away too. The result was a strip of open sky running the whole
+perimeter: ~2 m wide measured straight down over the east edge, up to a 12 m span elsewhere, and a
+chasm at eye level. Boundary quads are now **trimmed** to the campus edge rather than dropped, with
+a moved corner taking the height and colour the surface already had there (bilinear within the
+quad, which is exact for the bilinear patch the quad already is). Both properties hold at once, and
+each has a test that sweeps the edge at half-metre offsets — the gap and the z-fight are a pair,
+and a fix for one that breaks the other is not a fix.
+
+### Colour past the campus
+
+The region shipped with every colour inherited from a campus measurement: one flat tan for 30 km²
+of ground and one flat white for 5,551 roofs, each an honest stand-in with the gap written down.
+`region-colors.json` measures them, from **Google 2D satellite at zoom 19** (0.25 m/px):
+
+| | measured | fallback |
+|---|---|---|
+| ground | 601,874 cells, on the terrain grid's own lattice, none unsampled | `REGION_GROUND_COLOR` |
+| roofs | 5,460 of 5,551 footprints, 5,099 distinct colours | 91 held back as bare earth or too heterogeneous |
+
+Google over Apple *despite* Apple resolving twice as fine (0.125 vs 0.251 m/px): Apple misses
+georegistration by a measured 1.25 m against Google's 0.6 m, and colour is averaged over a roof, so
+registration beats resolution — a 1.25 m miss samples the neighbour's driveway onto a 10 m house.
+
+The imagery is a **build-time measurement source**, the same as everywhere else here: no photograph
+ships and nothing is draped on the world. What reaches the browser is one colour per 6 m cell and
+one per roof. Both joins are positional and both *refuse* rather than draw when they do not line up
+— the ground against every field of the terrain grid, the roofs against a footprint fingerprint —
+and an unsampled cell falls back to the inherited tan rather than rendering black, because a hole
+in the world is worse than a flat colour.
+
+**The measurement overturned the reasoning it replaced**, which is the argument for taking it.
+`REGION_GROUND_COLOR` was borrowed from Eighth College `dryLawn` on the stated argument that
+coastal sage scrub reads dry tan most of the year. Sampled, the region's median cell is green —
+hue 120°, `#76817a` — canyon chaparral and irrigated University City, not dry lawn. The roof note,
+by contrast, called its own limitation correctly: it warned that white TPO membrane was a claim
+about flat commercial roofs and that the region would be warmer, and 2,259 of the sampled roofs
+land in the red/terracotta band against 1,672 neutral.
+
+What the imagery does *not* settle is the part of a building you walk past. It looks straight down,
+so walls stay inherited and `REGION_MASSING_PROVENANCE.measuredForRegion` reads `"roofs only"`.
+From the air the region now reads as University City; from the pavement it is still grey boxes.
+Roads also keep their eye-level value: the terrain grid reads motorway centrelines at `#a8a6a4`
+against the shipped `#5e6163`, but a 6 m cell straddling a road swallows shoulder and lane paint,
+and top-down noon imagery reads asphalt lighter than grazing-angle footage. Two measurements of
+different things do not average into a better one.
+
 **Water is decided by elevation, not by size.** A void in the ground data stays open — and the sea
 plane shows through it — only where the land around its rim stands at sea level. The first rule
 tried was a size cap, which is a correlation rather than a discriminator, and it broke exactly
