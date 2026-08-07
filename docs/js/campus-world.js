@@ -38,7 +38,7 @@ import {
 } from "./campus-species.js";
 import { OVERLAY, overlayLift, applyOverlayDepth } from "./campus-overlay.js";
 import {
-  regionSampler, buildRegionMesh, buildOcean, oceanEastLimit, SEA_LEVEL_M,
+  regionSampler, buildRegionMesh, buildOcean, oceanEastLimit, regionColorLookup, SEA_LEVEL_M,
 } from "./campus-region.js";
 
 /* Campus on a clear November noon, as the 4K footage measures it: the big
@@ -149,7 +149,11 @@ export function createTerrain(scene, lidar, colors, region) {
     );
     if (heights.length >= h.cols * h.rows) {
       regionSample = regionSampler(h, heights);
-      regionMesh = { header: h, heights, outline: region.outline?.polygon?.local || null };
+      regionMesh = {
+        header: h, heights,
+        outline: region.outline?.polygon?.local || null,
+        colors: region.colors || null,
+      };
     }
   }
 
@@ -269,7 +273,12 @@ export function createTerrain(scene, lidar, colors, region) {
      replaces it, and survives only where the region is absent. */
   let regionInfo = null;
   if (regionMesh) {
-    const built = buildRegionMesh(regionMesh.header, regionMesh.heights, terrain);
+    /* Measured ground colour when it is there and it lines up; the inherited
+       tan when it is not. regionColorLookup refuses a grid that does not match
+       the height grid exactly, so a stale colour file degrades to flat rather
+       than to a world whose ground colours are offset from its ground. */
+    const colorAt = regionColorLookup(regionMesh.colors, regionMesh.header);
+    const built = buildRegionMesh(regionMesh.header, regionMesh.heights, terrain, { colorAt });
     group.add(built.group);
     /* The sea stops where the water does. See oceanEastLimit: an unbounded
        plane sits below every piece of land and is still wrong, because the
@@ -277,7 +286,10 @@ export function createTerrain(scene, lidar, colors, region) {
     const eastX = oceanEastLimit(regionMesh.header, regionMesh.heights, regionMesh.outline);
     const ocean = buildOcean(lidar.datum, { eastX });
     if (ocean) group.add(ocean);
-    regionInfo = { chunks: built.chunks, quads: built.quads, seaY, oceanEastX: eastX };
+    regionInfo = {
+      chunks: built.chunks, quads: built.quads, seaY, oceanEastX: eastX,
+      groundColour: colorAt ? "measured" : "inherited",
+    };
   } else {
     group.add(buildApron(terrain, h));
   }

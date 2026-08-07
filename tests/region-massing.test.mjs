@@ -295,20 +295,38 @@ test("a draped mesh follows the terrain rather than spanning it", () => {
 
 /* ---------------------------------------------------------------- colour */
 
-test("every shipped colour names its source and admits it is not measured here", () => {
-  assert.equal(REGION_MASSING_PROVENANCE.measuredForRegion, false);
-  for (const key of ["wall", "roof", "road", "water"]) {
+test("every shipped colour names its source and says whether it was measured here", () => {
+  /* Roofs became a real regional measurement when region-colors.json landed.
+     The point of this test is not that everything is inherited — it is that
+     nothing is ambiguous about WHICH it is, because a borrowed colour quietly
+     reclassified as measured is how provenance rots. */
+  assert.equal(REGION_MASSING_PROVENANCE.measuredForRegion, "roofs only");
+
+  /* Still inherited, and each must still confess the whole transfer. */
+  for (const key of ["wall", "road", "water"]) {
     const entry = REGION_MASSING_PROVENANCE[key];
     assert.ok(entry, `no provenance for the ${key} colour`);
     assert.ok(entry.inherited, `${key} claims no inherited source`);
     assert.ok(entry.source, `${key} names no measurement behind that source`);
     assert.ok(entry.limitation, `${key} states no limitation — every transfer here has one`);
+    assert.ok(!entry.measured, `${key} is inherited and must not claim to be measured`);
   }
+
+  /* Measured — and its fallback is held to the same standard as any other
+     inherited colour, since that is what 91 footprints actually render with. */
+  const roof = REGION_MASSING_PROVENANCE.roof;
+  assert.equal(roof.measured, true);
+  assert.ok(roof.source, "the roof measurement names no source");
+  assert.ok(roof.coverage, "a measurement that does not state its coverage hides its gaps");
+  assert.ok(roof.limitation, "even a measured colour has a limitation");
+  assert.ok(roof.fallback?.inherited, "the roof fallback claims no inherited source");
+  assert.ok(roof.fallback?.appliesTo, "the roof fallback does not say who gets it");
+
   /* The ledger's hex values are the ones that actually ship. A provenance note
      that has drifted from the constant beside it is worse than none. */
   const hex = (n) => `#${n.toString(16).padStart(6, "0")}`;
   assert.equal(hex(REGION_WALL_COLOR), REGION_MASSING_PROVENANCE.wall.value);
-  assert.equal(hex(REGION_ROOF_COLOR), REGION_MASSING_PROVENANCE.roof.value);
+  assert.equal(hex(REGION_ROOF_COLOR), roof.fallback.value);
   assert.equal(hex(REGION_ROAD_COLOR), REGION_MASSING_PROVENANCE.road.value);
   /* Water is imported rather than copied, so it cannot drift by construction —
      which is exactly what this asserts. */

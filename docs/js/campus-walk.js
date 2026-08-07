@@ -74,6 +74,11 @@ const DATA = [
      folding measurements into that file would erase them — or, worse, keep
      them attached to the wrong buildings. The join is checked before use. */
   { key: "regionRoofs", file: "region-heights.json", required: false, what: "measured regional roofs" },
+  /* Measured colour for the region: one palette index per terrain cell, plus a
+     roof colour per footprint. Sampled from satellite imagery at BUILD time —
+     the photograph itself never reaches the browser, which is the same rule
+     the campus has always followed. */
+  { key: "regionColors", file: "region-colors.json", required: false, what: "regional colour" },
 ];
 const urlOf = (file) => new URL(`../data/${file}`, import.meta.url);
 
@@ -417,7 +422,8 @@ export async function boot({ report } = {}) {
      it was before the expansion. */
   const regionData =
     data.region && data.regionTerrain && data.regionHeights
-      ? { outline: data.region, header: data.regionTerrain, heights: data.regionHeights }
+      ? { outline: data.region, header: data.regionTerrain, heights: data.regionHeights,
+          colors: data.regionColors }
       : null;
   if (!regionData && (data.region || data.regionTerrain || data.regionHeights)) {
     rep.log("region — incomplete, going without");
@@ -428,7 +434,8 @@ export async function boot({ report } = {}) {
   if (terrain.region) {
     rep.log(
       `region — ${terrain.region.chunks} chunks, ` +
-        `${terrain.region.quads.toLocaleString()} quads of land, sea at ${
+        `${terrain.region.quads.toLocaleString()} quads of land, ` +
+        `${terrain.region.groundColour} ground colour, sea at ${
           terrain.region.seaY.toFixed(1)} m`
     );
   }
@@ -450,6 +457,7 @@ export async function boot({ report } = {}) {
   if (regionData) {
     const regionBuilt = createRegionMassing(scene, {
       regionOsm: data.regionOsm, regionHeights: data.regionRoofs,
+      regionColors: data.regionColors,
       heightAt, campusTerrain: lidar.terrain,
     });
     if (regionBuilt.counts.buildings || regionBuilt.counts.roads || regionBuilt.counts.water) {
@@ -459,6 +467,7 @@ export async function boot({ report } = {}) {
         `region built — ${c.buildings.toLocaleString()} buildings, ` +
           `${c.roads.toLocaleString()} road runs, ${c.water} water bodies · ` +
           `${c.lidarRoofs.toLocaleString()} roofs measured · ` +
+        `${c.colouredRoofs ? `${c.colouredRoofs.toLocaleString()} roofs coloured · ` : ""}` +
           `${c.triangles.toLocaleString()} triangles in ${c.drawCalls} draw calls`
       );
     }

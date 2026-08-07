@@ -55,24 +55,33 @@ export const OCEAN_COLOR_PROVENANCE = {
   geometry: "top-down; not corrected for grazing-angle sky reflection",
 };
 
-/* INHERITED, NOT MEASURED — and flagged as such because that distinction is
-   the whole discipline of this repo.
-   Every other colour in this world came off a frame with a stated provenance.
-   There is no registered aerial of Rose Canyon or the Torrey Pines bluff here,
-   so there is nothing to measure yet, and inventing a plausible sage-green
-   would put an unsourced number next to a hundred sourced ones.
-   So this borrows the one measurement that genuinely applies: the Eighth
-   College survey's `dryLawn`, read off ref3 as the only clean unshaded sample
-   of UNIRRIGATED ground in full sun — tan, never green. Coastal sage scrub in
-   San Diego is the same dry tan for most of the year, and almost all of this
-   region is that. It is a defensible stand-in, it is not a measurement of the
-   region, and the moment a registered regional frame exists it should be
-   replaced by one. */
+/* THE FALLBACK, not the ground colour. region-colors.json now measures the
+   ground per 6 m cell from Google satellite z19 (0.25 m/px), on this grid's own
+   lattice, and buildRegionMesh paints those as vertex colours. This constant is
+   what a cell gets when the sampler has nothing for it — and the mesh falls
+   back to it rather than rendering black, because a hole in the world is worse
+   than a flat colour.
+   It stays inherited: EIGHTH_COLORS.dryLawn, read off Eighth College ref3 as
+   the only clean unshaded sample of UNIRRIGATED ground in full sun.
+   Worth recording that the measurement overturned the reasoning behind this
+   value. The note here used to argue coastal sage scrub reads dry tan for most
+   of the year, so a tan stand-in was safe. Sampled, the region's median cell is
+   green — hue 120°, #76817a — because the imagery caught canyon chaparral and
+   irrigated University City, not the dry lawn this was borrowed from. The
+   stand-in was defensible and it was also wrong, which is the argument for
+   measuring rather than reasoning about colour. */
 export const REGION_GROUND_COLOR = 0xab9d83;
 export const REGION_GROUND_PROVENANCE = {
-  inherited: "EIGHTH_COLORS.dryLawn",
-  source: "Eighth College ref3, unshaded unirrigated ground in full sun",
-  measuredForRegion: false,
+  measuredForRegion: true,
+  measured: "region-colors.json `terrain`, Google satellite z19, per 6 m cell, 601,874 cells",
+  fallback: {
+    inherited: "EIGHTH_COLORS.dryLawn",
+    source: "Eighth College ref3, unshaded unirrigated ground in full sun",
+    appliesTo: "cells with no sample, and every cell if the colour file is absent or fails its grid check",
+  },
+  limitation:
+    "top-down colour, so it describes ground cover and not the side of anything; " +
+    "and a 6 m cell is one colour for 36 m² of world, which blurs a kerb into its lawn",
 };
 
 /**
@@ -105,6 +114,56 @@ export function regionSampler(header, heights) {
       x1: x0 + (cols - 1) * cell,
       z1: z0 + (rows - 1) * cell,
     },
+  };
+}
+
+/**
+ * Measured ground colour, as a lookup by terrain-grid cell.
+ *
+ * region-colors.json ships a quantised palette plus one index per cell —
+ * exactly the shape campus-colors.json uses, because it is solving the same
+ * problem: 1.47 million colours as text would be tens of megabytes to parse on
+ * the main thread, and as a palette index it is one byte a cell.
+ *
+ * THE JOIN IS POSITIONAL, so it is checked. The colour grid and the height
+ * grid are produced by different builders, and the only thing making index i
+ * mean the same patch of ground in both is that they were cut on the same
+ * lattice. If that ever stops being true the world gets its ground colours
+ * offset by some number of cells — which looks like nothing at all until you
+ * notice a road running through a field beside the road. So a mismatch refuses
+ * the whole file and the region falls back to its honest inherited tan.
+ *
+ * Returns null when there is no usable colour, which callers must treat as
+ * "use the flat colour" rather than as black.
+ */
+export function regionColorLookup(colors, header) {
+  const g = colors?.terrain;
+  if (!g || !g.idx || !Array.isArray(g.palette)) return null;
+  if (g.x0 !== header.x0 || g.z0 !== header.z0 || g.cell !== header.cell ||
+      g.cols !== header.cols || g.rows !== header.rows) {
+    return null;
+  }
+  const idx = Uint8Array.from(atob(g.idx), (ch) => ch.charCodeAt(0));
+  if (idx.length !== header.cols * header.rows) return null;
+
+  /* Palette decoded once into linear float triples: doing the hex parse per
+     vertex would run it a million times for a few dozen distinct answers. */
+  const none = g.none ?? 255;
+  const table = g.palette.map((hex) => {
+    const c = new THREE.Color(hex);
+    return [c.r, c.g, c.b];
+  });
+  const fallback = (() => {
+    const c = new THREE.Color(REGION_GROUND_COLOR);
+    return [c.r, c.g, c.b];
+  })();
+
+  const { cols, rows } = header;
+  return (c, r) => {
+    if (c < 0 || c >= cols || r < 0 || r >= rows) return fallback;
+    const k = idx[r * cols + c];
+    if (k === none) return fallback;
+    return table[k] || fallback;
   };
 }
 
@@ -167,7 +226,9 @@ function makeInCampus(campusTerrain) {
  * metres of this, and paying to transform 30 km² of it every frame to look at
  * a courtyard is the kind of cost that makes a walk stutter.
  */
-export function buildRegionMesh(header, heights, campusTerrain, color = REGION_GROUND_COLOR) {
+export function buildRegionMesh(
+  header, heights, campusTerrain, { color = REGION_GROUND_COLOR, colorAt = null } = {}
+) {
   const s = regionSampler(header, heights);
   const inCampus = makeInCampus(campusTerrain);
   const coast = coastMask(header, heights);
@@ -176,7 +237,18 @@ export function buildRegionMesh(header, heights, campusTerrain, color = REGION_G
 
   const group = new THREE.Group();
   group.name = "region-terrain";
-  const material = new THREE.MeshLambertMaterial({ color });
+  /* MEASURED colour when there is any, the inherited tan when there is not.
+     Per-vertex rather than per-chunk, for the same reason the campus terrain
+     carries NAIP vertex colours: the interesting thing about this ground is
+     that it is NOT uniform — asphalt, chaparral, irrigated turf and parking
+     lots all meet inside a single 500 m chunk, and a per-chunk colour would
+     average exactly the variation worth showing.
+     Note this is still a MEASUREMENT, not a texture: the imagery was sampled
+     at build time into one colour per terrain cell and the photograph itself
+     never reaches the browser. */
+  const material = colorAt
+    ? new THREE.MeshLambertMaterial({ vertexColors: true })
+    : new THREE.MeshLambertMaterial({ color });
   let quads = 0;
 
   const nearCoast = (c, r) => coast[r * cols + c] !== 255;
@@ -185,6 +257,7 @@ export function buildRegionMesh(header, heights, campusTerrain, color = REGION_G
     for (let c0 = 0; c0 < cols - 1; c0 += CHUNK) {
       const position = [];
       const normal = [];
+      const rgb = [];
       const r1 = Math.min(r0 + CHUNK, rows - 1);
       const c1 = Math.min(c0 + CHUNK, cols - 1);
 
@@ -227,6 +300,17 @@ export function buildRegionMesh(header, heights, campusTerrain, color = REGION_G
           position.push(x, a, z, x, d, ze, xe, b, z);
           position.push(xe, b, z, x, d, ze, xe, e, ze);
           for (let k = 0; k < 6; k++) normal.push(nx, ny, nz);
+          if (colorAt) {
+            /* One colour per CORNER, so a road crossing a cell reads as a
+               gradient rather than snapping at the cell boundary. The two
+               triangles share corners in the order pushed above. */
+            const cA = colorAt(c, r);
+            const cB = colorAt(cc, r);
+            const cD = colorAt(c, rr);
+            const cE = colorAt(cc, rr);
+            rgb.push(...cA, ...cD, ...cB);
+            rgb.push(...cB, ...cD, ...cE);
+          }
           quads++;
         }
         r += step;
@@ -236,6 +320,9 @@ export function buildRegionMesh(header, heights, campusTerrain, color = REGION_G
       const geo = new THREE.BufferGeometry();
       geo.setAttribute("position", new THREE.Float32BufferAttribute(position, 3));
       geo.setAttribute("normal", new THREE.Float32BufferAttribute(normal, 3));
+      if (rgb.length === position.length) {
+        geo.setAttribute("color", new THREE.Float32BufferAttribute(rgb, 3));
+      }
       geo.computeBoundingSphere();
       group.add(new THREE.Mesh(geo, material));
     }
