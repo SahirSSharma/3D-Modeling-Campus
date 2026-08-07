@@ -8,6 +8,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { createExplore } from "../docs/js/campus-explore.js";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -119,6 +120,38 @@ test("the campus box is fully carried by the region grid", () => {
   assert.equal(missing, 0, `${missing} campus cells are nodata in the region grid`);
 });
 
+test("free roam can actually reach the region, not just see it", () => {
+  /* The wall has to move with the measurements. Until the region existed,
+     createExplore derived its clamp from the campus grid alone; leaving it
+     that way would have rendered 30 km² of coast that you bounce off an
+     invisible wall two kilometres short of. */
+  const campusOnly = createExplore({
+    campus: { places: {} },
+    lidar: { terrain: campus.terrain },
+    heightAt: () => 0,
+  });
+  const withRegion = createExplore({
+    campus: { places: {} },
+    lidar: { terrain: campus.terrain },
+    heightAt: () => 0,
+    coverage: { x0: header.x0, z0: header.z0,
+                x1: header.x0 + (header.cols - 1) * header.cell,
+                z1: header.z0 + (header.rows - 1) * header.cell },
+  });
+
+  /* Walk hard west in both and see where each is stopped. */
+  const westEdge = (ex) => { ex.enterAt(0, 0, 0); ex.x = -1e6; ex.update(0, new Set()); return ex.x; };
+  const campusStop = westEdge(campusOnly);
+  const regionStop = westEdge(withRegion);
+
+  assert.ok(
+    regionStop < campusStop - 500,
+    `region clamp (${regionStop.toFixed(0)}) should reach well past the campus clamp (${campusStop.toFixed(0)})`
+  );
+  /* And it must still be a wall — inside the measured grid, not past it. */
+  assert.ok(regionStop >= header.x0, "clamp escaped the measured grid");
+});
+
 test("the region reaches the sea and the mesa tops", () => {
   /* The point of the expansion: the world used to stop at a rectangle on the
      mesa. It now runs down the bluff to the water. */
@@ -128,8 +161,8 @@ test("the region reaches the sea and the mesa tops", () => {
 
 test("open water is left unmeasured rather than invented", () => {
   /* Hole-filling across the coastline would grow a shelf of land out to sea.
-     The builder fills only voids small enough to be a building shadow, so a
-     large void must survive the build. */
+     The builder leaves open only the voids whose surrounding land stands at
+     sea level, so the ocean must survive the build as one large void. */
   assert.ok(
     header.stats.holes.largestOpen > 10_000,
     "the ocean should remain one large unmeasured void"

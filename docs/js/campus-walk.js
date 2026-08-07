@@ -538,6 +538,9 @@ export async function boot({ report } = {}) {
   );
   explore = createExplore({
     campus: { ...campus, places: placeable }, lidar, heightAt, solidAt,
+    /* With the region loaded this is the coastal extent, so free roam reaches
+       the beach instead of stopping at the old campus wall. */
+    coverage: terrain.coverage,
   });
   explore.speed = state.speed;
 

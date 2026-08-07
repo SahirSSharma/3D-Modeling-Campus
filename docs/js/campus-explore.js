@@ -112,11 +112,24 @@ export function climbRate(clearance, shift = false) {
  *   to stay usable without the massing (the Node tests build no buildings),
  *   and every caller that predates it keeps working unchanged.
  */
-export function createExplore({ campus, lidar, heightAt, solidAt }) {
+export function createExplore({ campus, lidar, heightAt, solidAt, coverage }) {
   const t = lidar.terrain;
+  /* Where the walk is allowed to go: one cell inside whatever has measured
+     ground under it.
+     `coverage` is passed by createTerrain and is the REGION's extent when the
+     region is loaded. Deriving this from lidar.terrain alone — as it did until
+     the region existed — leaves the walk clamped to the campus box while the
+     coast is plainly visible past it, which is a wall in the middle of a world
+     that visibly continues. Absent the region it is the campus grid, exactly
+     as before. */
+  const c = coverage || {
+    x0: t.x0, x1: t.x0 + (t.cols - 1) * t.cell,
+    z0: t.z0, z1: t.z0 + (t.rows - 1) * t.cell,
+  };
+  const inset = t.cell;
   const bounds = {
-    x0: t.x0 + t.cell, x1: t.x0 + (t.cols - 2) * t.cell,
-    z0: t.z0 + t.cell, z1: t.z0 + (t.rows - 2) * t.cell,
+    x0: c.x0 + inset, x1: c.x1 - inset,
+    z0: c.z0 + inset, z1: c.z1 - inset,
   };
 
   const self = {
@@ -228,9 +241,11 @@ export function createExplore({ campus, lidar, heightAt, solidAt }) {
   };
 
   /* The world ends where the measurements end. Walking past the edge of the
-     LiDAR grid puts the camera over unmeasured void that heightAt reports as
-     0 m — a cliff that exists in the data, not in La Jolla — so the edge is a
-     wall rather than a lie. */
+     measured ground puts the camera over unmeasured void that heightAt reports
+     from the nearest clamped sample — a plateau that exists in the data, not
+     in La Jolla — so the edge is a wall rather than a lie.
+     That edge is now the coastal region's, not the campus box's; see
+     `coverage` above. It moved outward, it did not stop being a wall. */
   function clamp() {
     self.x = Math.max(bounds.x0, Math.min(bounds.x1, self.x));
     self.z = Math.max(bounds.z0, Math.min(bounds.z1, self.z));
