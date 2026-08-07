@@ -39,6 +39,7 @@ import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { eptSource, merc, GROUND } from "./lib/ept.mjs";
 import { treeExclusionZones, pruneTrees } from "./lib/tree-rules.mjs";
 import { roofOf, denseBandFraction, explainRoof } from "./lib/roof-measure.mjs";
 import { namesMatch } from "../docs/js/name-match.js";
@@ -1370,109 +1371,25 @@ const HAND_AUDITED = {
   "Hyatt Regency La Jolla at Aventine": null,
 };
 
-const R = 6378137;
-const toX = (lng) => (lng * Math.PI * R) / 180;
-const toY = (lat) => R * Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360));
-const toLat = (y) => (2 * Math.atan(Math.exp(y / R)) - Math.PI / 2) * (180 / Math.PI);
-const toLng = (x) => (x / R) * (180 / Math.PI);
+const toX = merc.x;
+const toY = merc.y;
+const toLat = merc.lat;
+const toLng = merc.lng;
 
-const BOX = {
-  minx: toX(AREA.west), maxx: toX(AREA.east),
-  miny: toY(AREA.south), maxy: toY(AREA.north),
-};
-
-/* ------------------------------------------------------------------ octree */
-
-const hierCache = new Map();
-async function hierarchy(key) {
-  if (hierCache.has(key)) return hierCache.get(key);
-  const res = await fetch(`${EPT}/ept-hierarchy/${key}.json`);
-  if (!res.ok) throw new Error(`hierarchy ${key}: ${res.status}`);
-  const json = await res.json();
-  hierCache.set(key, json);
-  return json;
-}
-
-/** Every populated octree node whose cube overlaps the area, at every depth. */
-async function findTiles(bounds) {
-  const size = bounds[3] - bounds[0];
-  const nodeBox = (d, x, y) => {
-    const s = size / 2 ** d;
-    return {
-      minx: bounds[0] + x * s, maxx: bounds[0] + (x + 1) * s,
-      miny: bounds[1] + y * s, maxy: bounds[1] + (y + 1) * s,
-    };
-  };
-  const overlaps = (a) =>
-    !(a.maxx < BOX.minx || a.minx > BOX.maxx || a.maxy < BOX.miny || a.miny > BOX.maxy);
-
-  const found = [];
-  const walk = async (rootKey) => {
-    const node = await hierarchy(rootKey);
-    for (const [key, count] of Object.entries(node)) {
-      const [d, x, y] = key.split("-").map(Number);
-      if (!overlaps(nodeBox(d, x, y))) continue;
-      // -1 means "this subtree continues in its own hierarchy file".
-      if (count === -1) await walk(key);
-      else if (count > 0) found.push(key);
-    }
-  };
-  await walk("0-0-0-0");
-  return found;
-}
-
-/* ------------------------------------------------------------------- LAZ */
-
-/* The LAS public header block. laz-perf decodes point RECORDS but hands back
-   raw scaled integers, so the scale and offset that turn them into real
-   coordinates have to be read out of the header here. Offsets per the LAS 1.2+
-   spec; classification moved from byte 15 to byte 16 in point formats 6+. */
-function lasHeader(view) {
-  return {
-    format: view.getUint8(104),
-    scale: [view.getFloat64(131, true), view.getFloat64(139, true), view.getFloat64(147, true)],
-    offset: [view.getFloat64(155, true), view.getFloat64(163, true), view.getFloat64(171, true)],
-  };
-}
-
-async function readTile(laz, key) {
-  const res = await fetch(`${EPT}/ept-data/${key}.laz`);
-  if (!res.ok) throw new Error(`tile ${key}: ${res.status}`);
-  const bytes = new Uint8Array(await res.arrayBuffer());
-  const head = lasHeader(new DataView(bytes.buffer));
-
-  const filePtr = laz._malloc(bytes.byteLength);
-  laz.HEAPU8.set(bytes, filePtr);
-  const reader = new laz.LASZip();
-  reader.open(filePtr, bytes.byteLength);
-
-  const count = reader.getCount();
-  const pointLength = reader.getPointLength();
-  const classOffset = reader.getPointFormat() >= 6 ? 16 : 15;
-  const pointPtr = laz._malloc(pointLength);
-
-  const out = [];
-  for (let i = 0; i < count; i++) {
-    reader.getPoint(pointPtr);
-    const p = new DataView(laz.HEAPU8.buffer, pointPtr, pointLength);
-    const x = p.getInt32(0, true) * head.scale[0] + head.offset[0];
-    const y = p.getInt32(4, true) * head.scale[1] + head.offset[1];
-    if (x < BOX.minx || x > BOX.maxx || y < BOX.miny || y > BOX.maxy) continue;
-    const z = p.getInt32(8, true) * head.scale[2] + head.offset[2];
-    let cls = p.getUint8(classOffset);
-    if (head.format < 6) cls &= 0x1f; // pre-1.4 packs flags into the top bits
-    out.push([x, y, z, cls]);
-  }
-
-  reader.delete();
-  laz._free(filePtr);
-  laz._free(pointPtr);
-  return out;
-}
+/* The octree walk, the LAS header parse and the laz-perf decode live in
+   scripts/lib/ept.mjs. They used to live here, which was right while this was
+   the only builder that read a point cloud; the regional terrain builder now
+   reads the same one over a wider box, and two copies of a decoder that must
+   agree about where the ground is would eventually stop agreeing exactly at
+   the campus seam. */
+const SOURCE = eptSource(EPT, AREA);
+const BOX = SOURCE.box;
+const findTiles = (bounds) => SOURCE.findTiles(bounds);
+const readTile = (laz, key) => SOURCE.readTile(laz, key);
 
 /* --------------------------------------------------------------- geometry */
 
-const GROUND = 2;
+/* GROUND now comes from lib/ept.mjs with the rest of the point-cloud vocabulary. */
 
 function percentile(values, q) {
   if (!values.length) return null;

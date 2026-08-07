@@ -29,6 +29,7 @@ import { createAthletics } from "./campus-athletics.js";
 import { createRecreation } from "./campus-recreation.js";
 import { createEighth } from "./campus-eighth.js";
 import { createEighthFurniture } from "./campus-eighth-furniture.js";
+import { createRegionMassing } from "./campus-region-massing.js";
 import { createMuirField } from "./campus-muir-field.js";
 import { createRimac } from "./campus-rimac.js";
 import { createMinimap } from "./campus-minimap.js";
@@ -54,6 +55,25 @@ const DATA = [
   { key: "boundary", file: "campus-boundary.json", required: false, what: "campus boundary" },
   { key: "markings", file: "campus-markings.json", required: false, what: "sports markings" },
   { key: "eighth", file: "campus-eighth.json", required: false, what: "Eighth College survey" },
+  { key: "region", file: "region.json", required: false, what: "region outline" },
+  { key: "regionTerrain", file: "region-terrain.json", required: false, what: "regional terrain" },
+  /* The regional heights are 1.5 million samples. As JSON that is ~30 MB of
+     text to parse on the main thread; as Int16 it is a 2.8 MB buffer the
+     renderer can read straight through. Everything else here stays JSON
+     because everything else here is small enough for that to be free. */
+  { key: "regionHeights", file: "region-terrain.bin", required: false, binary: true,
+    what: "regional heights" },
+  /* The region's buildings, roads and water. Optional like everything else out
+     there: absent, the regional terrain still renders and the campus is
+     untouched — it just stands in an unbuilt landscape, which is exactly what
+     it did before this file existed. */
+  { key: "regionOsm", file: "region-osm.json", required: false, what: "regional buildings and roads" },
+  /* Measured regional roofs, as a SIDECAR keyed by index into region-osm.json.
+     Separate for the same reason campus-lidar.json is separate from
+     campus-3d.json: a fresh Overpass pull regenerates the footprints, and
+     folding measurements into that file would erase them — or, worse, keep
+     them attached to the wrong buildings. The join is checked before use. */
+  { key: "regionRoofs", file: "region-heights.json", required: false, what: "measured regional roofs" },
 ];
 const urlOf = (file) => new URL(`../data/${file}`, import.meta.url);
 
@@ -300,6 +320,12 @@ async function download(rep) {
     /* No streams (an old Safari, or a test double): take it in one lump. The
        bar simply steps once per file instead of gliding. */
     if (!r.body?.getReader) {
+      if (DATA[i].binary) {
+        const buf = new Uint8Array(await r.arrayBuffer());
+        bytes[i] = buf.length;
+        announce();
+        return buf;
+      }
       const text = await r.text();
       bytes[i] = text.length;
       announce();
@@ -319,6 +345,7 @@ async function download(rep) {
     const buf = new Uint8Array(size);
     let at = 0;
     for (const c of chunks) { buf.set(c, at); at += c.length; }
+    if (DATA[i].binary) return buf;
     return JSON.parse(new TextDecoder().decode(buf));
   };
 
@@ -383,15 +410,60 @@ export async function boot({ report } = {}) {
   /* ------------------------------------------------------------- terrain */
   rep.phase("terrain");
   await rep.paint();
-  const terrain = world.createTerrain(scene, lidar, colors);
+  /* The region is all-or-nothing: a header without its heights, or heights
+     without the outline, is not a partial region — it is a broken one, and
+     drawing half of it would put a plane of sea over a campus with no coast
+     to justify it. Any missing piece and the world falls back to exactly what
+     it was before the expansion. */
+  const regionData =
+    data.region && data.regionTerrain && data.regionHeights
+      ? { outline: data.region, header: data.regionTerrain, heights: data.regionHeights }
+      : null;
+  if (!regionData && (data.region || data.regionTerrain || data.regionHeights)) {
+    rep.log("region — incomplete, going without");
+  }
+  const terrain = world.createTerrain(scene, lidar, colors, regionData);
   heightAt = terrain.heightAt;
   rep.facts(geometryFacts({ terrain: terrain.mesh }));
+  if (terrain.region) {
+    rep.log(
+      `region — ${terrain.region.chunks} chunks, ` +
+        `${terrain.region.quads.toLocaleString()} quads of land, sea at ${
+          terrain.region.seaY.toFixed(1)} m`
+    );
+  }
   await rep.paint();
 
   /* ------------------------------------------------------------- massing */
   rep.phase("massing");
   await rep.paint();
   const built = createBuildings(scene, { campus, lidar, arcgis, colors, facades, heightAt });
+
+  /* The REGION's buildings, roads and water — everything outside the campus
+     box, which the campus's own sources say nothing about. Its own layer, like
+     Eighth's: it is 5,551 footprints on inherited (never measured) colour,
+     and being able to drop the whole lot is how you see what the regional
+     terrain underneath actually looks like. Only built when the regional
+     terrain is up — massing a town onto a world with no land under it would
+     hang 10,000 buildings on the campus sampler's edge clamp. */
+  const regionZone = new THREE.Group();
+  if (regionData) {
+    const regionBuilt = createRegionMassing(scene, {
+      regionOsm: data.regionOsm, regionHeights: data.regionRoofs,
+      heightAt, campusTerrain: lidar.terrain,
+    });
+    if (regionBuilt.counts.buildings || regionBuilt.counts.roads || regionBuilt.counts.water) {
+      regionZone.add(regionBuilt.group);
+      const c = regionBuilt.counts;
+      rep.log(
+        `region built — ${c.buildings.toLocaleString()} buildings, ` +
+          `${c.roads.toLocaleString()} road runs, ${c.water} water bodies · ` +
+          `${c.lidarRoofs.toLocaleString()} roofs measured · ` +
+          `${c.triangles.toLocaleString()} triangles in ${c.drawCalls} draw calls`
+      );
+    }
+  }
+  scene.add(regionZone);
   massInfo = built.info;
   /* Which roof, if any, is under the camera. Free roam's climb rate is scaled
      by the clearance to it, so hovering over Geisel is as finely controllable
@@ -504,6 +576,9 @@ export async function boot({ report } = {}) {
   );
   explore = createExplore({
     campus: { ...campus, places: placeable }, lidar, heightAt, solidAt,
+    /* With the region loaded this is the coastal extent, so free roam reaches
+       the beach instead of stopping at the old campus wall. */
+    coverage: terrain.coverage,
   });
   explore.speed = state.speed;
 
@@ -591,6 +666,18 @@ export async function boot({ report } = {}) {
        Q sends you up at thirty metres a second over a building the sampler could
        not see — so the coverage has to be checkable from the console. */
     probe: (x, z) => ({ ground: heightAt(x, z), roof: solidAt(x, z) }),
+    /* What the region actually put in the scene, and where the world now ends.
+       Exposed for the same reason `probe` is: from a screenshot you cannot
+       tell a regional hillside from the campus grid's own west edge draped in
+       satellite imagery, and "it looked right" is not a measurement. */
+    region: () => (terrain.region
+      ? {
+          ...terrain.region,
+          coverage: terrain.coverage,
+          /* Is there land here, sea here, or nothing at all? */
+          landAt: (x, z) => heightAt(x, z),
+        }
+      : null),
   };
 
   /* --------------------------------------------------------- first frame */
@@ -634,6 +721,7 @@ export async function boot({ report } = {}) {
       details: details.group,
       athletics: athleticsZone,
       eighth: eighthZone,
+      regionMassing: regionZone,
       labels: labels.group,
       ...(landmarksGroup ? { landmarks: landmarksGroup } : {}),
     },

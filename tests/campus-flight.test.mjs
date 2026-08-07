@@ -105,13 +105,32 @@ describe("climbRate is set by clearance, and grows with it", () => {
   });
 
   test("the curve hits the numbers it was specified with", () => {
+    /* Literal clearances, deliberately. This table used to key its last row on
+       HOVER_MAX, which quietly tied the shape of the climb CURVE to the height
+       of the CEILING — two independent things. Raising the ceiling for the
+       coastal region then failed this test even though the curve was untouched.
+       The curve is specified at fixed clearances; the ceiling is checked on its
+       own, below. */
     for (const [clearance, expected] of [
-      [2, 2.6], [10, 7], [50, 29], [110, 62], [HOVER_MAX, 496.5],
+      [2, 2.6], [10, 7], [50, 29], [110, 62], [900, 496.5],
     ]) {
       assert.ok(Math.abs(climbRate(clearance) - expected) < 0.05,
         `${clearance} m of clearance gives ${climbRate(clearance)} m/s, not ~${expected}`);
     }
     assert.equal(CLIMB_GAIN, 0.55);
+  });
+
+  test("the ceiling stays inside the speed cap the curve is clamped by", () => {
+    /* At the ceiling the climb rate must still be a rate and not the clamp —
+       if CLIMB_BASE + GAIN x HOVER_MAX ever reaches MAX_SPEED_MPS, the last
+       stretch of the climb goes constant-velocity and the "rate grows with
+       height" property the controls are built on stops holding at the top. */
+    const atCeiling = CLIMB_BASE_MPS + CLIMB_GAIN * HOVER_MAX;
+    assert.ok(
+      atCeiling < MAX_SPEED_MPS,
+      `climb at the ceiling (${atCeiling} m/s) has hit the ${MAX_SPEED_MPS} m/s clamp`
+    );
+    assert.ok(Math.abs(climbRate(HOVER_MAX) - atCeiling) < 1e-6);
   });
 
   test("shift doubles it, under the same cap travel obeys", () => {

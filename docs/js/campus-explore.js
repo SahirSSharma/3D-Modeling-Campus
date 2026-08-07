@@ -13,12 +13,22 @@
    that is the same world from higher up, which is the whole point of the
    control. */
 export const EYE = 1.65;
-/* 900 m stays: the measured world is ~3 km across and the whole of it already
-   fits in frame from here, so more altitude buys no more campus — it only
-   drags scaleAtmosphere's far plane out past 13 km for an emptier picture.
-   Nothing about the clearance-driven climb argues for changing it either;
-   because the rate grows with height the last 400 m cost about a second. */
-export const HOVER_MAX = 900;
+/* Raised from 900 m when the world went from the campus box to the coastal
+   region (2026-08-06).
+   The old value was not a taste call — it was derived: "the measured world is
+   ~3 km across and the whole of it already fits in frame from here." That
+   premise expired the moment the measured world became 7.2 km across. At
+   900 m the region is not merely hard to see, it is unreachable: the camera
+   sees ~1.9 km of ground and the land now runs four times that.
+   3,600 m is the altitude at which the region's full WIDTH fits the frame —
+   at this camera (68 degrees vertical, ~94 horizontal at 16:10) the ground
+   width in view is about 2.16x the height, and 2.16 x 3,600 = 7.8 km against
+   a 7.25 km region. Fitting its full HEIGHT too would want ~5,400 m, which
+   pushes the climb past the ten-second feel the flight tests pin and buys a
+   frame that is mostly ocean and haze.
+   The clearance-driven climb still holds: because the rate grows with height,
+   EYE to here takes ~12 s rather than ~10. */
+export const HOVER_MAX = 3600;
 
 /* The velocity slider is logarithmic: human speeds (1–2 m/s) need fine
    control and drone speeds do not, and on a linear slider walking pace would
@@ -102,11 +112,24 @@ export function climbRate(clearance, shift = false) {
  *   to stay usable without the massing (the Node tests build no buildings),
  *   and every caller that predates it keeps working unchanged.
  */
-export function createExplore({ campus, lidar, heightAt, solidAt }) {
+export function createExplore({ campus, lidar, heightAt, solidAt, coverage }) {
   const t = lidar.terrain;
+  /* Where the walk is allowed to go: one cell inside whatever has measured
+     ground under it.
+     `coverage` is passed by createTerrain and is the REGION's extent when the
+     region is loaded. Deriving this from lidar.terrain alone — as it did until
+     the region existed — leaves the walk clamped to the campus box while the
+     coast is plainly visible past it, which is a wall in the middle of a world
+     that visibly continues. Absent the region it is the campus grid, exactly
+     as before. */
+  const c = coverage || {
+    x0: t.x0, x1: t.x0 + (t.cols - 1) * t.cell,
+    z0: t.z0, z1: t.z0 + (t.rows - 1) * t.cell,
+  };
+  const inset = t.cell;
   const bounds = {
-    x0: t.x0 + t.cell, x1: t.x0 + (t.cols - 2) * t.cell,
-    z0: t.z0 + t.cell, z1: t.z0 + (t.rows - 2) * t.cell,
+    x0: c.x0 + inset, x1: c.x1 - inset,
+    z0: c.z0 + inset, z1: c.z1 - inset,
   };
 
   const self = {
@@ -218,9 +241,11 @@ export function createExplore({ campus, lidar, heightAt, solidAt }) {
   };
 
   /* The world ends where the measurements end. Walking past the edge of the
-     LiDAR grid puts the camera over unmeasured void that heightAt reports as
-     0 m — a cliff that exists in the data, not in La Jolla — so the edge is a
-     wall rather than a lie. */
+     measured ground puts the camera over unmeasured void that heightAt reports
+     from the nearest clamped sample — a plateau that exists in the data, not
+     in La Jolla — so the edge is a wall rather than a lie.
+     That edge is now the coastal region's, not the campus box's; see
+     `coverage` above. It moved outward, it did not stop being a wall. */
   function clamp() {
     self.x = Math.max(bounds.x0, Math.min(bounds.x1, self.x));
     self.z = Math.max(bounds.z0, Math.min(bounds.z1, self.z));
@@ -238,13 +263,25 @@ export function createExplore({ campus, lidar, heightAt, solidAt }) {
 export function scaleAtmosphere(scene, camera, hover) {
   const lift = Math.max(0, hover - EYE);
   scene.fog.near = 170 + lift * 4;
-  /* The world is now ~3 km across; from full height the whole of it must
+  /* The world is now ~7.2 km across; from full height the whole of it must
      clear the haze, so the far plane grows faster than it did when the data
      ended a few hundred metres out. */
   scene.fog.far = 640 + lift * 11;
   const far = 1100 + lift * 14;
-  if (Math.abs(camera.far - far) > 1) {
+  /* The near plane has to rise with it, and this is why.
+     Depth precision is governed by the RATIO far/near, not by far alone. At
+     the old 900 m ceiling that ratio topped out around 34,000; carrying a
+     0.4 m near plane to the new 3,600 m ceiling would take it past 128,000
+     and start eating the decal-stack's ordering at exactly the altitude where
+     whole neighbourhoods of coplanar ground are in frame at once.
+     Nothing needs 40 cm of near clipping from three kilometres up, so the near
+     plane follows the camera up and the ratio stays where it was. At eye level
+     `lift` is 0 and the near plane is untouched, so the walk — the thing the
+     ladder was tuned for — is bit-for-bit what it was. */
+  const near = Math.max(0.4, lift / 1000);
+  if (Math.abs(camera.far - far) > 1 || Math.abs(camera.near - near) > 0.05) {
     camera.far = far;
+    camera.near = near;
     camera.updateProjectionMatrix();
   }
 }
