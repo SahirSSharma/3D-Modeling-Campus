@@ -156,6 +156,13 @@ rather than silently going stale.
 
 Extracted from the TritonPlan repository, where it began as a dashboard tile.
 
+## Licence
+
+**Source-available, not open source.** Copyright © 2026 Sahir Sharma, all rights reserved —
+you may read this code, you may not copy, modify, redistribute or reuse it without written
+permission. See [LICENSE](LICENSE) for the exact terms and for the third-party components
+that carry their own.
+
 ## Data licences
 
 - Building outlines, paths, plazas and the campus boundary: © OpenStreetMap contributors, **ODbL**.

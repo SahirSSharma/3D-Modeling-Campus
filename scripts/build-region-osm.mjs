@@ -364,7 +364,7 @@ async function fetchOnce(bbox) {
       try {
         const res = await fetch(endpoint, {
           method: "POST",
-          headers: { "User-Agent": "campus-walk region-osm build (github.com/SahirSSharma)" },
+          headers: { "User-Agent": "3d-modeling-campus region-osm build (github.com/SahirSSharma)" },
           body: new URLSearchParams({ data: queryFor(bbox) }),
         });
         if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);

@@ -126,7 +126,7 @@ async function fetchRing(id) {
     try {
       const res = await fetch(host, {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded", "User-Agent": "campus-walk/1.0 (sahir.sharma@gmail.com)" },
+        headers: { "Content-Type": "application/x-www-form-urlencoded", "User-Agent": "3d-modeling-campus/1.0 (github.com/SahirSSharma/3D-Modeling-Campus)" },
         body: "data=" + encodeURIComponent(q),
       });
       if (!res.ok) { last = `${res.status} from ${new URL(host).host}`; await sleep(2000 * (attempt + 1)); continue; }

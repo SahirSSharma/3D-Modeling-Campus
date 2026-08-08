@@ -133,7 +133,7 @@ async function fetchOverpass(query) {
       try {
         const res = await fetch(endpoint, {
           method: "POST",
-          headers: { "User-Agent": "campus-walk satellite build (github.com/SahirSSharma)" },
+          headers: { "User-Agent": "3d-modeling-campus satellite build (github.com/SahirSSharma)" },
           body: new URLSearchParams({ data: query }),
         });
         if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);

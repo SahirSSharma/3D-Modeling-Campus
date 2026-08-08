@@ -1,0 +1,79 @@
+Copyright © 2026 Sahir Sharma. All rights reserved.
+
+This repository is published so that it can be read — as a portfolio and a
+reference work. It is SOURCE-AVAILABLE, NOT OPEN SOURCE. Publishing it grants
+no licence to use it.
+
+
+WHAT YOU MAY DO
+
+  - Read and study the source code, the data pipeline and the documentation.
+  - Fork the repository on GitHub, to the extent GitHub's Terms of Service
+    require that of public repositories.
+  - Quote short excerpts, with attribution, for commentary, review, teaching,
+    or academic citation.
+  - Visit and use the hosted site at
+    https://sahirssharma.github.io/3D-Modeling-Campus/
+
+
+WHAT YOU MAY NOT DO WITHOUT PRIOR WRITTEN PERMISSION
+
+  - Copy, reproduce or redistribute this work, in whole or in any substantial
+    part.
+  - Modify it, or create derivative works from it.
+  - Incorporate it, or any substantial part of it, into another project —
+    personal, academic, or commercial.
+  - Deploy, host, publish or distribute it, whether or not for a fee.
+  - Use it to train, fine-tune or evaluate machine learning models.
+
+No licence is granted by implication, estoppel, or otherwise. Rights not
+expressly granted above are reserved. To request permission, open an issue on
+this repository.
+
+THE WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE WORK OR THE USE OR OTHER DEALINGS IN THE WORK.
+
+
+THIRD-PARTY COMPONENTS AND DATA
+
+The terms above cover the original code and documentation in this repository
+ONLY. The following are not the author's to license, and their own terms
+govern them — those terms override everything above for the files named:
+
+  three.js — docs/vendor/three/
+      MIT Licence, © 2010-2024 three.js authors. The licence notice is
+      retained in the distributed file.
+
+  OpenStreetMap-derived data — building outlines, paths, plazas, names and the
+  campus boundary, in docs/data/campus-3d.json, docs/data/campus-boundary.json
+  and docs/data/region-osm.json
+      © OpenStreetMap contributors, Open Database Licence (ODbL) v1.0.
+      https://www.openstreetmap.org/copyright
+      These are derivative databases. Anyone redistributing them must do so
+      under ODbL, and that obligation runs with the files regardless of the
+      terms above.
+
+  USGS 3DEP aerial LiDAR (CA_SanDiegoQL2_2014) — heights, terrain, trees
+      Public domain (work of the U.S. Government).
+
+  USDA NAIP aerial imagery — the aerial colour base and minimap
+      Public domain (work of the U.S. Government).
+
+  UC San Diego facilities GIS — per-mass building geometry
+      Property of the University of California, San Diego, used here for
+      non-commercial academic work.
+
+  Satellite imagery — Imagery © Google (Map Tiles API) and, where selected,
+  Imagery © Apple (Maps Web Snapshot)
+      Governed by the Google Maps Platform Terms of Service and the Apple
+      MapKit JS terms respectively. NOT licensed for redistribution by this
+      repository or by anyone who obtains it from this repository. Imagery is
+      used at build time as a measurement source; the derived measurements —
+      not the pixels — are what this project publishes.
+
+This project is unofficial. It is not affiliated with, endorsed by, or
+operated by any university.

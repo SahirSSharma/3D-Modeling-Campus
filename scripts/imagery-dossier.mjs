@@ -173,7 +173,7 @@ if (GEOCODE) {
   for (const [i, row] of selected.entries()) {
     try {
       const u = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${row.lat}&lon=${row.lng}&zoom=18`;
-      const res = await fetch(u, { headers: { "User-Agent": "campus-walk/1.0 (UCSD 3D survey; contact via repo)" } });
+      const res = await fetch(u, { headers: { "User-Agent": "3d-modeling-campus/1.0 (UCSD 3D survey; contact via repo)" } });
       if (res.ok) {
         const j = await res.json();
         row.address = j.display_name ?? null;

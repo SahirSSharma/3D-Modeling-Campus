@@ -114,7 +114,7 @@ async function fetchOverpass() {
       try {
         const res = await fetch(endpoint, {
           method: "POST",
-          headers: { "User-Agent": "TritonPlan campus-3d build (github.com/SahirSSharma)" },
+          headers: { "User-Agent": "3d-modeling-campus campus-3d build (github.com/SahirSSharma)" },
           body: new URLSearchParams({ data: QUERY }),
         });
         if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
