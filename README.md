@@ -1,7 +1,6 @@
 # 3D Modeling Campus
 
-A browsable 3D model of a real university campus and the coastal region around it, built
-from public survey data rather than hand-modelled by eye. Every building height, every
+3D model of UCSD campus + surrounding La Jolla. Every building height, every
 tree and every ground colour in the world is a measurement with a source.
 
 **Live:** https://sahirssharma.github.io/3D-Modeling-Campus/
