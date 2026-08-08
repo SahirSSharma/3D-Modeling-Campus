@@ -54,4 +54,4 @@ http
       res.writeHead(404, { "content-type": "text/plain" }).end("not found");
     }
   })
-  .listen(PORT, () => console.log(`Campus Walk -> http://localhost:${PORT}`));
+  .listen(PORT, () => console.log(`3D Modeling Campus -> http://localhost:${PORT}`));

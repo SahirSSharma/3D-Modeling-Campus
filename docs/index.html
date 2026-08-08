@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Campus Walk</title>
+<title>3D Modeling Campus</title>
 <meta name="description" content="A walk across a real campus, built from aerial LiDAR and OpenStreetMap." />
 <meta name="color-scheme" content="light" />
 <link rel="icon" href="data:," />
@@ -14,7 +14,7 @@
 <canvas id="walk-canvas"></canvas>
 
 <div class="walk-title">
-  <h1>Campus Walk</h1>
+  <h1>3D Modeling Campus</h1>
   <p>The whole campus, North Torrey Pines Road to I-5. Massing from the university's own GIS,
      heights from aerial LiDAR, colours from aerial photography. Roam anywhere on it. L labels.</p>
 </div>
@@ -60,7 +60,7 @@
 <div class="walk-loading" id="walk-loading">
   <div class="boot">
     <header class="boot-head">
-      <h2>Campus Walk</h2>
+      <h2>3D Modeling Campus</h2>
       <p>Assembling the measured campus in your browser &mdash; massing from the university's own GIS,
          heights from aerial LiDAR, colours from aerial photography.</p>
     </header>
@@ -124,7 +124,7 @@
   } catch (err) {
     /* A blank rectangle is the worst possible failure here: it looks like a
        slow load, forever. Say what actually broke. */
-    console.error('Campus Walk failed to start', err);
+    console.error('3D Modeling Campus failed to start', err);
     report.fail(`${err.message}. It needs a browser with WebGL.`);
   }
 
@@ -178,7 +178,7 @@
     requestAnimationFrame(tick);
 
     console.info(
-      `Campus Walk — ${walk.masses} building masses in ${walk.drawCalls} draw calls · ` +
+      `3D Modeling Campus — ${walk.masses} building masses in ${walk.drawCalls} draw calls · ` +
       `${walk.ground} ground polygons · ${walk.trees} trees`
     );
   }

@@ -1,7 +1,7 @@
 # Gauntlet Loop Prompt
 
 Hand this to the gauntletloop (Fable 5, multi-agent workflows/sub-agent teams) tasked with
-driving Campus Walk to total measured accuracy — elevation, scale, color, placement — across
+driving 3D Modeling Campus to total measured accuracy — elevation, scale, color, placement — across
 the whole surveyed campus. It is written in the project's own vocabulary (the two-source rule,
 the epoch rule, fit-error/coverage gates, "better absent than wrong") so fixes stay consistent
 with `README.md` instead of drifting into generic photorealism.
@@ -10,7 +10,7 @@ with `README.md` instead of drifting into generic photorealism.
 
 ## Mandate
 
-Campus Walk claims to be "built from measurements rather than impressions." Your job is to find
+3D Modeling Campus claims to be "built from measurements rather than impressions." Your job is to find
 every place that claim is currently false and make it true — building by building, path by path,
 tree by tree, sports surface by sports surface, across the full ~3 km surveyed area — until a
 full sweep turns up nothing. Not "looks close." Not "plausible." Measured, cited, and pinned by a
@@ -261,7 +261,7 @@ A region only counts as done when ALL of:
 - Eye-level walkthrough at the entity's location confirms plausibility.
 - README updated in its existing voice (source, what was wrong, measured correction — matching
   the Argo/Blake table and RIMAC-section style), not a generic changelog line.
-- Deployed and confirmed live at `https://sahirssharma.github.io/campus-walk/` before being
+- Deployed and confirmed live at `https://sahirssharma.github.io/3D-Modeling-Campus/` before being
   reported as done.
 
 ## Running this on Cursor (single agent, no fan-out)

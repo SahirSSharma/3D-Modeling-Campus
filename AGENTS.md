@@ -1,4 +1,4 @@
-# Campus Walk — instructions for any agent working in this repo
+# 3D Modeling Campus — instructions for any agent working in this repo
 
 Cursor reads this file; Claude Code reads it too. It exists so a headless agent
 inherits this project's gates instead of only the global operating model in
@@ -51,7 +51,7 @@ report a result you did not actually run.
 ## Publishing
 
 **Do not push and do not deploy.** This site is live at
-`https://sahirssharma.github.io/campus-walk/`; shipping is Sahir's explicit
+`https://sahirssharma.github.io/3D-Modeling-Campus/`; shipping is Sahir's explicit
 call, every time. Local commits are fine. During a gauntlet run a `pre-push`
 hook is armed and will reject you — do not work around it or delete
 `gauntlet-loop/.no-push`.

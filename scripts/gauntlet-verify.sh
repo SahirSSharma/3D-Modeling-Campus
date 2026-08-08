@@ -77,12 +77,12 @@ for id in "${PANEL_IDS[@]}"; do
   VERDICT="$OUT/verdict-$id.md"
   echo "[verify] panel: $id ($MODEL)"
 
-  PROMPT="You are ONE member of a review panel judging whether Campus Walk is finished.
+  PROMPT="You are ONE member of a review panel judging whether 3D Modeling Campus is finished.
 Other agents on other models are answering the same question independently. Do
 not try to agree with them; your value here is an independent read.
 
 THE CLAIM UNDER TEST
-Campus Walk claims to be 'built from measurements rather than impressions',
+3D Modeling Campus claims to be 'built from measurements rather than impressions',
 across the whole surveyed campus — elevation, scale, colour, placement. A
 gauntlet loop has just swept every shard and reports itself finished. Your job
 is to find where that claim is still false.
