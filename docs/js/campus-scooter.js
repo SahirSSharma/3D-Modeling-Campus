@@ -1,16 +1,22 @@
-// The scooter run: Argo Hall to Peterson Hall, as its own world.
+// The scooter run: the Eighth College courts to Peterson Hall, as its own world.
 //
 // WHY THIS IS NOT campus-walk.js WITH A FLAG. Free roam boots ~10 MB and hands
-// you the whole campus at 110 m. This boots one 780 KB crop
-// (corridor-argo-peterson.json) and puts you on a deck at eye level, on one
+// you the whole campus at 110 m. This boots one 1.5 MB crop
+// (corridor-eighth-peterson.json) and puts you on a deck at eye level, on one
 // route, with a finish line. Almost nothing the two modes do at boot is the
 // same thing, and threading a mode flag through 750 lines of the other file
 // would have made both harder to read to save a file.
 //
-// What IS shared is everything that draws the world: campus-world.js builds
-// the terrain, buildings, ground and trees here from cropped data that has the
-// same shape as the campus-wide data, so there is exactly one implementation of
-// "how a measured building looks" and this mode cannot drift from it.
+// What IS shared is everything that draws the world: campus-world.js,
+// campus-massing.js, campus-details.js, campus-eighth.js, campus-landmarks.js
+// and campus-markings.js all build here from cropped data that has the same
+// shape as the campus-wide data, so there is exactly one implementation of "how
+// a measured building looks" and this mode cannot drift from it.
+//
+// Three cameras, one at a time (camMode): the opening orbit, the chase camera
+// that is the game, and a detached flythrough for looking at the map fast. The
+// ride only advances in chase — the other two freeze it, so neither the intro
+// nor an inspection flight can move the scooter or the clock.
 //
 // What is deliberately NOT shared is the look. The corridor is art-directed —
 // shadows, tone mapping, a tighter sky — because it is a game and it is meant
@@ -19,12 +25,27 @@
 import * as THREE from "../vendor/three/three.module.min.js";
 import * as world from "./campus-world.js";
 import { createBuildings } from "./campus-massing.js";
+import { createDetails } from "./campus-details.js";
+import { createMarkings } from "./campus-markings.js";
+import { createLabels, createLandmarks } from "./campus-landmarks.js";
+import { createEighth } from "./campus-eighth.js";
+import { createEighthFurniture } from "./campus-eighth-furniture.js";
 import { OVERLAY, overlayLift, applyOverlayDepth } from "./campus-overlay.js";
 import { nullReporter } from "./campus-boot.js";
 import { createRide, positionAt, laneCentre } from "./scooter-ride.js";
 import { createScooter, createObstacle, coinFactory } from "./scooter-model.js";
 
-const DATA_FILE = "corridor-argo-peterson.json";
+/* The corridors this module can boot, keyed by the ?mode= that asks for one.
+   Same renderer, same ride, same everything — a different cut of the same
+   measured campus. `staging` is the work zone: it exists so a change can be
+   tried on a real route and looked at on the live site without touching the
+   run people ride. Keep this table in step with ROUTES in
+   scripts/build-corridor.mjs; the builder stamps its key into built.target and
+   boot() refuses a file that does not match. */
+const CORRIDORS = {
+  scooter: { file: "corridor-eighth-peterson.json", staging: false },
+  staging: { file: "corridor-argo-peterson.json", staging: true },
+};
 
 /* The chase camera. Far enough back that the next obstacle group is on screen
    with time to pick a lane at the ES2's 6.9 m/s, close enough that the scooter
@@ -86,6 +107,7 @@ let skyDome = null;
 let hemi = null;
 
 let renderer, scene, camera, heightAt, ride, doc, scooter;
+let labels = null;
 let hud = null;
 const held = new Set();
 let last = 0;
@@ -364,7 +386,7 @@ function createProps(scene, route, game) {
 
 /* ---------------------------------------------------------------- the HUD */
 
-function bindHud() {
+function bindHud(mode) {
   const el = (id) => document.getElementById(id);
   const node = {
     root: el("ride-hud"),
@@ -375,9 +397,20 @@ function bindHud() {
     flash: el("ride-flash"),
     finish: el("ride-finish"),
     finishBody: el("ride-finish-body"),
+    fly: el("ride-fly"),
   };
   if (!node.root) return null;
   node.root.hidden = false;
+
+  /* "Run it again" has to come back to the corridor you were actually on —
+     the markup can only name one, and on staging that would quietly bounce
+     you into the shipped run. */
+  const again = document.getElementById("ride-again");
+  if (again) again.href = `?mode=${mode}`;
+  /* The staging badge. This corridor is reachable from the live site, so it
+     says on screen that it is the work zone and not the run. */
+  const badge = document.getElementById("ride-staging");
+  if (badge) badge.hidden = mode !== "staging";
 
   /* The sky toggle is a button as well as a key. T is faster once you know
      it; the button is how you find out it exists. */
@@ -387,7 +420,20 @@ function bindHud() {
   let lastHitAt = -1;
 
   return {
+    /* The HUD says which camera you are in, because a screenshot otherwise
+       cannot tell a paused inspection flight from a run going badly. */
+    setMode(mode) {
+      node.root.dataset.mode = mode;
+      if (node.fly) {
+        node.fly.hidden = mode !== "flythrough";
+        node.fly.textContent = `flythrough · ${Math.round(fly.s)} m · [ ] to scrub · F to ride`;
+      }
+    },
     update(now) {
+      if (camMode === "flythrough") {
+        node.fly.textContent = `flythrough · ${Math.round(fly.s)} m · [ ] to scrub · F to ride`;
+        return;
+      }
       const s = ride.status();
       node.clock.textContent = s.clock.toFixed(1);
       node.coins.textContent = String(s.coins);
@@ -429,6 +475,7 @@ function bindHud() {
  * update, which is the difference between "responsive" and "sometimes
  * ignores you". */
 const releasing = new Set();
+const drag = { on: false, x: 0, y: 0 };
 
 function drainReleases() {
   if (!releasing.size) return;
@@ -453,15 +500,39 @@ function bindInput(canvas) {
        is a game the second mode is hard to reach from. */
     if (k === "escape") location.search = "";
     if (k === "t") toggleSky();
+    if (k === "l" && labels) labels.visible = !labels.visible;
+    if (k === "f") toggleFly();
+    /* Scrub the free camera along the route — the reason it exists is to get
+       to the stretch you are working on without riding there. */
+    if (camMode === "flythrough" && (k === "[" || k === "]")) {
+      flyTo(fly.s + (k === "]" ? 60 : -60));
+    }
+    /* Anything else skips the intro. Deliberately last, so the keys above keep
+       their own meaning on the frame they also cut the orbit short. */
+    if (camMode === "intro") endIntro();
   });
   addEventListener("keyup", (e) => releasing.add(e.key.toLowerCase()));
   addEventListener("blur", () => { held.clear(); releasing.clear(); });
   /* Tap the left or right half of the canvas to change lane, and the top
      third to hop, so this is playable on a phone without a keyboard. */
   canvas.addEventListener("pointerdown", (e) => {
+    if (camMode === "intro") { endIntro(); return; } // a tap skips it too
+    if (camMode === "flythrough") { drag.on = true; drag.x = e.clientX; drag.y = e.clientY; return; }
     if (e.clientY < canvas.clientHeight / 3) tap(" ");
     else tap(e.clientX < canvas.clientWidth / 2 ? "a" : "d");
   });
+
+  /* Drag to look, in flythrough only — the chase camera aims itself. */
+  canvas.addEventListener("pointermove", (e) => {
+    if (!drag.on || camMode !== "flythrough") return;
+    fly.yaw -= (e.clientX - drag.x) * 0.004;
+    fly.pitch = Math.max(-1.4, Math.min(1.0, fly.pitch - (e.clientY - drag.y) * 0.003));
+    drag.x = e.clientX;
+    drag.y = e.clientY;
+  });
+  for (const ev of ["pointerup", "pointercancel", "pointerleave"]) {
+    canvas.addEventListener(ev, () => { drag.on = false; });
+  }
 }
 
 /* --------------------------------------------------------------- the frame */
@@ -478,6 +549,160 @@ function resize() {
 let props = null;
 let spin = 0;
 let bank = 0;
+
+/* -------------------------------------------------------- the camera modes */
+
+/* Three states, and only one of them is the game.
+ *
+ *   intro      the opening 360° around the scooter. The ride is frozen.
+ *   chase      the run itself.
+ *   flythrough map inspection. The ride is frozen — deliberately, so this can
+ *              never be a way to move the scooter or the clock.
+ *
+ * Held here rather than as three booleans because they are mutually exclusive
+ * and a pair of booleans is how you end up orbiting and flying at once. */
+let camMode = "intro";
+
+/* The opening shot. Seven seconds is long enough to read the court you are
+   standing on and short enough that a second run does not resent it; the arc
+   from 4.4 m down to 2.2 m ends near the chase camera's own height, so the
+   hand-off is a settle rather than a cut. */
+const INTRO_S = 7;
+const INTRO_RADIUS_M = 9;
+const INTRO_Y_FROM = 4.4;
+const INTRO_Y_TO = 2.2;
+let introT = 0;
+
+/* Inspection speed. 45 m/s crosses the whole 1,060 m route in 24 s, which is
+   the point — the ride takes nearly three minutes. */
+const FLY_SPEED_MPS = 45;
+/* Not SHIFT_MULT. campus-explore.js owns that name and
+   tests/campus-gameplay.test.mjs asserts it is the only file that declares it;
+   a second declaration here would fail that test for a good reason. */
+const FLY_BOOST = 2.5;
+const fly = { x: 0, y: 0, z: 0, yaw: 0, pitch: -0.1, s: 0 };
+
+const easeInOut = (u) => (u < 0.5 ? 2 * u * u : 1 - ((-2 * u + 2) ** 2) / 2);
+
+/** The chase camera's ideal pose for the rider's current position. */
+function chasePose(p) {
+  const behind = {
+    x: p.x - p.tangent.x * CHASE_BACK_M,
+    z: p.z - p.tangent.z * CHASE_BACK_M,
+  };
+  const ahead = positionAt(
+    doc.route, Math.min(doc.route.metres, ride.s + CHASE_LOOK_AHEAD_M), ride.laneX * 0.5
+  );
+  return {
+    pos: new THREE.Vector3(behind.x, heightAt(behind.x, behind.z) + CHASE_UP_M + ride.y * 0.4, behind.z),
+    aim: new THREE.Vector3(ahead.x, heightAt(ahead.x, ahead.z) + 1.25, ahead.z),
+  };
+}
+
+/**
+ * The opening orbit.
+ *
+ * Circles the parked scooter once and hands over to the chase camera. The ride
+ * is not running — `started` gates that — so the clock reads 0.0 throughout and
+ * nobody loses time to the cinematography.
+ */
+function stepIntro(dt) {
+  introT += dt;
+  const u = Math.min(1, introT / INTRO_S);
+  const p = ride.position();
+  const gy = heightAt(p.x, p.z);
+
+  /* Start behind the scooter and go all the way round, eased at both ends so
+     it does not jerk into motion or stop dead on the hand-off. */
+  const angle = p.heading + Math.PI + easeInOut(u) * Math.PI * 2;
+  const y = INTRO_Y_FROM + (INTRO_Y_TO - INTRO_Y_FROM) * easeInOut(u);
+  const orbit = new THREE.Vector3(
+    p.x + Math.sin(angle) * INTRO_RADIUS_M,
+    gy + y,
+    p.z + Math.cos(angle) * INTRO_RADIUS_M
+  );
+
+  /* Over the last fifth, blend the orbit into the chase pose so the run opens
+     already moving the way it will keep moving. */
+  const hand = Math.max(0, (u - 0.8) / 0.2);
+  const chase = chasePose(p);
+  camPos.copy(orbit).lerp(chase.pos, easeInOut(hand));
+  camAim.set(p.x, gy + 1.1, p.z).lerp(chase.aim, easeInOut(hand));
+  camera.position.copy(camPos);
+  camera.lookAt(camAim);
+  trackSun(p.x, gy, p.z);
+  /* Keep the panel honest during the orbit. It used to sit on whatever the
+     static HTML said, which meant the intro announced the previous route's
+     length for seven seconds before the first real frame corrected it. */
+  hud?.update(performance.now());
+
+  if (u >= 1) endIntro();
+}
+
+/** Skip or finish the intro: seat the chase camera and start the clock. */
+function endIntro() {
+  if (camMode !== "intro") return;
+  camMode = "chase";
+  const chase = chasePose(ride.position());
+  camPos.copy(chase.pos);
+  camAim.copy(chase.aim);
+  started = true;
+  hud?.setMode("chase");
+}
+
+/** Free camera for looking at the map. The ride is paused while it is up. */
+function stepFly(dt) {
+  const boost = held.has("shift") ? FLY_BOOST : 1;
+  const v = FLY_SPEED_MPS * boost * dt;
+  const fwd = { x: Math.sin(fly.yaw), z: Math.cos(fly.yaw) };
+  const rgt = { x: Math.cos(fly.yaw), z: -Math.sin(fly.yaw) };
+  if (held.has("w") || held.has("arrowup")) { fly.x += fwd.x * v; fly.z += fwd.z * v; }
+  if (held.has("s") || held.has("arrowdown")) { fly.x -= fwd.x * v; fly.z -= fwd.z * v; }
+  if (held.has("a") || held.has("arrowleft")) { fly.x -= rgt.x * v; fly.z -= rgt.z * v; }
+  if (held.has("d") || held.has("arrowright")) { fly.x += rgt.x * v; fly.z += rgt.z * v; }
+  if (held.has("e")) fly.y += v;
+  if (held.has("q")) fly.y -= v;
+
+  /* Never below the ground you are inspecting. */
+  fly.y = Math.max(heightAt(fly.x, fly.z) + 1.5, fly.y);
+
+  camera.position.set(fly.x, fly.y, fly.z);
+  const flat = Math.cos(fly.pitch) * 14;
+  camera.lookAt(
+    fly.x + Math.sin(fly.yaw) * flat,
+    fly.y + Math.sin(fly.pitch) * 14,
+    fly.z + Math.cos(fly.yaw) * flat
+  );
+  trackSun(fly.x, heightAt(fly.x, fly.z), fly.z);
+  hud?.update(performance.now());
+}
+
+/** Jump the free camera to a distance along the route. */
+function flyTo(s) {
+  fly.s = Math.max(0, Math.min(doc.route.metres, s));
+  const p = positionAt(doc.route, fly.s, 0);
+  fly.x = p.x - p.tangent.x * 14;
+  fly.z = p.z - p.tangent.z * 14;
+  fly.y = heightAt(fly.x, fly.z) + 8;
+  fly.yaw = p.heading;
+  fly.pitch = -0.18;
+}
+
+function toggleFly() {
+  if (camMode === "intro") endIntro();
+  if (camMode === "flythrough") {
+    camMode = "chase";
+    started = true;
+    const chase = chasePose(ride.position());
+    camPos.copy(chase.pos);
+    camAim.copy(chase.aim);
+  } else {
+    camMode = "flythrough";
+    started = false; // the run and its clock stop dead
+    flyTo(ride.s);
+  }
+  hud?.setMode(camMode);
+}
 
 function step(dt, now) {
   const prevLaneX = ride.laneX;
@@ -529,20 +754,30 @@ function frame(now) {
   requestAnimationFrame(frame);
   const dt = Math.min(0.05, (now - last) / 1000 || 0);
   last = now;
-  if (started) step(dt, now);
+  if (camMode === "intro") stepIntro(dt);
+  else if (camMode === "flythrough") stepFly(dt);
+  else if (started) step(dt, now);
+  labels?.update(camera);
   renderer.render(scene, camera);
 }
 
 /* ---------------------------------------------------------------- the boot */
 
-export async function boot({ report } = {}) {
+export async function boot({ report, mode = "scooter" } = {}) {
   const rep = report || nullReporter();
+  const corridor = CORRIDORS[mode] || CORRIDORS.scooter;
 
   rep.phase("data");
   await rep.paint();
-  const res = await fetch(new URL(`../data/${DATA_FILE}`, import.meta.url));
-  if (!res.ok) throw new Error(`${DATA_FILE} is missing — run npm run build:corridor`);
+  const res = await fetch(new URL(`../data/${corridor.file}`, import.meta.url));
+  if (!res.ok) throw new Error(`${corridor.file} is missing — run npm run build:corridor`);
   doc = await res.json();
+  /* The two corridors are the same document shape, so loading the wrong one
+     produces a world that is merely a different route rather than an error.
+     The builder stamps which it is; say so out loud instead. */
+  if (doc.built?.target && doc.built.target !== mode) {
+    throw new Error(`${corridor.file} was built for ?mode=${doc.built.target}, not ${mode}`);
+  }
   rep.log(`${doc.route.metres} m · ${doc.route.from} to ${doc.route.to}`);
   rep.log(`${doc.campus.buildings.length} buildings · ${doc.lidar.trees.length} trees`);
   rep.log(`${doc.game.obstacles.length} obstacles · ${doc.game.coins.length} coins (invented)`);
@@ -609,12 +844,64 @@ export async function boot({ report } = {}) {
   rep.phase("trees");
   await rep.paint();
   const trees = world.createTrees(scene, doc.lidar, heightAt, {
-    campus3d: doc.campus, arcgis: doc.arcgis,
+    campus3d: doc.campus, arcgis: doc.arcgis, markings: doc.markings,
   });
   trees.group?.traverse((o) => { if (o.isMesh) o.castShadow = true; });
 
   rep.phase("detail");
   await rep.paint();
+
+  /* THE MEASURED DETAIL. Free roam has built all of this since long before
+     there was a scooter; this mode simply was not calling any of it, which is
+     why the route read as empty pavement between massing blocks. Every builder
+     below is unchanged, takes the cropped data, and no-ops quietly when its
+     survey file is absent. Each gets its own dev-panel layer, because being
+     able to switch one off is how the last pass's invisible lane ribbon was
+     found. */
+  const details = createDetails(scene, doc.campus, heightAt);
+  details.group?.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+
+  /* Eighth College. NOT optional on the route that starts there: the ride
+     begins dead centre on its basketball court and the intro orbits that spot
+     for seven seconds, so without this the run opens on a blank grey slab.
+     The staging corridor never reaches Eighth, and its crop carries no survey
+     of it — `doc.eighth` is null and this builds nothing. */
+  const eighthZone = new THREE.Group();
+  for (const made of doc.eighth ? [
+    createEighth(scene, { campus: doc.campus, arcgis: doc.arcgis, eighth: doc.eighth, markings: doc.markings, heightAt }),
+    createEighthFurniture(scene, { arcgis: doc.arcgis, eighth: doc.eighth, heightAt }),
+  ] : []) {
+    /* Some builders hand back { group }, some the Object3D — the same
+       both-shapes lesson campus-walk.js:531-538 records. */
+    const obj = made?.group ?? (made?.isObject3D ? made : null);
+    if (obj) eighthZone.add(obj);
+  }
+  scene.add(eighthZone);
+
+  /* Measured painted markings, and the campus's own landmarks — the Sun God,
+     the fountains, Snake Path. Both quiet no-ops when their file is missing. */
+  createMarkings(scene, heightAt, doc.markings);
+  let landmarksGroup = null;
+  if (doc.landmarks) {
+    landmarksGroup = createLandmarks(scene, doc.landmarks, {
+      origin: doc.campus.origin,
+      heightAt,
+      roofTopOf: (name) => {
+        let best = null;
+        for (const [n, entry] of built.info) {
+          if (n.startsWith(name) && (!best || entry.topY > best.topY)) best = entry;
+        }
+        return best;
+      },
+    });
+  }
+
+  /* Building names, in the ride style: constant-screen-size pills that fade in
+     as they come into range, so you can read what you are passing at 25 km/h
+     instead of squinting at a roof sign that only gets legible once it is
+     behind you. `L` toggles them, same key as free roam. */
+  labels = createLabels(scene, built.info, { style: "ride" });
+
   ride = createRide({ route: doc.route, game: doc.game });
   const route = new THREE.Group();
   createRibbon(route, doc.route, doc.game);
@@ -625,7 +912,8 @@ export async function boot({ report } = {}) {
 
   rep.phase("chrome");
   await rep.paint();
-  hud = bindHud();
+  hud = bindHud(mode);
+  hud?.setMode("intro");
   bindInput(canvas);
   addEventListener("resize", resize);
   resize();
@@ -636,34 +924,52 @@ export async function boot({ report } = {}) {
      bug even when it settles correctly half a second later. */
   const start = ride.position();
   const sy = heightAt(start.x, start.z);
-  camPos.set(start.x - start.tangent.x * CHASE_BACK_M, sy + CHASE_UP_M, start.z - start.tangent.z * CHASE_BACK_M);
-  camAim.set(start.x, sy + 1.25, start.z);
   scooter.group.position.set(start.x, sy, start.z);
   scooter.group.rotation.y = start.heading;
   trackSun(start.x, sy, start.z);
-  camera.position.copy(camPos);
-  camera.lookAt(camAim);
+
+  /* Open on the orbit, parked in the middle of the basketball court, with the
+     ride NOT running — `started` stays false until stepIntro hands over, so
+     the clock reads 0.0 for the whole seven seconds. Seat the camera at the
+     orbit's first frame rather than at the chase pose, or the intro begins
+     with a jump cut from behind the scooter to beside it. */
+  camMode = "intro";
+  introT = 0;
+  stepIntro(0);
   renderer.render(scene, camera);
   await rep.paint();
 
   last = performance.now();
-  started = true;
   frame(last);
+
+  /* The scripting seam, same idea as campus-walk.js's __campusWalk: the
+     verification harnesses drive the mode through this rather than through a
+     second code path that could be right about things the site gets wrong. */
+  window.__campusScooter = {
+    get camera() { return camera; },
+    get mode() { return camMode; },
+    scene, ride, labels,
+    flyTo, toggleFly, toggleSky, endIntro,
+  };
 
   return {
     masses: built.masses,
     drawCalls: built.drawCalls,
-    ground: doc.arcgis.ground.length,
+    ground: doc.arcgis.ground.filter(Boolean).length,
     trees: trees.count ?? 0,
-    landmarks: 0,
+    landmarks: doc.landmarks?.landmarks?.length ?? 0,
     layers: {
       terrain: terrain.mesh,
       buildings: built.group,
       ground: surfaces,
       trees: trees.group,
+      details: details.group,
+      eighth: eighthZone,
       route,
       props: props.group,
       scooter: scooter.group,
+      ...(labels ? { labels: labels.group } : {}),
+      ...(landmarksGroup ? { landmarks: landmarksGroup } : {}),
       ...(skyline ? { skyline } : {}),
     },
     status() {

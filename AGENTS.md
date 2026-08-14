@@ -34,11 +34,26 @@ inherits this project's gates instead of only the global operating model in
   tolerance, leave it unbuilt and say so. Do not fill the gap with a plausible
   guess.
 - **Never loosen a gate to make a fix pass.**
+- **Work in progress goes to `?mode=staging`, not to the run.** There are two
+  corridors and `scripts/build-corridor.mjs` builds both from one `ROUTES`
+  table: `corridor-eighth-peterson.json` is the run people ride, and
+  `corridor-argo-peterson.json` is the workbench. Try things on staging. It is
+  allowed to be broken; the run is not. Staging is **not** exempt from any gate
+  — the same `--check` and the whole of `tests/corridor.test.mjs` run over both
+  — it is exempt only from being finished. Each file is stamped with
+  `built.target` and both the builder and `campus-scooter.js` refuse a mismatch,
+  because the two documents are otherwise identical in shape and loading the
+  wrong one is silent.
 - **The scooter run's props are the only invented entities, and they stay
-  quarantined.** `docs/data/corridor-argo-peterson.json` is a CROP of the
-  measured files — if `scripts/build-corridor.mjs` ever emits a ring, height,
-  tree or colour that is not copied verbatim from its parent, it is broken, and
-  its `--check` fails on exactly that. Its obstacles and coins are invented and
+  quarantined.** Both corridor files are a CROP of the measured files — if
+  `scripts/build-corridor.mjs` ever emits a ring, height, tree or colour that is
+  not copied verbatim from its parent, it is broken, and its `--check` fails on
+  exactly that. **Never compact `arcgis.ground` or
+  `arcgis.massing` in that crop.** `campus-eighth.js` addresses those arrays by
+  literal index (a hard-coded `1761`, plus every `arcgis.ground#NNNN`
+  registration in `campus-eighth.json`), so a renumbering rebuilds Eighth
+  College out of the wrong polygons with nothing on screen to say so. Dropped
+  slots are `null`; consumers guard for the hole. Its obstacles and coins are invented and
   live under the single `game` key: seeded from a pinned constant, never read by
   a measured consumer, and labelled as invented in the file, the README and the
   on-screen HUD. Do not widen that key's reach, and do not let anything under it

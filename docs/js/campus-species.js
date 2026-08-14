@@ -107,6 +107,7 @@ export function treeExclusionZones({ campus3d, arcgis, markings } = {}) {
      Outer ring only, scaled to metres, matching how OSM rings (holes
      dropped at build) already behave. */
   for (const m of arcgis?.massing || []) {
+    if (!m) continue; // hole from an index-stable crop
     add((m.r?.[0] || []).map(([x, z]) => [x / 10, z / 10]), "building", WALL_MARGIN, m.n);
   }
   for (const f of markings?.facilities || []) add(f.bounds, "sports", PAD_MARGIN, f.name);

@@ -344,6 +344,13 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
   /* -------- 1. facilities massing parts (primary) -------- */
   const gis = arcgis?.massing || [];
   gis.forEach((m, i) => {
+    /* A HOLE left by an index-stable crop — see campus-ground.js's
+       prepareGround. Skip it entirely: `covered` is a bag of real rings that
+       ringCoveredBy tests points against, and a null in there is a crash, not
+       a gap. The index-parallel lookup that USED to be derived from this array
+       is built from `gis` itself now (gisCentroids, below), so shortening
+       `covered` here is safe. Campus mode has no holes. */
+    if (!m?.r?.[0]) return;
     const rings = m.r.map((ring) => ring.map(([x, z]) => [x / 10, z / 10]));
     covered.push(rings[0]);
     masses.push({
@@ -454,7 +461,20 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
      host rename below must know, because a name may only move onto the
      massing when its own ring does NOT render (r2c1 judge sweep). */
   const renderedOsm = new Set();
-  const gisCentroids = covered.map((r) => centroidOf(r));
+  /* Indexed by `gis`, not by `covered`.
+   *
+   * These are read back as gisCentroids[gi] against a `gis` index, so the two
+   * arrays have to agree position for position. They used to be derived from
+   * `covered`, which was the same thing only because every mass pushed exactly
+   * one ring — an invariant an index-stable crop breaks by skipping holes.
+   * Deriving from `gis` says what is actually meant and cannot drift.
+   *
+   * NaN for a hole: every downstream test is a comparison or an inRing, and
+   * both are false against NaN, so a cropped-away mass excludes itself from
+   * wing detection and name carrying without a guard at each site. */
+  const gisCentroids = gis.map((m) => (m?.r?.[0]
+    ? centroidOf(m.r[0].map(([x, z]) => [x / 10, z / 10]))
+    : [NaN, NaN]));
   /* Twin identity (r1c2 case-fold, r1c1 pass-2 abbrev/punct): OSM and the
      facilities inventory disagree on capitalisation ("building 3" vs
      "Building 3") and on abbreviations / punctuation ("Canyonview
@@ -474,7 +494,7 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
     if (b.n) {
       let wings = 0;
       for (let gi = 0; gi < gis.length; gi++) {
-        const gn = gis[gi].n;
+        const gn = gis[gi]?.n;
         if (!gn || !isWingPrefix(gn, b.n)) continue;
         if (inRing(gisCentroids[gi][0], gisCentroids[gi][1], b.p)) wings++;
         if (wings >= 2) break;
@@ -500,9 +520,9 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
     const [bcx, bcz] = centroidOf(b.p);
     const nameCarried = !b.n ||
       gisCentroids.some(([x, z]) => inRing(x, z, b.p)) ||
-      gis.some((m, gi) => m.n && namesMatch(m.n, b.n) &&
+      gis.some((m, gi) => m?.n && namesMatch(m.n, b.n) &&
         Math.hypot(gisCentroids[gi][0] - bcx, gisCentroids[gi][1] - bcz) < 150) ||
-      gis.some((m, gi) => m.n && !namesMatch(m.n, b.n) &&
+      gis.some((m, gi) => m?.n && !namesMatch(m.n, b.n) &&
         (m.n.toLowerCase().endsWith(` - ${b.n.toLowerCase()}`) ||
           m.n.toLowerCase().endsWith(` ${b.n.toLowerCase()}`)) &&
         Math.hypot(gisCentroids[gi][0] - bcx, gisCentroids[gi][1] - bcz) < 150);

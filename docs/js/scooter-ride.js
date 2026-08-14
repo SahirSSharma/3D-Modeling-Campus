@@ -119,7 +119,7 @@ export function positionAt(route, s, laneX = 0) {
 /**
  * Create a run.
  *
- * `route` and `game` come straight out of corridor-argo-peterson.json. Nothing
+ * `route` and `game` come straight out of corridor-eighth-peterson.json. Nothing
  * is mutated on them — the arrays are read through cursors, and what has been
  * taken is tracked here, so the same loaded file can start a second run.
  */

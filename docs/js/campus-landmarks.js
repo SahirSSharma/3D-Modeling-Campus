@@ -21,43 +21,134 @@ import * as THREE from "../vendor/three/three.module.min.js";
 const LABEL_RANGE = 240;   // metres; beyond this a label is noise
 const LABEL_MAX = 26;      // at most this many at once
 
-function labelSprite(name) {
-  const pad = 8;
-  const font = "600 22px Arial, Helvetica, sans-serif";
+/* Two looks, because the two modes read labels from completely different
+ * distances and speeds.
+ *
+ *   plate — free roam's original. A hard-edged panel with a gold left rule,
+ *           sized in WORLD metres, so it shrinks with distance the way a sign
+ *           bolted to the roof would. Correct for a surveyor 110 m up.
+ *   ride  — the scooter run's. A rounded pill at a CONSTANT SCREEN size, fading
+ *           in as it comes into range and out again at the edge. At 6.9 m/s at
+ *           eye level a world-scaled label is unreadable until you are already
+ *           past the building, which is the wrong half of the ride to read it.
+ */
+const LABEL_STYLES = {
+  plate: {
+    range: LABEL_RANGE, max: LABEL_MAX, stride: 20, screenSpace: false, fade: 0,
+    /* Four metres clear of the roofline — read from above, where free roam is. */
+    anchor: (at) => at.topY + 4,
+  },
+  ride: {
+    range: 190, max: 16, stride: 5, screenSpace: true, fade: 70,
+    /* Just clear of the roofline — and it HAS to be clear of it.
+     *
+     * The obvious idea at eye level is to drop labels to about head height so
+     * they sit in the forward view. That fails, and fails invisibly: the
+     * anchor is the mass CENTROID, so a label nine metres up is nine metres up
+     * inside the building, and depth testing correctly hides it behind the
+     * facade it is buried in. Sixteen labels rendered, positioned and faded
+     * exactly as intended, and the building's own wall ate them.
+     *
+     * Two metres over the roof is outside the mass from every angle. It is
+     * also perfectly visible from a deck: a 25 m building 100 m down the
+     * walkway puts its label 13 degrees above the centre of a 70 degree view.
+     * Lower than the plate style's +4 only because there is no reason to
+     * shout when the camera is not 110 m up. */
+    anchor: (at) => at.topY + 2,
+  },
+};
+
+/* Rounded rectangle, because CanvasRenderingContext2D.roundRect is not in
+   every browser this has to run in. */
+function pill(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function labelSprite(name, style) {
+  const ride = style.screenSpace;
+  const pad = ride ? 14 : 8;
+  const font = ride
+    ? "600 24px ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+    : "600 22px Arial, Helvetica, sans-serif";
   const probe = document.createElement("canvas").getContext("2d");
   probe.font = font;
   const w = Math.ceil(probe.measureText(name).width) + pad * 2;
-  const h = 34;
+  const h = ride ? 40 : 34;
   const canvas = document.createElement("canvas");
   canvas.width = w;
   canvas.height = h;
   const ctx = canvas.getContext("2d");
-  ctx.fillStyle = "rgba(6, 56, 77, 0.82)";
-  ctx.fillRect(0, 0, w, h);
-  ctx.fillStyle = "#ffcd00";
-  ctx.fillRect(0, 0, 3, h);
-  ctx.font = font;
-  ctx.fillStyle = "#ffffff";
-  ctx.textBaseline = "middle";
-  ctx.fillText(name, pad, h / 2 + 1);
+
+  if (ride) {
+    /* Glass pill: a soft dark ground with a hairline edge and the accent as a
+       dot rather than a bar, so a row of them down a walkway reads as a set of
+       tags instead of a fence. */
+    pill(ctx, 1, 1, w - 2, h - 2, (h - 2) / 2);
+    ctx.fillStyle = "rgba(8, 26, 34, 0.72)";
+    ctx.fill();
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.22)";
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(pad - 3, h / 2, 3.2, 0, Math.PI * 2);
+    ctx.fillStyle = "#ffc63d";
+    ctx.fill();
+    ctx.font = font;
+    ctx.fillStyle = "#ffffff";
+    ctx.textBaseline = "middle";
+    ctx.fillText(name, pad + 6, h / 2 + 1);
+  } else {
+    ctx.fillStyle = "rgba(6, 56, 77, 0.82)";
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = "#ffcd00";
+    ctx.fillRect(0, 0, 3, h);
+    ctx.font = font;
+    ctx.fillStyle = "#ffffff";
+    ctx.textBaseline = "middle";
+    ctx.fillText(name, pad, h / 2 + 1);
+  }
+
   const tex = new THREE.CanvasTexture(canvas);
   /* Depth-tested: a label whose building is hidden behind a nearer facade is
      hidden with it. Undepthed labels sprayed the names of six Revelle dorms
      across the front of Urey Hall. */
-  const mat = new THREE.SpriteMaterial({ map: tex, depthTest: true, transparent: true });
+  const mat = new THREE.SpriteMaterial({
+    map: tex, depthTest: true, transparent: true,
+    /* Screen-space in ride style: the sprite scale becomes a fraction of the
+       viewport instead of a size in metres, so a label 180 m down the walkway
+       is exactly as legible as one beside you. */
+    sizeAttenuation: !ride,
+  });
   const sprite = new THREE.Sprite(mat);
-  /* World size from the text's own aspect so nothing stretches; ~2.6 m tall
-     reads to about 250 m without shouting up close. */
-  const worldH = 2.6;
-  sprite.scale.set((w / h) * worldH, worldH, 1);
+  if (ride) {
+    const screenH = 0.05; // ~5% of viewport height
+    sprite.scale.set((w / h) * screenH, screenH, 1);
+  } else {
+    /* World size from the text's own aspect so nothing stretches; ~2.6 m tall
+       reads to about 250 m without shouting up close. */
+    const worldH = 2.6;
+    sprite.scale.set((w / h) * worldH, worldH, 1);
+  }
   return sprite;
 }
 
 /**
  * Build one sprite per named building (lazily) and keep only the nearest few
  * visible. `info` is the Map campus-massing returns: name -> {x, z, topY}.
+ *
+ * `opts.style` picks the look — "plate" (default, free roam, unchanged) or
+ * "ride" (the scooter run's constant-screen-size pill). `opts.range`,
+ * `opts.max` and `opts.stride` override the style's own numbers. Defaulting
+ * everything keeps free roam's call site a two-argument call.
  */
-export function createLabels(scene, info) {
+export function createLabels(scene, info, opts = {}) {
+  const style = { ...(LABEL_STYLES[opts.style] || LABEL_STYLES.plate), ...opts };
   const group = new THREE.Group();
   group.renderOrder = 10;
   /* One label per BUILDING, not per naming convention: the GIS says
@@ -70,7 +161,7 @@ export function createLabels(scene, info) {
     if (!prev || at.topY > prev.at.topY) byNorm.set(key, { name, at });
   }
   const entries = [...byNorm.values()].map(({ name, at }) => ({
-    name, x: at.x, z: at.z, y: at.topY + 4, sprite: null,
+    name, x: at.x, z: at.z, y: style.anchor(at), sprite: null,
   }));
   scene.add(group);
 
@@ -80,21 +171,28 @@ export function createLabels(scene, info) {
     set visible(v) { group.visible = v; },
     get visible() { return group.visible; },
     update(camera) {
-      if (!group.visible || frame++ % 20) return; // every 20th frame is plenty
+      if (!group.visible || frame++ % style.stride) return;
       for (const e of entries) {
         e.d2 = (e.x - camera.position.x) ** 2 + (e.z - camera.position.z) ** 2;
       }
-      const near = entries.filter((e) => e.d2 < LABEL_RANGE * LABEL_RANGE)
-        .sort((a, b) => a.d2 - b.d2).slice(0, LABEL_MAX);
+      const near = entries.filter((e) => e.d2 < style.range * style.range)
+        .sort((a, b) => a.d2 - b.d2).slice(0, style.max);
       const keep = new Set(near);
       for (const e of entries) {
         if (keep.has(e)) {
           if (!e.sprite) {
-            e.sprite = labelSprite(e.name);
+            e.sprite = labelSprite(e.name, style);
             e.sprite.position.set(e.x, e.y, e.z);
             group.add(e.sprite);
           }
           e.sprite.visible = true;
+          /* Fade the last stretch of range in and out. Without it a label
+             springs into existence at full strength exactly `range` metres
+             away, which at riding speed is a flicker down the whole walkway. */
+          if (style.fade > 0) {
+            const d = Math.sqrt(e.d2);
+            e.sprite.material.opacity = Math.max(0, Math.min(1, (style.range - d) / style.fade));
+          }
         } else if (e.sprite) {
           e.sprite.visible = false;
         }

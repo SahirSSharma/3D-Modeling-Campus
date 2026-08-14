@@ -110,23 +110,46 @@ wrong place is worse than a soft one landing in the right one.
 
 ---
 
-## Two ways in
+## Three ways in
 
 The site opens on a choice, and `?mode=` skips it.
 
 | Mode | What it is | Payload |
 |---|---|---|
 | **Free roam** (`?mode=campus`) | the whole campus, North Torrey Pines Road to I-5, fly anywhere | ~10 MB |
-| **Argo → Peterson** (`?mode=scooter`) | one 732 m route on a scooter, three lanes, against a clock | ~0.8 MB |
+| **Eighth → Peterson** (`?mode=scooter`) | one 1,060 m route on a scooter, three lanes, against a clock | ~1.5 MB |
+| **Argo → Peterson** (`?mode=staging`) | the same thing on the 732 m stretch, as a workbench | ~1.3 MB |
 
-The scooter run is a **crop, not a second survey**. `scripts/build-corridor.mjs` cuts
-everything within 100 m of the Argo Hall → Peterson Hall walk out of the same four
-measured files the campus is built from and writes
-`docs/data/corridor-argo-peterson.json` — 37 buildings, 155 trees, 311 ground polygons,
-about 3% of the campus. Every ring, height and colour in it is copied verbatim; the
-build fails if any of them is not. The runtime feeds those crops to the same
-`campus-world.js` builders free roam uses, so the two modes cannot disagree about what a
-measured building looks like.
+`staging` exists so there is somewhere to try things. Work in progress lands there
+first, where it can be looked at on the live site without touching the run. It is
+**not a lesser build**: same builder, same crop, same gates, and the full test suite
+runs over both corridors — a subset violation on staging is the same lie it would be
+on the run. What it is allowed to be is broken, and it says so on screen. The two are
+different files, each stamped with the mode it was built for, and both the builder's
+`--check` and `campus-scooter.js` refuse a file whose stamp does not match; the
+documents are otherwise the same shape, so loading the wrong one would just quietly
+be the other route.
+
+Both scooter modes are a **crop, not a second survey**. `scripts/build-corridor.mjs` cuts
+everything within 130 m of the route out of the same measured files the campus is built
+from and writes `docs/data/corridor-eighth-peterson.json` — 69 buildings, 330 trees, 571
+ground polygons, about 5% of the campus. Every ring, height and colour in it is copied
+verbatim; the build fails if any of them is not. The runtime feeds those crops to the
+same builders free roam uses — `campus-world.js`, `campus-massing.js`,
+`campus-details.js`, `campus-eighth.js`, `campus-landmarks.js` — so the two modes cannot
+disagree about what a measured building looks like.
+
+The route starts dead centre on the Eighth College basketball court and is defined by
+landmarks rather than coordinates: north through the "fleet" (Revelle's halls are all
+named after research ships — Atlantis, Galathea, Beagle, Meteor, Challenger, Discovery,
+and Argo itself), past the 64 Degrees dining hall, right at Argo, left through Revelle
+Plaza, then the long straight north to Peterson.
+
+`arcgis.ground` is cropped **in place**, with `null` for a dropped ring rather than a
+compacted array, because `campus-eighth.js` addresses those rings by literal index —
+including a hard-coded `1761` and every `arcgis.ground#NNNN` registration string in
+`campus-eighth.json`. Renumbering them rebuilds Eighth College out of the wrong
+polygons, silently. The builder and the test suite both gate on it.
 
 **The obstacles, coins and lanes are invented.** They are the only invented entities in
 this repository. They live under one `game` key that no measured consumer reads, they
@@ -165,16 +188,25 @@ moves until you do.
 
 ### Scooter run
 
-You leave Argo Hall already rolling and top out at 6.9 m/s — the real 25 km/h cap of the
+You leave the Eighth College courts already rolling and top out at 6.9 m/s — the real 25 km/h cap of the
 Ninebot ES2 the scooter is modelled on. The clock counts up; a hit costs 3 s and all your
 speed, a coin buys back 0.5 s.
 
 | | |
 |---|---|
+The run opens on a seven-second orbit of the scooter parked on the court. The clock does
+not start until it ends; any key or tap skips it.
+
+| | |
+|---|---|
 | `A` `D` or `←` `→` | change lane |
 | `space` / `W` | bunny hop — clears a bench or a cone, never a bollard |
+| `F` | flythrough: detach the camera and inspect the map at 45 m/s. The ride and the clock pause. |
+| `[` / `]` | in flythrough, scrub 60 m along the route |
+| `L` | building labels on/off |
 | `T` | sunset / noon |
 | `Esc` | back to the menu |
+| | *`?mode=staging` is the same run on Argo → Peterson, and says so on screen* |
 | tap left / right | change lane, on a phone |
 | tap the top third | hop, on a phone |
 

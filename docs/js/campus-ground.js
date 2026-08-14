@@ -112,6 +112,13 @@ export function tile(rings) {
 export function prepareGround(data) {
   const out = [];
   (data.ground || []).forEach((g, src) => {
+    /* A HOLE. scripts/build-corridor.mjs crops this array in place rather than
+       compacting it, because campus-eighth.js addresses rings by index and a
+       renumbering there is silent (it would rebuild Eighth College out of the
+       wrong polygons). A dropped ring is `null` and `src` still means what it
+       meant in the full survey. Campus mode has no holes and never takes this
+       branch. */
+    if (!g) return;
     const rings = g.r.map((ring) => ring.map(([x, z]) => [x / 10, z / 10]));
     for (const piece of tile(rings)) {
       /* src carries the polygon's index so a piece can find its sampled

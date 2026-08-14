@@ -526,7 +526,7 @@ body.walk-live #walk-minimap { animation: walk-map-in 0.42s 0.14s var(--ease-out
 .mode-pick[hidden] { display: none; }
 .mode-pick.is-gone { opacity: 0; pointer-events: none; }
 
-.mode-pick-inner { max-width: 880px; text-align: center; }
+.mode-pick-inner { max-width: 1120px; text-align: center; }
 .mode-pick h1 {
   margin: 0 0 8px; font-size: clamp(26px, 4.4vw, 40px); font-weight: 620;
   letter-spacing: -0.02em;
@@ -535,7 +535,8 @@ body.walk-live #walk-minimap { animation: walk-map-in 0.42s 0.14s var(--ease-out
   margin: 0 0 30px; color: var(--muted); font-size: 15px; line-height: 1.5;
 }
 
-.mode-cards { display: grid; gap: 18px; grid-template-columns: 1fr 1fr; }
+.mode-cards { display: grid; gap: 18px; grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 1040px) { .mode-cards { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 720px) { .mode-cards { grid-template-columns: 1fr; } }
 
 .mode-card {
@@ -590,17 +591,50 @@ body.walk-live #walk-minimap { animation: walk-map-in 0.42s 0.14s var(--ease-out
 <path d='M102.1 44 L103.2 44 L129.2 100 L124.2 100 Z' fill='%23fff' opacity='.6'/>\
 </svg>") center / 100% 100% no-repeat;
 }
+/* Staging: the same road, drawn as a plan of one rather than a view of one.
+   Blueprint grid, cool ink, no sky — it should not look like somewhere you
+   have arrived, because it is the bench the next thing is built on. */
+.mode-art-staging {
+  background:
+    url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 100' preserveAspectRatio='none'>\
+<rect width='200' height='100' fill='%23132430'/>\
+<g stroke='%235e8fa8' stroke-width='.5' opacity='.35'>\
+<path d='M0 12.5h200M0 25h200M0 37.5h200M0 50h200M0 62.5h200M0 75h200M0 87.5h200'/>\
+<path d='M12.5 0v100M25 0v100M37.5 0v100M50 0v100M62.5 0v100M75 0v100M87.5 0v100M100 0v100M112.5 0v100M125 0v100M137.5 0v100M150 0v100M162.5 0v100M175 0v100M187.5 0v100'/>\
+</g>\
+<path d='M40 88 L40 46 L112 46 L112 14 L164 14' fill='none' stroke='%23ffc63d' stroke-width='3' stroke-linecap='square' stroke-linejoin='miter'/>\
+<circle cx='40' cy='88' r='5.5' fill='none' stroke='%23ffc63d' stroke-width='2.5'/>\
+<rect x='158' y='8' width='12' height='12' fill='none' stroke='%23ffc63d' stroke-width='2.5'/>\
+</svg>") center / 100% 100% no-repeat;
+}
+/* The card is deliberately quieter than the other two: it is a door to a
+   workbench, not a third thing to play. */
+.mode-card-staging { border-style: dashed; }
+.mode-card-staging:hover, .mode-card-staging:focus-visible {
+  border-style: solid;
+}
+.mode-tag {
+  display: inline-block; vertical-align: 2px; margin-left: 7px;
+  padding: 2px 7px; border-radius: 999px;
+  font-family: var(--mono); font-size: 10px; font-weight: 500;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: #0a1319; background: var(--accent);
+}
 
 /* --------------------------------------------------------------- ride HUD */
 
 /* Free roam's chrome has nothing to say on a scooter. Hidden by mode rather
    than removed, so one document serves both worlds. */
-body.mode-scooter .walk-title,
-body.mode-scooter .walk-bar,
-body.mode-scooter .walk-dev,
-body.mode-scooter .walk-here,
-body.mode-scooter #walk-minimap { display: none; }
-body.mode-scooter #walk-canvas { cursor: default; }
+/* Both corridor modes wear .mode-ride. Free roam's chrome — the title card,
+   the speed bar, the minimap — is all about roaming somewhere, and there is
+   nowhere else to be on a route. */
+body.mode-ride .walk-title,
+body.mode-ride .walk-bar,
+body.mode-ride .walk-dev,
+body.mode-ride .walk-here,
+body.mode-ride #walk-minimap { display: none; }
+body.mode-ride #walk-canvas { cursor: default; }
 
 .ride-hud { position: fixed; inset: 0; z-index: 42; pointer-events: none; }
 .ride-hud[hidden] { display: none; }
@@ -637,6 +671,22 @@ body.mode-scooter #walk-canvas { cursor: default; }
   opacity: 0; transition: opacity 0.18s, transform 0.18s var(--ease-out);
 }
 .ride-flash.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* The staging badge. Both corridors are reachable from the live site and they
+   look alike from inside, so the one that is a workbench says so — top right,
+   out of the HUD's way, and unmissable in a screenshot. That last part is the
+   point: a bug report from staging has to be legible as one. */
+.ride-staging {
+  /* Top LEFT. The sky toggle owns the top right and the badge is wider than
+     it, so sharing that corner clipped the label to "work in". */
+  position: absolute; top: 16px; left: 16px;
+  padding: 6px 12px; border-radius: 8px;
+  border: 1px dashed rgba(255, 198, 61, 0.6);
+  background: rgba(10, 19, 25, 0.66);
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em;
+  color: var(--accent);
+}
+.ride-staging[hidden] { display: none; }
 
 .ride-note {
   position: absolute; left: 0; right: 0; bottom: 14px; margin: 0;
@@ -700,3 +750,22 @@ body.mode-scooter #walk-canvas { cursor: default; }
 .ride-sky:hover { border-color: rgba(255, 198, 61, 0.6); }
 .ride-sky.on { color: var(--accent); border-color: rgba(255, 198, 61, 0.5); }
 @media (max-width: 560px) { .ride-sky { top: auto; bottom: 46px; right: 12px; } }
+
+/* Flythrough: the map-inspection camera. Announced on screen because a
+   screenshot otherwise cannot tell a paused inspection flight from a run
+   going badly. */
+.ride-fly {
+  position: absolute; top: 96px; left: 50%; transform: translateX(-50%);
+  padding: 7px 15px; border-radius: 999px;
+  background: rgba(8, 26, 34, 0.82); border: 1px solid rgba(255, 198, 61, 0.45);
+  color: var(--accent);
+  font-family: var(--mono); font-size: 12px; letter-spacing: 0.05em;
+  backdrop-filter: blur(9px);
+}
+.ride-fly[hidden] { display: none; }
+
+/* The stat panel is meaningless while the ride is paused, and the intro's
+   whole job is to show the place rather than the numbers. */
+.ride-hud[data-mode="intro"] .ride-panel,
+.ride-hud[data-mode="flythrough"] .ride-panel { opacity: 0.35; }
+.ride-hud[data-mode="intro"] .ride-panel { transition: opacity 0.5s var(--ease-out); }

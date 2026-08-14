@@ -224,7 +224,7 @@ describe("the clock", () => {
 
 describe("the shipped corridor", () => {
   const DOC = JSON.parse(
-    readFileSync(path.join(ROOT, "docs/data/corridor-argo-peterson.json"), "utf8")
+    readFileSync(path.join(ROOT, "docs/data/corridor-eighth-peterson.json"), "utf8")
   );
 
   test("a rider who never steers still reaches Peterson Hall", () => {

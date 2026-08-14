@@ -660,6 +660,7 @@ export function createSurfaces(scene, campus, heightAt, arcgis, colors) {
       let trueGround = null;
       if (TRUECOLOR?.surfaces) {
         trueGround = arcgis.ground.map((g) => {
+          if (!g?.r?.[0]) return null; // hole from an index-stable crop
           const outer = g.r[0].map(([x, z]) => [x / 10, z / 10]);
           return TRUECOLOR.surfaces[`g:${g.k}:${keyOf(outer)}`] || null;
         });

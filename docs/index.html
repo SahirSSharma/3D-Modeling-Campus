@@ -21,7 +21,7 @@
 <div class="mode-pick" id="mode-pick">
   <div class="mode-pick-inner">
     <h1>3D Modeling Campus</h1>
-    <p>A real campus, measured from aerial LiDAR and OpenStreetMap. Two ways in.</p>
+    <p>A real campus, measured from aerial LiDAR and OpenStreetMap. Three ways in.</p>
     <div class="mode-cards">
       <button type="button" class="mode-card" data-mode="campus">
         <span class="mode-art mode-art-campus" aria-hidden="true"></span>
@@ -32,10 +32,19 @@
       </button>
       <button type="button" class="mode-card" data-mode="scooter">
         <span class="mode-art mode-art-scooter" aria-hidden="true"></span>
-        <b>Argo &rarr; Peterson</b>
-        <i>One route, 732 m, on a scooter. Three lanes, obstacles, coins, a clock.
-           The campus around you is measured; the obstacles and coins are not.</i>
-        <em>~0.8 MB &middot; the game</em>
+        <b>Eighth &rarr; Peterson</b>
+        <i>One route, 1,060 m, on a scooter. Off the Eighth College courts, north
+           through the fleet, right at Argo, then the long straight to Peterson.
+           The campus is measured; the obstacles and coins are not.</i>
+        <em>~1.5 MB &middot; the run</em>
+      </button>
+      <button type="button" class="mode-card mode-card-staging" data-mode="staging">
+        <span class="mode-art mode-art-staging" aria-hidden="true"></span>
+        <b>Argo &rarr; Peterson <span class="mode-tag">staging</span></b>
+        <i>The same 732 m stretch on its own, as a workbench. Whatever is being
+           built next lands here first, so it can be looked at without touching
+           the run. Expect it to be broken sometimes.</i>
+        <em>~1.3 MB &middot; work in progress</em>
       </button>
     </div>
   </div>
@@ -44,7 +53,7 @@
   /* Classic script, not a module, so it runs before the menu can paint. */
   (function () {
     var m = new URLSearchParams(location.search).get('mode');
-    if (m === 'campus' || m === 'scooter') {
+    if (m === 'campus' || m === 'scooter' || m === 'staging') {
       document.getElementById('mode-pick').hidden = true;
     }
   })();
@@ -55,17 +64,23 @@
   <div class="ride-panel">
     <div class="ride-stat"><b id="ride-clock">0.0</b><span>seconds</span></div>
     <div class="ride-stat"><b id="ride-coins">0</b><span>coins</span></div>
-    <div class="ride-stat"><b id="ride-left">732</b><span>m to Peterson</span></div>
+    <div class="ride-stat"><b id="ride-left">&mdash;</b><span>m to Peterson</span></div>
     <div class="ride-stat"><b id="ride-speed">0</b><span>km/h</span></div>
   </div>
   <div class="ride-flash" id="ride-flash"></div>
+  <!-- Shown only on ?mode=staging. This corridor is reachable from the live
+       site, so it says on screen which one you are looking at. -->
+  <div class="ride-staging" id="ride-staging" hidden>staging &middot; Argo &rarr; Peterson &middot; work in progress</div>
   <button type="button" class="ride-sky" id="ride-sky" title="Toggle the time of day (T)">sunset</button>
-  <p class="ride-note">A&nbsp;/&nbsp;D or &larr;&nbsp;&rarr; change lane &middot; space hops &middot; T sky &middot; Esc leaves.
+  <div class="ride-fly" id="ride-fly" hidden></div>
+  <p class="ride-note">A&nbsp;/&nbsp;D or &larr;&nbsp;&rarr; change lane &middot; space hops &middot; F flythrough &middot;
+     L labels &middot; T sky &middot; Esc leaves.
      Obstacles and coins are invented; the campus they sit in is measured.</p>
   <div class="ride-finish" id="ride-finish" hidden>
     <h2>Peterson Hall</h2>
     <p id="ride-finish-body"></p>
-    <a class="ride-again" href="?mode=scooter">Run it again</a>
+    <!-- href is rewritten at boot to whichever corridor is loaded. -->
+    <a class="ride-again" id="ride-again" href="?mode=scooter">Run it again</a>
     <a class="ride-again ride-again-alt" href="?">Back to the menu</a>
   </div>
 </div>
@@ -168,19 +183,26 @@
      screen would appear only once there was nothing left to wait for. */
   import { createBootScreen } from './js/campus-boot.js';
 
-  /* Which world. ?mode=campus / ?mode=scooter answer it outright — which is
+  /* Which world. ?mode=campus / scooter / staging answer it outright — which is
      also how scripts/verify-boot.mjs and the inspection harnesses get past the
      menu without clicking anything. Without the parameter, ask. */
+  const MODES = ['campus', 'scooter', 'staging'];
   const mode = await chooseMode();
   document.body.classList.add(`mode-${mode}`);
+  /* Everything that is not free roam is a route, and the two routes want the
+     same chrome hidden. One class for the family, one for the specific mode. */
+  if (mode !== 'campus') document.body.classList.add('mode-ride');
 
   const report = createBootScreen();
   try {
     report.phase('code');
+    /* Both corridor modes are the same module on a different cut of the
+       campus, so the mode goes through to boot() rather than picking a file
+       here — campus-scooter.js owns which corridor each one loads. */
     const { boot } = await import(
-      mode === 'scooter' ? './js/campus-scooter.js' : './js/campus-walk.js'
+      mode === 'campus' ? './js/campus-walk.js' : './js/campus-scooter.js'
     );
-    const walk = await boot({ report });
+    const walk = await boot({ report, mode });
     await report.finish();
     wireDevPanel(walk);
     /* The automated verification harness reads layer/status through this;
@@ -195,7 +217,7 @@
 
   function chooseMode() {
     const asked = new URLSearchParams(location.search).get('mode');
-    if (asked === 'campus' || asked === 'scooter') return Promise.resolve(asked);
+    if (MODES.includes(asked)) return Promise.resolve(asked);
 
     const pick = document.getElementById('mode-pick');
     return new Promise((resolve) => {
