@@ -110,7 +110,42 @@ wrong place is worse than a soft one landing in the right one.
 
 ---
 
+## Two ways in
+
+The site opens on a choice, and `?mode=` skips it.
+
+| Mode | What it is | Payload |
+|---|---|---|
+| **Free roam** (`?mode=campus`) | the whole campus, North Torrey Pines Road to I-5, fly anywhere | ~10 MB |
+| **Argo → Peterson** (`?mode=scooter`) | one 732 m route on a scooter, three lanes, against a clock | ~0.8 MB |
+
+The scooter run is a **crop, not a second survey**. `scripts/build-corridor.mjs` cuts
+everything within 100 m of the Argo Hall → Peterson Hall walk out of the same four
+measured files the campus is built from and writes
+`docs/data/corridor-argo-peterson.json` — 37 buildings, 155 trees, 311 ground polygons,
+about 3% of the campus. Every ring, height and colour in it is copied verbatim; the
+build fails if any of them is not. The runtime feeds those crops to the same
+`campus-world.js` builders free roam uses, so the two modes cannot disagree about what a
+measured building looks like.
+
+**The obstacles, coins and lanes are invented.** They are the only invented entities in
+this repository. They live under one `game` key that no measured consumer reads, they
+are placed by a seeded PRNG so the run is identical on every build, and they are
+labelled as invented in the data file, in the loading log and on screen. What they are
+*not* is guessed measurement — nothing about the campus moved to make room for them.
+They are held to their own gates instead: never all three lanes blocked at once, never
+an obstacle wide enough to bleed into the lane beside it, never two groups closer than
+12 m, and a headless test rides the whole route to prove a clean line beats par.
+
+Where the run departs from the measured world on purpose is the *look*: shadows, tone
+mapping, tighter fog and a togglable sunset. Free roam does without all of it, because
+there the point is the measurement.
+
+---
+
 ## Controls
+
+### Free roam
 
 You spawn 110 m above Argo Hall at 500 m/s, holding height over the ground. Nothing
 moves until you do.
@@ -127,6 +162,21 @@ moves until you do.
 | teleport menu | jump to any of 360+ named places |
 | `L` | building labels on/off |
 | `H` | development panel (layer toggles) |
+
+### Scooter run
+
+You leave Argo Hall already rolling and top out at 6.9 m/s — the real 25 km/h cap of the
+Ninebot ES2 the scooter is modelled on. The clock counts up; a hit costs 3 s and all your
+speed, a coin buys back 0.5 s.
+
+| | |
+|---|---|
+| `A` `D` or `←` `→` | change lane |
+| `space` / `W` | bunny hop — clears a bench or a cone, never a bollard |
+| `T` | sunset / noon |
+| `Esc` | back to the menu |
+| tap left / right | change lane, on a phone |
+| tap the top third | hop, on a phone |
 
 ---
 

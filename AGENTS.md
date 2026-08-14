@@ -34,16 +34,35 @@ inherits this project's gates instead of only the global operating model in
   tolerance, leave it unbuilt and say so. Do not fill the gap with a plausible
   guess.
 - **Never loosen a gate to make a fix pass.**
+- **The scooter run's props are the only invented entities, and they stay
+  quarantined.** `docs/data/corridor-argo-peterson.json` is a CROP of the
+  measured files — if `scripts/build-corridor.mjs` ever emits a ring, height,
+  tree or colour that is not copied verbatim from its parent, it is broken, and
+  its `--check` fails on exactly that. Its obstacles and coins are invented and
+  live under the single `game` key: seeded from a pinned constant, never read by
+  a measured consumer, and labelled as invented in the file, the README and the
+  on-screen HUD. Do not widen that key's reach, and do not let anything under it
+  become a source for anything else. Scooter mode's *look* (shadows, tone
+  mapping, the sunset sky) is art direction and is deliberately allowed to
+  diverge from free roam; its *geometry* is not.
 
 ## Verification
 
-`npm test` must pass, and the emulator suite needs:
+`npm test` must pass. No emulators and no Java are involved in this repo.
 
 ```bash
-export PATH="/opt/homebrew/opt/openjdk@21/bin:$PATH"
-npm test
-node --test tests/data/*.test.mjs   # the no-emulator subset
+npm test                  # node --test tests/*.test.mjs
+npm run check             # every builder's --check + the reproducibility verify
+npm run verify:boot       # the site actually boots
+npm run verify:reproducible   # LiDAR build is byte-identical on a rerun
+npm run readiness         # gate status
+npm run progress          # gauntlet progress
+npm run serve             # local server to look at it
 ```
+
+`npm run check` is the real gate — it runs `--check` on the OSM, LiDAR, satellite,
+colors, and colleges builders plus the reproducibility verify. Run it before
+claiming a build change is safe.
 
 An untested fix is not a fix. Paste the real output, including failures — never
 report a result you did not actually run.

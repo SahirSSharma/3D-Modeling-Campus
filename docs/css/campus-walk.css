@@ -504,3 +504,199 @@ body.walk-live #walk-minimap { animation: walk-map-in 0.42s 0.14s var(--ease-out
   body.walk-live .walk-dev,
   body.walk-live #walk-minimap { animation-name: none; }
 }
+
+/* ==========================================================================
+   The mode picker, and the scooter run's HUD.
+   Appended rather than woven in: everything above styles the free-roam walk
+   and none of it changes. The tokens are the same ones — --accent, --mono,
+   --hud, --ease-out — so the second mode reads as the same product rather
+   than as a game bolted onto a survey.
+   ========================================================================== */
+
+/* Above the loading screen (60), because it is the thing that decides whether
+   the loading screen is even for. */
+.mode-pick {
+  position: fixed; inset: 0; z-index: 70;
+  display: grid; place-content: center;
+  padding: 32px 20px;
+  background:
+    radial-gradient(120% 90% at 50% 0%, #16323f 0%, #0a1319 62%, #060b0f 100%);
+  transition: opacity 0.3s var(--ease-out);
+}
+.mode-pick[hidden] { display: none; }
+.mode-pick.is-gone { opacity: 0; pointer-events: none; }
+
+.mode-pick-inner { max-width: 880px; text-align: center; }
+.mode-pick h1 {
+  margin: 0 0 8px; font-size: clamp(26px, 4.4vw, 40px); font-weight: 620;
+  letter-spacing: -0.02em;
+}
+.mode-pick > .mode-pick-inner > p {
+  margin: 0 0 30px; color: var(--muted); font-size: 15px; line-height: 1.5;
+}
+
+.mode-cards { display: grid; gap: 18px; grid-template-columns: 1fr 1fr; }
+@media (max-width: 720px) { .mode-cards { grid-template-columns: 1fr; } }
+
+.mode-card {
+  display: grid; gap: 9px; align-content: start;
+  padding: 0 0 22px; margin: 0;
+  text-align: left; cursor: pointer; color: inherit;
+  font: inherit;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.24s var(--ease-out), border-color 0.24s, background 0.24s;
+}
+.mode-card:hover, .mode-card:focus-visible {
+  transform: translateY(-3px);
+  border-color: rgba(255, 198, 61, 0.55);
+  background: rgba(255, 255, 255, 0.075);
+  outline: none;
+}
+.mode-card b { padding: 0 22px; font-size: 19px; font-weight: 620; }
+.mode-card i {
+  padding: 0 22px; font-style: normal; font-size: 13.5px; line-height: 1.55;
+  color: var(--muted);
+}
+.mode-card em {
+  padding: 0 22px; font-style: normal; font-family: var(--mono);
+  font-size: 11px; letter-spacing: 0.04em; color: var(--accent); opacity: 0.85;
+}
+
+/* The card art is CSS, not an image: two 150 px panels that say "aerial" and
+   "eye level" at a glance and cost nothing to download. */
+.mode-art { display: block; height: 150px; margin-bottom: 14px; }
+.mode-art-campus {
+  background:
+    linear-gradient(#0000 0 62%, rgba(0,0,0,0.28) 100%),
+    repeating-linear-gradient(64deg, rgba(255,255,255,0.1) 0 2px, #0000 2px 22px),
+    repeating-linear-gradient(-28deg, rgba(255,255,255,0.07) 0 3px, #0000 3px 34px),
+    linear-gradient(160deg, #5d7a52 0%, #47603f 44%, #2f4436 100%);
+}
+/* An inline SVG rather than gradients. A road narrows toward the horizon, so
+   the vanishing point has to sit ON the horizon and the shape has to open
+   DOWNWARD from it — which a conic gradient can only express by wrapping its
+   own 0% mark, and the first attempt at that opened the road upward off the
+   top of the card instead. Four paths say it exactly and cost 500 bytes. */
+.mode-art-scooter {
+  background:
+    url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 100' preserveAspectRatio='none'>\
+<rect width='200' height='44' fill='%2386b7da'/>\
+<rect y='44' width='200' height='56' fill='%23c9c1ab'/>\
+<path d='M92 44 L108 44 L180 100 L20 100 Z' fill='%238b8f8a'/>\
+<path d='M96.8 44 L97.9 44 L75.8 100 L70.8 100 Z' fill='%23fff' opacity='.6'/>\
+<path d='M102.1 44 L103.2 44 L129.2 100 L124.2 100 Z' fill='%23fff' opacity='.6'/>\
+</svg>") center / 100% 100% no-repeat;
+}
+
+/* --------------------------------------------------------------- ride HUD */
+
+/* Free roam's chrome has nothing to say on a scooter. Hidden by mode rather
+   than removed, so one document serves both worlds. */
+body.mode-scooter .walk-title,
+body.mode-scooter .walk-bar,
+body.mode-scooter .walk-dev,
+body.mode-scooter .walk-here,
+body.mode-scooter #walk-minimap { display: none; }
+body.mode-scooter #walk-canvas { cursor: default; }
+
+.ride-hud { position: fixed; inset: 0; z-index: 42; pointer-events: none; }
+.ride-hud[hidden] { display: none; }
+
+.ride-panel {
+  position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 4px;
+  padding: 10px 6px;
+  background: var(--hud); border: 1px solid var(--hud-line);
+  border-radius: 11px; backdrop-filter: blur(9px);
+}
+.ride-stat {
+  display: grid; gap: 2px; justify-items: center;
+  min-width: 92px; padding: 0 14px;
+}
+.ride-stat + .ride-stat { border-left: 1px solid var(--hud-line); }
+.ride-stat b {
+  font-family: var(--mono); font-size: 25px; font-weight: 600; line-height: 1;
+  color: var(--accent); font-variant-numeric: tabular-nums;
+}
+.ride-stat span {
+  font-size: 10.5px; letter-spacing: 0.07em; text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* The hit flash. Absent from the layout until something is hit — a permanent
+   empty slot reads as a thing that is broken. */
+.ride-flash {
+  position: absolute; top: 108px; left: 50%;
+  transform: translate(-50%, -6px);
+  padding: 7px 15px; border-radius: 999px;
+  background: rgba(200, 46, 30, 0.9);
+  font-family: var(--mono); font-size: 13px; letter-spacing: 0.05em;
+  opacity: 0; transition: opacity 0.18s, transform 0.18s var(--ease-out);
+}
+.ride-flash.show { opacity: 1; transform: translate(-50%, 0); }
+
+.ride-note {
+  position: absolute; left: 0; right: 0; bottom: 14px; margin: 0;
+  text-align: center; font-size: 11.5px; line-height: 1.5;
+  color: rgba(255, 255, 255, 0.52);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.ride-finish {
+  position: absolute; inset: 0; z-index: 1;
+  display: grid; place-content: center; gap: 12px; justify-items: center;
+  padding: 24px; text-align: center;
+  pointer-events: auto;
+  background: rgba(6, 13, 18, 0.72); backdrop-filter: blur(7px);
+  animation: ride-finish-in 0.4s var(--ease-out) both;
+}
+.ride-finish[hidden] { display: none; }
+.ride-finish h2 {
+  margin: 0; font-size: clamp(28px, 5vw, 44px); font-weight: 620;
+  letter-spacing: -0.02em;
+}
+.ride-finish p { margin: 0; font-size: 16px; color: var(--muted); }
+.ride-finish.beat h2 { color: var(--accent); }
+.ride-h { font-family: var(--mono); color: var(--accent); font-weight: 600; }
+
+.ride-again {
+  margin-top: 6px; padding: 9px 20px; border-radius: 999px;
+  background: var(--accent); color: #10202a;
+  font-size: 14px; font-weight: 600; text-decoration: none;
+  transition: transform 0.2s var(--ease-out);
+}
+.ride-again:hover { transform: translateY(-2px); }
+.ride-again-alt {
+  margin-top: 0; background: transparent; color: var(--muted);
+  border: 1px solid var(--hud-line);
+}
+
+@keyframes ride-finish-in { from { opacity: 0; } to { opacity: 1; } }
+
+@media (max-width: 560px) {
+  .ride-stat { min-width: 68px; padding: 0 9px; }
+  .ride-stat b { font-size: 20px; }
+  .ride-stat span { font-size: 9px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mode-card, .ride-again { transition: none; }
+  .ride-finish { animation: none; }
+}
+
+/* The time-of-day toggle. A button as well as the T key: the key is faster
+   once you know it, the button is how you learn it is there. */
+.ride-sky {
+  position: absolute; top: 16px; right: 16px;
+  padding: 8px 15px; border-radius: 999px;
+  pointer-events: auto; cursor: pointer;
+  font: inherit; font-size: 12.5px; letter-spacing: 0.05em;
+  color: #fff; background: var(--hud);
+  border: 1px solid var(--hud-line); backdrop-filter: blur(9px);
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+.ride-sky:hover { border-color: rgba(255, 198, 61, 0.6); }
+.ride-sky.on { color: var(--accent); border-color: rgba(255, 198, 61, 0.5); }
+@media (max-width: 560px) { .ride-sky { top: auto; bottom: 46px; right: 12px; } }

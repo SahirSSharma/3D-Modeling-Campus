@@ -48,7 +48,10 @@ const errors = [];
 page.on("pageerror", (e) => errors.push(String(e)));
 page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
 
-await page.goto(base, { waitUntil: "load" });
+/* ?mode=campus, always. index.html now opens on a mode picker, and a harness
+   that navigated to the bare URL would sit on a menu until it timed out. The
+   parameter is the same one a direct link uses; it is not a test-only hatch. */
+await page.goto(`${base}?mode=campus`, { waitUntil: "load" });
 await page.waitForFunction(() => document.body.classList.contains("walk-live"), null, { timeout: 120_000 });
 await page.waitForFunction(() => !!window.__campusWalk?.probe, null, { timeout: 30_000 });
 

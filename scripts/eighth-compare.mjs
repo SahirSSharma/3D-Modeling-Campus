@@ -351,7 +351,9 @@ let exitCode = 0;
 
 try {
   page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-  await page.goto(base, { waitUntil: "load" });
+  /* ?mode=campus: index.html opens on a mode picker and Eighth is in free
+     roam, not on the scooter route. */
+  await page.goto(`${base}?mode=campus`, { waitUntil: "load" });
   await page.waitForFunction(() => document.body.classList.contains("walk-live"), null, { timeout: 180_000 });
   await page.waitForFunction(() => !!window.__campusWalk?.fly, null, { timeout: 30_000 });
 

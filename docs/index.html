@@ -13,6 +13,63 @@
 
 <canvas id="walk-canvas"></canvas>
 
+<!-- The mode picker. Markup, not script, and visible from first parse for the
+     same reason the loading screen is: whichever one a visitor is going to see,
+     they should see it immediately rather than after a module has downloaded.
+     The inline script below removes it synchronously when ?mode= already
+     answers the question, so a direct link never flashes a menu. -->
+<div class="mode-pick" id="mode-pick">
+  <div class="mode-pick-inner">
+    <h1>3D Modeling Campus</h1>
+    <p>A real campus, measured from aerial LiDAR and OpenStreetMap. Two ways in.</p>
+    <div class="mode-cards">
+      <button type="button" class="mode-card" data-mode="campus">
+        <span class="mode-art mode-art-campus" aria-hidden="true"></span>
+        <b>Free roam</b>
+        <i>The whole campus, North Torrey Pines Road to I-5. Fly anywhere on it at any
+           height. Every building is the measured one.</i>
+        <em>~10 MB &middot; the survey</em>
+      </button>
+      <button type="button" class="mode-card" data-mode="scooter">
+        <span class="mode-art mode-art-scooter" aria-hidden="true"></span>
+        <b>Argo &rarr; Peterson</b>
+        <i>One route, 732 m, on a scooter. Three lanes, obstacles, coins, a clock.
+           The campus around you is measured; the obstacles and coins are not.</i>
+        <em>~0.8 MB &middot; the game</em>
+      </button>
+    </div>
+  </div>
+</div>
+<script>
+  /* Classic script, not a module, so it runs before the menu can paint. */
+  (function () {
+    var m = new URLSearchParams(location.search).get('mode');
+    if (m === 'campus' || m === 'scooter') {
+      document.getElementById('mode-pick').hidden = true;
+    }
+  })();
+</script>
+
+<!-- The scooter run's HUD. Hidden until campus-scooter.js claims it. -->
+<div class="ride-hud" id="ride-hud" hidden>
+  <div class="ride-panel">
+    <div class="ride-stat"><b id="ride-clock">0.0</b><span>seconds</span></div>
+    <div class="ride-stat"><b id="ride-coins">0</b><span>coins</span></div>
+    <div class="ride-stat"><b id="ride-left">732</b><span>m to Peterson</span></div>
+    <div class="ride-stat"><b id="ride-speed">0</b><span>km/h</span></div>
+  </div>
+  <div class="ride-flash" id="ride-flash"></div>
+  <button type="button" class="ride-sky" id="ride-sky" title="Toggle the time of day (T)">sunset</button>
+  <p class="ride-note">A&nbsp;/&nbsp;D or &larr;&nbsp;&rarr; change lane &middot; space hops &middot; T sky &middot; Esc leaves.
+     Obstacles and coins are invented; the campus they sit in is measured.</p>
+  <div class="ride-finish" id="ride-finish" hidden>
+    <h2>Peterson Hall</h2>
+    <p id="ride-finish-body"></p>
+    <a class="ride-again" href="?mode=scooter">Run it again</a>
+    <a class="ride-again ride-again-alt" href="?">Back to the menu</a>
+  </div>
+</div>
+
 <div class="walk-title">
   <h1>3D Modeling Campus</h1>
   <p>The whole campus, North Torrey Pines Road to I-5. Massing from the university's own GIS,
@@ -111,10 +168,18 @@
      screen would appear only once there was nothing left to wait for. */
   import { createBootScreen } from './js/campus-boot.js';
 
+  /* Which world. ?mode=campus / ?mode=scooter answer it outright — which is
+     also how scripts/verify-boot.mjs and the inspection harnesses get past the
+     menu without clicking anything. Without the parameter, ask. */
+  const mode = await chooseMode();
+  document.body.classList.add(`mode-${mode}`);
+
   const report = createBootScreen();
   try {
     report.phase('code');
-    const { boot } = await import('./js/campus-walk.js');
+    const { boot } = await import(
+      mode === 'scooter' ? './js/campus-scooter.js' : './js/campus-walk.js'
+    );
     const walk = await boot({ report });
     await report.finish();
     wireDevPanel(walk);
@@ -126,6 +191,25 @@
        slow load, forever. Say what actually broke. */
     console.error('3D Modeling Campus failed to start', err);
     report.fail(`${err.message}. It needs a browser with WebGL.`);
+  }
+
+  function chooseMode() {
+    const asked = new URLSearchParams(location.search).get('mode');
+    if (asked === 'campus' || asked === 'scooter') return Promise.resolve(asked);
+
+    const pick = document.getElementById('mode-pick');
+    return new Promise((resolve) => {
+      pick.addEventListener('click', (e) => {
+        const card = e.target.closest('[data-mode]');
+        if (!card) return;
+        /* Put the choice in the URL before booting, so a reload, a back
+           button and a shared link all land on the world you picked. */
+        history.replaceState(null, '', `?mode=${card.dataset.mode}`);
+        pick.classList.add('is-gone');
+        setTimeout(() => { pick.hidden = true; }, 320);
+        resolve(card.dataset.mode);
+      });
+    });
   }
 
   function wireDevPanel(walk) {

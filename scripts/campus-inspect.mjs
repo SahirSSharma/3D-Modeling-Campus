@@ -95,7 +95,9 @@ const errors = [];
 page.on("pageerror", (e) => errors.push(String(e)));
 page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
 
-await page.goto(base, { waitUntil: "load" });
+/* ?mode=campus: index.html opens on a mode picker and free roam is what this
+   inspects. Same parameter a direct link uses. */
+await page.goto(`${base}?mode=campus`, { waitUntil: "load" });
 await page.waitForFunction(() => document.body.classList.contains("walk-live"), null, { timeout: 180_000 });
 await page.waitForFunction(() => !!window.__campusWalk?.fly, null, { timeout: 30_000 });
 
