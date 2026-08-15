@@ -65,8 +65,6 @@ const CHASE_LAG_S = 0.16;
 /* Lean into a lane change, up to this at full lateral speed. */
 const MAX_BANK_RAD = 0.26;
 
-const RIBBON_MARGIN_M = 0.55; // painted strip past the outer lanes
-
 /* Two skies, toggled with T.
  *
  * "noon" is campus-world's own measured November light, pulled into a game
@@ -301,62 +299,78 @@ const drape = (mesh, rung) => {
   mesh.receiveShadow = true;
   return mesh;
 };
+/**
+ * The lanes, as markings on the measured ground.
+ *
+ * NOT a road surface. This used to lay an opaque grey carpet the full width of
+ * the route and paint dashes on it — which read as a highway dropped on the
+ * campus, and hid the one thing the corridor exists to show: the measured
+ * ground, its surveyed colour, and the painted markings already on it. The
+ * lanes are gameplay information, so they are drawn the way information is
+ * drawn — as lines over what is there, not as a thing that replaces it.
+ *
+ * Four stripes say "three lanes" unambiguously: two continuous edges bounding
+ * the rideable width, two dashed dividers between the lanes. That is exactly
+ * how a real carriageway distinguishes an edge you should not cross from a
+ * divider you may, so it needs no explaining.
+ *
+ * All four sit on the "paint" rung of the shared decal ladder
+ * (campus-overlay.js) rather than choosing their own lift —
+ * tests/campus-overlay.test.mjs greps every file in docs/js for a locally
+ * declared lift, and it is right to: two modules picking their own numbers is
+ * exactly how a z-fighting bug ships.
+ */
 function createRibbon(group, route, game) {
-  const half = game.laneOffset * (game.lanes - 1) / 2 + game.laneOffset / 2 + RIBBON_MARGIN_M;
-  const lift = overlayLift("carpet");
-  const pts = route.points;
+  const paint = overlayLift("paint");
+  const edgeOff = game.laneOffset * game.lanes / 2;   // outer bound of lane 0 and lane 2
 
-  const position = [];
-  const push = (x, y, z) => position.push(x, y, z);
-  for (let i = 0; i < pts.length - 1; i++) {
-    const a = positionAt(route, i * route.spacing, 0);
-    const b = positionAt(route, (i + 1) * route.spacing, 0);
-    const quad = [
-      [a.x + a.normal.x * -half, a.z + a.normal.z * -half],
-      [a.x + a.normal.x * half, a.z + a.normal.z * half],
-      [b.x + b.normal.x * -half, b.z + b.normal.z * -half],
-      [b.x + b.normal.x * half, b.z + b.normal.z * half],
-    ].map(([x, z]) => [x, heightAt(x, z) + lift, z]);
-    push(...quad[0]); push(...quad[2]); push(...quad[1]);
-    push(...quad[1]); push(...quad[2]); push(...quad[3]);
-  }
+  /* One stripe: a quad strip at a constant lateral offset, either continuous or
+     broken. Built as flat triangles that follow the terrain, because a single
+     long quad would sink into every rise the route climbs. */
+  const stripe = (off, { width, dash = 0, gap = 0 }) => {
+    const out = [];
+    const step = dash || 2;
+    const stride = dash ? dash + gap : step;
+    for (let s = 0; s + step <= route.metres; s += stride) {
+      const a = positionAt(route, s, off);
+      const b = positionAt(route, s + step, off);
+      const quad = [
+        [a.x + a.normal.x * -width, a.z + a.normal.z * -width],
+        [a.x + a.normal.x * width, a.z + a.normal.z * width],
+        [b.x + b.normal.x * -width, b.z + b.normal.z * -width],
+        [b.x + b.normal.x * width, b.z + b.normal.z * width],
+      ].map(([x, z]) => [x, heightAt(x, z) + paint, z]);
+      out.push(...quad[0], ...quad[2], ...quad[1], ...quad[1], ...quad[2], ...quad[3]);
+    }
+    return out;
+  };
+
+  /* Edges continuous and a touch wider than the dividers, so which is which
+     reads at a glance and from the chase camera's shallow angle. */
+  const position = [
+    ...stripe(-edgeOff, { width: 0.09 }),
+    ...stripe(edgeOff, { width: 0.09 }),
+    ...stripe(laneCentre(0.5, game.laneOffset), { width: 0.06, dash: 1.6, gap: 1.4 }),
+    ...stripe(laneCentre(1.5, game.laneOffset), { width: 0.06, dash: 1.6, gap: 1.4 }),
+  ];
+
   const geo = new THREE.BufferGeometry();
   geo.setAttribute("position", new THREE.Float32BufferAttribute(position, 3));
   geo.computeVertexNormals();
+  /* Slightly translucent: at full opacity the paint is the brightest thing in
+     frame and pulls the eye off the campus, which is the opposite of the
+     point. It still reads clearly against grass, plaza and asphalt alike. */
   group.add(drape(new THREE.Mesh(geo, applyOverlayDepth(
-    new THREE.MeshLambertMaterial({ color: 0x8d9391, side: THREE.DoubleSide }), "carpet"
-  )), "carpet"));
-
-  /* Two dashed lane dividers, drawn the way a real crosswalk is: on, off, on. */
-  const paint = overlayLift("paint");
-  const dash = [];
-  const DASH_M = 1.6, GAP_M = 1.4, W = 0.07;
-  for (const lane of [0.5, 1.5]) {
-    const off = laneCentre(lane, game.laneOffset);
-    for (let s = 0; s < route.metres - DASH_M; s += DASH_M + GAP_M) {
-      const a = positionAt(route, s, off);
-      const b = positionAt(route, s + DASH_M, off);
-      const quad = [
-        [a.x + a.normal.x * -W, a.z + a.normal.z * -W],
-        [a.x + a.normal.x * W, a.z + a.normal.z * W],
-        [b.x + b.normal.x * -W, b.z + b.normal.z * -W],
-        [b.x + b.normal.x * W, b.z + b.normal.z * W],
-      ].map(([x, z]) => [x, heightAt(x, z) + paint, z]);
-      dash.push(...quad[0], ...quad[2], ...quad[1], ...quad[1], ...quad[2], ...quad[3]);
-    }
-  }
-  const dashGeo = new THREE.BufferGeometry();
-  dashGeo.setAttribute("position", new THREE.Float32BufferAttribute(dash, 3));
-  dashGeo.computeVertexNormals();
-  group.add(drape(new THREE.Mesh(dashGeo, applyOverlayDepth(
-    new THREE.MeshLambertMaterial({ color: 0xf3f1e6, side: THREE.DoubleSide }), "paint"
+    new THREE.MeshLambertMaterial({
+      color: 0xf6f4ea, side: THREE.DoubleSide, transparent: true, opacity: 0.82,
+    }), "paint"
   )), "paint"));
 
   /* A finish line at Peterson, because a route with no visible end is a route
      you do not know you are winning. */
   const fin = positionAt(route, route.metres - 2, 0);
   const bar = new THREE.Mesh(
-    new THREE.BoxGeometry(half * 2, 0.06, 0.5),
+    new THREE.BoxGeometry(edgeOff * 2, 0.06, 0.5),
     applyOverlayDepth(new THREE.MeshLambertMaterial({ color: 0xf2f0e6 }), "logo")
   );
   bar.position.set(fin.x, heightAt(fin.x, fin.z) + 0.03, fin.z);

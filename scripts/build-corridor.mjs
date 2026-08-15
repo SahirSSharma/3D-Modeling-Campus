@@ -48,7 +48,9 @@
 import { readFileSync, writeFileSync, existsSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { buildGraph, routeThrough, smooth, resample, pushOutside } from "../docs/js/campus-route.js";
+import {
+  buildGraph, routeThrough, smooth, resample, pushOutside, nearestNode, findRoute,
+} from "../docs/js/campus-route.js";
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DATA = path.join(REPO_ROOT, "docs/data");
@@ -174,6 +176,23 @@ const TERRAIN_PAD_M = 40;
    path, because the path is the measured thing and this is a correction, not a
    re-survey. */
 const WALL_CLEARANCE_M = 1.2;
+
+/* How far from a startAt point to look for a way onto the path network. The
+   court's own nearest node is 12.7 m away at its SOUTH-WEST corner while the
+   route heads north, so "nearest" sent the ride 12.6 m backwards and made it
+   40 m before it was level with its own start line. 70 m is wide enough to
+   reach the walkway on the far side of the court. */
+const ENTRY_SEARCH_M = 70;
+const ENTRY_CANDIDATES = 25;
+
+/* THE LEAD-IN HAS TO EARN ITS LENGTH. It is the one stretch of centreline that
+   is not a surveyed path, so a metre of it is worth less than a metre of real
+   walkway and the search must not spend it freely. Unweighted, the totals come
+   out flat — 18 m of lead-in scores 266 and 38 m scores 263 — and the search
+   bought 19 extra metres of invention to save one metre of walking. At 1.5 the
+   18 m entry wins comfortably, and it also wins at 2.0, so the choice is not
+   balanced on the weight. */
+const LEAD_IN_WEIGHT = 1.5;
 
 /* ------------------------------------------------------ the invented part */
 
@@ -420,23 +439,74 @@ function pointInRing(x, z, ring) {
   return inside;
 }
 
+/**
+ * The graph node to start the ride from: the one that minimises lead-in plus
+ * onward leg, rather than the one that happens to be closest.
+ *
+ * @returns {{x:number,z:number,name:string}} a waypoint to hand routeThrough
+ */
+function bestEntry(campus, graph, spec) {
+  const start = spec.startAt;
+  const next = spec.waypoints[1];
+  const goalPoint = typeof next === "string" ? campus.places[next] : next;
+  if (!goalPoint) throw new Error(`the waypoint after ${start.name} is not a known place`);
+  const goal = nearestNode(graph, goalPoint.x, goalPoint.z).index;
+
+  const near = [];
+  graph.nodes.forEach((n, i) => {
+    const d = Math.hypot(n.x - start.x, n.z - start.z);
+    if (d <= ENTRY_SEARCH_M) near.push({ i, d });
+  });
+  near.sort((a, b) => a.d - b.d);
+
+  let best = null;
+  for (const { i, d } of near.slice(0, ENTRY_CANDIDATES)) {
+    const leg = findRoute(graph, i, goal);
+    if (!leg) continue;
+    const total = d * LEAD_IN_WEIGHT + leg.metres;
+    if (!best || total < best.total) best = { total, i, d };
+  }
+  if (!best) throw new Error(`no way onto the path network within ${ENTRY_SEARCH_M} m of ${start.name}`);
+
+  const n = graph.nodes[best.i];
+  return { x: n.x, z: n.z, name: start.name };
+}
+
 /* ---------------------------------------------------------------- the cut */
 
 function centreline(campus, spec) {
   const graph = buildGraph(campus);
-  const found = routeThrough(campus, graph, spec.waypoints);
-  if (!found) throw new Error(`no route through ${spec.waypoints.length} waypoints`);
 
-  /* THE LEAD-IN. routeThrough starts at the nearest node of the pedestrian
-     graph, and the nearest node to the middle of the basketball court is 12.7 m
-     away at its north-west corner — so without this the ride would begin off
-     the court, which is not what "start in the exact middle of the courts" says.
-     Prepend the straight line from the true centre out to that first node.
+  /* WHERE THE RIDE JOINS THE PATH NETWORK.
+   *
+   * Not the nearest node. The nearest node to the middle of the basketball
+   * court is 12.7 m away at its SOUTH-WEST corner, and the route from there
+   * heads north — so the ride opened by driving 12.6 m backwards, turning
+   * round, and passing its own start line again 40 m in. On the map that is a
+   * hook on the front of the route; on the scooter it is the first thing you
+   * see, and it is not what "out of the courts and north" means.
+   *
+   * So choose the entry that makes the whole journey shortest: the onward leg
+   * plus the lead-in, the latter weighted because it is invented (see
+   * LEAD_IN_WEIGHT). Doubling back is longer than not doubling back, so this
+   * removes the hook by construction rather than by detecting it. Only the
+   * FIRST leg is routed per candidate —
+   * the choice of entry cannot affect anything past the first waypoint, and
+   * routing the whole 1 km per candidate would cost 40x for no information.
+   */
+  const entry = spec.startAt ? bestEntry(campus, graph, spec) : null;
+  const waypoints = entry ? [entry, ...spec.waypoints.slice(1)] : spec.waypoints;
+
+  const found = routeThrough(campus, graph, waypoints);
+  if (!found) throw new Error(`no route through ${waypoints.length} waypoints`);
+
+  /* THE LEAD-IN: the straight line from the true centre of the court out to
+     that entry node, so the ride genuinely begins in the middle of the slab
+     rather than at its edge.
 
      This is the one segment of centreline that is not a surveyed path, and it
      is a straight line across the middle of a paved court that the survey
-     already draws. It invents no geometry; it only says the ride begins in the
-     middle of a slab rather than at its edge.
+     already draws. It invents no geometry; it only says where the ride starts.
 
      Only for a route that names a startAt. A route that begins at a building
      begins where the router put it, which is already a real path node. */

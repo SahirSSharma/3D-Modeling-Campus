@@ -117,7 +117,7 @@ The site opens on a choice, and `?mode=` skips it.
 | Mode | What it is | Payload |
 |---|---|---|
 | **Free roam** (`?mode=campus`) | the whole campus, North Torrey Pines Road to I-5, fly anywhere | ~10 MB |
-| **Eighth → Peterson** (`?mode=scooter`) | one 1,058 m route on a scooter, three lanes, against a clock | ~1.5 MB |
+| **Eighth → Peterson** (`?mode=scooter`) | one 1,026 m route on a scooter, three lanes, against a clock | ~1.5 MB |
 | **Eighth → Peterson** (`?mode=staging`) | the same route with no obstacles or coins, as a workbench | ~1.5 MB |
 
 `staging` exists so there is somewhere to try things. Work in progress lands there
@@ -134,14 +134,25 @@ be the other route.
 
 Both scooter modes are a **crop, not a second survey**. `scripts/build-corridor.mjs` cuts
 everything within 130 m of the route out of the same measured files the campus is built
-from and writes `docs/data/corridor-eighth-peterson.json` — 69 buildings, 330 trees, 571
+from and writes `docs/data/corridor-eighth-peterson.json` — 68 buildings, 324 trees, 567
 ground polygons, about 5% of the campus. Every ring, height and colour in it is copied
 verbatim; the build fails if any of them is not. The runtime feeds those crops to the
 same builders free roam uses — `campus-world.js`, `campus-massing.js`,
 `campus-details.js`, `campus-eighth.js`, `campus-landmarks.js` — so the two modes cannot
 disagree about what a measured building looks like.
 
-The route starts dead centre on the Eighth College basketball court and is defined by
+The route starts dead centre on the Eighth College basketball court and leaves it
+heading north-east. It used to leave heading *south*: the lead-in joined the path
+network at the nearest graph node, which sits at the court's south-west corner while
+the route runs north, so the ride opened by driving 12.6 m backwards and did not pass
+its own start line again until 40 m in. The entry node is now the one that minimises
+lead-in plus onward leg rather than the one that is closest — doubling back is longer
+than not doubling back, so the hook cannot come back. The lead-in is weighted 1.5x in
+that search because it is the one stretch of centreline that is not a surveyed path,
+and it should not be spent freely: unweighted, the search bought 19 extra metres of
+invented line to save one metre of walking.
+
+The route is defined by
 landmarks rather than coordinates: north through the "fleet" (Revelle's halls are all
 named after research ships — Atlantis, Galathea, Beagle, Meteor, Challenger, Discovery,
 and Argo itself), past the 64 Degrees dining hall, then east into Revelle Plaza and the
@@ -162,6 +173,13 @@ compacted array, because `campus-eighth.js` addresses those rings by literal ind
 including a hard-coded `1761` and every `arcgis.ground#NNNN` registration string in
 `campus-eighth.json`. Renumbering them rebuilds Eighth College out of the wrong
 polygons, silently. The builder and the test suite both gate on it.
+
+The three lanes are **markings on the measured ground, not a road**. An opaque
+surface the width of the route reads as a highway dropped on the campus, and hides
+the measured colour and the painted markings already there — which is the one thing
+the corridor exists to show. Two continuous edges bound the rideable width and two
+dashed dividers separate the lanes, the way a real carriageway distinguishes an edge
+you should not cross from a divider you may.
 
 **The obstacles, coins and lanes are invented.** They are the only invented entities in
 this repository. They live under one `game` key that no measured consumer reads, they
