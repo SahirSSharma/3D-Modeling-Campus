@@ -117,14 +117,16 @@ The site opens on a choice, and `?mode=` skips it.
 | Mode | What it is | Payload |
 |---|---|---|
 | **Free roam** (`?mode=campus`) | the whole campus, North Torrey Pines Road to I-5, fly anywhere | ~10 MB |
-| **Eighth → Peterson** (`?mode=scooter`) | one 1,060 m route on a scooter, three lanes, against a clock | ~1.5 MB |
-| **Argo → Peterson** (`?mode=staging`) | the same thing on the 732 m stretch, as a workbench | ~1.3 MB |
+| **Eighth → Peterson** (`?mode=scooter`) | one 1,058 m route on a scooter, three lanes, against a clock | ~1.5 MB |
+| **Eighth → Peterson** (`?mode=staging`) | the same route with no obstacles or coins, as a workbench | ~1.5 MB |
 
 `staging` exists so there is somewhere to try things. Work in progress lands there
-first, where it can be looked at on the live site without touching the run. It is
-**not a lesser build**: same builder, same crop, same gates, and the full test suite
-runs over both corridors — a subset violation on staging is the same lie it would be
-on the run. What it is allowed to be is broken, and it says so on screen. The two are
+first, where it can be looked at on the live site without touching the run. It rides
+the **same line** — a staging area on a different route would be staging for something
+else — and differs only in carrying no invented props, because you cannot judge the map
+through a slalom. It is **not a lesser build**: same builder, same crop, same gates, and
+the full test suite runs over both corridors. What it is allowed to be is broken, and it
+says so on screen. The two are
 different files, each stamped with the mode it was built for, and both the builder's
 `--check` and `campus-scooter.js` refuse a file whose stamp does not match; the
 documents are otherwise the same shape, so loading the wrong one would just quietly
@@ -142,8 +144,18 @@ disagree about what a measured building looks like.
 The route starts dead centre on the Eighth College basketball court and is defined by
 landmarks rather than coordinates: north through the "fleet" (Revelle's halls are all
 named after research ships — Atlantis, Galathea, Beagle, Meteor, Challenger, Discovery,
-and Argo itself), past the 64 Degrees dining hall, right at Argo, left through Revelle
-Plaza, then the long straight north to Peterson.
+and Argo itself), past the 64 Degrees dining hall, then east into Revelle Plaza and the
+long straight north to Peterson.
+
+It goes **past** Argo Hall, not through it. It used to go through it — 12 m of centreline
+inside the walls — for two compounding reasons. Naming a building as a waypoint routes to
+that building's centroid, which is inside it by definition; and `campus-route.js` joins
+every plaza perimeter vertex to the plaza centre to make open squares crossable, which is
+an invented shortcut, and four of the eighteen spokes of the courtyard plaza that wraps
+Argo were straight lines through the building. Both are fixed — spokes are now tested
+against footprints, corner-smoothing will not round into a wall, and the finished line is
+pushed 1.2 m clear of any facade it still touches — and `--check` now walks the shipped
+centreline against every footprint in the crop, so it cannot come back quietly.
 
 `arcgis.ground` is cropped **in place**, with `null` for a dropped ring rather than a
 compacted array, because `campus-eighth.js` addresses those rings by literal index —
@@ -188,25 +200,26 @@ moves until you do.
 
 ### Scooter run
 
-You leave the Eighth College courts already rolling and top out at 6.9 m/s — the real 25 km/h cap of the
+You leave the Eighth College courts from a standstill and top out at 6.9 m/s — the real 25 km/h cap of the
 Ninebot ES2 the scooter is modelled on. The clock counts up; a hit costs 3 s and all your
 speed, a coin buys back 0.5 s.
 
 | | |
 |---|---|
-The run opens on a seven-second orbit of the scooter parked on the court. The clock does
-not start until it ends; any key or tap skips it.
+The run opens 165 m over the Eighth College courts and falls onto the scooter as it
+accelerates off the court and onto the pavement. The clock does not start until the
+descent hands over; any key or tap skips it.
 
 | | |
 |---|---|
 | `A` `D` or `←` `→` | change lane |
 | `space` / `W` | bunny hop — clears a bench or a cone, never a bollard |
-| `F` | flythrough: detach the camera and inspect the map at 45 m/s. The ride and the clock pause. |
-| `[` / `]` | in flythrough, scrub 60 m along the route |
+| `F` | fly mode: free roam's own controls over the corridor — `W` `A` `S` `D`, `Q`/`E` height, `↑`/`↓` speed, `shift` doubles. The ride and the clock pause. |
+| `[` / `]` | in fly mode, jump 60 m along the route |
 | `L` | building labels on/off |
 | `T` | sunset / noon |
 | `Esc` | back to the menu |
-| | *`?mode=staging` is the same run on Argo → Peterson, and says so on screen* |
+| | *`?mode=staging` is the same run with the obstacles and coins removed, and says so on screen* |
 | tap left / right | change lane, on a phone |
 | tap the top third | hop, on a phone |
 

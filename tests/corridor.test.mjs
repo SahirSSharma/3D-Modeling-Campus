@@ -111,7 +111,9 @@ describe("the run's route", () => {
 
   test("passes every waypoint, in order", () => {
     /* The route is described by landmarks — north through the fleet, past 64
-       Degrees, right at Argo, left in the plaza. A router that took Ridge Walk
+       Degrees, then east into the plaza. Argo is in the list because the route
+       passes it, which it must; "never runs inside a building" above is what
+       keeps "passes" from becoming "through". A router that took Ridge Walk
        on the far side of the halls would still be a valid Eighth->Peterson
        route and would no longer be THIS route. Note "64 Degrees" is the dining
        hall, not a compass bearing. */
@@ -132,9 +134,51 @@ describe("the run's route", () => {
     }
   });
 
+  test("never runs inside a building", () => {
+    /* THE ONE THAT SHIPPED. The route drove 12 m through Argo Hall and 2 m
+       through Challenger, and nothing on screen said so — you simply rode
+       through a residence hall. Three causes, all fixed:
+
+         1. "Argo Hall" was a waypoint, and a building waypoint routes to that
+            building's CENTROID, which is inside it by definition.
+         2. campus-route.js joins every plaza perimeter vertex to the plaza
+            centre to make open squares crossable. That shortcut is invented,
+            and four of the eighteen spokes of the courtyard plaza that wraps
+            Argo were straight lines through the building.
+         3. Chaikin smoothing rounds corners off the surveyed path, which is
+            how a line that clears a wall as a polyline ends up inside it once
+            smoothed — Challenger, by 1.2 m.
+
+       This asserts the outcome rather than any one of the three, so it holds
+       however the next one arrives. It runs on the SHIPPED points, after
+       smoothing and resampling, because that is the line that is ridden. */
+    const inRing = (x, z, ring) => {
+      let inside = false;
+      for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+        const [xi, zi] = ring[i];
+        const [xj, zj] = ring[j];
+        if ((zi > z) !== (zj > z) && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) inside = !inside;
+      }
+      return inside;
+    };
+    /* Against the FULL campus, not the crop: a building just outside the
+       corridor is still a building you would drive through. */
+    const hits = new Map();
+    for (const [x, z] of DOC.route.points) {
+      for (const b of CAMPUS.buildings) {
+        if (!b?.p || !inRing(x, z, b.p)) continue;
+        const n = b.n || "an unnamed building";
+        hits.set(n, (hits.get(n) || 0) + 1);
+      }
+    }
+    assert.deepEqual([...hits], [],
+      `the route runs inside ${[...hits].map(([n, c]) => `${n} (${c * 2} m)`).join(", ")}`);
+  });
+
   test("turns the way the route was described", () => {
-    /* Bearing 0 = north, 90 = east. Right at Argo means the heading swings
-       east; left in the plaza means it swings back to north and holds. */
+    /* Bearing 0 = north, 90 = east. The route runs north up past 64 Degrees,
+       turns east into Revelle Plaza — PAST Argo, not through it — and then
+       holds north for the long straight to Peterson. */
     const bearingAt = (metres) => {
       const i = Math.round(metres / DOC.route.spacing);
       const a = DOC.route.points[i];
@@ -144,7 +188,7 @@ describe("the run's route", () => {
     const east = (deg) => deg > 60 && deg < 130;
     const north = (deg) => deg < 25 || deg > 335;
 
-    assert.ok(east(bearingAt(280)), `at 280 m the route heads ${bearingAt(280).toFixed(0)}deg, not east (the turn at Argo)`);
+    assert.ok(east(bearingAt(280)), `at 280 m the route heads ${bearingAt(280).toFixed(0)}deg, not east (the turn into the plaza)`);
     for (const m of [440, 520, 600]) {
       assert.ok(north(bearingAt(m)), `at ${m} m the route heads ${bearingAt(m).toFixed(0)}deg, not north`);
     }
@@ -161,23 +205,33 @@ describe("the run's route", () => {
      * Not every segment is exactly `spacing`, and it does not need to be.
      * routeThrough stitches one A* leg per waypoint pair and the resampler
      * restarts its remainder at each join, so the handful of segments AT those
-     * joins — plus the lead-in join and the final remainder — come out short.
-     * Three of them on this route. What matters is that the error is bounded
-     * and does not accumulate: a short segment displaces the rider by less than
-     * the shortfall at that one index and the next segment is back on the grid.
-     * So: bound every segment, and hold the whole route to its stated length. */
+     * joins come out short. What matters is that the error is bounded and does
+     * not accumulate: a short segment displaces the rider by less than the
+     * shortfall at that one index and the next segment is back on the grid.
+     *
+     * THE LAST SEGMENT IS EXEMPT, and not as a concession. It is the remainder
+     * of the division — whatever is left of the route after the last whole
+     * step — so it is uniformly distributed over (0, spacing] by construction
+     * and carries no information about drift at all. Bounding it near `spacing`
+     * asserts something the resampler never promised, and the assertion duly
+     * fired the day a route change happened to leave 1.20 m at the end. Every
+     * INTERIOR segment is still held to the tight bound. */
     const gaps = [];
     for (let i = 1; i < DOC.route.points.length; i++) {
       const [ax, az] = DOC.route.points[i - 1];
       const [bx, bz] = DOC.route.points[i];
       gaps.push(dist(ax, az, bx, bz));
     }
-    for (const [i, g] of gaps.entries()) {
+    const interior = gaps.slice(0, -1);
+    for (const [i, g] of interior.entries()) {
       assert.ok(Math.abs(g - DOC.route.spacing) < 0.6,
         `segment ${i + 1} is ${g.toFixed(2)} m, too far off ${DOC.route.spacing}`);
     }
-    const loose = gaps.filter((g) => Math.abs(g - DOC.route.spacing) > 0.15).length;
-    assert.ok(loose <= 6, `${loose} segments are off-grid — expected only the leg joins`);
+    const tail = gaps.at(-1);
+    assert.ok(tail > 0 && tail <= DOC.route.spacing + 1e-6,
+      `the final remainder is ${tail.toFixed(2)} m, which is not a remainder of ${DOC.route.spacing}`);
+    const loose = interior.filter((g) => Math.abs(g - DOC.route.spacing) > 0.15).length;
+    assert.ok(loose <= 6, `${loose} interior segments are off-grid — expected only the leg joins`);
 
     /* The arc length the ride believes in must match the polyline it rides. */
     const walked = gaps.reduce((a, b) => a + b, 0);
@@ -187,50 +241,47 @@ describe("the run's route", () => {
 });
 
 
-/* The staging corridor's own route. Short, direct, and deliberately the stretch
-   the run ends on — so a change tried out here is a change tried on geometry
-   the run actually contains. */
-describe("the staging route", () => {
-  test("runs Argo Hall to Peterson Hall", () => {
-    assert.equal(STAGING.route.from, "Argo Hall");
-    assert.equal(STAGING.route.to, "Peterson Hall");
-    const a = CAMPUS.places["Argo Hall"];
-    const b = CAMPUS.places["Peterson Hall"];
-    const first = STAGING.route.points[0];
-    const last = STAGING.route.points.at(-1);
-    assert.ok(dist(first[0], first[1], a.x, a.z) <= 40, "does not start at Argo Hall");
-    assert.ok(dist(last[0], last[1], b.x, b.z) <= 25, "does not end at Peterson Hall");
+/* The staging corridor. Same line as the run — that is the point of it — so
+   what there is to assert is that it really is the same line, and that the one
+   thing it drops is the invented props and not a piece of the world. */
+describe("the staging corridor", () => {
+  test("rides the same route as the run", () => {
+    /* A workbench on a different route is a workbench for something else. This
+       was the first version's mistake: staging was the OLD 732 m Argo->Peterson
+       stretch, so it was staging for a route that no longer existed. */
+    assert.equal(STAGING.route.from, DOC.route.from);
+    assert.equal(STAGING.route.to, DOC.route.to);
+    assert.equal(STAGING.route.metres, DOC.route.metres);
+    assert.deepEqual(STAGING.route.points, DOC.route.points);
   });
 
-  test("is a real subsection of the run, not a second survey of it", () => {
-    /* Staging exists to try things on the run's own geometry. If its centreline
-       wandered somewhere the run never goes, work verified here would prove
-       nothing about there. Every staging point has to lie on the run's line. */
-    const onRun = nearestOn(DOC);
-    let worst = 0;
-    for (const [x, z] of STAGING.route.points) worst = Math.max(worst, onRun(x, z));
-    assert.ok(worst < 12, `staging strays ${worst.toFixed(1)} m from the run's centreline`);
+  test("carries the same measured world", () => {
+    /* Dropping props must not quietly drop scenery with them. */
+    assert.equal(STAGING.campus.buildings.length, DOC.campus.buildings.length);
+    assert.equal(STAGING.lidar.trees.length, DOC.lidar.trees.length);
+    assert.equal(STAGING.arcgis.ground.length, DOC.arcgis.ground.length);
+    assert.ok(STAGING.eighth, "staging runs through Eighth College and must carry its survey");
   });
 
-  test("carries no Eighth College survey, because it never gets there", () => {
-    assert.equal(STAGING.eighth, null);
+  test("carries no obstacles and no coins, and says so", () => {
+    assert.equal(STAGING.game.props, false);
+    assert.equal(STAGING.game.obstacles.length, 0);
+    assert.equal(STAGING.game.coins.length, 0);
+    /* And the run still does, or the switch is wired to the wrong corridor. */
+    assert.equal(DOC.game.props, true);
+    assert.ok(DOC.game.obstacles.length > 20);
   });
 });
 
 describe("the two corridors are separate files", () => {
   test("each says which one it is", () => {
-    /* The documents are the same shape, so a build written to the wrong path is
-       otherwise silent — you would simply get the other route. campus-scooter.js
-       refuses to boot a file whose target does not match its mode; this is the
-       same assertion at build time. */
+    /* The documents are the same shape AND now the same route, so a build
+       written to the wrong path is otherwise completely silent.
+       campus-scooter.js refuses to boot a file whose target does not match its
+       mode; this is the same assertion at build time. */
     const targets = CORRIDORS.map((c) => c.doc.built.target);
     assert.deepEqual([...targets].sort(), ["scooter", "staging"]);
     for (const { spec, doc } of CORRIDORS) assert.equal(doc.built.target, spec.target);
-  });
-
-  test("they are different routes", () => {
-    assert.notEqual(DOC.route.metres, STAGING.route.metres);
-    assert.notEqual(DOC.route.from, STAGING.route.from);
   });
 });
 
@@ -448,6 +499,14 @@ for (const { spec, doc } of CORRIDORS) {
     });
 
     test("sit in real lanes, on the route", () => {
+      if (!spec.props) {
+        /* Nothing to place, and that is the corridor's whole job. Assert the
+           empty is the DECLARED empty rather than skipping: an accidental
+           empty and a deliberate one look identical from here. */
+        assert.equal(game.props, false);
+        assert.equal(game.obstacles.length + game.coins.length, 0);
+        return;
+      }
       for (const c of game.coins) {
         assert.ok(c.lane >= 0 && c.lane < game.lanes, `coin lane ${c.lane}`);
         assert.ok(c.s >= 0 && c.s <= route.metres, `coin at ${c.s} m is off the route`);
@@ -458,11 +517,12 @@ for (const { spec, doc } of CORRIDORS) {
         assert.equal(typeof o.hop, "boolean", "an obstacle does not say whether it can be hopped");
         assert.ok(o.h > 0, "an obstacle has no height");
       }
-      assert.ok(game.obstacles.length > 20, "too few obstacles for a 700 m run");
-      assert.ok(game.coins.length > 50, "too few coins for a 700 m run");
+      assert.ok(game.obstacles.length > 20, "too few obstacles for a 1 km run");
+      assert.ok(game.coins.length > 50, "too few coins for a 1 km run");
     });
 
     test("include obstacles a hop cannot clear", () => {
+      if (!spec.props) return; // no props at all — covered by the test above
       /* If everything were hoppable the lanes would be decoration. */
       const solid = game.obstacles.filter((o) => !o.hop);
       assert.ok(solid.length > 5, "nothing on the route actually requires a lane change");

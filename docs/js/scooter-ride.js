@@ -123,7 +123,7 @@ export function positionAt(route, s, laneX = 0) {
  * is mutated on them — the arrays are read through cursors, and what has been
  * taken is tracked here, so the same loaded file can start a second run.
  */
-export function createRide({ route, game }) {
+export function createRide({ route, game, startSpeed = START_SPEED_MPS }) {
   const offset = game.laneOffset ?? LANE_OFFSET_M;
   const lanes = game.lanes ?? 3;
 
@@ -140,7 +140,7 @@ export function createRide({ route, game }) {
     s: 0,
     lane: 1,
     laneX: 0,
-    speed: START_SPEED_MPS,
+    speed: startSpeed,
     y: 0, // metres above the deck's resting height
     hopT: null, // seconds into the current hop, or null on the ground
     time: 0,
@@ -169,9 +169,20 @@ export function createRide({ route, game }) {
     swapT = 0;
   };
 
-  function update(dt, held = new Set()) {
+  /**
+   * One tick.
+   *
+   * `counting` is what the opening shot rides on. The intro is not a still —
+   * the scooter accelerates off the court and onto the pavement while the
+   * camera comes down — and none of that should cost the rider a second. So the
+   * physics run and the clock does not. It is a separate flag rather than
+   * "rewind the clock afterwards" because the clock is what the run is scored
+   * on, and a number that goes up and then back down is a number nobody can
+   * trust while they are watching it.
+   */
+  function update(dt, held = new Set(), counting = true) {
     if (ride.finished || dt <= 0) return ride;
-    ride.time += dt;
+    if (counting) ride.time += dt;
 
     /* Edge-triggered: holding A slides you one lane, not across the path.
        Comparing against the previous frame's set is the whole mechanism. */

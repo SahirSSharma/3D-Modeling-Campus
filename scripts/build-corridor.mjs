@@ -4,9 +4,10 @@
 //
 //   scooter → corridor-eighth-peterson.json — the shipped run, Eighth College
 //             courts to Peterson Hall
-//   staging → corridor-argo-peterson.json   — Argo Hall to Peterson Hall, the
-//             work zone. Same builder, same gates, its own file, so a change
-//             being tried out on it cannot reach the run people ride.
+//   staging → corridor-staging.json         — the SAME route, with no obstacles
+//             and no coins. The work zone: same builder, same gates, its own
+//             file, so a change tried out on it cannot reach the run people
+//             ride, and nothing invented stands between you and the map.
 //
 // WHY THIS EXISTS. The site ships one world: the whole campus, ~10 MB of
 // survey, free roam from 110 m up. That is the right shape for "look at the
@@ -47,7 +48,7 @@
 import { readFileSync, writeFileSync, existsSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { buildGraph, routeThrough, smooth, resample } from "../docs/js/campus-route.js";
+import { buildGraph, routeThrough, smooth, resample, pushOutside } from "../docs/js/campus-route.js";
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DATA = path.join(REPO_ROOT, "docs/data");
@@ -60,28 +61,30 @@ const CHECK = process.argv.includes("--check");
  * is described by landmarks, not by coordinates: north out of the court into
  * the "fleet" — Revelle's halls are all named after research ships (Atlantis,
  * Galathea, Beagle, Meteor, Challenger, Discovery, and Argo itself) — past the
- * 64 Degrees dining hall, right at Argo, left through Revelle Plaza, then the
- * long straight north that was the original corridor.
+ * 64 Degrees dining hall, then east into Revelle Plaza and the long straight
+ * north. It goes PAST Argo, not through it; see the note under WAYPOINTS.
  *
  * 64 Degrees is a BUILDING, not a bearing. Read as a compass heading it aims at
  * Pepper Canyon, 1.2 km the wrong way; the waypoint is what keeps the route on
  * the west side of Ridge Walk and actually among the halls.
  *
- * `staging` is that last stretch on its own: Argo Hall to Peterson, the 732 m
- * the run was before it was extended. It exists so there is somewhere to try
- * things. It is not a lesser build — it goes through the same crop, the same
- * gates and the same test suite; it is simply a second file, so work in
- * progress cannot land in the world people ride. Nothing here is route-specific
- * except this table.
+ * `staging` rides the SAME line. It exists so there is somewhere to try things,
+ * not somewhere lesser — it goes through the same crop, the same gates and the
+ * same test suite, and differs only in carrying no invented props. It was
+ * briefly a shorter Argo->Peterson route, which made it a staging area that was
+ * behind the thing it was staging for. Nothing here is route-specific except
+ * this table.
  *
  *   startAt  a point the route must BEGIN on exactly, when the pedestrian graph
  *            has no node there (the middle of a court is not a path junction).
  *            null means "start wherever the router starts", which is what a
  *            route between two buildings wants.
- *   eighth   whether to carry the Eighth College survey. Only the route that
- *            passes through it does; carrying it otherwise would paint a
+ *   eighth   whether to carry the Eighth College survey. Only a route that
+ *            passes through it should; carrying it otherwise would paint a
  *            basketball court half a kilometre off the line, and would drag in
  *            the index exemptions that exist to protect it.
+ *   props    whether to place obstacles and coins at all. False is a deliberate
+ *            empty, and check() holds the file and the spec to agreeing on it.
  *   metres   the range the finished route must land in. A window, not a
  *            number — the router is allowed to re-route around a retagged
  *            path — but narrow enough that a route through the wrong campus
@@ -89,28 +92,50 @@ const CHECK = process.argv.includes("--check");
  */
 const COURT_CENTRE = { x: -174.55, z: 525.2, name: "Eighth College courts" };
 
+const WAYPOINTS = [COURT_CENTRE, "64 Degrees", "Revelle Plaza", "Peterson Hall"];
+
+/* ARGO HALL IS NOT A WAYPOINT, AND MUST NOT BECOME ONE AGAIN.
+ *
+ * It was, and the route drove 12 m through the building. Naming a building as a
+ * waypoint asks the router to reach that building's CENTROID, which is inside
+ * the walls by definition; the correct instruction is "go straight north and
+ * enter the plaza", which is what the 64 Degrees -> Revelle Plaza pair says.
+ * The route still passes Argo — it just passes it rather than through it.
+ *
+ * That was only half the fault. The other half was in campus-route.js: plaza
+ * centre-spokes are an invented shortcut and four of the courtyard plaza's
+ * eighteen ran straight through Argo. Both are fixed, and `check` now walks the
+ * finished centreline against every footprint in the crop, so neither can come
+ * back quietly. */
 const ROUTES = {
   scooter: {
     target: "scooter",
     file: "corridor-eighth-peterson.json",
     label: "Eighth → Peterson",
-    waypoints: [COURT_CENTRE, "64 Degrees", "Argo Hall", "Revelle Plaza", "Peterson Hall"],
+    waypoints: WAYPOINTS,
     from: "Eighth College courts",
     to: "Peterson Hall",
     startAt: COURT_CENTRE,
     eighth: true,
+    props: true,
     metres: [950, 1200],
   },
+  /* THE BENCH. Same route, same crop, same gates — the difference is that it
+     carries no obstacles and no coins, because what is being worked on is the
+     map and the ride, and invented props are in the way of looking at either.
+     It was briefly the old 732 m Argo->Peterson stretch, which made it a
+     staging area that was behind what it was staging for. */
   staging: {
     target: "staging",
-    file: "corridor-argo-peterson.json",
-    label: "Argo → Peterson (staging)",
-    waypoints: ["Argo Hall", "Peterson Hall"],
-    from: "Argo Hall",
+    file: "corridor-staging.json",
+    label: "Eighth → Peterson (staging)",
+    waypoints: WAYPOINTS,
+    from: "Eighth College courts",
     to: "Peterson Hall",
-    startAt: null,
-    eighth: false,
-    metres: [600, 900],
+    startAt: COURT_CENTRE,
+    eighth: true,
+    props: false,
+    metres: [950, 1200],
   },
 };
 
@@ -140,6 +165,15 @@ const SAMPLE_M = 2;
    end; 40 m past the corridor puts the seam well outside the chase camera's
    useful range. */
 const TERRAIN_PAD_M = 40;
+
+/* How far the centreline is kept off a wall. The scooter is half a metre across
+   and the outer lanes sit 1.15 m either side of the line, so this is not enough
+   for the whole rideable width to clear a building — it is enough that the
+   RIDER does, which is what you can see. Where a path genuinely runs tight to a
+   facade, the line hugs it at this distance rather than being dragged off the
+   path, because the path is the measured thing and this is a correction, not a
+   re-survey. */
+const WALL_CLEARANCE_M = 1.2;
 
 /* ------------------------------------------------------ the invented part */
 
@@ -292,12 +326,16 @@ function cropGrid(grid, x0, x1, z0, z1, values) {
  * tests/corridor.test.mjs: nothing in the first or last stretch, never all
  * three lanes blocked at once, never two groups closer than OBSTACLE_GAP_M.
  */
-function placeGame(route, rng) {
+function placeGame(route, rng, props = true) {
   const obstacles = [];
   const coins = [];
   const end = route.metres - FINISH_CLEAR_M;
 
-  let s = START_CLEAR_M;
+  /* props:false leaves both arrays empty and every other field intact. The
+     lanes, the par and the clearances are still what they are; there is simply
+     nothing invented standing on the route. That is what the staging corridor
+     wants — you cannot judge the map through a slalom. */
+  let s = props ? START_CLEAR_M : end;
   while (s < end) {
     s += OBSTACLE_GAP_M + rng() * 10;
     if (s >= end) break;
@@ -357,6 +395,7 @@ function placeGame(route, rng) {
   return {
     invented: "Obstacles, coins and lanes are placed by this builder, not surveyed. "
       + "The campus they sit in is measured; these are not.",
+    props,
     seed: SEED,
     lanes: LANES,
     laneOffset: LANE_OFFSET_M,
@@ -368,6 +407,17 @@ function placeGame(route, rng) {
     obstacles,
     coins,
   };
+}
+
+/** Even-odd point-in-polygon, for asking whether the route is inside a wall. */
+function pointInRing(x, z, ring) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, zi] = ring[i];
+    const [xj, zj] = ring[j];
+    if ((zi > z) !== (zj > z) && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) inside = !inside;
+  }
+  return inside;
 }
 
 /* ---------------------------------------------------------------- the cut */
@@ -409,7 +459,23 @@ function centreline(campus, spec) {
   /* Smoothed BEFORE the resample so the corners are cut, then resampled to the
      fixed spacing the ride indexes by. The lead-in joins ahead of the smoothing
      so the turn off the court is rounded like every other corner. */
-  const points = resample(smooth([...lead, ...found.points]), SAMPLE_M);
+  /* Smoothed against the footprints, not blind to them — see smooth()'s own
+     note. Only buildings within 60 m of the routed line can possibly be reached
+     by a corner cut, and testing all 1,395 of them per corner per pass is the
+     difference between instant and not. */
+  const box = found.points.reduce((b, p) => ({
+    x0: Math.min(b.x0, p.x - 60), x1: Math.max(b.x1, p.x + 60),
+    z0: Math.min(b.z0, p.z - 60), z1: Math.max(b.z1, p.z + 60),
+  }), { x0: Infinity, x1: -Infinity, z0: Infinity, z1: -Infinity });
+  const avoid = campus.buildings
+    .filter((b) => b?.p?.length >= 3
+      && b.p.some(([x, z]) => x >= box.x0 && x <= box.x1 && z >= box.z0 && z <= box.z1))
+    .map((b) => b.p);
+
+  const points = resample(
+    pushOutside(smooth([...lead, ...found.points], 2, avoid), avoid, WALL_CLEARANCE_M),
+    SAMPLE_M
+  );
 
   /* Chaikin pulls the very first point off the exact centre. Put it back: the
      promise "s = 0 is the middle of the court" is the whole reason for the
@@ -561,7 +627,7 @@ function build(sources, spec = ROUTES.scooter) {
     buildingColors.push(colors?.buildings?.[old] ?? null);
   }
 
-  const game = placeGame(route, mulberry32(SEED));
+  const game = placeGame(route, mulberry32(SEED), spec.props !== false);
 
   return {
     _: `${route.from} -> ${route.to}, cut out of the measured campus by `
@@ -674,6 +740,34 @@ function check(doc, sources, spec = ROUTES.scooter) {
     fail(`route is ${doc.route.metres} m — expected ${lo}-${hi} m`);
   }
   if (doc.route.spacing !== SAMPLE_M) fail("route spacing is not the fixed sample");
+
+  /* THE ROUTE DOES NOT GO THROUGH BUILDINGS.
+   *
+   * The one that actually happened: the shipped run drove 12 m inside Argo Hall
+   * and 2 m inside Challenger, because campus-route.js joins every plaza
+   * perimeter vertex to the plaza centre and the courtyard plaza's ring wraps
+   * Argo — four of its eighteen spokes were straight lines through a residence
+   * hall. Naming "Argo Hall" as a waypoint made it worse, since a building
+   * waypoint routes to the building's centroid.
+   *
+   * Both causes are fixed. This is the assertion that keeps them fixed: walk
+   * the finished centreline, after smoothing, against every footprint the crop
+   * carries. Smoothing matters — Chaikin cuts corners, so a route that clears a
+   * building as a polyline can still clip it once rounded, and this runs on the
+   * geometry that actually ships. */
+  {
+    const hits = new Map();
+    for (const [x, z] of doc.route.points) {
+      for (const b of doc.campus.buildings) {
+        if (!b?.p || !pointInRing(x, z, b.p)) continue;
+        hits.set(b.n || "an unnamed building", (hits.get(b.n || "an unnamed building") || 0) + 1);
+      }
+    }
+    if (hits.size) {
+      const worst = [...hits].map(([n, c]) => `${n} (${c * SAMPLE_M} m)`).join(", ");
+      fail(`the route runs inside ${worst} — it must go round buildings, not through them`);
+    }
+  }
 
   /* The Eighth survey travels with exactly the route that runs through it. A
      corridor that carries it without passing it paints a basketball court half
@@ -843,7 +937,18 @@ function check(doc, sources, spec = ROUTES.scooter) {
     if (c.lane < 0 || c.lane >= game.lanes) fail(`coin lane ${c.lane} is out of range`);
     if (c.s < 0 || c.s > route.metres) fail(`coin at ${c.s} m is off the route`);
   }
-  if (!game.obstacles.length || !game.coins.length) fail("the run has no props at all");
+  /* A corridor either has props or declares that it deliberately has none.
+     "Empty because that is the point" and "empty because the placer silently
+     produced nothing" look identical in the file, so the spec has to say which
+     and the two have to agree. */
+  if (spec.props === false) {
+    if (game.props !== false) fail("props are switched off for this corridor but the file does not say so");
+    if (game.obstacles.length || game.coins.length) {
+      fail(`props are switched off but ${game.obstacles.length} obstacles and ${game.coins.length} coins were placed`);
+    }
+  } else if (!game.obstacles.length || !game.coins.length) {
+    fail("the run has no props at all");
+  }
 }
 
 function load() {

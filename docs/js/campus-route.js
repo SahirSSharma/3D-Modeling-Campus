@@ -20,6 +20,43 @@ const cellKey = (x, z) => `${Math.round(x / SNAP_M)}:${Math.round(z / SNAP_M)}`;
 
 const dist = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
 
+/* ---- geometry, for keeping shortcuts out of buildings ---- */
+
+const pointInRing = (x, z, ring) => {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, zi] = ring[i];
+    const [xj, zj] = ring[j];
+    if ((zi > z) !== (zj > z) && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) inside = !inside;
+  }
+  return inside;
+};
+
+const segmentsCross = (ax, az, bx, bz, cx, cz, dx, dz) => {
+  const s = (px, pz, qx, qz, rx, rz) =>
+    Math.sign((qx - px) * (rz - pz) - (qz - pz) * (rx - px));
+  return s(ax, az, bx, bz, cx, cz) !== s(ax, az, bx, bz, dx, dz)
+    && s(cx, cz, dx, dz, ax, az) !== s(cx, cz, dx, dz, bx, bz);
+};
+
+/** Does the segment a->b enter this ring at all — by crossing it or starting in it? */
+const segmentHitsRing = (ax, az, bx, bz, ring) => {
+  if (pointInRing(ax, az, ring) || pointInRing(bx, bz, ring)) return true;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    if (segmentsCross(ax, az, bx, bz, ring[j][0], ring[j][1], ring[i][0], ring[i][1])) return true;
+  }
+  return false;
+};
+
+const bboxOf = (ring) => {
+  let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+  for (const [x, z] of ring) {
+    if (x < x0) x0 = x; if (x > x1) x1 = x;
+    if (z < z0) z0 = z; if (z > z1) z1 = z;
+  }
+  return { x0, x1, z0, z1 };
+};
+
 /**
  * Build the routable graph once per page load.
  * @param {{paths: {p: number[][], steps?: number}[], surfaces?: object[]}} data campus-3d.json
@@ -68,9 +105,31 @@ export function buildGraph(data) {
    * So an open surface is made crossable. Its perimeter becomes walkable, and
    * every perimeter vertex is joined to the centre, which lets a route cut
    * diagonally across in roughly the line a person takes. It is not a full
-   * triangulation of the space and does not need to be — the plazas here are
-   * convex enough that centre-crossing spokes are indistinguishable from the
-   * desire line at walking scale. */
+   * triangulation of the space and does not need to be.
+   *
+   * BUT A SHORTCUT MUST NOT GO THROUGH A BUILDING. The original version of this
+   * assumed the plazas here are convex enough that a centre-crossing spoke is
+   * indistinguishable from the desire line. That is false for the courtyard
+   * plaza around Argo Hall, whose ring wraps the building: 4 of its 18 spokes
+   * ran straight through Argo, and the shipped scooter route inherited 12 m of
+   * centreline inside the walls. Nothing on screen said so — you simply drove
+   * through a residence hall.
+   *
+   * So every link laid down here is tested against the footprints it might
+   * cross, and dropped if it enters one. This is the failure this module's own
+   * header warns about ("a route that silently degrades to a straight line
+   * through Urey Hall"); it arrived through the shortcut rather than through a
+   * fallback, which is why it went unnoticed. Real OSM paths are NOT filtered —
+   * a way that genuinely runs under a building is a breezeway, and the survey is
+   * right about it. Only these invented shortcuts are. */
+  const footprints = (data.buildings || [])
+    .filter((b) => b?.p?.length >= 3)
+    .map((b) => ({ ring: b.p, box: bboxOf(b.p) }));
+
+  /** Buildings whose bbox overlaps this one — the only ones worth testing. */
+  const near = (box) => footprints.filter((f) =>
+    f.box.x0 <= box.x1 && f.box.x1 >= box.x0 && f.box.z0 <= box.z1 && f.box.z1 >= box.z0);
+
   for (const surface of data.surfaces || []) {
     if (surface.kind !== "plaza" || !surface.p || surface.p.length < 4) continue;
     const ring = surface.p;
@@ -78,11 +137,19 @@ export function buildGraph(data) {
     const cx = ring.reduce((s, p) => s + p[0], 0) / ring.length;
     const cz = ring.reduce((s, p) => s + p[1], 0) / ring.length;
     const centre = nodeAt(cx, cz);
+    const candidates = near(bboxOf(ring));
 
-    const link = (a, b) => {
+    const link = (a, b, checked) => {
       if (a === b) return;
       const len = dist(nodes[a], nodes[b]);
       if (!len) return;
+      if (checked) {
+        const { x: ax, z: az } = nodes[a];
+        const { x: bx, z: bz } = nodes[b];
+        for (const f of candidates) {
+          if (segmentHitsRing(ax, az, bx, bz, f.ring)) return;
+        }
+      }
       nodes[a].edges.push({ to: b, w: len, len });
       nodes[b].edges.push({ to: a, w: len, len });
     };
@@ -90,8 +157,12 @@ export function buildGraph(data) {
     for (let i = 0; i < ring.length; i++) {
       const here = nodeAt(ring[i][0], ring[i][1]);
       const next = nodeAt(ring[(i + 1) % ring.length][0], ring[(i + 1) % ring.length][1]);
-      link(here, next);   // the perimeter
-      link(here, centre); // and straight across it
+      /* The perimeter is the surveyed edge of the plaza and is walkable even
+         where it hugs a wall — filtering it disconnects the graph outright
+         (the courts lose their only link to Revelle). Only the spoke is an
+         invention of this function, so only the spoke is checked. */
+      link(here, next, false);
+      link(here, centre, true);
     }
   }
 
@@ -170,18 +241,106 @@ export function findRoute(graph, startIdx, goalIdx) {
  * corners enough for a camera to follow without the route drifting off the
  * actual walkway.
  */
-export function smooth(points, passes = 2) {
+export function smooth(points, passes = 2, avoid = null) {
+  /* ROUND CORNERS, NEVER ROUND INTO A WALL. Cutting a corner moves the line off
+     the surveyed path by design, and beside a building that is how a route
+     which clears the wall as a polyline ends up 2 m inside it once smoothed —
+     which is exactly what happened at Challenger Hall. Given `avoid` (footprint
+     rings), a cut that would land inside one is not taken and that corner stays
+     square. A square corner is a slightly worse ride and a far better one than
+     driving through a residence hall. */
+  const blocked = (x, z) => {
+    if (!avoid) return false;
+    for (const ring of avoid) if (pointInRing(x, z, ring)) return true;
+    return false;
+  };
+
   let pts = points;
   for (let pass = 0; pass < passes; pass++) {
     const out = [pts[0]];
     for (let i = 0; i < pts.length - 1; i++) {
       const a = pts[i];
       const b = pts[i + 1];
-      out.push({ x: a.x * 0.75 + b.x * 0.25, z: a.z * 0.75 + b.z * 0.25 });
-      out.push({ x: a.x * 0.25 + b.x * 0.75, z: a.z * 0.25 + b.z * 0.75 });
+      const p = { x: a.x * 0.75 + b.x * 0.25, z: a.z * 0.75 + b.z * 0.25 };
+      const q = { x: a.x * 0.25 + b.x * 0.75, z: a.z * 0.25 + b.z * 0.75 };
+      if (blocked(p.x, p.z) || blocked(q.x, q.z)) {
+        out.push({ x: a.x, z: a.z }, { x: b.x, z: b.z });
+      } else {
+        out.push(p, q);
+      }
     }
     out.push(pts[pts.length - 1]);
     pts = out;
+  }
+  return pts;
+}
+
+/** Nearest point to (x,z) on a closed ring's boundary, and how far away it is. */
+function nearestOnRing(x, z, ring) {
+  let best = null;
+  let bestD = Infinity;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [ax, az] = ring[j];
+    const [bx, bz] = ring[i];
+    const dx = bx - ax;
+    const dz = bz - az;
+    const len2 = dx * dx + dz * dz;
+    const t = len2 ? Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / len2)) : 0;
+    const qx = ax + dx * t;
+    const qz = az + dz * t;
+    const d = Math.hypot(x - qx, z - qz);
+    if (d < bestD) { bestD = d; best = { x: qx, z: qz }; }
+  }
+  return { point: best, distance: bestD };
+}
+
+/**
+ * Push a centreline out of the buildings it clips, and off their walls.
+ *
+ * Smoothing is not the only way a route ends up inside a wall. OSM draws plazas
+ * and buildings as separate polygons that overlap slightly where a plaza abuts a
+ * building, so a plaza's own PERIMETER can run a metre inside the neighbouring
+ * footprint — which is how the route caught the corner of Challenger Hall by
+ * 1.2 m. Filtering those perimeter edges out of the graph is not an option: they
+ * are the only thing connecting some of this campus, and dropping them left the
+ * courts with no route to Revelle at all.
+ *
+ * So repair the line instead of the graph. Anything inside a footprint, or
+ * closer to one than `clearance`, is moved to the nearest point on that wall
+ * plus the clearance. Run this BEFORE resampling — the resample re-grids
+ * afterwards, so the fixed spacing the ride indexes by survives untouched.
+ *
+ * A few metres of lateral correction on a route this long is not a claim about
+ * where the path is. It is a statement that the rider does not pass through
+ * masonry, which the survey already implies and the polyline had merely lost.
+ */
+export function pushOutside(points, rings, clearance = 1.2, passes = 2) {
+  if (!rings?.length) return points;
+  let pts = points.map((p) => ({ x: p.x, z: p.z }));
+
+  for (let pass = 0; pass < passes; pass++) {
+    let moved = 0;
+    pts = pts.map((p) => {
+      let { x, z } = p;
+      for (const ring of rings) {
+        const inside = pointInRing(x, z, ring);
+        const { point: q, distance } = nearestOnRing(x, z, ring);
+        if (!q) continue;
+        if (!inside && distance >= clearance) continue;
+        /* Outward is away from the wall we are nearest to — which is the
+           direction we already lie in when outside, and its opposite when in. */
+        let dx = x - q.x;
+        let dz = z - q.z;
+        const len = Math.hypot(dx, dz);
+        if (len < 1e-6) continue; // exactly on the wall: no direction to trust
+        if (inside) { dx = -dx; dz = -dz; }
+        x = q.x + (dx / len) * clearance;
+        z = q.z + (dz / len) * clearance;
+        moved++;
+      }
+      return { x, z };
+    });
+    if (!moved) break;
   }
   return pts;
 }

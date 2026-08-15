@@ -767,5 +767,5 @@ body.mode-ride #walk-canvas { cursor: default; }
 /* The stat panel is meaningless while the ride is paused, and the intro's
    whole job is to show the place rather than the numbers. */
 .ride-hud[data-mode="intro"] .ride-panel,
-.ride-hud[data-mode="flythrough"] .ride-panel { opacity: 0.35; }
+.ride-hud[data-mode="fly"] .ride-panel { opacity: 0.35; }
 .ride-hud[data-mode="intro"] .ride-panel { transition: opacity 0.5s var(--ease-out); }

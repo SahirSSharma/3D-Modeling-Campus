@@ -34,10 +34,19 @@ inherits this project's gates instead of only the global operating model in
   tolerance, leave it unbuilt and say so. Do not fill the gap with a plausible
   guess.
 - **Never loosen a gate to make a fix pass.**
+- **A route must never run through a building.** `check` in
+  `scripts/build-corridor.mjs` walks the shipped centreline against every
+  footprint and fails on any intrusion; `tests/corridor.test.mjs` does the same
+  against the FULL campus. It fired for real: the run drove 12 m through Argo
+  Hall. Three causes, all now guarded — a building named as a waypoint routes to
+  its centroid; `campus-route.js` plaza centre-spokes are an invented shortcut
+  and were crossing footprints; and Chaikin smoothing rounds corners off the
+  surveyed path and into walls. Do not "fix" a future instance by relaxing that
+  gate.
 - **Work in progress goes to `?mode=staging`, not to the run.** There are two
   corridors and `scripts/build-corridor.mjs` builds both from one `ROUTES`
   table: `corridor-eighth-peterson.json` is the run people ride, and
-  `corridor-argo-peterson.json` is the workbench. Try things on staging. It is
+  `corridor-staging.json` is the workbench — the SAME route with no obstacles or coins. Try things on staging. It is
   allowed to be broken; the run is not. Staging is **not** exempt from any gate
   — the same `--check` and the whole of `tests/corridor.test.mjs` run over both
   — it is exempt only from being finished. Each file is stamped with
