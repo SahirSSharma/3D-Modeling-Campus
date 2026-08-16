@@ -39,6 +39,8 @@ import { surveyFacts, geometryFacts, sourceLines } from "./campus-facts.js";
 import { createPostfx } from "./campus-postfx.js";
 import { createPhotoEighth } from "./campus-photo-eighth.js";
 import { createPhotoRevelle } from "./campus-photo-revelle.js";
+import { createPhotoRady } from "./campus-photo-rady.js";
+import { createPhotoErc } from "./campus-photo-erc.js";
 import {
   createExplore, scaleAtmosphere, stepSpeed, EYE, sliderToSpeed, speedToSlider,
   MAX_SPEED_MPS,
@@ -645,6 +647,10 @@ export async function boot({ report } = {}) {
     const surfaceAt = terrain.surfaceAt;
     photoZone.add(createPhotoEighth(null, { photo: data.photo, heightAt: surfaceAt }).group);
     createPhotoRevelle(photoZone, { photo: data.photo, heightAt: surfaceAt, surfaceAt });
+    /* Rady and ERC are free-roam-only: both sit far outside the scooter
+       corridor's crop, so the run never has the terrain under them. */
+    photoZone.add(createPhotoRady(null, { photo: data.photo, heightAt: surfaceAt, surfaceAt }).group);
+    photoZone.add(createPhotoErc(null, { photo: data.photo, heightAt: surfaceAt, surfaceAt }).group);
   }
   scene.add(photoZone);
 
