@@ -36,12 +36,21 @@ export function createPostfx({ renderer, scene, camera }) {
   composer.addPass(new RenderPass(scene, camera));
 
   /* Modest sample counts: GTAO's cost is per-pixel and the campus fills every
-     pixel; the Poisson denoise pass is what buys smoothness back. */
+     pixel; the Poisson denoise pass is what buys smoothness back.
+
+     TUNED DOWN 2026-08-17, and the numbers are load-bearing: the first pass
+     shipped radius 2.2 / scale 1.4 / blend 0.9, and at that strength GTAO
+     manufactured occlusion on open flat ground — every court on campus went
+     from its measured colour to near-black, worst at distance where depth
+     precision is thinnest. Sahir reported it from the live site; the bisect
+     (passes.gtao.enabled, below) pinned it to this pass alone. Contact
+     shadows survive at these values; if AO ever needs to be stronger, check
+     the courts first. */
   const gtao = new GTAOPass(scene, camera, size.x, size.y);
   gtao.output = GTAOPass.OUTPUT.Default;
-  gtao.blendIntensity = 0.9;
-  gtao.updateGtaoMaterial({ radius: 2.2, distanceExponent: 1.6, thickness: 1.2,
-    scale: 1.4, samples: 12, distanceFallOff: 1 });
+  gtao.blendIntensity = 0.6;
+  gtao.updateGtaoMaterial({ radius: 0.8, distanceExponent: 2, thickness: 0.6,
+    scale: 1.0, samples: 12, distanceFallOff: 0.5 });
   gtao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2.5, normalPhi: 3.5, radius: 6, rings: 3, samples: 12 });
   composer.addPass(gtao);
 
@@ -57,5 +66,9 @@ export function createPostfx({ renderer, scene, camera }) {
       gtao.setSize(w, h);
       bloom.setSize(w, h);
     },
+    /* The manipulation seam, campus-walk.js style: each pass reachable from
+       the console so a rendering fault can be bisected live — turning passes
+       off one at a time is how the double-tone-mapping regression was found. */
+    passes: { gtao, bloom },
   };
 }

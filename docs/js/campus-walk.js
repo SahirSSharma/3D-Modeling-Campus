@@ -744,6 +744,8 @@ export async function boot({ report } = {}) {
   window.__campusWalk = {
     state, explore,
     get camera() { return camera; },
+    get renderer() { return renderer; },
+    get postfx() { return postfx; },
     /* Hover anywhere: x/z in campus metres, eyes `hover` m above the ground. */
     fly(x, z, hover = EYE, yaw = 0, pitch = -0.05) {
       explore.enterAt(x, z, yaw);
