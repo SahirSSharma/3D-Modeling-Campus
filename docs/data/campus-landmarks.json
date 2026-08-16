@@ -222,7 +222,10 @@
     "pole": "#e4e6e3",
     "flagRed": "#b22234",
     "flagWhite": "#f2f2ef",
-    "flagBlue": "#3c3b6e"
+    "flagBlue": "#3c3b6e",
+    "flagGold": "#c8a02c",
+    "halyard": "#cfd2cd",
+    "cleat": "#9aa0a0"
    },
    "fountain": {
     "diameter_m": 8,
@@ -233,7 +236,7 @@
     "height_m": 15,
     "north_m": 12
    },
-   "description": "The centrepiece of Revelle Plaza, and the thing the walk aims at once it leaves Argo: a low ring basin about 8 m across with a single white aerating jet standing in the middle of it, and the tall US flagpole a dozen metres off its north side. Measured W:f0035 (and corroborated W:f0034, W:f0036): the basin is BLACK - a charcoal basalt that samples #151217 raw in the frame, which is the darkest thing on the plaza and the reason the fountain reads as a hole in the concrete rather than an ornament. The rendered #3a3437 is that reading lifted to daylight, a very dark warm charcoal rather than the literal near-black. The jet samples #a5b1b6 backlit and is rendered as lifted white foam - a single column that flares as it rises, not a fan of nozzles. Position is the surveyed OSM point 'Revelle Plaza Fountain' inside the plaza polygon both the router and the walk cross. The flagpole stand-off is parallax between W:f0034 and W:f0035, which puts it 12-17 m from the basin on the side away from the cafe umbrellas; the flag's own red/white/blue are the canonical US flag colours, NOT measurements - at this distance the flag is a handful of sky-mixed pixels. Low-poly: charcoal rim cylinder, dark water disc, one flaring foam cone, white pole with a small flag box.",
+   "description": "The centrepiece of Revelle Plaza, and the thing the walk aims at once it leaves Argo: a low ring basin about 8 m across with a single white aerating jet standing in the middle of it, and the tall US flagpole a dozen metres off its north side. Measured W:f0035 (and corroborated W:f0034, W:f0036): the basin is BLACK - a charcoal basalt that samples #151217 raw in the frame, which is the darkest thing on the plaza and the reason the fountain reads as a hole in the concrete rather than an ornament. The rendered #3a3437 is that reading lifted to daylight, a very dark warm charcoal rather than the literal near-black. The jet samples #a5b1b6 backlit and is rendered as lifted white foam - a single column that flares as it rises, not a fan of nozzles. Position is the surveyed OSM point 'Revelle Plaza Fountain' inside the plaza polygon both the router and the walk cross. The flagpole stand-off is parallax between W:f0034 and W:f0035, which puts it 12-17 m from the basin on the side away from the cafe umbrellas; the flag's own red/white/blue are the canonical US flag colours, NOT measurements - at this distance the flag is a handful of sky-mixed pixels. The flag itself is now built to the published US proportions - hoist 1, fly 1.9, thirteen equal stripes with seven red and red at top and bottom, union 7/13 of the hoist tall and 0.76 of the hoist wide over the top seven stripes, fifty stars in the 6/5 nine-row grid - which is a SPECIFICATION, not a measurement. So is everything else new on the pole: the 1.52 m hoist (the conventional flag for a pole this tall), the standing wave the cloth is bent onto and the direction it flies, the gold ball finial and truck (flagGold), the halyard (halyard) and the cleat (cleat). What a source actually settles is only that the pole is there and that it flies the US flag - Revelle College's own page lists 'the May 1970 Peace Memorial and the U.S. Flag' as what the Plaza hosts (revelle.ucsd.edu/events), and W:f0034-f0036 place it. No frame on this campus resolves the hardware at 15 m. Low-poly: charcoal rim cylinder, dark water disc, one flaring foam cone, tapered white pole with ball finial, halyard and cleat, and a thirteen-stripe flag welded into four instanced ribbons.",
    "prominence": "notable"
   },
   {

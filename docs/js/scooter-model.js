@@ -104,12 +104,27 @@ export function createScooter() {
   /* Raked back about 8 degrees, which is what the photograph shows and what
      stops the machine looking like a scooter drawn with a set square. */
   const rake = -0.14;
-  const stem = part(new THREE.CylinderGeometry(0.028, 0.036, 0.98, 12), BODY, {
+  const stemLen = 0.98;
+  const stemBaseY = R.deckY + 0.47;
+  const stemBaseZ = R.nose - 0.06;
+  const stem = part(new THREE.CylinderGeometry(0.028, 0.036, stemLen, 12), BODY, {
     roughness: 0.35, metalness: 0.5,
   });
-  stem.position.set(0, R.deckY + 0.47, R.nose - 0.06);
+  stem.position.set(0, stemBaseY, stemBaseZ);
   stem.rotation.x = rake;
   body.add(stem);
+
+  /* Where the raked tube's centreline and surface actually are at a given
+     height. The bar and the headlight are mounted off this rather than off
+     eyeballed constants, which is what left both of them hanging in air. */
+  const stemAxis = (y) => {
+    const t = (y - stemBaseY) / Math.cos(rake);
+    return {
+      z: stemBaseZ + Math.sin(rake) * t,
+      r: 0.036 + (0.028 - 0.036) * ((t + stemLen / 2) / stemLen),
+    };
+  };
+  const stemTopY = stemBaseY + Math.cos(rake) * (stemLen / 2);
 
   /* The folding clamp, two-thirds up. Small, but it is the single detail that
      identifies the machine. */
@@ -121,20 +136,26 @@ export function createScooter() {
   body.add(clamp);
 
   /* ---- handlebar ---- */
-  const barZ = R.nose - 0.19;
+  /* Sat across the top of the stem, not floating above it: the crossbar's
+     centre is one grip-radius below R.barY so the machine still measures
+     1,130 mm to the top of the grips while the bar overlaps the tube it is
+     clamped to. */
+  const gripR = 0.023;
+  const barY = R.barY - gripR;
+  const barZ = stemAxis(stemTopY).z;
   const bar = part(new THREE.CylinderGeometry(0.017, 0.017, R.barW, 10), DARK, {
     roughness: 0.4, metalness: 0.6,
   });
   bar.rotation.z = Math.PI / 2;
-  bar.position.set(0, R.barY, barZ);
+  bar.position.set(0, barY, barZ);
   body.add(bar);
 
   for (const side of [-1, 1]) {
-    const handle = part(new THREE.CylinderGeometry(0.023, 0.023, 0.115, 10), DARK, {
+    const handle = part(new THREE.CylinderGeometry(gripR, gripR, 0.115, 10), DARK, {
       roughness: 0.95, metalness: 0,
     });
     handle.rotation.z = Math.PI / 2;
-    handle.position.set(side * (R.barW / 2 - 0.055), R.barY, barZ);
+    handle.position.set(side * (R.barW / 2 - 0.055), barY, barZ);
     body.add(handle);
   }
 
@@ -142,7 +163,7 @@ export function createScooter() {
   const lever = part(new THREE.BoxGeometry(0.085, 0.012, 0.02), ACCENT, {
     roughness: 0.3, metalness: 0.6,
   });
-  lever.position.set(-0.11, R.barY - 0.035, barZ + 0.035);
+  lever.position.set(-0.11, barY - 0.035, barZ + 0.035);
   lever.rotation.z = 0.22;
   body.add(lever);
 
@@ -150,7 +171,7 @@ export function createScooter() {
   const display = part(new THREE.BoxGeometry(0.062, 0.03, 0.042), DARK, {
     roughness: 0.2, metalness: 0.3, emissive: 0x1b3a52, emissiveIntensity: 0.6,
   });
-  display.position.set(0, R.barY + 0.024, barZ);
+  display.position.set(0, barY + 0.024, barZ);
   body.add(display);
 
   /* ---- fork, fenders, lights ---- */
@@ -177,17 +198,24 @@ export function createScooter() {
   /* Headlight in the stem, and the red reflector under the rear fender. Both
      are emissive rather than actual lights: two more real lights per frame buys
      nothing at noon and costs a shader recompile. */
+  const headY = R.deckY + 0.63;
+  const headFace = stemAxis(headY);
   const head = part(new THREE.CylinderGeometry(0.032, 0.032, 0.028, 14), LIGHT, {
     roughness: 0.2, metalness: 0.1, emissive: LIGHT, emissiveIntensity: 0.85,
   });
   head.rotation.x = Math.PI / 2 + rake;
-  head.position.set(0, R.deckY + 0.63, R.nose + 0.02);
+  /* Let into the tube's face: the tilted disc reaches 0.018 either side of its
+     centre, so sitting 0.008 proud of the surface buries its back rim 0.01 in
+     and leaves the lens standing out of the stem. */
+  head.position.set(0, headY, headFace.z + headFace.r + 0.008);
   body.add(head);
 
+  /* The reflector rides the tail of the rear fender. It used to sit at the same
+     height as the axle, which put all but a sliver of it inside the tyre. */
   const reflector = part(new THREE.BoxGeometry(0.06, 0.022, 0.012), ACCENT, {
     roughness: 0.25, metalness: 0.1, emissive: 0x7a1c08, emissiveIntensity: 0.7,
   });
-  reflector.position.set(0, R.rearWheel + 0.07, R.tail - 0.05);
+  reflector.position.set(0, R.rearWheel + 0.093, R.tail - 0.058);
   body.add(reflector);
 
   /* ---- wheels ---- */
@@ -235,10 +263,14 @@ export function createObstacle(kind) {
 
   switch (kind) {
     case "bench": {
+      /* Backless, the way the campus slab benches are — and the way this one
+         has to be. The builder declares it at h 0.46 and scooter-ride.js counts
+         a hop cleared at ride.y > o.h, with the hop peaking at 0.55 m. A
+         backrest topping out at 0.75 m meant a hop the game scored as clean
+         drove the wheels through 0.20 m of timber. Nothing here goes above the
+         0.46 m it collides at. */
       const seat = add(part(new THREE.BoxGeometry(1.3, 0.07, 0.42), 0x8a6a45, { roughness: 0.85, metalness: 0 }));
       seat.position.y = 0.42;
-      const back = add(part(new THREE.BoxGeometry(1.3, 0.3, 0.06), 0x8a6a45, { roughness: 0.85, metalness: 0 }));
-      back.position.set(0, 0.6, -0.18);
       for (const side of [-0.5, 0.5]) {
         const leg = add(part(new THREE.BoxGeometry(0.07, 0.42, 0.36), 0x3f4348, { roughness: 0.5, metalness: 0.5 }));
         leg.position.set(side, 0.21, 0);
@@ -287,17 +319,21 @@ export function createObstacle(kind) {
       /* Leaned hard enough to read as an A. At the first pass the two panels
          sat 9 degrees off vertical and 0.24 m apart, which from behind is a
          yellow cube. The apex has to be visibly narrower than the feet or the
-         silhouette says nothing. Top lands at 1.12 m, which is the 1.15 m the
-         builder declares it collides at. */
+         silhouette says nothing — and the lean has to be NEGATIVE, because the
+         obvious sign builds a V: 0.75 m open at the top, 0.05 m at the feet,
+         with each stripe hanging 0.25 m off its panel in the empty middle.
+         Flipped, the feet are the wide end and the stripes lie on the panels.
+         Top lands at 1.03 m; the builder collides it at 1.15 m. */
       for (const lean of [-1, 1]) {
         const panel = add(part(new THREE.BoxGeometry(0.9, 1.0, 0.022), 0xf0c419, { roughness: 0.6, metalness: 0 }));
         panel.position.set(0, 0.55, lean * 0.2);
-        panel.rotation.x = lean * 0.34;
+        panel.rotation.x = -lean * 0.34;
         const stripe = add(part(new THREE.BoxGeometry(0.9, 0.11, 0.026), 0x24262a, { roughness: 0.7, metalness: 0 }));
         stripe.position.set(0, 0.93, lean * 0.075);
-        stripe.rotation.x = lean * 0.34;
+        stripe.rotation.x = -lean * 0.34;
       }
-      const foot = add(part(new THREE.BoxGeometry(0.92, 0.05, 0.62), 0x24262a, { roughness: 0.7, metalness: 0 }));
+      /* Deep enough for the now-wide feet to land on it rather than overhang. */
+      const foot = add(part(new THREE.BoxGeometry(0.92, 0.05, 0.82), 0x24262a, { roughness: 0.7, metalness: 0 }));
       foot.position.y = 0.025;
     }
   }

@@ -20,10 +20,13 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const {
-  createRide, positionAt, laneCentre,
+  createRide, positionAt,
   TOP_SPEED_MPS, START_SPEED_MPS, HIT_PENALTY_S, COIN_BONUS_S,
-  HOP_HEIGHT_M, HOP_S, LANE_OFFSET_M,
+  HOP_HEIGHT_M, HOP_S, TRACK_HALF_W, RIDER_HALF_W, STEER_MPS,
 } = await import(path.join(ROOT, "docs/js/scooter-ride.js"));
+
+/* Where the rider's centre may go — the same clamp createRide applies. */
+const SPAN = TRACK_HALF_W - RIDER_HALF_W;
 
 /* A straight 200 m route heading due south (+z), sampled at 2 m — the same
    spacing the builder emits, so the index arithmetic under test is the real
@@ -34,7 +37,7 @@ const straight = (metres = 200) => ({
 });
 
 const game = (over = {}) => ({
-  lanes: 3, laneOffset: LANE_OFFSET_M, startClear: 30, finishClear: 30,
+  halfWidth: TRACK_HALF_W, startClear: 30, finishClear: 30,
   par: 40, obstacles: [], coins: [], ...over,
 });
 
@@ -58,46 +61,46 @@ describe("the centreline", () => {
     assert.ok(Math.abs(positionAt(r, 5000).z - 200) < 1e-6);
   });
 
-  test("lanes sit either side of it", () => {
+  test("a lateral offset sits to the rider's right", () => {
     const r = straight();
-    assert.equal(laneCentre(1), 0, "the middle lane is on the centreline");
-    assert.equal(laneCentre(0), -LANE_OFFSET_M);
-    assert.equal(laneCentre(2), LANE_OFFSET_M);
-    /* Heading south, the right-hand lane is to the WEST. Getting this sign
+    /* Heading south, the rider's right is to the WEST. Getting this sign
        backwards mirrors the whole course and nothing else catches it. */
-    const right = positionAt(r, 10, LANE_OFFSET_M);
-    assert.ok(right.x < 0, "positive lane offset is the rider's right");
-    assert.ok(Math.abs(Math.abs(right.x) - LANE_OFFSET_M) < 1e-6);
+    const right = positionAt(r, 10, 1);
+    assert.ok(right.x < 0, "positive offset is the rider's right");
+    assert.ok(Math.abs(Math.abs(right.x) - 1) < 1e-6);
   });
 });
 
 describe("steering", () => {
-  test("a tap moves one lane, and holding does not slide across the path", () => {
+  test("holding a key slides across and stops at the painted edge", () => {
     const ride = createRide({ route: straight(), game: game() });
     const held = new Set(["a"]);
     for (let i = 0; i < 120; i++) ride.update(1 / 60, held); // 2 s of holding A
-    assert.equal(ride.lane, 0, "holding A moved more than one lane");
+    assert.ok(Math.abs(ride.laneX - -SPAN) < 1e-9,
+      `2 s of holding A ended at ${ride.laneX} m, not clamped at the left edge`);
+    for (let i = 0; i < 240; i++) ride.update(1 / 60, new Set(["d"]));
+    assert.ok(Math.abs(ride.laneX - SPAN) < 1e-9, "did not clamp at the right edge");
   });
 
-  test("lane index clamps at both edges", () => {
-    const ride = createRide({ route: straight(), game: game() });
-    for (let i = 0; i < 6; i++) {
-      ride.update(1 / 60, new Set(["a"]));
-      ride.update(1 / 60, new Set());
-    }
-    assert.equal(ride.lane, 0, "steered off the left of the path");
-    for (let i = 0; i < 9; i++) {
-      ride.update(1 / 60, new Set(["d"]));
-      ride.update(1 / 60, new Set());
-    }
-    assert.equal(ride.lane, 2, "steered off the right of the path");
-  });
-
-  test("the lean takes time rather than teleporting", () => {
+  test("steering takes time rather than teleporting", () => {
     const ride = createRide({ route: straight(), game: game() });
     ride.update(1 / 60, new Set(["d"]));
-    assert.ok(Math.abs(ride.laneX) < LANE_OFFSET_M * 0.5,
-      "one frame moved the whole lane width");
+    assert.ok(Math.abs(ride.laneX - STEER_MPS / 60) < 1e-9,
+      "one frame moved other than one frame's worth of steering");
+  });
+
+  test("left and right held together cancel", () => {
+    const ride = createRide({ route: straight(), game: game() });
+    for (let i = 0; i < 60; i++) ride.update(1 / 60, new Set(["a", "d"]));
+    assert.equal(ride.laneX, 0, "opposed keys still moved the rider");
+  });
+
+  test("letting go stops the slide where it is", () => {
+    const ride = createRide({ route: straight(), game: game() });
+    for (let i = 0; i < 6; i++) ride.update(1 / 60, new Set(["d"]));
+    const at = ride.laneX;
+    for (let i = 0; i < 60; i++) ride.update(1 / 60, new Set());
+    assert.equal(ride.laneX, at, "the rider drifted with no key held");
   });
 });
 
@@ -111,8 +114,8 @@ describe("speed", () => {
 });
 
 describe("obstacles", () => {
-  const bench = { s: 60, lane: 1, kind: "bench", w: 1.7, h: 0.46, hop: true };
-  const bollard = { s: 60, lane: 1, kind: "bollard", w: 0.24, h: 0.95, hop: false };
+  const bench = { s: 60, off: 0, kind: "bench", w: 1.7, h: 0.46, hop: true };
+  const bollard = { s: 60, off: 0, kind: "bollard", w: 0.24, h: 0.95, hop: false };
 
   test("riding into one costs exactly the penalty, once", () => {
     const ride = createRide({ route: straight(), game: game({ obstacles: [bollard] }) });
@@ -148,10 +151,11 @@ describe("obstacles", () => {
     assert.equal(ride.airborne, false);
   });
 
-  test("another lane goes past untouched", () => {
-    const ride = createRide({ route: straight(), game: game({ obstacles: [{ ...bollard, lane: 0 }] }) });
+  test("an obstacle off to the side goes past untouched", () => {
+    /* 1.15 m away is clear of a 0.24 m bollard plus the rider's 0.32 m. */
+    const ride = createRide({ route: straight(), game: game({ obstacles: [{ ...bollard, off: -1.15 }] }) });
     run(ride);
-    assert.equal(ride.hits, 0, "hit an obstacle two lanes away");
+    assert.equal(ride.hits, 0, "hit an obstacle well off the rider's line");
   });
 
   test("a hit is not skipped by a long frame", () => {
@@ -164,15 +168,15 @@ describe("obstacles", () => {
 });
 
 describe("coins", () => {
-  test("a low coin in the lane is taken once", () => {
-    const coins = [{ s: 50, lane: 1, y: 0.9 }];
+  test("a low coin on the rider's line is taken once", () => {
+    const coins = [{ s: 50, off: 0, y: 0.9 }];
     const ride = createRide({ route: straight(), game: game({ coins }) });
     run(ride);
     assert.equal(ride.coins, 1);
   });
 
   test("a high coin needs the hop", () => {
-    const coins = [{ s: 50, lane: 1, y: 1.45 }];
+    const coins = [{ s: 50, off: 0, y: 1.45 }];
     const missed = createRide({ route: straight(), game: game({ coins }) });
     run(missed);
     assert.equal(missed.coins, 0, "an out-of-reach coin was taken from the deck");
@@ -185,7 +189,7 @@ describe("coins", () => {
   test("collecting does not consume the loaded data", () => {
     /* The ride copies the coin objects. Without that, the second run of a
        session would start with every coin already taken. */
-    const g = game({ coins: [{ s: 50, lane: 1, y: 0.9 }] });
+    const g = game({ coins: [{ s: 50, off: 0, y: 0.9 }] });
     const first = createRide({ route: straight(), game: g });
     run(first);
     const second = createRide({ route: straight(), game: g });
@@ -202,20 +206,20 @@ describe("the clock", () => {
 
     const hurt = createRide({
       route: straight(60),
-      game: game({ obstacles: [{ s: 30, lane: 1, kind: "bollard", w: 0.24, h: 0.95, hop: false }] }),
+      game: game({ obstacles: [{ s: 30, off: 0, kind: "bollard", w: 0.24, h: 0.95, hop: false }] }),
     });
     run(hurt);
     assert.ok(hurt.clock() > plain + HIT_PENALTY_S - 0.5,
       "a hit did not cost the penalty and the lost speed");
 
-    const rich = createRide({ route: straight(60), game: game({ coins: [{ s: 30, lane: 1, y: 0.9 }] }) });
+    const rich = createRide({ route: straight(60), game: game({ coins: [{ s: 30, off: 0, y: 0.9 }] }) });
     const richT = run(rich);
     assert.ok(Math.abs(rich.clock() - (richT - COIN_BONUS_S)) < 0.1,
       "a coin did not buy back its half second");
   });
 
   test("never runs negative, however many coins", () => {
-    const coins = Array.from({ length: 200 }, (_, i) => ({ s: 20 + i * 0.5, lane: 1, y: 0.9 }));
+    const coins = Array.from({ length: 200 }, (_, i) => ({ s: 20 + i * 0.5, off: 0, y: 0.9 }));
     const ride = createRide({ route: straight(160), game: game({ coins }) });
     run(ride);
     assert.ok(ride.clock() >= 0, `clock went to ${ride.clock()}`);
@@ -227,8 +231,27 @@ describe("the shipped corridor", () => {
     readFileSync(path.join(ROOT, "docs/data/corridor-eighth-peterson.json"), "utf8")
   );
 
+  /* The widest free window of rider-centre positions through a group — the
+     same arithmetic the builder's check() runs, re-derived here so the test
+     cannot inherit the builder's own mistake. */
+  const freeCentre = (group) => {
+    const span = DOC.game.halfWidth - RIDER_HALF_W;
+    const blocked = group
+      .map((o) => [o.off - o.w / 2 - RIDER_HALF_W, o.off + o.w / 2 + RIDER_HALF_W])
+      .sort((a, b) => a[0] - b[0]);
+    let cursor = -span;
+    let best = { width: 0, centre: 0 };
+    for (const [a, b] of blocked) {
+      const width = Math.min(a, span) - cursor;
+      if (width > best.width) best = { width, centre: cursor + width / 2 };
+      cursor = Math.max(cursor, b);
+    }
+    if (span - cursor > best.width) best = { width: span - cursor, centre: cursor + (span - cursor) / 2 };
+    return best;
+  };
+
   test("a rider who never steers still reaches Peterson Hall", () => {
-    /* The whole promise of "never all three lanes at once" is that the run is
+    /* The whole promise of "every group leaves a gap" is that the run is
        finishable. This is the end-to-end version of that assertion: it will
        cost hits, but it must terminate at the finish line. */
     const ride = createRide({ route: DOC.route, game: DOC.game });
@@ -237,45 +260,39 @@ describe("the shipped corridor", () => {
     assert.ok(Math.abs(ride.s - DOC.route.metres) < 0.01, "finished somewhere other than the end");
   });
 
-  test("a rider who takes the open lane can beat par", () => {
-    /* Steer to whichever lane the next group leaves open. If a perfect line
-       cannot beat par, par is wrong and the game is unwinnable. */
-    /* The line is planned in full BEFORE the run rather than decided frame by
-       frame. A greedy autopilot that re-reads "the next group" every frame
-       abandons the group it is about to reach as soon as it is within its own
-       lookahead, and steers back into it — which is a bug in the driver, not
-       in the game, and the point of this test is the game. */
-    const groups = [...new Set(DOC.game.obstacles.map((o) => o.s))].sort((a, b) => a - b);
-    const blockedAt = new Map(groups.map((s) => [s, new Set()]));
-    for (const o of DOC.game.obstacles) blockedAt.get(o.s).add(o.lane);
-
-    let planned = 1;
+  test("a rider who steers for the gaps can beat par", () => {
+    /* Aim at the widest free window through each coming group. If a clean
+       line cannot beat par, par is wrong and the game is unwinnable. The line
+       is planned in full BEFORE the run: a greedy autopilot that re-reads
+       "the next group" every frame abandons the group it is about to reach
+       as soon as it passes into its own lookahead, and steers back into it —
+       a bug in the driver, not the game, and the point of this test is the
+       game. */
+    const byS = new Map();
+    for (const o of DOC.game.obstacles) {
+      if (!byS.has(o.s)) byS.set(o.s, []);
+      byS.get(o.s).push(o);
+    }
+    const groups = [...byS.keys()].sort((a, b) => a - b);
     const plan = new Map();
     for (const s of groups) {
-      const open = [0, 1, 2].filter((l) => !blockedAt.get(s).has(l));
-      assert.ok(open.length, `no lane is open at ${s} m`);
-      planned = open.reduce((a, b) => (Math.abs(a - planned) <= Math.abs(b - planned) ? a : b));
-      plan.set(s, planned);
+      const gap = freeCentre(byS.get(s));
+      assert.ok(gap.width > 0, `no way through the group at ${s} m`);
+      plan.set(s, gap.centre);
     }
 
     const ride = createRide({ route: DOC.route, game: DOC.game });
-    /* Steering is edge-triggered, so the autopilot has to let go of the key
-       between lanes — holding it down moves one lane and then nothing, which
-       is the behaviour the "holding does not slide across the path" test
-       above pins. Releasing on alternate frames is the cheapest way to tap. */
-    let down = false;
     run(ride, {
       maxSeconds: 600,
       keysAt: (s) => {
         /* Aim at the next group not yet passed, and keep aiming at it. */
         const next = groups.find((g) => g > s - 1);
-        const want = next == null ? ride.lane : plan.get(next);
-        if (ride.lane === want) { down = false; return new Set(); }
-        down = !down;
-        return down ? new Set([ride.lane > want ? "a" : "d"]) : new Set();
+        const want = next == null ? ride.laneX : plan.get(next);
+        if (Math.abs(ride.laneX - want) < 0.03) return new Set();
+        return new Set([ride.laneX > want ? "a" : "d"]);
       },
     });
-    assert.equal(ride.hits, 0, `a perfect line still hit ${ride.hits} things`);
+    assert.equal(ride.hits, 0, `a clean line still hit ${ride.hits} things`);
     assert.ok(ride.clock() <= DOC.game.par,
       `a clean run took ${ride.clock().toFixed(1)} s against a par of ${DOC.game.par} s`);
   });

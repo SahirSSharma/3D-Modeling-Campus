@@ -358,12 +358,19 @@ function netRun(group, nets, heightAt, { height, postR }) {
     const len = Math.hypot(n.bx - n.ax, n.bz - n.az);
     const x = (n.ax + n.bx) / 2;
     const z = (n.az + n.bz) / 2;
-    return { x, z, len, rot: Math.atan2(n.bx - n.ax, n.bz - n.az) };
+    /* The body hangs between the posts, so it takes ITS ground from THEIR
+       ground — the mean of the two post samples, not a third sample at the
+       midpoint. On the sand pit the midpoint reads 0.10 m off the posts'
+       mean, which floated the tape clean off one post and buried it in the
+       other; the mean halves the worst residual and ties it to the steel the
+       net is actually strung from. */
+    const y = (heightAt(n.ax, n.az) + heightAt(n.bx, n.bz)) / 2;
+    return { x, z, y, len, rot: Math.atan2(n.bx - n.ax, n.bz - n.az) };
   });
   group.add(instanced(new THREE.BoxGeometry(0.05, height, 1), lambert(REC_COLORS.net), line,
-    (n) => ({ x: n.x, y: heightAt(n.x, n.z) + height / 2, z: n.z, rot: n.rot, sz: n.len })));
+    (n) => ({ x: n.x, y: n.y + height / 2, z: n.z, rot: n.rot, sz: n.len })));
   group.add(instanced(new THREE.BoxGeometry(0.07, 0.07, 1), lambert(REC_COLORS.tape), line,
-    (n) => ({ x: n.x, y: heightAt(n.x, n.z) + height + 0.02, z: n.z, rot: n.rot, sz: n.len })));
+    (n) => ({ x: n.x, y: n.y + height + 0.02, z: n.z, rot: n.rot, sz: n.len })));
   const posts = nets.flatMap((n) => [{ x: n.ax, z: n.az }, { x: n.bx, z: n.bz }]);
   group.add(instanced(new THREE.CylinderGeometry(postR, postR, height + 0.12, 6),
     lambert(REC_COLORS.steel), posts,
@@ -387,14 +394,28 @@ export function createRecreation(scene, { campus, arcgis, markings, heightAt } =
     ...r.terraceMats, r.turfLane,
   ], heightAt, "carpet"));
 
-  /* --- the sand pit's low concrete edge. */
+  /* --- the sand pit's low concrete edge. Subdivided the same way the pads
+     are (MAX_SEG), because a 34 m side placed at one midpoint sample crossed
+     half a metre of real grade — one end of the beam buried, the other
+     floating in the air. Short segments follow the ground the way the pad
+     under them does; the 0.02 m of shared length is the joint. */
   const s = r.sandPad;
-  const curbs = [
-    { x: (s.x0 + s.x1) / 2, z: s.z0, len: s.x1 - s.x0, rot: Math.PI / 2 },
-    { x: (s.x0 + s.x1) / 2, z: s.z1, len: s.x1 - s.x0, rot: Math.PI / 2 },
-    { x: s.x0, z: (s.z0 + s.z1) / 2, len: s.z1 - s.z0, rot: 0 },
-    { x: s.x1, z: (s.z0 + s.z1) / 2, len: s.z1 - s.z0, rot: 0 },
-  ];
+  const curbs = [];
+  const curbSide = (x0, z0, x1, z1) => {
+    const len = Math.hypot(x1 - x0, z1 - z0);
+    const segs = Math.max(1, Math.ceil(len / MAX_SEG));
+    for (let i = 0; i < segs; i++) {
+      const tm = (i + 0.5) / segs;
+      curbs.push({
+        x: x0 + (x1 - x0) * tm, z: z0 + (z1 - z0) * tm,
+        len: len / segs + 0.02, rot: Math.atan2(x1 - x0, z1 - z0),
+      });
+    }
+  };
+  curbSide(s.x0, s.z0, s.x1, s.z0);
+  curbSide(s.x0, s.z1, s.x1, s.z1);
+  curbSide(s.x0, s.z0, s.x0, s.z1);
+  curbSide(s.x1, s.z0, s.x1, s.z1);
   group.add(instanced(new THREE.BoxGeometry(0.35, 0.26, 1), lambert(REC_COLORS.curb), curbs,
     (c) => ({ x: c.x, y: heightAt(c.x, c.z) + 0.13, z: c.z, rot: c.rot, sz: c.len })));
 
@@ -404,14 +425,24 @@ export function createRecreation(scene, { campus, arcgis, markings, heightAt } =
 
   /* --- hoop assemblies: pole set back behind the line, arm reaching in,
      pale backboard, orange ring. `rot` faces the court centre, so -sin/-cos
-     of it is the outward direction the pole leans away along. */
+     of it is the outward direction the pole leans away along, and `d` below is
+     metres OUTWARD from the ring axis.
+
+     The assembly is spaced like a real one and must not interpenetrate. The
+     board's front face sits 0.375 m out — the regulation rim overhang (0.15 m
+     of daylight between board and ring) plus the 0.225 m ring radius — so the
+     ring's rear arc, which reaches 0.247 m out, clears it. The 1.5 m arm runs
+     from the pole axis at 1.9 m only as far as 0.40 m, dying 0.035 m inside
+     the 0.06 m slab: enough to read as joined, not far enough to come out the
+     front. Every piece takes its y from the RING's ground sample, not its own,
+     or the assembly shears apart on a grade. */
   const out = (h, d) => ({ x: h.x - Math.sin(h.rot) * d, z: h.z - Math.cos(h.rot) * d });
   group.add(instanced(new THREE.CylinderGeometry(0.085, 0.11, 3.95, 6), lambert(REC_COLORS.steel), r.hoops,
-    (h) => { const p = out(h, 1.9); return { x: p.x, y: heightAt(p.x, p.z) + 1.97, z: p.z, rot: h.rot }; }));
-  group.add(instanced(new THREE.BoxGeometry(0.12, 0.12, 1.9), lambert(REC_COLORS.steel), r.hoops,
-    (h) => { const p = out(h, 0.95); return { x: p.x, y: heightAt(h.x, h.z) + 3.5, z: p.z, rot: h.rot }; }));
+    (h) => { const p = out(h, 1.9); return { x: p.x, y: heightAt(h.x, h.z) + 1.97, z: p.z, rot: h.rot }; }));
+  group.add(instanced(new THREE.BoxGeometry(0.12, 0.12, 1.5), lambert(REC_COLORS.steel), r.hoops,
+    (h) => { const p = out(h, 1.15); return { x: p.x, y: heightAt(h.x, h.z) + 3.5, z: p.z, rot: h.rot }; }));
   group.add(instanced(new THREE.BoxGeometry(1.83, 1.07, 0.06), lambert(REC_COLORS.backboard), r.hoops,
-    (h) => { const p = out(h, 0.15); return { x: p.x, y: heightAt(h.x, h.z) + 3.4, z: p.z, rot: h.rot }; }));
+    (h) => { const p = out(h, 0.405); return { x: p.x, y: heightAt(h.x, h.z) + 3.4, z: p.z, rot: h.rot }; }));
   const ring = new THREE.TorusGeometry(0.225, 0.022, 5, 12);
   ring.rotateX(-Math.PI / 2);
   group.add(instanced(ring, lambert(REC_COLORS.ring), r.hoops,

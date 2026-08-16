@@ -126,6 +126,66 @@ test("every colour is a measured hex", () => {
   }
 });
 
+/* The hoop assembly is spec, not measurement, so its numbers live as literals
+   in the renderer rather than in a data file — and the SAME literals live twice,
+   in campus-recreation.js (Muir, instanced) and campus-eighth-court.js (Eighth,
+   one mesh per hoop), because the two courts are meant to carry one object. So
+   this reads them out of both sources. It exists because they once did NOT
+   describe a real assembly: the arm ran the full 1.9 m from the pole to the ring
+   axis, straight through the backboard and 0.12 m out its front face, and the
+   ring's rear arc clipped the board too. Both read as a black rod through the
+   glass. `d` is metres OUTWARD from the ring axis, so a LARGER d is further
+   behind the board. */
+const HOOPS = ["docs/js/campus-recreation.js", "docs/js/campus-eighth-court.js"].map((rel) => {
+  const text = readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), "..", rel), "utf8");
+  const num = (re, what) => {
+    const m = text.match(re);
+    assert.ok(m, `${rel}: no ${what} in the hoop assembly`);
+    return m.slice(1).map(Number);
+  };
+  /* The three offsets appear once each, pole then arm then board, in both. */
+  const d = [...text.matchAll(/(?:out|back)\(h, ([\d.]+)\)/g)].map((m) => Number(m[1]));
+  assert.equal(d.length, 3, `${rel}: expected pole/arm/board offsets, got ${d.join(", ")}`);
+  const [armLen] = num(/BoxGeometry\(0\.12, 0\.12, ([\d.]+)\)/, "0.12 m arm");
+  const [, , boardThick] = num(
+    /BoxGeometry\(([\d.]+), ([\d.]+), ([\d.]+)\), lambert\((?:REC_COLORS|colors)\.backboard\)/, "backboard");
+  const [ringR, ringTube] = num(/TorusGeometry\(([\d.]+), ([\d.]+)/, "ring");
+  return { rel, pole: d[0], armD: d[1], armLen, boardD: d[2], boardThick, ringR, ringTube };
+});
+
+test("both courts build the same hoop assembly", () => {
+  const [muir, eighth] = HOOPS;
+  const shape = ({ rel, ...rest }) => rest;
+  assert.deepEqual(shape(eighth), shape(muir),
+    "Eighth's hoop must be Muir's object verbatim, spacing included");
+});
+
+test("the hoop arm and ring stay out of the backboard", () => {
+  for (const h of HOOPS) {
+    const boardFront = h.boardD - h.boardThick / 2;
+    const boardBack = h.boardD + h.boardThick / 2;
+    const armInner = h.armD - h.armLen / 2;
+    assert.ok(armInner > boardFront,
+      `${h.rel}: the arm reaches ${armInner.toFixed(3)} m out, through the board's front face at ${boardFront.toFixed(3)} m`);
+    assert.ok(armInner < boardBack,
+      `${h.rel}: the arm stops at ${armInner.toFixed(3)} m out and never meets the board's back face at ${boardBack.toFixed(3)} m`);
+    assert.ok(Math.abs((h.armD + h.armLen / 2) - h.pole) < 1e-9,
+      `${h.rel}: the arm's outer end misses the pole axis at ${h.pole} m`);
+    /* The ring is centred on the axis at d = 0; its rear arc is its outer radius. */
+    assert.ok(h.ringR + h.ringTube < boardFront,
+      `${h.rel}: the ring's rear arc reaches ${(h.ringR + h.ringTube).toFixed(3)} m and clips the board at ${boardFront.toFixed(3)} m`);
+  }
+});
+
+test("the whole hoop assembly hangs off one ground sample", () => {
+  /* Pole, arm and board all sample the RING's ground point. Sampling each
+     piece's own footprint shears the assembly apart on a grade. */
+  const text = readFileSync(
+    path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "docs/js/campus-recreation.js"), "utf8");
+  const hoops = text.slice(text.indexOf("--- hoop assemblies"), text.indexOf("--- court light poles"));
+  assert.doesNotMatch(hoops, /heightAt\(p\.x/, "a hoop part takes its height from its own footprint");
+});
+
 test("placement is deterministic, and survives markings never loading", () => {
   assert.deepEqual(placeRecreation(markings), r);
   const empty = placeRecreation(null);

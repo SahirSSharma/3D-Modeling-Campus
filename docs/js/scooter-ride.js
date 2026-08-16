@@ -9,7 +9,8 @@
 //
 // The shape of the thing: the rider's position is one number, `s`, the arc
 // length travelled along the centreline. Lateral position is a second number,
-// `laneX`, metres left or right of it. Everything else — world x/z, heading,
+// `laneX`, metres left or right of it — steered freely between the track's
+// painted edges, not snapped to lanes. Everything else — world x/z, heading,
 // what you just hit — falls out of those two and the route polyline.
 
 /* The scooter in the photograph is a Ninebot KickScooter ES2, and its real
@@ -27,15 +28,16 @@ export const START_SPEED_MPS = 3.0;
    punishment you sit through. */
 export const ACCEL_MPS2 = 1.4;
 
-/* Three lanes, 1.15 m apart — the walkways on this route run about 3.5 m of
-   pavement, so the outer lanes sit near its edge and the deck stays on it.
+/* Half the track's painted width — the continuous edge stripes sit this far
+   either side of the centreline, and the rider steers freely between them.
    The value is mirrored in scripts/build-corridor.mjs, which places the props
    against it; the file the runtime loads carries it, and that copy wins. */
-export const LANE_OFFSET_M = 1.15;
+export const TRACK_HALF_W = 1.725;
 
-/* A lane change is a lean, not a teleport. 0.18 s is fast enough to dodge
-   something you saw late and slow enough to read as a movement. */
-export const LANE_SWAP_S = 0.18;
+/* How fast holding A or D slides the rider across the track. 3.5 m/s crosses
+   the whole rideable width in ~0.8 s — fast enough to dodge something seen
+   late, slow enough to read as a lean rather than a teleport. */
+export const STEER_MPS = 3.5;
 
 /* A bunny hop: 0.55 m at the peak, over in 0.55 s. That clears a bench
    (0.46 m) and a cone (0.5 m) and does NOT clear a bollard (0.95 m) — which
@@ -48,13 +50,12 @@ export const HOP_S = 0.55;
    in the air. */
 export const REACH_M = 1.0;
 
-/* Half-width of the rider for the lane test — a person on a deck is about
-   0.64 m across at the shoulders. Collision is metric rather than by lane
-   index on purpose: clip the edge of something mid-swap and you hit it, which
-   is what makes a late dodge feel late. The cost of that choice is that an
-   obstacle wider than (laneOffset - RIDER_HALF_W) * 2 silently blocks the lane
-   beside it as well; scripts/build-corridor.mjs asserts no placed obstacle
-   is, and this constant is the one it checks against. */
+/* Half-width of the rider for the collision test — a person on a deck is
+   about 0.64 m across at the shoulders. Collision is metric on purpose: clip
+   the edge of something mid-dodge and you hit it, which is what makes a late
+   dodge feel late. scripts/build-corridor.mjs folds this same number into its
+   "every group leaves a gap the rider fits through" assertion, so a placed
+   set of obstacles can never wall the track. */
 export const RIDER_HALF_W = 0.32;
 
 /* A hit costs three seconds on the clock and all of your speed. Both, because
@@ -70,14 +71,6 @@ const RIGHT_KEYS = ["d", "arrowright"];
 const HOP_KEYS = [" ", "w", "arrowup", "spacebar"];
 
 const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
-
-/**
- * Where the centre of lane `lane` sits, in metres left(-) or right(+) of the
- * centreline. Lane 1 is the middle and is exactly on it.
- */
-export function laneCentre(lane, offset = LANE_OFFSET_M) {
-  return (lane - 1) * offset;
-}
 
 /**
  * World position and heading at arc length `s`, offset `laneX` metres to the
@@ -124,8 +117,8 @@ export function positionAt(route, s, laneX = 0) {
  * taken is tracked here, so the same loaded file can start a second run.
  */
 export function createRide({ route, game, startSpeed = START_SPEED_MPS }) {
-  const offset = game.laneOffset ?? LANE_OFFSET_M;
-  const lanes = game.lanes ?? 3;
+  /* Where the rider's centre may go: the deck stays on the track. */
+  const span = (game.halfWidth ?? TRACK_HALF_W) - RIDER_HALF_W;
 
   /* Copied and sorted once. Copied per OBJECT, not just per array: collecting
      a coin tags it, and tagging the loaded file's own objects would mean the
@@ -138,7 +131,6 @@ export function createRide({ route, game, startSpeed = START_SPEED_MPS }) {
 
   const ride = {
     s: 0,
-    lane: 1,
     laneX: 0,
     speed: startSpeed,
     y: 0, // metres above the deck's resting height
@@ -155,19 +147,9 @@ export function createRide({ route, game, startSpeed = START_SPEED_MPS }) {
      is considered exactly once, in order, for the whole run. */
   let oc = 0;
   let cc = 0;
-  let swapFrom = 0; // laneX at the moment the current swap started
-  let swapT = LANE_SWAP_S; // seconds into the swap; >= LANE_SWAP_S means settled
   let prevHeld = new Set();
 
   const anyHeld = (held, keys) => keys.some((k) => held.has(k));
-
-  const setLane = (next) => {
-    const want = clamp(next, 0, lanes - 1);
-    if (want === ride.lane) return;
-    ride.lane = want;
-    swapFrom = ride.laneX;
-    swapT = 0;
-  };
 
   /**
    * One tick.
@@ -184,26 +166,18 @@ export function createRide({ route, game, startSpeed = START_SPEED_MPS }) {
     if (ride.finished || dt <= 0) return ride;
     if (counting) ride.time += dt;
 
-    /* Edge-triggered: holding A slides you one lane, not across the path.
-       Comparing against the previous frame's set is the whole mechanism. */
+    /* Steering is held, not tapped: A and D slide the rider across the track
+       for as long as they are down, clamped at the painted edges. The hop
+       stays edge-triggered — holding space is one hop, not a pogo stick. */
     const leftNow = anyHeld(held, LEFT_KEYS);
     const rightNow = anyHeld(held, RIGHT_KEYS);
     const hopNow = anyHeld(held, HOP_KEYS);
-    if (leftNow && !anyHeld(prevHeld, LEFT_KEYS)) setLane(ride.lane - 1);
-    if (rightNow && !anyHeld(prevHeld, RIGHT_KEYS)) setLane(ride.lane + 1);
     if (hopNow && !anyHeld(prevHeld, HOP_KEYS) && ride.hopT == null) ride.hopT = 0;
     prevHeld = new Set(held);
 
-    /* Lateral. Smoothstep rather than linear so the lean starts and stops
-       gently — a linear slide reads as the scooter being dragged sideways. */
-    if (swapT < LANE_SWAP_S) {
-      swapT = Math.min(LANE_SWAP_S, swapT + dt);
-      const u = swapT / LANE_SWAP_S;
-      const eased = u * u * (3 - 2 * u);
-      ride.laneX = swapFrom + (laneCentre(ride.lane, offset) - swapFrom) * eased;
-    } else {
-      ride.laneX = laneCentre(ride.lane, offset);
-    }
+    /* Lateral. Left and right cancel rather than fight. */
+    const steer = (rightNow ? 1 : 0) - (leftNow ? 1 : 0);
+    if (steer) ride.laneX = clamp(ride.laneX + steer * STEER_MPS * dt, -span, span);
 
     /* Vertical. */
     if (ride.hopT != null) {
@@ -228,7 +202,7 @@ export function createRide({ route, game, startSpeed = START_SPEED_MPS }) {
     while (oc < obstacles.length && obstacles[oc].s <= ride.s) {
       const o = obstacles[oc++];
       if (o.s < from) continue; // already behind us at the start of the frame
-      const sideways = Math.abs(ride.laneX - laneCentre(o.lane, offset));
+      const sideways = Math.abs(ride.laneX - o.off);
       if (sideways > RIDER_HALF_W + o.w / 2) continue;
       if (ride.y > o.h) continue; // hopped it
       ride.hits++;
@@ -240,7 +214,7 @@ export function createRide({ route, game, startSpeed = START_SPEED_MPS }) {
     while (cc < coins.length && coins[cc].s <= ride.s) {
       const c = coins[cc++];
       if (c.s < from) continue;
-      const sideways = Math.abs(ride.laneX - laneCentre(c.lane, offset));
+      const sideways = Math.abs(ride.laneX - c.off);
       if (sideways > RIDER_HALF_W) continue;
       if (c.y > ride.y + REACH_M) continue; // out of reach without a hop
       c.taken = true;
@@ -259,7 +233,6 @@ export function createRide({ route, game, startSpeed = START_SPEED_MPS }) {
 
   return {
     get s() { return ride.s; },
-    get lane() { return ride.lane; },
     get laneX() { return ride.laneX; },
     get speed() { return ride.speed; },
     get y() { return ride.y; },
@@ -281,7 +254,7 @@ export function createRide({ route, game, startSpeed = START_SPEED_MPS }) {
         s: ride.s,
         remaining: Math.max(0, route.metres - ride.s),
         speed: ride.speed,
-        lane: ride.lane,
+        laneX: ride.laneX,
         coins: ride.coins,
         hits: ride.hits,
         clock: clock(),

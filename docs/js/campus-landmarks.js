@@ -500,6 +500,48 @@ const box = (w, h, d, x = 0, y = 0, z = 0) => {
    ridge azimuth already uses. */
 const yawForBearing = (deg) => ((90 - deg) * Math.PI) / 180;
 
+/* The standing wave the flag is bent onto: sideways displacement as a
+   fraction of the way along the fly, ramping from nothing at the hoist —
+   where the cloth is pinned — to full at the free edge. Every stripe and the
+   union share this one curve, which is what keeps them reading as one cloth
+   rather than thirteen slats. SPEC: a flag's shape is not something W:f0035
+   resolves at 15 m, and nothing measured depends on it. */
+const FLAG_WAVE = { cycles: 1.15, amp_m: 0.16, perFly: 10, thick_m: 0.035 };
+const flagWave = (t) => FLAG_WAVE.amp_m * t * Math.sin(FLAG_WAVE.cycles * 2 * Math.PI * t);
+
+/**
+ * One stripe of the flag: a ribbon of `hoist` height running from `t0` to
+ * `t1` along a fly of `fly` metres, bent onto the wave.
+ *
+ * Welded into ONE geometry per stripe shape, because there are only two
+ * shapes — a full-width stripe and the short one that starts outboard of the
+ * union — and the thirteen stripes are then four instanced draws rather than
+ * thirteen meshes on a plaza the ride crosses at speed.
+ *
+ * Segmented on ONE grid across the whole fly (`perFly` facets end to end),
+ * not `n` facets per ribbon. The union ends two tenths of the way along, so a
+ * per-ribbon split put the short stripes' facet edges between the full
+ * stripes', and the top and bottom halves of the flag caught the light as two
+ * separate sheets with a crease down the middle of the cloth.
+ */
+function flagRibbon(fly, hoist, t0, t1) {
+  const parts = [];
+  const n = Math.max(1, Math.round((t1 - t0) * FLAG_WAVE.perFly));
+  for (let i = 0; i < n; i++) {
+    const a = t0 + ((t1 - t0) * i) / n;
+    const b = t0 + ((t1 - t0) * (i + 1)) / n;
+    const dz = (b - a) * fly;
+    const dx = flagWave(b) - flagWave(a);
+    /* 6% long so the chord segments overlap at the joints instead of opening
+       a slot of daylight on the inside of every bend. */
+    const seg = new THREE.BoxGeometry(FLAG_WAVE.thick_m, hoist, Math.hypot(dx, dz) * 1.06);
+    seg.rotateY(Math.atan2(dx, dz));
+    seg.translate((flagWave(a) + flagWave(b)) / 2, 0, ((a + b) / 2) * fly);
+    parts.push(seg);
+  }
+  return weld(...parts);
+}
+
 /**
  * Revelle Plaza's ring fountain, and the flagpole beside it.
  *
@@ -548,21 +590,107 @@ function buildFountain(lm, toLocal, heightAt) {
   const poleH = fp.height_m || 15;
   const fz = z - (fp.north_m || 12);
   const fy = heightAt(x, fz);
-  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.15, poleH, 8), lambert(c.pole));
+  const metal = lambert(c.pole);
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.15, poleH, 8), metal);
   pole.position.set(x, fy + poleH / 2, fz);
   g.add(pole);
 
-  /* The flag as three flat slabs — field, lower stripes, canton. It flies at
-     the top of a 15 m pole, which is small enough on screen that anything
-     more than the three colours is wasted. */
-  const flagY = fy + poleH - 0.95;
-  const field = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.0, 1.9), lambert(c.flagWhite));
-  field.position.set(x, flagY, fz + 1.05);
-  const lower = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.42, 1.9), lambert(c.flagRed));
-  lower.position.set(x + 0.02, flagY - 0.29, fz + 1.05);
-  const canton = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.5, 0.76), lambert(c.flagBlue));
-  canton.position.set(x - 0.02, flagY + 0.25, fz + 0.48);
-  g.add(field, lower, canton);
+  /* Truck and gold ball at the top, halyard down the back of the pole to a
+     cleat at chest height. SPEC, all of it: what a source settles here is
+     that the pole is there and that it flies the US flag (Revelle's own page
+     lists the Plaza as hosting the May 1970 Peace Memorial and the U.S.
+     Flag; W:f0034–f0036 place it). No frame resolves the hardware at 15 m,
+     so this is the standard article for a ground-set pole of that height and
+     the JSON says so. */
+  const truck = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.09, 8), metal);
+  truck.position.set(x, fy + poleH + 0.045, fz);
+  const finial = new THREE.Mesh(new THREE.SphereGeometry(0.17, 8, 6), lambert(c.flagGold));
+  finial.position.set(x, fy + poleH + 0.26, fz);
+  g.add(truck, finial);
+
+  /* The halyard stands a little further off the pole at the bottom than at
+     the top, because the pole tapers — run it parallel and the rope
+     disappears inside the base. */
+  const cleatY = 1.35;
+  const rise = poleH - 0.08 - cleatY;
+  const lean = 0.10;
+  const rope = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.015, 0.015, Math.hypot(rise, lean), 4), lambert(c.halyard)
+  );
+  rope.position.set(x, fy + cleatY + rise / 2, fz - 0.15);
+  rope.rotation.x = Math.atan2(lean, rise);
+  const cleat = lambert(c.cleat);
+  const bar = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.05, 0.05), cleat);
+  bar.position.set(x, fy + cleatY, fz - 0.24);
+  const stub = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.13), cleat);
+  stub.position.set(x, fy + cleatY, fz - 0.18);
+  g.add(rope, bar, stub);
+
+  /* The flag to the published proportions: hoist A, fly 1.9 A, thirteen
+     equal stripes with red top and bottom (seven red, six white), and a
+     union 7/13 A tall by 0.76 A wide over the top seven. The seven stripes
+     behind the union are BUILT SHORT rather than run under it — same
+     thickness, same wave, so a full stripe and the union would z-fight along
+     the whole of the hoist.
+     A is 1.52 m, the conventional flag for a 15 m pole, and the +z fly
+     direction is inherited from the old three-slab flag. Both are spec. */
+  const A = 1.52;
+  const B = A * 1.9;
+  const band = A / 13;
+  const unionT = 0.76 / 1.9;              // the union ends 40% along the fly
+  const flag = new THREE.Group();
+  /* The hoist starts at the pole's SURFACE, not on its axis — the ribbon runs
+     from local z = 0, so hanging the group on the centreline buries the first
+     segment of every stripe inside the mast. */
+  flag.position.set(x, fy + poleH - 0.18 - A / 2, fz + 0.07);
+
+  const rows = { redFull: [], whiteFull: [], redShort: [], whiteShort: [] };
+  for (let i = 0; i < 13; i++) {
+    const y = (i + 0.5) * band - A / 2;
+    const red = i % 2 === 0;              // stripe 0 is the bottom one, and red
+    const behind = i >= 6;                // the union covers the top seven
+    rows[`${red ? "red" : "white"}${behind ? "Short" : "Full"}`].push([0, y, 0]);
+  }
+  const full = flagRibbon(B, band, 0, 1);
+  const short = flagRibbon(B, band, unionT, 1);
+  const red = lambert(c.flagRed);
+  const white = lambert(c.flagWhite);
+  flag.add(
+    instanced(full, red, rows.redFull),
+    instanced(full, white, rows.whiteFull),
+    instanced(short, red, rows.redShort),
+    instanced(short, white, rows.whiteShort)
+  );
+
+  const unionH = band * 7;
+  const union = new THREE.Mesh(flagRibbon(B, unionH, 0, unionT), lambert(c.flagBlue));
+  union.position.y = A / 2 - unionH / 2;
+  flag.add(union);
+
+  /* Fifty stars in the real 6/5 nine-row grid, on BOTH faces — the flag is a
+     slab you can stand either side of. Each one is set on the wave and yawed
+     onto the local tangent, because the cloth bends more across the union
+     than a star is thick, and a star laid on a flat plane would sink into
+     the blue for half its span. One instanced draw for all hundred. */
+  const stars = [];
+  const halfT = FLAG_WAVE.thick_m / 2 + 0.006;
+  for (let r = 1; r <= 9; r++) {
+    const y = A / 2 - (unionH * r) / 10;
+    for (let col = r % 2 ? 1 : 2; col <= 11; col += 2) {
+      const t = (unionT * col) / 12;
+      const yaw = Math.atan2(flagWave(t + 0.004) - flagWave(t - 0.004), 0.008 * B);
+      for (const face of [-1, 1]) {
+        stars.push([
+          flagWave(t) + face * halfT * Math.cos(yaw),
+          y,
+          t * B - face * halfT * Math.sin(yaw),
+          yaw,
+        ]);
+      }
+    }
+  }
+  flag.add(instanced(box(0.01, 0.088, 0.088), white, stars));
+  g.add(flag);
   return g;
 }
 
@@ -610,13 +738,19 @@ function buildPergola(lm, toLocal, heightAt) {
   g.add(instanced(box(0.09, 0.07, D + 0.5), roof, slats));
 
   /* One welded unit per swing (seat, back, two rods) and per bench (seat,
-     back, two legs): four boxes each, one draw call each. */
+     back, two legs). Each swing also gets a steel cross-member to hang FROM,
+     added below: the swings sit at the middle of the depth and the long
+     beams run along the edges 1.8 m away, so without it every rod ended at
+     beam height in open air — hanging from nothing, at eye level, on the
+     closest landmark the route passes. The member spans the depth, lands on
+     both beams (the 0.11 m of shared volume is the joint), and the rods run
+     0.02 m up into it. */
   const rod = H - 0.24 - 0.55;   // beam underside down to a seat you can sit on
   const swingUnit = weld(
     box(1.7, 0.09, 0.52, 0, 0, 0),
     box(1.7, 0.44, 0.07, 0, 0.24, -0.26),
-    box(0.05, rod, 0.05, -0.8, rod / 2, 0),
-    box(0.05, rod, 0.05, 0.8, rod / 2, 0)
+    box(0.05, rod + 0.02, 0.05, -0.8, (rod + 0.02) / 2, 0),
+    box(0.05, rod + 0.02, 0.05, 0.8, (rod + 0.02) / 2, 0)
   );
   const swings = [];
   const nSwings = p.swings || 3;
@@ -624,6 +758,10 @@ function buildPergola(lm, toLocal, heightAt) {
     swings.push([-L / 2 + (L * (i + 0.5)) / nSwings, 0.55, 0]);
   }
   g.add(instanced(swingUnit, seat, swings));
+  /* The steel cross-members themselves, one over each swing, in the frame's
+     own colour rather than the seat's. */
+  g.add(instanced(box(0.12, 0.12, D + 0.18), frame,
+    swings.map(([sx]) => [sx, 0.55 + rod + 0.05, 0])));
 
   const benchUnit = weld(
     box(2.0, 0.09, 0.5, 0, 0.45, 0),

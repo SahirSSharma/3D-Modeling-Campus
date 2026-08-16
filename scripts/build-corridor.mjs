@@ -22,7 +22,7 @@
 // world geometry, it is broken.
 //
 // The one exception is deliberate and quarantined: `game` holds the obstacles,
-// coins and lanes of the scooter run. Those ARE invented. They are seeded from
+// coins and track of the scooter run. Those ARE invented. They are seeded from
 // a constant so the run is the same every time, they live under one key no
 // measured consumer reads, and they are labelled as invented in the file, in
 // the README and on screen. Nothing else in this file is a guess.
@@ -39,7 +39,7 @@
 //   colors  — campus-colors.json shape: terrain palette, roof + ground colour
 //   eighth / markings / landmarks — carried whole; small, and keyed by name
 //   route   — the centreline itself, resampled at a fixed spacing
-//   game    — invented: lanes, obstacles, coins
+//   game    — invented: the track width, obstacles, coins
 //
 // Usage:
 //   node scripts/build-corridor.mjs                    # crop + write both
@@ -50,6 +50,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   buildGraph, routeThrough, smooth, resample, pushOutside, nearestNode, findRoute,
+  nearestOnRing,
 } from "../docs/js/campus-route.js";
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -247,14 +248,18 @@ const SAMPLE_M = 2;
    useful range. */
 const TERRAIN_PAD_M = 40;
 
-/* How far the centreline is kept off a wall. The scooter is half a metre across
-   and the outer lanes sit 1.15 m either side of the line, so this is not enough
-   for the whole rideable width to clear a building — it is enough that the
-   RIDER does, which is what you can see. Where a path genuinely runs tight to a
-   facade, the line hugs it at this distance rather than being dragged off the
-   path, because the path is the measured thing and this is a correction, not a
-   re-survey. */
-const WALL_CLEARANCE_M = 1.2;
+/* How far the centreline is kept off a wall. This must clear the whole TRACK,
+   not just the rider: the painted edge sits half the track width off the line
+   (1.725 m) and the stripe itself is 0.18 m wide, so anything under 1.815 m
+   lets the visible edge of the track run inside a facade — which it did, for
+   26 m along Argo Hall, while the centreline-only gate stayed green. 1.9 m is
+   that geometry plus margin. Where a path genuinely runs tight to a facade,
+   the line hugs it at this distance rather than being dragged off the path,
+   because the path is the measured thing and this is a correction, not a
+   re-survey. check() walks both track edges against every footprint, so a
+   clearance that stops covering the width fails the build rather than
+   shipping. */
+const WALL_CLEARANCE_M = 1.9;
 
 /* How far from a startAt point to look for a way onto the path network. The
    court's own nearest node is 12.7 m away at its SOUTH-WEST corner while the
@@ -308,14 +313,15 @@ const OBSTACLE_GAP_M = 12;
    draws each one, this file only says which and where. `hop` is whether a
    bunny hop clears it — a bench yes, a bollard no.
 
-   EVERY WIDTH HERE MUST FIT ITS LANE. An obstacle wide enough to reach into
-   the neighbouring lane makes the lane beside it unusable, and a group that
-   blocks two lanes that way is a group that blocks all three — the run stops
-   being finishable while every "never block all three lanes" assertion still
-   passes, because on paper it does not. The first build of this file had a
-   1.7 m bench in a 1.15 m lane and a perfect line still took 28 hits. The
-   arithmetic is asserted in check(); these numbers are what satisfies it, and
-   scooter-model.js draws each kind at exactly the width declared here. */
+   EVERY GROUP MUST LEAVE A WAY THROUGH. The rider steers freely across the
+   track, so the guarantee is not "a lane stays open" but "a gap wide enough
+   to ride stays open" — placeGame reserves the gap FIRST and fits obstacles
+   into what is left, and check() re-derives the free interval from the placed
+   widths rather than trusting that this happened. The first build of this
+   file had a 1.7 m bench that read as one blocked slot and actually blocked
+   two — a perfect line still took 28 hits — which is why the arithmetic is
+   asserted rather than assumed. scooter-model.js draws each kind at exactly
+   the width declared here. */
 const OBSTACLE_KINDS = [
   { kind: "bench", w: 1.3, h: 0.46, hop: true },
   { kind: "cone", w: 0.4, h: 0.5, hop: true },
@@ -326,14 +332,23 @@ const OBSTACLE_KINDS = [
 ];
 
 /* The rider's own half-width, mirrored from scooter-ride.js's RIDER_HALF_W.
-   Only used here to prove the widths above leave the next lane clear. */
+   Used to prove every obstacle group leaves a gap the rider fits through. */
 const RIDER_HALF_W = 0.32;
 
-/* Three lanes, 1.15 m apart. The walkways on this route run roughly 3.5 m of
-   pavement, so the outer lanes sit near the edge and the scooter (0.5 m across
-   the deck) stays on it. */
-const LANE_OFFSET_M = 1.15;
-const LANES = 3;
+/* Half the track's painted width: the continuous edge stripes sit this far
+   either side of the centreline, and the rider steers freely between them.
+   The walkways on this route run roughly 3.5 m of pavement, so the edges sit
+   near its edge and the scooter (0.5 m across the deck) stays on it. It is
+   this envelope — not the centreline — that must stay out of buildings. */
+const TRACK_HALF_W = 1.725;
+
+/* The free gap reserved past every obstacle group, measured in RIDER-CENTRE
+   space (the rider's own width is already folded in via RIDER_HALF_W). 0.5 m
+   of centre positions means a dodge has real margin rather than one exact
+   pixel-perfect line. check() asserts at 0.4 so float noise in placement
+   cannot flap the gate. */
+const FREE_GAP_M = 0.5;
+const FREE_GAP_MIN_M = 0.4;
 
 /* ---------------------------------------------------------------- helpers */
 
@@ -435,16 +450,25 @@ function cropGrid(grid, x0, x1, z0, z1, values) {
  *
  * The invariants are what make an invented set of props defensible here, so
  * they are enforced at placement AND asserted again in check() and in
- * tests/corridor.test.mjs: nothing in the first or last stretch, never all
- * three lanes blocked at once, never two groups closer than OBSTACLE_GAP_M.
+ * tests/corridor.test.mjs: nothing in the first or last stretch, every group
+ * leaves a free gap the rider fits through, never two groups closer than
+ * OBSTACLE_GAP_M.
+ *
+ * The rider steers freely across the track, so placement is gap-first: pick
+ * where the way through IS, then fit one or two obstacles into the space that
+ * is left. Building the gap by construction beats placing obstacles and
+ * hoping — and check() still re-derives the free interval from the placed
+ * widths rather than trusting this comment.
  */
 function placeGame(route, rng, props = true) {
   const obstacles = [];
   const coins = [];
   const end = route.metres - FINISH_CLEAR_M;
+  /* Where the rider's CENTRE can be: the deck must stay on the track. */
+  const span = TRACK_HALF_W - RIDER_HALF_W;
 
   /* props:false leaves both arrays empty and every other field intact. The
-     lanes, the par and the clearances are still what they are; there is simply
+     track, the par and the clearances are still what they are; there is simply
      nothing invented standing on the route. That is what the staging corridor
      wants — you cannot judge the map through a slalom. */
   let s = props ? START_CLEAR_M : end;
@@ -452,69 +476,79 @@ function placeGame(route, rng, props = true) {
     s += OBSTACLE_GAP_M + rng() * 10;
     if (s >= end) break;
 
-    /* One or two lanes, never three: there is always a way through. Two-lane
-       groups get rarer nowhere — the route is short enough that a flat 35%
-       reads as a rhythm rather than a difficulty curve, and a curve over
-       785 m would just be the last third being unfair. */
-    const blocked = rng() < 0.35 ? 2 : 1;
-    const lanes = [0, 1, 2];
-    /* Fisher-Yates off the seeded stream, so the choice is reproducible. */
-    for (let i = lanes.length - 1; i > 0; i--) {
-      const j = Math.floor(rng() * (i + 1));
-      [lanes[i], lanes[j]] = [lanes[j], lanes[i]];
-    }
-    const chosen = lanes.slice(0, blocked).sort((a, b) => a - b);
-    const open = lanes.slice(blocked).sort((a, b) => a - b);
+    /* The way through, first: a FREE_GAP_M window of rider-centre positions,
+       anywhere it fits. Obstacles only ever go in what is left of the track
+       either side of it. */
+    const g = (rng() * 2 - 1) * (span - FREE_GAP_M / 2);
 
-    for (const lane of chosen) {
+    /* One or two obstacles. A flat 35% chance of two reads as a rhythm rather
+       than a difficulty curve — a curve over a route this short would just be
+       the last third being unfair. */
+    const count = rng() < 0.35 ? 2 : 1;
+    const placed = [];
+    for (let n = 0; n < count; n++) {
       const spec = OBSTACLE_KINDS[Math.floor(rng() * OBSTACLE_KINDS.length)];
+      /* Where this obstacle's centre may go: fully on the track, and its
+         swept width (its own plus the rider's) clear of the free window. */
+      const lo = -TRACK_HALF_W + spec.w / 2;
+      const hi = TRACK_HALF_W - spec.w / 2;
+      const keep = FREE_GAP_M / 2 + RIDER_HALF_W + spec.w / 2;
+      const left = [lo, Math.min(hi, g - keep)];
+      const right = [Math.max(lo, g + keep), hi];
+      const rooms = [left, right].filter(([a, b]) => b - a > 0);
+      if (!rooms.length) continue;
+      const room = rooms[Math.floor(rng() * rooms.length)];
+      const off = round2(room[0] + rng() * (room[1] - room[0]));
+      /* Two obstacles may share a side, but not each other's footprint — a
+         bench drawn through a planter is the defect this whole pass exists
+         to remove. */
+      if (placed.some((p) => Math.abs(p.off - off) < (p.w + spec.w) / 2 + 0.1)) continue;
+      placed.push({ off, w: spec.w });
       obstacles.push({
         s: round1(s),
-        lane,
+        off,
         kind: spec.kind,
         w: spec.w,
         h: spec.h,
         hop: spec.hop,
-        /* A little yaw so a row of three benches is not three copies of one
-           bench. Rendering only; collision uses the lane, not the angle. */
+        /* A little yaw so a row of benches is not copies of one bench.
+           Rendering only; collision uses the offset, not the angle. */
         spin: round2((rng() - 0.5) * 0.5),
       });
       /* A hoppable obstacle gets an arc of coins over it — the reward for
-         taking the hard lane instead of going round. */
+         taking the hard line instead of going round. */
       if (spec.hop && rng() < 0.7) {
         for (let k = -1; k <= 1; k++) {
-          coins.push({ s: round1(s + k * 1.6), lane, y: round2(0.9 + (k === 0 ? 0.55 : 0.2)) });
+          coins.push({ s: round1(s + k * 1.6), off, y: round2(0.9 + (k === 0 ? 0.55 : 0.2)) });
         }
       }
     }
 
-    /* A run of coins down one of the lanes that IS open, starting a little
-       past the group so it pulls you out the far side rather than into it. */
+    /* A run of coins down the free window, starting a little past the group
+       so it pulls you out the far side rather than into it. */
     if (rng() < 0.75) {
-      const lane = open[Math.floor(rng() * open.length)];
       const runLen = 4 + Math.floor(rng() * 4);
       for (let k = 0; k < runLen; k++) {
         const cs = s + 5 + k * 2.5;
         if (cs > end) break;
-        coins.push({ s: round1(cs), lane, y: 0.9 });
+        coins.push({ s: round1(cs), off: round2(g), y: 0.9 });
       }
     }
   }
 
-  coins.sort((a, b) => a.s - b.s || a.lane - b.lane || a.y - b.y);
-  obstacles.sort((a, b) => a.s - b.s || a.lane - b.lane);
+  coins.sort((a, b) => a.s - b.s || a.off - b.off || a.y - b.y);
+  obstacles.sort((a, b) => a.s - b.s || a.off - b.off);
 
   return {
-    invented: "Obstacles, coins and lanes are placed by this builder, not surveyed. "
+    invented: "Obstacles and coins are placed by this builder, not surveyed. "
       + "The campus they sit in is measured; these are not.",
     props,
     seed: SEED,
-    lanes: LANES,
-    laneOffset: LANE_OFFSET_M,
+    halfWidth: TRACK_HALF_W,
     startClear: START_CLEAR_M,
     finishClear: FINISH_CLEAR_M,
-    /* Par: the route at the ES2's real top speed, plus 15% for the lane
-       changes and hops you cannot take at full tilt. */
+    /* Par: the route at the ES2's real top speed, plus 15% for the dodges
+       and hops you cannot take at full tilt. */
     par: round1((route.metres / 6.9) * 1.15),
     obstacles,
     coins,
@@ -563,6 +597,59 @@ function bestEntry(campus, graph, spec) {
 
   const n = graph.nodes[best.i];
   return { x: n.x, z: n.z, name: start.name };
+}
+
+/* How hard the line may turn in one 2 m step before relaxTurns works on it.
+   20° per 2 m is a ~5.7 m turning radius — an easy lean on a scooter, and the
+   difference between a corner and an elbow on screen. Corners beside a wall
+   cannot always reach it: a move is only accepted at full WALL_CLEARANCE_M, so
+   the Argo corner rounds as far as the clearance allows and no further. */
+const MAX_TURN_DEG_PER_M = 10;
+const RELAX_ROUNDS = 200;
+
+/**
+ * Spread sharp corners over more of the line, without ever giving back wall
+ * clearance. Chaikin cannot do this: its cut spans one segment, so on a dense
+ * polyline a 90° path intersection stays a 40°+ elbow however many passes run.
+ * This instead nudges only the points that turn harder than the cap toward the
+ * midpoint of their neighbours — classic Laplacian relaxation, but selective,
+ * and a nudge that would land inside a footprint or closer to one than
+ * `clearance` is simply not taken. Straight stretches never move at all, so
+ * the drawn-line match is disturbed only where the corner itself is, and the
+ * gates measure the result.
+ */
+function relaxTurns(points, rings, clearance, maxDegPerM = MAX_TURN_DEG_PER_M) {
+  const pts = points.map((p) => ({ x: p.x, z: p.z }));
+  const maxRadPerM = (maxDegPerM * Math.PI) / 180;
+  const clear = (x, z) => {
+    for (const ring of rings) {
+      if (pointInRing(x, z, ring)) return false;
+      if (nearestOnRing(x, z, ring).distance < clearance) return false;
+    }
+    return true;
+  };
+  for (let round = 0; round < RELAX_ROUNDS; round++) {
+    let moved = 0;
+    for (let i = 1; i < pts.length - 1; i++) {
+      const a = pts[i - 1], b = pts[i], c = pts[i + 1];
+      const a1 = Math.atan2(b.z - a.z, b.x - a.x);
+      const a2 = Math.atan2(c.z - b.z, c.x - b.x);
+      let turn = Math.abs(a2 - a1);
+      if (turn > Math.PI) turn = 2 * Math.PI - turn;
+      /* Curvature, not raw angle: the same corner is many small turns on a
+         dense polyline and one large one on a sparse one. Per metre of the
+         two segments that meet here, it is the same number either way. */
+      const metres = (Math.hypot(b.x - a.x, b.z - a.z) + Math.hypot(c.x - b.x, c.z - b.z)) / 2;
+      if (turn <= maxRadPerM * Math.max(metres, 0.05)) continue;
+      const nx = b.x * 0.5 + (a.x + c.x) * 0.25;
+      const nz = b.z * 0.5 + (a.z + c.z) * 0.25;
+      if (!clear(nx, nz)) continue;
+      pts[i] = { x: nx, z: nz };
+      moved++;
+    }
+    if (!moved) break;
+  }
+  return pts;
 }
 
 /* ---------------------------------------------------------------- the cut */
@@ -635,10 +722,22 @@ function centreline(campus, spec) {
       && b.p.some(([x, z]) => x >= box.x0 && x <= box.x1 && z >= box.z0 && z <= box.z1))
     .map((b) => b.p);
 
-  const points = resample(
-    pushOutside(smooth([...lead, ...found.points], 2, avoid), avoid, WALL_CLEARANCE_M),
-    SAMPLE_M
-  );
+  /* Smooth, push off the walls — then DENSIFY and smooth again. The first
+     smoothing works on the sparse graph polyline, where a corner beside a
+     building cannot be cut at all: the cut chord lands inside the footprint,
+     the avoid rule refuses it, and the corner ships as an elbow — beside Argo
+     Hall it measured 122° over one 2 m step. Resampling to 2 m first makes
+     every cut tiny, so rounding a corner never strays more than centimetres
+     toward the wall and the turn spreads over several steps instead of one.
+     A final push restores the clearance the fine rounding shaved off, and the
+     gates judge the outcome: the drawn-line match and the edge-intrusion walk
+     both run on what ships. */
+  let line = smooth([...lead, ...found.points], 2, avoid);
+  line = pushOutside(line, avoid, WALL_CLEARANCE_M);
+  line = smooth(resample(line, SAMPLE_M), 3, avoid);
+  line = pushOutside(line, avoid, WALL_CLEARANCE_M);
+  line = relaxTurns(line, avoid, WALL_CLEARANCE_M);
+  const points = resample(line, SAMPLE_M);
 
   /* Chaikin pulls the very first point off the exact centre. Put it back: the
      promise "s = 0 is the middle of the court" is the whole reason for the
@@ -1038,15 +1137,32 @@ function check(doc, sources, spec = ROUTES.scooter) {
    * geometry that actually ships. */
   {
     const hits = new Map();
-    for (const [x, z] of doc.route.points) {
+    const hit = (x, z, what) => {
       for (const b of doc.campus.buildings) {
         if (!b?.p || !pointInRing(x, z, b.p)) continue;
-        hits.set(b.n || "an unnamed building", (hits.get(b.n || "an unnamed building") || 0) + 1);
+        const key = `${what} inside ${b.n || "an unnamed building"}`;
+        hits.set(key, (hits.get(key) || 0) + 1);
       }
+    };
+    const pts = doc.route.points;
+    for (let i = 0; i < pts.length; i++) {
+      const [x, z] = pts[i];
+      hit(x, z, "the centreline runs");
+      /* The track is TRACK_HALF_W wide either side of the line, and it was the
+         EDGE — never the centreline — that ran 26 m along the inside of Argo
+         Hall while this gate stayed green. So walk both edges too, offset
+         perpendicular to the local direction of travel. */
+      const [px, pz] = pts[Math.max(0, i - 1)];
+      const [nx, nz] = pts[Math.min(pts.length - 1, i + 1)];
+      const len = Math.hypot(nx - px, nz - pz) || 1;
+      const ox = -(nz - pz) / len;
+      const oz = (nx - px) / len;
+      hit(x + ox * TRACK_HALF_W, z + oz * TRACK_HALF_W, "the track's edge runs");
+      hit(x - ox * TRACK_HALF_W, z - oz * TRACK_HALF_W, "the track's edge runs");
     }
     if (hits.size) {
       const worst = [...hits].map(([n, c]) => `${n} (${c * SAMPLE_M} m)`).join(", ");
-      fail(`the route runs inside ${worst} — it must go round buildings, not through them`);
+      fail(`${worst} — the track must go round buildings, not through them`);
     }
   }
 
@@ -1185,27 +1301,46 @@ function check(doc, sources, spec = ROUTES.scooter) {
   const { game, route } = doc;
   if (game.seed !== SEED) fail("game seed drifted from the pinned constant");
   if (!game.invented) fail("the game block must say it is invented");
+  if (game.halfWidth !== TRACK_HALF_W) fail("game.halfWidth drifted from the track's painted half-width");
   const byS = new Map();
   for (const o of game.obstacles) {
     if (o.s < game.startClear) fail(`obstacle at ${o.s} m is inside the start clearance`);
     if (o.s > route.metres - game.finishClear) fail(`obstacle at ${o.s} m is inside the finish clearance`);
-    if (o.lane < 0 || o.lane >= game.lanes) fail(`obstacle lane ${o.lane} is out of range`);
-    const at = byS.get(o.s) || new Set();
-    at.add(o.lane);
+    if (Math.abs(o.off) + o.w / 2 > game.halfWidth + 0.01) {
+      fail(`a ${o.kind} at offset ${o.off} m sticks out past the track's edge`);
+    }
+    const at = byS.get(o.s) || [];
+    at.push(o);
     byS.set(o.s, at);
   }
-  for (const [s, lanes] of byS) {
-    if (lanes.size >= game.lanes) fail(`every lane is blocked at ${s} m — the route is impassable`);
-  }
-  /* An obstacle wider than its lane blocks the lane NEXT to it too, which is
-     how a group that reads as "one lane blocked" becomes a wall. Counting
-     lanes is not enough on its own; the width has to be checked against the
-     spacing that separates them. */
-  for (const o of game.obstacles) {
-    const reach = RIDER_HALF_W + o.w / 2;
-    if (reach >= game.laneOffset) {
-      fail(`a ${o.kind} is ${o.w} m wide: it reaches ${reach.toFixed(2)} m, `
-        + `past the ${game.laneOffset} m to the next lane, so the lane beside it is unusable`);
+  /* EVERY GROUP LEAVES A GAP THE RIDER FITS THROUGH. Re-derived from the
+     placed widths, in rider-centre space: each obstacle blocks the interval
+     its width plus the rider's sweeps, and what is left of the track must
+     still contain a free window at least FREE_GAP_MIN_M wide. This is the
+     free-steering version of "never block every lane at once", and it is a
+     stronger claim — a group can pass a lane count and still be a wall. */
+  for (const [s, group] of byS) {
+    const spanC = game.halfWidth - RIDER_HALF_W;
+    const blocked = group
+      .map((o) => [o.off - o.w / 2 - RIDER_HALF_W, o.off + o.w / 2 + RIDER_HALF_W])
+      .sort((a, b) => a[0] - b[0]);
+    let cursor = -spanC;
+    let widest = 0;
+    for (const [a, b] of blocked) {
+      widest = Math.max(widest, Math.min(a, spanC) - cursor);
+      cursor = Math.max(cursor, b);
+    }
+    widest = Math.max(widest, spanC - cursor);
+    if (widest < FREE_GAP_MIN_M) {
+      fail(`the group at ${s} m leaves only a ${widest.toFixed(2)} m gap — the route is impassable`);
+    }
+    /* And the group's members do not stand inside one another. */
+    for (let i = 0; i < group.length; i++) {
+      for (let j = i + 1; j < group.length; j++) {
+        if (Math.abs(group[i].off - group[j].off) < (group[i].w + group[j].w) / 2) {
+          fail(`two obstacles at ${s} m interpenetrate`);
+        }
+      }
     }
   }
   const stops = [...byS.keys()].sort((x, y) => x - y);
@@ -1215,7 +1350,7 @@ function check(doc, sources, spec = ROUTES.scooter) {
     }
   }
   for (const c of game.coins) {
-    if (c.lane < 0 || c.lane >= game.lanes) fail(`coin lane ${c.lane} is out of range`);
+    if (Math.abs(c.off) > game.halfWidth) fail(`coin offset ${c.off} m is off the track`);
     if (c.s < 0 || c.s > route.metres) fail(`coin at ${c.s} m is off the route`);
   }
   /* A corridor either has props or declares that it deliberately has none.
@@ -1298,6 +1433,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
 }
 
 export { build, check, load, summarize, placeGame, mulberry32, centreline };
-export { CORRIDOR_M, SKYLINE_M, SAMPLE_M, SEED, OBSTACLE_GAP_M, LANE_OFFSET_M };
+export { CORRIDOR_M, SKYLINE_M, SAMPLE_M, SEED, OBSTACLE_GAP_M, TRACK_HALF_W, FREE_GAP_MIN_M };
 export { DRAWN_REFERENCE, DRAWN_MEAN_M, DRAWN_WORST_M, BRIDGE_GAP_M };
 export { ROUTES, TARGETS, DATA };

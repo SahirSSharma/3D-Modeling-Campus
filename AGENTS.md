@@ -109,7 +109,7 @@ npm run verify:boot       # the site actually boots
                           # lowering the threshold and do not report it as passing.
 npm run verify:ride       # drives the scooter run in a real browser: fly-mode keys,
                           # the contact patch against the drawn surface, camera
-                          # continuity, and the lane-marking reveal
+                          # continuity, and the track-marking reveal
 npm run verify:reproducible   # LiDAR build is byte-identical on a rerun
 npm run readiness         # gate status
 npm run progress          # gauntlet progress
@@ -125,8 +125,13 @@ report a result you did not actually run.
 
 ## Publishing
 
-**Do not push and do not deploy.** This site is live at
-`https://sahirssharma.github.io/3D-Modeling-Campus/`; shipping is Sahir's explicit
-call, every time. Local commits are fine. During a gauntlet run a `pre-push`
-hook is armed and will reject you — do not work around it or delete
-`gauntlet-loop/.no-push`.
+This site is live at `https://sahirssharma.github.io/3D-Modeling-Campus/`.
+Local commits are always fine. Because `?mode=staging` is a dedicated review
+surface — Sahir reviews on the website, not locally — **pushing work whose
+review surface is staging is allowed once every gate has passed** (`npm test`,
+`npm run check`, `npm run verify:ride`); Sahir asked for this rule on
+2026-08-16. Anything that changes what the LIVE RUN plays — its route, its
+props, its rules — is still Sahir's explicit call, every time; when a change
+touches both, ask. Never push failing gates. During a gauntlet run a
+`pre-push` hook is armed and will reject you — do not work around it or
+delete `gauntlet-loop/.no-push`.

@@ -15,7 +15,7 @@
  *
  * The second is that the game props stay fair. They are invented, which is
  * exactly why they need assertions the measured world does not: never all
- * three lanes at once, never inside the start or finish clearance, never two
+ * width at once, never inside the start or finish clearance, never two
  * groups too close to react to, and identical on every rebuild.
  *
  * BOTH corridors are held to all of it. `staging` is a workbench, not a lesser
@@ -166,17 +166,35 @@ describe("the run's route", () => {
       return inside;
     };
     /* Against the FULL campus, not the crop: a building just outside the
-       corridor is still a building you would drive through. */
+       corridor is still a building you would drive through.
+
+       And against the track's EDGES, not just the centreline: the edge sits
+       half the track width off the line, and it was the edge that ran 26 m
+       along the inside of Argo Hall while a centreline-only version of this
+       test stayed green. */
+    const half = DOC.game.halfWidth;
+    const pts = DOC.route.points;
     const hits = new Map();
-    for (const [x, z] of DOC.route.points) {
+    const hit = (x, z, what) => {
       for (const b of CAMPUS.buildings) {
         if (!b?.p || !inRing(x, z, b.p)) continue;
-        const n = b.n || "an unnamed building";
-        hits.set(n, (hits.get(n) || 0) + 1);
+        const key = `${what} inside ${b.n || "an unnamed building"}`;
+        hits.set(key, (hits.get(key) || 0) + 1);
       }
+    };
+    for (let i = 0; i < pts.length; i++) {
+      const [x, z] = pts[i];
+      hit(x, z, "the centreline runs");
+      const [px, pz] = pts[Math.max(0, i - 1)];
+      const [nx, nz] = pts[Math.min(pts.length - 1, i + 1)];
+      const len = Math.hypot(nx - px, nz - pz) || 1;
+      const ox = -(nz - pz) / len;
+      const oz = (nx - px) / len;
+      hit(x + ox * half, z + oz * half, "the track's edge runs");
+      hit(x - ox * half, z - oz * half, "the track's edge runs");
     }
     assert.deepEqual([...hits], [],
-      `the route runs inside ${[...hits].map(([n, c]) => `${n} (${c * 2} m)`).join(", ")}`);
+      `${[...hits].map(([n, c]) => `${n} (${c * 2} m)`).join(", ")}`);
   });
 
   test("keeps the fleet halls on the sides they were drawn on", () => {
@@ -569,29 +587,40 @@ for (const { spec, doc } of CORRIDORS) {
       }
     });
 
-    test("never block every lane at once", () => {
+    test("leave every group a gap the rider fits through", () => {
+      /* The free-steering version of "never block every lane at once", and a
+         stronger claim: it is re-derived from the placed widths in
+         rider-centre space, because counting obstacles is not enough. The
+         first build had a 1.7 m bench that read as one blocked slot and
+         actually blocked two — a perfect line took 28 hits. This arithmetic
+         is what would have caught it. */
       const byS = new Map();
       for (const o of game.obstacles) {
-        if (!byS.has(o.s)) byS.set(o.s, new Set());
-        byS.get(o.s).add(o.lane);
+        if (!byS.has(o.s)) byS.set(o.s, []);
+        byS.get(o.s).push(o);
       }
-      for (const [s, lanes] of byS) {
-        assert.ok(lanes.size < game.lanes, `every lane is blocked at ${s} m — the run is impassable`);
-      }
-    });
-
-    test("are narrow enough to leave the next lane usable", () => {
-      /* Counting blocked lanes is not enough. Collision is metric, so an
-         obstacle wider than the gap to the next lane blocks that lane too — a
-         group that reads as "one lane blocked" becomes a wall, every lane-count
-         assertion still passes, and the run is quietly unfinishable. The first
-         build had a 1.7 m bench in a 1.15 m lane and a perfect line took 28
-         hits. This is the assertion that would have caught it. */
-      for (const o of game.obstacles) {
-        const reach = RIDER_HALF_W + o.w / 2;
-        assert.ok(reach < game.laneOffset,
-          `a ${o.kind} is ${o.w} m wide and reaches ${reach.toFixed(2)} m into the `
-          + `${game.laneOffset} m gap to the next lane`);
+      const span = game.halfWidth - RIDER_HALF_W;
+      for (const [s, group] of byS) {
+        const blocked = group
+          .map((o) => [o.off - o.w / 2 - RIDER_HALF_W, o.off + o.w / 2 + RIDER_HALF_W])
+          .sort((a, b) => a[0] - b[0]);
+        let cursor = -span;
+        let widest = 0;
+        for (const [a, b] of blocked) {
+          widest = Math.max(widest, Math.min(a, span) - cursor);
+          cursor = Math.max(cursor, b);
+        }
+        widest = Math.max(widest, span - cursor);
+        assert.ok(widest >= builder.FREE_GAP_MIN_M,
+          `the group at ${s} m leaves only a ${widest.toFixed(2)} m gap`);
+        /* And no two of the group stand inside one another — a bench drawn
+           through a planter is the defect the props pass exists to remove. */
+        for (let i = 0; i < group.length; i++) {
+          for (let j = i + 1; j < group.length; j++) {
+            assert.ok(Math.abs(group[i].off - group[j].off) >= (group[i].w + group[j].w) / 2,
+              `two obstacles at ${s} m interpenetrate`);
+          }
+        }
       }
     });
 
@@ -603,7 +632,7 @@ for (const { spec, doc } of CORRIDORS) {
       }
     });
 
-    test("sit in real lanes, on the route", () => {
+    test("sit on the track, on the route", () => {
       if (!spec.props) {
         /* Nothing to place, and that is the corridor's whole job. Assert the
            empty is the DECLARED empty rather than skipping: an accidental
@@ -613,12 +642,13 @@ for (const { spec, doc } of CORRIDORS) {
         return;
       }
       for (const c of game.coins) {
-        assert.ok(c.lane >= 0 && c.lane < game.lanes, `coin lane ${c.lane}`);
+        assert.ok(Math.abs(c.off) <= game.halfWidth, `coin offset ${c.off} m is off the track`);
         assert.ok(c.s >= 0 && c.s <= route.metres, `coin at ${c.s} m is off the route`);
         assert.ok(c.y > 0, "a coin is buried in the pavement");
       }
       for (const o of game.obstacles) {
-        assert.ok(o.lane >= 0 && o.lane < game.lanes, `obstacle lane ${o.lane}`);
+        assert.ok(Math.abs(o.off) + o.w / 2 <= game.halfWidth + 0.01,
+          `a ${o.kind} at offset ${o.off} m sticks out past the track's edge`);
         assert.equal(typeof o.hop, "boolean", "an obstacle does not say whether it can be hopped");
         assert.ok(o.h > 0, "an obstacle has no height");
       }
@@ -628,9 +658,9 @@ for (const { spec, doc } of CORRIDORS) {
 
     test("include obstacles a hop cannot clear", () => {
       if (!spec.props) return; // no props at all — covered by the test above
-      /* If everything were hoppable the lanes would be decoration. */
+      /* If everything were hoppable the steering would be decoration. */
       const solid = game.obstacles.filter((o) => !o.hop);
-      assert.ok(solid.length > 5, "nothing on the route actually requires a lane change");
+      assert.ok(solid.length > 5, "nothing on the route actually requires a dodge");
     });
   });
 

@@ -416,7 +416,7 @@ export function smooth(points, passes = 2, avoid = null) {
 }
 
 /** Nearest point to (x,z) on a closed ring's boundary, and how far away it is. */
-function nearestOnRing(x, z, ring) {
+export function nearestOnRing(x, z, ring) {
   let best = null;
   let bestD = Infinity;
   for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
@@ -429,7 +429,7 @@ function nearestOnRing(x, z, ring) {
     const qx = ax + dx * t;
     const qz = az + dz * t;
     const d = Math.hypot(x - qx, z - qz);
-    if (d < bestD) { bestD = d; best = { x: qx, z: qz }; }
+    if (d < bestD) { bestD = d; best = { x: qx, z: qz, sx: dx, sz: dz }; }
   }
   return { point: best, distance: bestD };
 }
@@ -471,9 +471,18 @@ export function pushOutside(points, rings, clearance = 1.2, passes = 2) {
            direction we already lie in when outside, and its opposite when in. */
         let dx = x - q.x;
         let dz = z - q.z;
-        const len = Math.hypot(dx, dz);
-        if (len < 1e-6) continue; // exactly on the wall: no direction to trust
-        if (inside) { dx = -dx; dz = -dz; }
+        let len = Math.hypot(dx, dz);
+        if (len < 1e-6) {
+          /* Exactly on the wall — a footway node that ends at a doorway does
+             this. The point itself offers no direction, but the wall does:
+             take its normal, signed so a step along it leaves the ring. */
+          const slen = Math.hypot(q.sx, q.sz);
+          if (slen < 1e-6) continue;
+          dx = -q.sz / slen;
+          dz = q.sx / slen;
+          len = 1;
+          if (pointInRing(x + dx * 0.01, z + dz * 0.01, ring)) { dx = -dx; dz = -dz; }
+        } else if (inside) { dx = -dx; dz = -dz; }
         x = q.x + (dx / len) * clearance;
         z = q.z + (dz / len) * clearance;
         moved++;

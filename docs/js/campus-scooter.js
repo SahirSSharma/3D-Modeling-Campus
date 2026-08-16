@@ -27,13 +27,14 @@ import * as world from "./campus-world.js";
 import { createBuildings } from "./campus-massing.js";
 import { createDetails } from "./campus-details.js";
 import { createMarkings } from "./campus-markings.js";
+import { createRecreation } from "./campus-recreation.js";
 import { createLabels, createLandmarks } from "./campus-landmarks.js";
 import { createEighth } from "./campus-eighth.js";
 import { createEighthFurniture } from "./campus-eighth-furniture.js";
 import { OVERLAY, overlayLift, applyOverlayDepth } from "./campus-overlay.js";
 import { nullReporter } from "./campus-boot.js";
 import {
-  createRide, positionAt, laneCentre,
+  createRide, positionAt,
   ACCEL_MPS2, TOP_SPEED_MPS,
 } from "./scooter-ride.js";
 /* Fly mode is free roam's controller, imported rather than reimplemented — see
@@ -56,18 +57,18 @@ const CORRIDORS = {
 };
 
 /* The chase camera. Far enough back that the next obstacle group is on screen
-   with time to pick a lane at the ES2's 6.9 m/s, close enough that the scooter
+   with time to pick a line at the ES2's 6.9 m/s, close enough that the scooter
    is a machine rather than a dot. */
 const CHASE_BACK_M = 3.8;
 const CHASE_UP_M = 1.75;
 const CHASE_LOOK_AHEAD_M = 11;
 /* Seconds for the camera to cover the distance to where it should be. A hard
-   follow makes every lane change a jolt; too soft and the scooter swims. */
+   follow makes every dodge a jolt; too soft and the scooter swims. */
 const CHASE_LAG_S = 0.16;
 /* The aim leads the body. See the note at its use in step(). */
 const CHASE_AIM_LAG_S = 0.10;
 
-/* Lean into a lane change, up to this at full lateral speed. */
+/* Lean into a dodge, up to this at full lateral speed. */
 const MAX_BANK_RAD = 0.26;
 
 /* Two skies, toggled with T.
@@ -313,21 +314,21 @@ const drape = (mesh, rung) => {
   return mesh;
 };
 /**
- * The lanes, as markings on the measured ground.
+ * The track, as markings on the measured ground.
  *
  * NOT a road surface. This used to lay an opaque grey carpet the full width of
  * the route and paint dashes on it — which read as a highway dropped on the
  * campus, and hid the one thing the corridor exists to show: the measured
  * ground, its surveyed colour, and the painted markings already on it. The
- * lanes are gameplay information, so they are drawn the way information is
+ * track is gameplay information, so it is drawn the way information is
  * drawn — as lines over what is there, not as a thing that replaces it.
  *
- * Four stripes say "three lanes" unambiguously: two continuous edges bounding
- * the rideable width, two dashed dividers between the lanes. That is exactly
- * how a real carriageway distinguishes an edge you should not cross from a
- * divider you may, so it needs no explaining.
+ * Two continuous edge stripes and nothing between them: the rider steers
+ * freely across the width, so there are no lanes to divide. A continuous
+ * line is how a real carriageway marks an edge you should not cross, so it
+ * needs no explaining.
  *
- * All four sit on the "paint" rung of the shared decal ladder
+ * Both sit on the "paint" rung of the shared decal ladder
  * (campus-overlay.js) rather than choosing their own lift —
  * tests/campus-overlay.test.mjs greps every file in docs/js for a locally
  * declared lift, and it is right to: two modules picking their own numbers is
@@ -335,7 +336,7 @@ const drape = (mesh, rung) => {
  */
 function createRibbon(group, route, game) {
   const paint = overlayLift("paint");
-  const edgeOff = game.laneOffset * game.lanes / 2;   // outer bound of lane 0 and lane 2
+  const edgeOff = game.halfWidth;   // the painted edges of the track
 
   /* One stripe: a quad strip at a constant lateral offset, either continuous or
      broken. Built as flat triangles that follow the terrain, because a single
@@ -358,13 +359,9 @@ function createRibbon(group, route, game) {
     return out;
   };
 
-  /* Edges continuous and a touch wider than the dividers, so which is which
-     reads at a glance and from the chase camera's shallow angle. */
   const position = [
     ...stripe(-edgeOff, { width: 0.09 }),
     ...stripe(edgeOff, { width: 0.09 }),
-    ...stripe(laneCentre(0.5, game.laneOffset), { width: 0.06, dash: 1.6, gap: 1.4 }),
-    ...stripe(laneCentre(1.5, game.laneOffset), { width: 0.06, dash: 1.6, gap: 1.4 }),
   ];
 
   const geo = new THREE.BufferGeometry();
@@ -400,7 +397,7 @@ function createRibbon(group, route, game) {
 
   /* THE MARKINGS BELONG TO THE PLAYER, NOT TO THE SHOT.
    *
-   * During the opening reveal there is nothing to steer, so three painted lanes
+   * During the opening reveal there is nothing to steer, so painted edges
    * are answering a question nobody has asked yet — and they were the most
    * eye-catching thing in a frame whose subject is Eighth College. They arrive
    * when control does, which is `endIntro`, and every way out of the intro goes
@@ -409,7 +406,7 @@ function createRibbon(group, route, game) {
    * Hidden at CREATION rather than at the start of the shot, so a slow load
    * cannot flash them before the first frame. `visible` as well as opacity
    * because zero-opacity geometry is still submitted, and because it is the
-   * honest state: the lanes are not there yet. */
+   * honest state: the track is not there yet. */
   const parts = [{ mesh: stripes, base: 0.82 }, { mesh: bar, base: 1 }];
   const setReveal = (a) => {
     for (const { mesh, base } of parts) {
@@ -449,7 +446,7 @@ function createProps(scene, route, game) {
 
   for (const o of game.obstacles) {
     const mesh = createObstacle(o.kind);
-    const p = positionAt(route, o.s, laneCentre(o.lane, game.laneOffset));
+    const p = positionAt(route, o.s, o.off);
     /* THE SAME PLANE THE SCOOTER IS ON, and not merely so it looks right:
        scooter-ride.js decides a hop cleared an obstacle with `ride.y > o.h`,
        where ride.y is height above the deck's resting plane. Put the obstacle
@@ -464,7 +461,7 @@ function createProps(scene, route, game) {
   const coinMeshes = [];
   for (const c of ride.coinList) {
     const mesh = coins.make();
-    const p = positionAt(route, c.s, laneCentre(c.lane, game.laneOffset));
+    const p = positionAt(route, c.s, c.off);
     mesh.position.set(p.x, rideSurfaceAt(p.x, p.z) + c.y, p.z);
     mesh.rotation.y = p.heading;
     group.add(mesh);
@@ -574,6 +571,7 @@ function bindHud(mode) {
  * ignores you". */
 const releasing = new Set();
 const drag = { on: false, x: 0, y: 0 };
+let touchSteer = null; // the held steering key while a finger is down
 
 function drainReleases() {
   if (!releasing.size) return;
@@ -611,7 +609,7 @@ function bindInput(canvas) {
   });
   addEventListener("keyup", (e) => releasing.add(e.key.toLowerCase()));
   addEventListener("blur", () => { held.clear(); releasing.clear(); });
-  /* Tap the left or right half of the canvas to change lane, and the top
+  /* Hold the left or right half of the canvas to steer, and tap the top
      third to hop, so this is playable on a phone without a keyboard. */
   canvas.addEventListener("pointerdown", (e) => {
     if (camMode === "intro") { endIntro(); return; } // a tap skips it too
@@ -624,7 +622,13 @@ function bindInput(canvas) {
       return;
     }
     if (e.clientY < canvas.clientHeight / 3) tap(" ");
-    else tap(e.clientX < canvas.clientWidth / 2 ? "a" : "d");
+    else {
+      /* Steering is a hold, not a tap: the finger stays down and the key stays
+         held until it lifts, exactly like the keyboard. */
+      touchSteer = e.clientX < canvas.clientWidth / 2 ? "a" : "d";
+      held.add(touchSteer);
+      releasing.delete(touchSteer);
+    }
   });
 
   /* Drag to look, in fly mode only — the chase camera aims itself. The
@@ -641,6 +645,7 @@ function bindInput(canvas) {
   });
   const stopDrag = (e) => {
     drag.on = false;
+    if (touchSteer) { releasing.add(touchSteer); touchSteer = null; }
     if (canvas.hasPointerCapture?.(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
   };
   for (const ev of ["pointerup", "pointercancel"]) canvas.addEventListener(ev, stopDrag);
@@ -661,8 +666,8 @@ let props = null;
 let spin = 0;
 let bank = 0;
 
-/* The lane markings and their reveal. 600 ms, eased out: the first lane
-   decision is seconds away, so the near-field information has to land in the
+/* The track markings and their reveal. 600 ms, eased out: the first dodge
+   is seconds away, so the near-field information has to land in the
    first fifth of the ramp and the tail is free polish. It fades to the shipped
    0.82 rather than to 1 — that translucency is a deliberate art call (see
    createRibbon) and overshooting it would quietly undo it. */
@@ -956,7 +961,7 @@ function endIntro() {
   camPos.copy(chase.pos);
   camAim.copy(chase.aim);
   started = true;
-  /* The lane markings are gameplay information, so they arrive with control —
+  /* The track markings are gameplay information, so they arrive with control —
      not when the camera finishes settling. */
   revealing = true;
   hud?.setMode("chase");
@@ -965,7 +970,7 @@ function endIntro() {
 /** Free roam's own controller, over the corridor. The ride is paused while it is up. */
 function stepFly(dt) {
   /* Arrow keys drive the speed ladder here exactly as they do in free roam.
-     They are the lane-change keys during the run; the mode decides which. */
+     They are the steering keys during the run; the mode decides which. */
   explore.speed = stepSpeed(explore.speed, dt, held);
   const pose = explore.update(dt, held);
 
@@ -1327,8 +1332,26 @@ export async function boot({ report, mode = "scooter" } = {}) {
      survey file is absent. Each gets its own dev-panel layer, because being
      able to switch one off is how the last pass's invisible lane ribbon was
      found. */
-  const details = createDetails(scene, doc.campus, heightAt);
+  /* EVERY PROP BUILDER BELOW GETS surfaceAt, NOT heightAt. The rule is
+     campus-terrain.js's own: heightAt interpolates every LiDAR sample while
+     the mesh draws every second one, so anything placed at heightAt is
+     genuinely underneath the visible ground — measured on this corridor, a
+     lamp 4 m off the route sat 8 cm under it. The ride already places the
+     scooter and its props on surfaceAt; the campus's own furniture has to
+     stand on the same floor. */
+  const details = createDetails(scene, doc.campus, surfaceAt);
   details.group?.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+
+  /* The Muir courts, standing up. The corridor crop carries the fitted court
+     markings in full, so the ride already painted the basketball and tennis
+     LINES — and then ran past slabs with nothing on them. This is free roam's
+     own builder over the same cropped data: the nets, the hoop assemblies,
+     the court lights. It no-ops quietly when the markings are absent. */
+  const recreation = createRecreation(scene, {
+    campus: doc.campus, arcgis: doc.arcgis, markings: doc.markings, heightAt: surfaceAt,
+  });
+  const recreationGroup = recreation?.group ?? (recreation?.isObject3D ? recreation : null);
+  recreationGroup?.traverse((o) => { if (o.isMesh) o.castShadow = true; });
 
   /* Eighth College. NOT optional on the route that starts there: the ride
      begins dead centre on its basketball court and the intro orbits that spot
@@ -1337,8 +1360,8 @@ export async function boot({ report, mode = "scooter" } = {}) {
      of it — `doc.eighth` is null and this builds nothing. */
   const eighthZone = new THREE.Group();
   for (const made of doc.eighth ? [
-    createEighth(scene, { campus: doc.campus, arcgis: doc.arcgis, eighth: doc.eighth, markings: doc.markings, heightAt }),
-    createEighthFurniture(scene, { arcgis: doc.arcgis, eighth: doc.eighth, heightAt }),
+    createEighth(scene, { campus: doc.campus, arcgis: doc.arcgis, eighth: doc.eighth, markings: doc.markings, heightAt: surfaceAt }),
+    createEighthFurniture(scene, { arcgis: doc.arcgis, eighth: doc.eighth, heightAt: surfaceAt }),
   ] : []) {
     /* Some builders hand back { group }, some the Object3D — the same
        both-shapes lesson campus-walk.js:531-538 records. */
@@ -1349,12 +1372,12 @@ export async function boot({ report, mode = "scooter" } = {}) {
 
   /* Measured painted markings, and the campus's own landmarks — the Sun God,
      the fountains, Snake Path. Both quiet no-ops when their file is missing. */
-  createMarkings(scene, heightAt, doc.markings);
+  createMarkings(scene, surfaceAt, doc.markings);
   let landmarksGroup = null;
   if (doc.landmarks) {
     landmarksGroup = createLandmarks(scene, doc.landmarks, {
       origin: doc.campus.origin,
-      heightAt,
+      heightAt: surfaceAt,
       roofTopOf: (name) => {
         let best = null;
         for (const [n, entry] of built.info) {
@@ -1460,6 +1483,7 @@ export async function boot({ report, mode = "scooter" } = {}) {
       ground: surfaces,
       trees: trees.group,
       details: details.group,
+      ...(recreationGroup ? { recreation: recreationGroup } : {}),
       eighth: eighthZone,
       route,
       props: props.group,

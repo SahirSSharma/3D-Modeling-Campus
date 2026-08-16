@@ -506,10 +506,12 @@ export function createEighthCourt(parent, { points, colors, heightAt } = {}) {
 
   /* Hoop assemblies. Only the plan anchor is measured; every dimension below
      is SPEC, and is deliberately campus-recreation.js's Muir assembly verbatim
-     (3.95 m pole set back 1.9 m, 1.9 m arm, 1.83 x 1.07 m backboard, 0.225 m
-     ring at 3.05 m) so Eighth's hoops are the same object rather than a second
-     invented geometry. Nothing in the nine frames resolves a backboard, a rim
-     or a pole. The net is likewise spec, not measurement. */
+     (3.95 m pole set back 1.9 m, 1.5 m arm, 1.83 x 1.07 m backboard whose
+     front face is 0.375 m out, 0.225 m ring at 3.05 m) so Eighth's hoops are
+     the same object rather than a second invented geometry — including its
+     spacing, which is what keeps the arm from coming out the front of the
+     board and the ring's rear arc off it. Nothing in the nine frames resolves
+     a backboard, a rim or a pole. The net is likewise spec, not measurement. */
   const back = (h, d) => ({ x: h.x - Math.sin(h.rot) * d, z: h.z - Math.cos(h.rot) * d });
   for (const h of c.hoops) {
     const y = heightAt(h.x, h.z);
@@ -522,9 +524,9 @@ export function createEighthCourt(parent, { points, colors, heightAt } = {}) {
     };
     mk(new THREE.CylinderGeometry(0.085, 0.11, 3.95, 8), lambert(colors.steel),
       pole.x, y + 1.97, pole.z, h.rot);
-    const arm = back(h, 0.95);
-    mk(new THREE.BoxGeometry(0.12, 0.12, 1.9), lambert(colors.steel), arm.x, y + 3.5, arm.z, h.rot);
-    const bb = back(h, 0.15);
+    const arm = back(h, 1.15);
+    mk(new THREE.BoxGeometry(0.12, 0.12, 1.5), lambert(colors.steel), arm.x, y + 3.5, arm.z, h.rot);
+    const bb = back(h, 0.405);
     mk(new THREE.BoxGeometry(1.83, 1.07, 0.06), lambert(colors.backboard), bb.x, y + 3.4, bb.z, h.rot);
     const ring = new THREE.TorusGeometry(0.225, 0.022, 6, 16);
     ring.rotateX(-Math.PI / 2);

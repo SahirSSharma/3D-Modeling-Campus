@@ -117,7 +117,7 @@ The site opens on a choice, and `?mode=` skips it.
 | Mode | What it is | Payload |
 |---|---|---|
 | **Free roam** (`?mode=campus`) | the whole campus, North Torrey Pines Road to I-5, fly anywhere | ~10 MB |
-| **Eighth → Peterson** (`?mode=scooter`) | one 1,004 m route on a scooter, three lanes, against a clock | ~1.5 MB |
+| **Eighth → Peterson** (`?mode=scooter`) | one ~1,000 m route on a scooter, steered freely across a marked track, against a clock | ~1.5 MB |
 | **Eighth → Peterson** (`?mode=staging`) | the same route with no obstacles or coins, as a workbench | ~1.5 MB |
 
 `staging` exists so there is somewhere to try things. Work in progress lands there
@@ -213,21 +213,22 @@ including a hard-coded `1761` and every `arcgis.ground#NNNN` registration string
 `campus-eighth.json`. Renumbering them rebuilds Eighth College out of the wrong
 polygons, silently. The builder and the test suite both gate on it.
 
-The three lanes are **markings on the measured ground, not a road**. An opaque
+The track is **markings on the measured ground, not a road**. An opaque
 surface the width of the route reads as a highway dropped on the campus, and hides
 the measured colour and the painted markings already there — which is the one thing
-the corridor exists to show. Two continuous edges bound the rideable width and two
-dashed dividers separate the lanes, the way a real carriageway distinguishes an edge
-you should not cross from a divider you may.
+the corridor exists to show. Two continuous edge stripes bound the rideable width —
+the way a real carriageway marks an edge you should not cross — and the rider steers
+freely between them; there are no lanes to divide.
 
-**The obstacles, coins and lanes are invented.** They are the only invented entities in
+**The obstacles, coins and track are invented.** They are the only invented entities in
 this repository. They live under one `game` key that no measured consumer reads, they
 are placed by a seeded PRNG so the run is identical on every build, and they are
 labelled as invented in the data file, in the loading log and on screen. What they are
 *not* is guessed measurement — nothing about the campus moved to make room for them.
-They are held to their own gates instead: never all three lanes blocked at once, never
-an obstacle wide enough to bleed into the lane beside it, never two groups closer than
-12 m, and a headless test rides the whole route to prove a clean line beats par.
+They are held to their own gates instead: every obstacle group must leave a free gap
+the rider fits through — re-derived from the placed widths, not assumed — never two
+groups closer than 12 m, and a headless test rides the whole route to prove a clean
+line beats par.
 
 ### The machine sits on the surface you can see
 
@@ -296,7 +297,7 @@ descent hands over; any key or tap skips it.
 
 | | |
 |---|---|
-| `A` `D` or `←` `→` | change lane |
+| `A` `D` or `←` `→` | steer — hold to slide, the painted edges are the limits |
 | `space` / `W` | bunny hop — clears a bench or a cone, never a bollard |
 | `F` | fly mode: free roam's own controls over the corridor — `W` `A` `S` `D`, `Q`/`E` height, `↑`/`↓` speed, `shift` doubles. The ride and the clock pause. |
 | `[` / `]` | in fly mode, jump 60 m along the route |
@@ -304,7 +305,7 @@ descent hands over; any key or tap skips it.
 | `T` | sunset / noon |
 | `Esc` | back to the menu |
 | | *`?mode=staging` is the same run with the obstacles and coins removed, and says so on screen* |
-| tap left / right | change lane, on a phone |
+| hold left / right | steer, on a phone |
 | tap the top third | hop, on a phone |
 
 ---
