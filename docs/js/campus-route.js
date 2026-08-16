@@ -57,11 +57,29 @@ const bboxOf = (ring) => {
   return { x0, x1, z0, z1 };
 };
 
+/* A footway that stops just short of another footway is a survey gap, not a
+   wall — but only the caller gets to decide that.
+
+   OSM's pedestrian ways here are drawn way-by-way and are not always noded
+   where they meet. The north-south walk through the Revelle fleet ends at
+   (-90.0, 480.7); the east-west walk above it passes 8.8 m away at the same x.
+   On the ground that is one continuous walkway. In the graph it is two, and
+   A* answers a 28 m question with a 148 m detour out west and back.
+
+   Bridging those gaps is an INFERENCE, so it is off unless asked for. Campus
+   wide at a 10 m threshold it would add 244 links, which is far too large a
+   claim to make silently on free roam's behalf, and the corridor builder is
+   the only caller that has a hand-traced reference to check the result
+   against. `bridgeGaps` is that opt-in, and `graph.bridges` reports every link
+   it laid down so a caller can declare them rather than quietly benefit. */
+const BRIDGE_DETOUR_RATIO = 5;
+
 /**
  * Build the routable graph once per page load.
  * @param {{paths: {p: number[][], steps?: number}[], surfaces?: object[]}} data campus-3d.json
+ * @param {{bridgeGaps?: number}} [opts] max metres of survey gap to bridge; 0 (default) bridges none
  */
-export function buildGraph(data) {
+export function buildGraph(data, { bridgeGaps = 0 } = {}) {
   const nodes = [];
   const byCell = new Map();
 
@@ -166,8 +184,130 @@ export function buildGraph(data) {
     }
   }
 
-  return { nodes };
+  const bridges = bridgeGaps > 0 ? bridgeSurveyGaps(nodes, bridgeGaps, near) : [];
+  return { nodes, bridges };
 }
+
+/* Join every dangling footway tip to the walkway it stops short of.
+ *
+ * Three conditions, and all three matter:
+ *
+ *  - the tip has exactly one edge. A junction with two ways already leaving it
+ *    is not a loose end, whatever else is nearby.
+ *  - the connector enters no building. Same rule the plaza spokes are held to,
+ *    and for the same reason: the one way this module breaks is by inventing a
+ *    line through a wall.
+ *  - walking round the gap on the existing graph costs more than
+ *    BRIDGE_DETOUR_RATIO times the gap itself. This is what separates a genuine
+ *    break in the survey from a redundant shortcut. Two walkways that already
+ *    meet 20 m away do not need a link and would be quietly re-routed by one;
+ *    a 9 m gap you must walk 172 m around is not something any pedestrian
+ *    believes.
+ *
+ * Tips are visited in node order and each bridge is applied before the next is
+ * searched, so the result is deterministic and a bridge can serve as the target
+ * of a later one.
+ */
+function bridgeSurveyGaps(nodes, maxGap, near) {
+  const bridges = [];
+  const walk = (from, to) => {
+    const found = findRoute({ nodes }, from, to);
+    return found ? found.metres : Infinity;
+  };
+
+  /* Edges bucketed on a maxGap grid, so a tip only tests the walkways that
+     could possibly be within reach. Without this the search is every tip
+     against every edge — 1,381 x 21,000 — and the builder stops being a thing
+     you can run while you iterate. */
+  const cell = Math.max(1, maxGap);
+  const buckets = new Map();
+  const bucketKey = (x, z) => `${Math.floor(x / cell)}:${Math.floor(z / cell)}`;
+  const index = (a, b) => {
+    const A = nodes[a], B = nodes[b];
+    const x0 = Math.min(A.x, B.x), x1 = Math.max(A.x, B.x);
+    const z0 = Math.min(A.z, B.z), z1 = Math.max(A.z, B.z);
+    for (let gx = Math.floor(x0 / cell); gx <= Math.floor(x1 / cell); gx++) {
+      for (let gz = Math.floor(z0 / cell); gz <= Math.floor(z1 / cell); gz++) {
+        const k = `${gx}:${gz}`;
+        const list = buckets.get(k);
+        if (list) list.push([a, b]); else buckets.set(k, [[a, b]]);
+      }
+    }
+  };
+  for (let a = 0; a < nodes.length; a++) {
+    for (const e of nodes[a].edges) if (e.to > a) index(a, e.to);
+  }
+
+  const tips = nodes.length;
+  for (let tip = 0; tip < tips; tip++) {
+    if (nodes[tip].edges.length !== 1) continue;
+    const E = nodes[tip];
+
+    /* Nearest point on any edge not incident to this tip. Interior only — a
+       tip-to-tip pair is the same defect but joining them needs no split, and
+       the projection below would land on the shared endpoint anyway. */
+    let best = null;
+    const seen = new Set();
+    for (let gx = -1; gx <= 1; gx++) for (let gz = -1; gz <= 1; gz++) {
+      const list = buckets.get(bucketKey(E.x + gx * cell, E.z + gz * cell));
+      if (!list) continue;
+      for (const [a, b] of list) {
+        if (a === tip || b === tip) continue;
+        const key = `${a}:${b}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const A = nodes[a], B = nodes[b];
+        const vx = B.x - A.x, vz = B.z - A.z;
+        const L = vx * vx + vz * vz;
+        if (!L) continue;
+        const t = ((E.x - A.x) * vx + (E.z - A.z) * vz) / L;
+        if (t < 0.02 || t > 0.98) continue;
+        const px = A.x + t * vx, pz = A.z + t * vz;
+        const d = Math.hypot(E.x - px, E.z - pz);
+        if (d > maxGap || (best && d >= best.d)) continue;
+        best = { d, px, pz, a, b };
+      }
+    }
+    if (!best) continue;
+    /* The edge may have been split by an earlier bridge; only act if it is
+       still there. */
+    if (!nodes[best.a].edges.some((e) => e.to === best.b)) continue;
+
+    const box = bboxOf([[E.x, E.z], [best.px, best.pz]]);
+    if (near(box).some((f) => segmentHitsRing(E.x, E.z, best.px, best.pz, f.ring))) continue;
+    if (walk(tip, best.a) <= best.d * BRIDGE_DETOUR_RATIO) continue;
+
+    /* Split the target edge at the projection and hang the tip off it. */
+    const mid = nodes.length;
+    nodes.push({ x: best.px, z: best.pz, edges: [] });
+    const drop = (from, to) => {
+      const i = nodes[from].edges.findIndex((e) => e.to === to);
+      if (i >= 0) nodes[from].edges.splice(i, 1);
+    };
+    drop(best.a, best.b);
+    drop(best.b, best.a);
+    const join = (i, j) => {
+      const len = dist(nodes[i], nodes[j]);
+      nodes[i].edges.push({ to: j, w: len, len });
+      nodes[j].edges.push({ to: i, w: len, len });
+    };
+    join(best.a, mid);
+    join(best.b, mid);
+    join(tip, mid);
+    /* The split halves are walkways too — a later tip may stop short of one. */
+    index(best.a, mid);
+    index(best.b, mid);
+    index(tip, mid);
+    bridges.push({
+      from: [round1(E.x), round1(E.z)],
+      to: [round1(best.px), round1(best.pz)],
+      metres: round1(best.d),
+    });
+  }
+  return bridges;
+}
+
+const round1 = (v) => Math.round(v * 10) / 10;
 
 /** Nearest graph node to an arbitrary point (a building centroid, say). */
 export function nearestNode(graph, x, z) {
@@ -351,18 +491,49 @@ export function pushOutside(points, rings, clearance = 1.2, passes = 2) {
  */
 export function resample(points, spacing = 2) {
   const out = [points[0]];
-  let carry = 0;
-  for (let i = 1; i < points.length; i++) {
-    const a = points[i - 1];
-    const b = points[i];
-    const seg = dist(a, b);
-    if (seg < 1e-6) continue;
-    let t = spacing - carry;
-    while (t <= seg) {
-      out.push({ x: a.x + ((b.x - a.x) * t) / seg, z: a.z + ((b.z - a.z) * t) / seg });
-      t += spacing;
+  /* Step by CHORD, not by arc length.
+   *
+   * Stepping `spacing` along the polyline is the obvious reading, and it is
+   * wrong at a corner: two points 2 m apart along a 120-degree turn are only
+   * 0.67 m apart in a straight line. The consumer does not know that.
+   * scooter-ride.js positionAt indexes with `i = floor(s / spacing)` and then
+   * interpolates `f = s/spacing - i` ALONG THE CHORD — so on that segment the
+   * rider covers 0.67 m of ground while their odometer advances 2 m, crawls,
+   * and jumps back to speed at the next point. One real corner produced exactly
+   * that: the turn east below Argo.
+   *
+   * Walking the circle of radius `spacing` forward along the line instead makes
+   * every emitted chord exactly `spacing` by construction, which is the thing
+   * positionAt actually assumes and the thing corridor.test.mjs actually
+   * measures. It also makes `(n-1) * spacing` the true walked length rather
+   * than an approximation of it.
+   *
+   * The cost is that corners are cut by up to the sagitta of one step, a few
+   * centimetres at 2 m. The route is already Chaikin-smoothed, so it is not
+   * claiming corner geometry to that precision. */
+  let cur = { x: points[0].x, z: points[0].z };
+  let pos = { x: cur.x, z: cur.z };
+  let j = 0;
+  while (j < points.length - 1) {
+    const b = points[j + 1];
+    const dx = b.x - pos.x, dz = b.z - pos.z;
+    const A = dx * dx + dz * dz;
+    if (A < 1e-12) { j++; pos = { x: b.x, z: b.z }; continue; }
+    const fx = pos.x - cur.x, fz = pos.z - cur.z;
+    const B = 2 * (fx * dx + fz * dz);
+    const C = fx * fx + fz * fz - spacing * spacing;
+    const disc = B * B - 4 * A * C;
+    let t = -1;
+    if (disc >= 0) {
+      const r = Math.sqrt(disc);
+      for (const c of [(-B - r) / (2 * A), (-B + r) / (2 * A)]) {
+        if (c > 1e-9 && c <= 1 && (t < 0 || c < t)) t = c;
+      }
     }
-    carry = (carry + seg) % spacing;
+    if (t < 0) { j++; pos = { x: b.x, z: b.z }; continue; }
+    pos = { x: pos.x + dx * t, z: pos.z + dz * t };
+    cur = { x: pos.x, z: pos.z };
+    out.push({ x: cur.x, z: cur.z });
   }
   const last = points[points.length - 1];
   if (dist(out[out.length - 1], last) > spacing * 0.5) out.push(last);

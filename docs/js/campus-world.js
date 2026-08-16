@@ -32,7 +32,9 @@
 // hands back a height field; campus-walk.js moves through it.
 import * as THREE from "../vendor/three/three.module.min.js";
 import { prepareGround } from "./campus-ground.js";
-import { makeHeightSampler, chunkGrid } from "./campus-terrain.js";
+import {
+  makeHeightSampler, makeSurfaceSampler, chunkGrid, STEP, axisSamples,
+} from "./campus-terrain.js";
 import {
   SPECIES, treeSpecies, treeTint, treeExclusionZones, solidZones, clearanceFor, crownFor,
 } from "./campus-species.js";
@@ -200,17 +202,6 @@ export function createTerrain(scene, lidar, colors, region) {
     };
   }
 
-  /* Sample indices for one chunk edge at the decimation step: every STEP-th
-     sample from the chunk's first row/col, plus its exact last one, so
-     neighbouring chunks share their edge samples and no seam can open. */
-  const STEP = 2;
-  const axisSamples = (a0, a1) => {
-    const out = [];
-    for (let v = a0; v < a1; v += STEP) out.push(v);
-    out.push(a1);
-    return out;
-  };
-
   const group = new THREE.Group();
   const chunkMeshes = [];
   for (const chunk of chunkGrid(terrain)) {
@@ -306,7 +297,15 @@ export function createTerrain(scene, lidar, colors, region) {
     ? { ...regionSample.bounds }
     : ground.coverage;
 
-  return { mesh: group, heightAt, coverage, region: regionInfo };
+  /* The height of the DRAWN triangles, for anything that must sit ON the mesh
+     rather than on the 3 m samples the mesh decimates away (see
+     makeSurfaceSampler). Free roam deliberately keeps riding `heightAt`. Past
+     the campus grid the drawn ground is the apron or the regional mesh, so the
+     region-aware heightAt is the right answer there. */
+  const drawnSurfaceAt = makeSurfaceSampler(terrain);
+  const surfaceAt = (x, z) => (ground.inGrid(x, z) ? drawnSurfaceAt(x, z) : heightAt(x, z));
+
+  return { mesh: group, heightAt, surfaceAt, coverage, region: regionInfo };
 }
 
 /**

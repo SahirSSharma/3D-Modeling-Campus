@@ -74,6 +74,88 @@ export function makeHeightSampler(terrain) {
   return { heightAt, bounds, coverage, inGrid };
 }
 
+/** Decimation of the LiDAR grid into the DRAWN mesh: every STEP-th sample, so
+ *  the visible triangles span 2 x 3 m = 6 m. */
+export const STEP = 2;
+
+/**
+ * Sample indices for one chunk edge at the decimation step: every STEP-th
+ * sample from the chunk's first row/col, plus its exact last one, so
+ * neighbouring chunks share their edge samples and no seam can open.
+ *
+ * This lives here, next to makeSurfaceSampler, because it IS the definition of
+ * the drawn surface. campus-world.js builds the mesh from it and the sampler
+ * answers questions about that mesh; a second copy of this arithmetic would
+ * reintroduce exactly the bug the sampler exists to fix.
+ */
+export function axisSamples(a0, a1) {
+  const out = [];
+  for (let v = a0; v < a1; v += STEP) out.push(v);
+  out.push(a1);
+  return out;
+}
+
+/**
+ * Height of the DRAWN triangle under (x,z) — not the bilinear height.
+ *
+ * WHY THIS EXISTS. makeHeightSampler interpolates the full 3 m LiDAR grid, but
+ * the mesh you can actually see is built from every STEP-th sample. Wherever a
+ * skipped sample is a local low, the drawn triangles bow ABOVE the sampled
+ * height, and anything placed at heightAt is genuinely underneath the visible
+ * ground — which is how the scooter came to ride below the surface it is
+ * supposed to be on.
+ *
+ * Outside the grid there are no drawn triangles here (the apron and the
+ * regional mesh take over), so the bilinear height is the honest answer.
+ */
+export function makeSurfaceSampler(terrain) {
+  const { x0, z0, cell, cols, rows, z: heights } = terrain;
+  const { heightAt, inGrid } = makeHeightSampler(terrain);
+
+  /* The drawn sample indices per axis, taken from the same chunk walk and the
+     same axisSamples() the mesh builder uses, so the SHORT cells axisSamples
+     leaves at each chunk edge (its trailing out.push(a1)) are reproduced by
+     construction rather than re-derived. */
+  const drawn = (n, pick) => {
+    const seen = new Set();
+    for (const chunk of chunkGrid(terrain)) for (const v of axisSamples(...pick(chunk))) seen.add(v);
+    const list = [...seen].sort((a, b) => a - b);
+    /* index -> the drawn sample that starts the cell containing it. */
+    const start = new Int32Array(n);
+    for (let k = 0, i = 0; k < list.length - 1; k++) {
+      for (; i < list[k + 1]; i++) start[i] = k;
+    }
+    start[n - 1] = list.length - 2; // the last index closes the last cell
+    return { list, start };
+  };
+  const colsDrawn = drawn(cols, (ch) => [ch.c0, ch.c1]);
+  const rowsDrawn = drawn(rows, (ch) => [ch.r0, ch.r1]);
+
+  /* Read heights exactly as campus-world.js's mesh builder does: clamped
+     index, decimetres -> metres. */
+  const clampIdx = (v, hi) => (v < 0 ? 0 : v > hi ? hi : v);
+  const h = (r, c) => heights[clampIdx(r, rows - 1) * cols + clampIdx(c, cols - 1)] / 10;
+
+  return (x, zz) => {
+    if (!inGrid(x, zz)) return heightAt(x, zz);
+    const fx = (x - x0) / cell;
+    const fz = (zz - z0) / cell;
+    const k = colsDrawn.start[clampIdx(Math.floor(fx), cols - 1)];
+    const m = rowsDrawn.start[clampIdx(Math.floor(fz), rows - 1)];
+    const cA = colsDrawn.list[k], cB = colsDrawn.list[k + 1];
+    const rA = rowsDrawn.list[m], rB = rowsDrawn.list[m + 1];
+    const u = (fx - cA) / (cB - cA);
+    const v = (fz - rA) / (rB - rA);
+    const h00 = h(rA, cA), h01 = h(rA, cB), h10 = h(rB, cA), h11 = h(rB, cB);
+    /* The mesh's two triangles per cell are {(r,c),(r+1,c),(r,c+1)} and
+       {(r,c+1),(r+1,c),(r+1,c+1)} (campus-world.js's index order). Their shared
+       edge is the ANTI-diagonal, so u + v <= 1 picks the first. */
+    return u + v <= 1
+      ? h00 + (h01 - h00) * u + (h10 - h00) * v
+      : h11 + (h10 - h11) * (1 - u) + (h01 - h11) * (1 - v);
+  };
+}
+
 /**
  * The texture-chunk grid: blocks of CHUNK_CELLS x CHUNK_CELLS terrain cells
  * (the trailing blocks are smaller when the grid does not divide evenly).

@@ -117,7 +117,7 @@ The site opens on a choice, and `?mode=` skips it.
 | Mode | What it is | Payload |
 |---|---|---|
 | **Free roam** (`?mode=campus`) | the whole campus, North Torrey Pines Road to I-5, fly anywhere | ~10 MB |
-| **Eighth → Peterson** (`?mode=scooter`) | one 1,026 m route on a scooter, three lanes, against a clock | ~1.5 MB |
+| **Eighth → Peterson** (`?mode=scooter`) | one 1,004 m route on a scooter, three lanes, against a clock | ~1.5 MB |
 | **Eighth → Peterson** (`?mode=staging`) | the same route with no obstacles or coins, as a workbench | ~1.5 MB |
 
 `staging` exists so there is somewhere to try things. Work in progress lands there
@@ -152,11 +152,50 @@ that search because it is the one stretch of centreline that is not a surveyed p
 and it should not be spent freely: unweighted, the search bought 19 extra metres of
 invented line to save one metre of walking.
 
-The route is defined by
-landmarks rather than coordinates: north through the "fleet" (Revelle's halls are all
-named after research ships — Atlantis, Galathea, Beagle, Meteor, Challenger, Discovery,
-and Argo itself), past the 64 Degrees dining hall, then east into Revelle Plaza and the
-long straight north to Peterson.
+The route runs east out of the courts, north up the corridor **between** the "fleet"
+(Revelle's halls are all named after research ships — Atlantis, Galathea, Beagle, Meteor,
+Challenger, Discovery, and Argo itself), east along Argo Hall's south face, north up its
+east side, then east into Revelle Plaza and the long straight north to Peterson.
+
+### The route is gated against a line drawn on a map
+
+The shape above is not a preference, and it is not held in prose. It is held by
+`DRAWN_REFERENCE` in `scripts/build-corridor.mjs`: the correct line, drawn by hand onto
+an Apple Maps screenshot, extracted from the pixels and converted into this repo's metric
+frame. `check` measures the shipped centreline against it and fails past 5 m mean or 12 m
+worst, and separately fails if the line ever doubles back along it.
+
+This exists because every other gate can pass on a route that is simply wrong. The
+previous line started in the right place, ended in the right place, was the right length
+and touched no building — and was **39 m** from where it was supposed to go, twice. "It
+looks right on the site" is not a gate.
+
+Two things made it wrong, and both are now impossible rather than fixed:
+
+- **`64 Degrees` was a waypoint.** The dining hall is north-*west* of Argo, so routing
+  through it dragged the line diagonally across the top of the plaza. Waypoints are now
+  raw `{x, z}` points taken from the drawing. A building name routes to that building's
+  *centroid*, and several hall-adjacent graph nodes are dead-end entrance spurs that turn
+  a waypoint into a visible out-and-back — which is what the no-doubling-back gate exists
+  to catch.
+- **The survey has a hole.** OSM's footways here are drawn way by way and are not always
+  noded where they meet: the north-south walk through the fleet ends at `(-90.0, 480.7)`
+  and the east-west walk above it passes 8.8 m away at the same x. On the ground that is
+  one continuous walkway; in the graph it was two, and A* answered a 28 m question with a
+  148 m detour out west and back — the dogleg that put the route on the wrong side of
+  Atlantis Hall. `campus-route.js` can now bridge a gap like that, but **only when asked**
+  (`bridgeGaps`), only between a dangling tip and a walkway it stops short of, never
+  through a building, and only where walking round costs more than five times the gap.
+  Campus-wide at 10 m that is 244 inferred links — far too large a claim to make silently
+  on free roam's behalf, so free roam does not use it. The corridor builder is the only
+  caller, and every bridge the shipped line actually crosses is listed in
+  `route.bridges`.
+
+**A note on the hall names.** The drawing labels the hall on the right of the northbound
+straight *Meteor*; this repo's OSM data calls that same building *Galathea* and puts
+Meteor 40 m further east. One screenshot is not enough to re-label survey data, so
+nothing has been renamed — and it does not matter, because the route is fitted to
+geometry and gated against geometry. Neither label has to be right for the line to be.
 
 It goes **past** Argo Hall, not through it. It used to go through it — 12 m of centreline
 inside the walls — for two compounding reasons. Naming a building as a waypoint routes to
@@ -189,6 +228,33 @@ labelled as invented in the data file, in the loading log and on screen. What th
 They are held to their own gates instead: never all three lanes blocked at once, never
 an obstacle wide enough to bleed into the lane beside it, never two groups closer than
 12 m, and a headless test rides the whole route to prove a clean line beats par.
+
+### The machine sits on the surface you can see
+
+The scooter used to render below the ground, and it took two independent mistakes to do
+it. `heightAt` interpolates the full 3 m LiDAR grid, but the terrain that is *drawn* uses
+every second sample — so wherever a skipped sample was a local low, the visible triangles
+bow above the sampled height and anything placed at `heightAt` is genuinely underneath
+them. `campus-terrain.js` now also exposes `surfaceAt`, the height of the drawn triangle,
+built from the same `STEP` and the same diagonal as the mesh itself rather than a second
+copy of that arithmetic.
+
+The second mistake was the datum. Everything you read as ground here is a lifted decal:
+plazas, walks and roads are drawn on the `ground` rung of `campus-overlay.js`'s ladder and
+the Eighth basketball court sits on `pad`. A machine at raw terrain height therefore had
+5–9 cm of drawn pavement over its wheels — and the run's own lane paint (`paint`, 0.17)
+floated 2 cm *above* the deck at 0.15, so the markings were literally drawn over the
+scooter. The scooter, its obstacles, its coins and its finish bar now share one ride plane
+on the `pad` rung, which is never more than 4 cm from either surface the route crosses.
+Obstacles matter as much as the scooter here, and not cosmetically: `scooter-ride.js`
+decides a hop cleared an obstacle with `ride.y > o.h`, so two different datums make that
+comparison lie about clearance.
+
+It also *rides* now. Both contact patches are sampled 0.86 m apart and the machine sits on
+the plane they define and pitches to match, so on a grade both wheels touch instead of one
+burying and one floating. `npm run verify:ride` drives the whole route in a real browser
+and asserts the contact patch stays within 5 cm of that plane — **two-sided**, so a fix
+that hoists the machine into the air fails just as loudly as one that sinks it.
 
 Where the run departs from the measured world on purpose is the *look*: shadows, tone
 mapping, tighter fog and a togglable sunset. Free roam does without all of it, because

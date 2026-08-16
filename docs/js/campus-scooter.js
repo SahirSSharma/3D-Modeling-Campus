@@ -32,11 +32,14 @@ import { createEighth } from "./campus-eighth.js";
 import { createEighthFurniture } from "./campus-eighth-furniture.js";
 import { OVERLAY, overlayLift, applyOverlayDepth } from "./campus-overlay.js";
 import { nullReporter } from "./campus-boot.js";
-import { createRide, positionAt, laneCentre } from "./scooter-ride.js";
+import {
+  createRide, positionAt, laneCentre,
+  ACCEL_MPS2, TOP_SPEED_MPS,
+} from "./scooter-ride.js";
 /* Fly mode is free roam's controller, imported rather than reimplemented — see
    the note above stepFly. SHIFT_MULT stays declared only in campus-explore.js,
    which tests/campus-gameplay.test.mjs asserts. */
-import { createExplore, stepSpeed } from "./campus-explore.js";
+import { createExplore, stepSpeed, EYE } from "./campus-explore.js";
 import { makeSolidSampler } from "./campus-clearance.js";
 import { createScooter, createObstacle, coinFactory } from "./scooter-model.js";
 
@@ -61,6 +64,8 @@ const CHASE_LOOK_AHEAD_M = 11;
 /* Seconds for the camera to cover the distance to where it should be. A hard
    follow makes every lane change a jolt; too soft and the scooter swims. */
 const CHASE_LAG_S = 0.16;
+/* The aim leads the body. See the note at its use in step(). */
+const CHASE_AIM_LAG_S = 0.10;
 
 /* Lean into a lane change, up to this at full lateral speed. */
 const MAX_BANK_RAD = 0.26;
@@ -109,7 +114,7 @@ let skyName = "noon";
 let skyDome = null;
 let hemi = null;
 
-let renderer, scene, camera, heightAt, ride, doc, scooter;
+let renderer, scene, camera, heightAt, surfaceAt, ride, doc, scooter;
 let labels = null;
 let hud = null;
 const held = new Set();
@@ -118,6 +123,10 @@ let sun = null;
 let sunTarget = null;
 const camPos = new THREE.Vector3();
 const camAim = new THREE.Vector3();
+/* Reused per frame; a new Vector3 sixty times a second for the same two
+   targets is the kind of garbage that shows up as a stutter, not a leak. */
+const CHASE_POS = new THREE.Vector3();
+const CHASE_AIM = new THREE.Vector3();
 let started = false;
 
 /* ------------------------------------------------------------------- look */
@@ -193,6 +202,10 @@ function applySky(name) {
   scene.fog.color.set(s.fog);
   scene.fog.near = s.fogNear;
   scene.fog.far = s.fogFar;
+  /* Re-apply the altitude push on the same frame, or pressing T at 300 m shows
+     one frame of the fog written for a deck at 1.4 m. All three modes re-drive
+     it next frame anyway; this is only to avoid the flash. */
+  if (camMode === "fly" && explore) scaleRideAtmosphere(explore.hover);
 
   if (sun) {
     sun.color.set(s.sun);
@@ -339,7 +352,7 @@ function createRibbon(group, route, game) {
         [a.x + a.normal.x * width, a.z + a.normal.z * width],
         [b.x + b.normal.x * -width, b.z + b.normal.z * -width],
         [b.x + b.normal.x * width, b.z + b.normal.z * width],
-      ].map(([x, z]) => [x, heightAt(x, z) + paint, z]);
+      ].map(([x, z]) => [x, surfaceAt(x, z) + paint, z]);
       out.push(...quad[0], ...quad[2], ...quad[1], ...quad[1], ...quad[2], ...quad[3]);
     }
     return out;
@@ -360,22 +373,52 @@ function createRibbon(group, route, game) {
   /* Slightly translucent: at full opacity the paint is the brightest thing in
      frame and pulls the eye off the campus, which is the opposite of the
      point. It still reads clearly against grass, plaza and asphalt alike. */
-  group.add(drape(new THREE.Mesh(geo, applyOverlayDepth(
+  const stripes = drape(new THREE.Mesh(geo, applyOverlayDepth(
     new THREE.MeshLambertMaterial({
       color: 0xf6f4ea, side: THREE.DoubleSide, transparent: true, opacity: 0.82,
     }), "paint"
-  )), "paint"));
+  )), "paint");
+  group.add(stripes);
 
   /* A finish line at Peterson, because a route with no visible end is a route
      you do not know you are winning. */
   const fin = positionAt(route, route.metres - 2, 0);
   const bar = new THREE.Mesh(
     new THREE.BoxGeometry(edgeOff * 2, 0.06, 0.5),
-    applyOverlayDepth(new THREE.MeshLambertMaterial({ color: 0xf2f0e6 }), "logo")
+    /* transparent so it can fade in with the stripes. Without the flag,
+       setting opacity does nothing and the bar pops in at full strength one
+       frame after the fade starts. It already has depthWrite:false and an
+       explicit renderOrder from applyOverlayDepth/drape, so joining the
+       transparent pass does not change what it draws over. */
+    applyOverlayDepth(new THREE.MeshLambertMaterial({
+      color: 0xf2f0e6, transparent: true,
+    }), "logo")
   );
-  bar.position.set(fin.x, heightAt(fin.x, fin.z) + 0.03, fin.z);
+  bar.position.set(fin.x, surfaceAt(fin.x, fin.z) + overlayLift("logo") + 0.03, fin.z);
   bar.rotation.y = fin.heading;
   group.add(drape(bar, "logo"));
+
+  /* THE MARKINGS BELONG TO THE PLAYER, NOT TO THE SHOT.
+   *
+   * During the opening reveal there is nothing to steer, so three painted lanes
+   * are answering a question nobody has asked yet — and they were the most
+   * eye-catching thing in a frame whose subject is Eighth College. They arrive
+   * when control does, which is `endIntro`, and every way out of the intro goes
+   * through it.
+   *
+   * Hidden at CREATION rather than at the start of the shot, so a slow load
+   * cannot flash them before the first frame. `visible` as well as opacity
+   * because zero-opacity geometry is still submitted, and because it is the
+   * honest state: the lanes are not there yet. */
+  const parts = [{ mesh: stripes, base: 0.82 }, { mesh: bar, base: 1 }];
+  const setReveal = (a) => {
+    for (const { mesh, base } of parts) {
+      mesh.visible = a > 0.001;
+      mesh.material.opacity = base * a;
+    }
+  };
+  setReveal(0);
+  return { setReveal };
 }
 
 /** The skyline tier: plain extrusions of the tall things past the corridor. */
@@ -407,7 +450,12 @@ function createProps(scene, route, game) {
   for (const o of game.obstacles) {
     const mesh = createObstacle(o.kind);
     const p = positionAt(route, o.s, laneCentre(o.lane, game.laneOffset));
-    mesh.position.set(p.x, heightAt(p.x, p.z), p.z);
+    /* THE SAME PLANE THE SCOOTER IS ON, and not merely so it looks right:
+       scooter-ride.js decides a hop cleared an obstacle with `ride.y > o.h`,
+       where ride.y is height above the deck's resting plane. Put the obstacle
+       on a different datum and that comparison is quietly lying about
+       clearance. */
+    mesh.position.set(p.x, rideSurfaceAt(p.x, p.z), p.z);
     mesh.rotation.y = p.heading + (o.spin || 0);
     group.add(mesh);
   }
@@ -417,7 +465,7 @@ function createProps(scene, route, game) {
   for (const c of ride.coinList) {
     const mesh = coins.make();
     const p = positionAt(route, c.s, laneCentre(c.lane, game.laneOffset));
-    mesh.position.set(p.x, heightAt(p.x, p.z) + c.y, p.z);
+    mesh.position.set(p.x, rideSurfaceAt(p.x, p.z) + c.y, p.z);
     mesh.rotation.y = p.heading;
     group.add(mesh);
     coinMeshes.push({ mesh, coin: c });
@@ -567,22 +615,35 @@ function bindInput(canvas) {
      third to hop, so this is playable on a phone without a keyboard. */
   canvas.addEventListener("pointerdown", (e) => {
     if (camMode === "intro") { endIntro(); return; } // a tap skips it too
-    if (camMode === "fly") { drag.on = true; drag.x = e.clientX; drag.y = e.clientY; return; }
+    if (camMode === "fly") {
+      drag.on = true; drag.x = e.clientX; drag.y = e.clientY;
+      /* Captured, like free roam. Without this a look-drag dies the moment the
+         pointer crosses the edge of the canvas, which on a wide turn is most
+         of them. */
+      canvas.setPointerCapture?.(e.pointerId);
+      return;
+    }
     if (e.clientY < canvas.clientHeight / 3) tap(" ");
     else tap(e.clientX < canvas.clientWidth / 2 ? "a" : "d");
   });
 
-  /* Drag to look, in fly mode only — the chase camera aims itself. */
+  /* Drag to look, in fly mode only — the chase camera aims itself. The
+     sensitivities and the pitch clamp are campus-walk.js's, to the digit: one
+     mode, one feel. This used to keep a private `flyPitch` at 0.004/0.003 and
+     -1.4..1.0, so the same gesture moved the view by a different amount
+     depending on which mode you were in, for no reason anyone chose. */
   canvas.addEventListener("pointermove", (e) => {
     if (!drag.on || camMode !== "fly") return;
-    explore.yaw -= (e.clientX - drag.x) * 0.004;
-    flyPitch = Math.max(-1.4, Math.min(1.0, flyPitch - (e.clientY - drag.y) * 0.003));
+    explore.yaw -= (e.clientX - drag.x) * 0.005;
+    explore.pitch = Math.max(-1.35, Math.min(1.2, explore.pitch - (e.clientY - drag.y) * 0.004));
     drag.x = e.clientX;
     drag.y = e.clientY;
   });
-  for (const ev of ["pointerup", "pointercancel", "pointerleave"]) {
-    canvas.addEventListener(ev, () => { drag.on = false; });
-  }
+  const stopDrag = (e) => {
+    drag.on = false;
+    if (canvas.hasPointerCapture?.(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
+  };
+  for (const ev of ["pointerup", "pointercancel"]) canvas.addEventListener(ev, stopDrag);
 }
 
 /* --------------------------------------------------------------- the frame */
@@ -599,6 +660,16 @@ function resize() {
 let props = null;
 let spin = 0;
 let bank = 0;
+
+/* The lane markings and their reveal. 600 ms, eased out: the first lane
+   decision is seconds away, so the near-field information has to land in the
+   first fifth of the ramp and the tail is free polish. It fades to the shipped
+   0.82 rather than to 1 — that translucency is a deliberate art call (see
+   createRibbon) and overshooting it would quietly undo it. */
+const REVEAL_S = 0.6;
+let ribbon = null;
+let revealing = false;
+let revealT = 0;
 
 /* -------------------------------------------------------- the camera modes */
 
@@ -637,11 +708,32 @@ const INTRO_Y_FROM = 108;
    down rather than flying in. */
 const INTRO_BACK_FROM = 86;
 const INTRO_LAUNCH_S = 1.8;   // camera falls this long before the scooter moves
-const INTRO_FALL_S = 5.4;     // how long the descent itself takes
+/* Only the fallback, for a route with no lead-in to derive from — see
+   introFallS below, which is what the shot actually runs on. */
+const INTRO_FALL_S = 5.4;
 const INTRO_END_PAD_M = 10;   // pavement past the lead-in before the hand-over
 const INTRO_MAX_S = 14;       // a hard stop, so a stalled ride cannot hold the shot
 let introT = 0;
 let introEndM = 0;            // set at boot from the route's own lead-in
+/* How long the descent takes, DERIVED at boot rather than declared.
+ *
+ * INTRO_FALL_S was a hand-picked 5.4 s racing a hand-picked hand-over distance,
+ * and whenever the ride won the race the camera was cut off mid-air. The time
+ * for the scooter to cover introEndM from rest at its published acceleration is
+ * closed-form, so the descent can simply be given that long: the two clocks
+ * cannot disagree because there is only one answer. It also means the length of
+ * the shot comes from the machine's real numbers, which is how the rest of this
+ * project prefers to choose things. */
+let introFallS = INTRO_FALL_S;
+
+/** Seconds for the ride to cover `metres`, accelerating from 0 and capped. */
+function launchSeconds(metres) {
+  const toTop = TOP_SPEED_MPS / ACCEL_MPS2;
+  const atTop = 0.5 * ACCEL_MPS2 * toTop * toTop;
+  return metres <= atTop
+    ? Math.sqrt((2 * metres) / ACCEL_MPS2)
+    : toTop + (metres - atTop) / TOP_SPEED_MPS;
+}
 
 /* FLY MODE IS FREE ROAM'S CONTROLS, NOT A SECOND SET.
  *
@@ -657,11 +749,112 @@ let introEndM = 0;            // set at boot from the route's own lead-in
  * corridor crop — so fly mode cannot wander off the edge of the cut world. */
 let explore = null;
 let flyS = 0;               // where along the route the last jump put us
-let flyPitch = -0.18;
 const FLY_START_SPEED_MPS = 45;   // the slider's starting notch, not a cap
 const FLY_SCRUB_M = 60;
 
 const easeInOut = (u) => (u < 0.5 ? 2 * u * u : 1 - ((-2 * u + 2) ** 2) / 2);
+
+/* Fog and the far plane have to open up as you climb, or fly mode's whole
+ * reason for existing — getting above the corridor to look at it — returns a
+ * rectangle of haze. campus-explore.js has exactly this function and it is
+ * deliberately NOT imported, for two reasons that would each be a bug:
+ *
+ *  - it writes free roam's fog numbers, which would overwrite this mode's sky
+ *    table (sunset is 55/300, not 90/420) and never restore it on the way out;
+ *  - it sets far = 1100 + lift*14, and at ground level 1100 is BELOW the 1400
+ *    this mode's camera was given to clear campus-world's radius-1000 sky
+ *    dome. Importing it would slice a wedge out of the sky, which is the exact
+ *    artefact that 1400 was chosen to fix.
+ *
+ * The RATES are copied from campus-explore.js on purpose, so climbing feels the
+ * same in both modes and only the ground-level base differs. That base
+ * difference is art direction, which AGENTS.md allows this mode to keep. */
+/* The corridor's skyline ring: SKYLINE_M in scripts/build-corridor.mjs. Past
+   this radius the crop simply has no world in it. */
+const FOG_FAR_CAP_M = 520;
+
+function scaleRideAtmosphere(hover) {
+  const s = SKY[skyName] || SKY.noon;
+  const up = Math.max(0, hover - EYE);
+  /* CAPPED AT THE EDGE OF THE CUT WORLD, which is the one thing free roam does
+     not have to think about. This is a 130 m corridor with a 520 m skyline ring
+     around it and nothing beyond; open the fog past that and the reveal shot
+     stops showing Eighth College and starts showing where the crop was made —
+     a smeared terrain apron and a hard boundary across the frame. The lift is
+     for seeing the buildings, not for seeing the seam. */
+  const fogFar = Math.min(FOG_FAR_CAP_M, s.fogFar + up * 11);
+  scene.fog.near = Math.min(s.fogNear + up * 4, fogFar * (s.fogNear / s.fogFar));
+  scene.fog.far = fogFar;
+
+  /* The clip planes are NOT capped with the fog. Fog hides the seam; a near
+     far-plane would clip the skyline ring itself out of frame, and 1400 is
+     what keeps campus-world's radius-1000 sky dome intact. */
+  const far = Math.max(1400, 1100 + up * 14);
+  const near = Math.max(0.5, up / 1000);
+  if (Math.abs(camera.far - far) > 1 || Math.abs(camera.near - near) > 0.05) {
+    camera.far = far;
+    camera.near = near;
+    camera.updateProjectionMatrix();
+  }
+}
+
+/* EVERY HAND-OVER IS A GLIDE, NOT A CUT.
+ *
+ * Four of them used to be a `copy()`: the end of the intro, both directions of
+ * F, and every [ or ] press. A cut between two individually correct poses is
+ * still a cut, and it was the one thing in this mode that read as a bug rather
+ * than as a camera.
+ *
+ * The source pose is frozen at the moment of the switch; the target is re-read
+ * every frame, because the chase camera's ideal pose is itself moving and a
+ * blend towards a stale target lands wrong and then jumps. easeInOut has zero
+ * derivative at both ends, so neither the departure nor the arrival has a
+ * velocity step — which is what the continuity gate in scripts/verify-ride.mjs
+ * measures.
+ *
+ * ONE SNAP IS KEPT ON PURPOSE: entering fly, and the [ / ] scrubs. Fly is a
+ * workbench and instant relocation is the feature; animating 60 m per bracket
+ * press would make scrubbing slower for nothing. Cuts mean "tool", glides mean
+ * "game". */
+/* The duration is derived from the distance, not fixed, and that is the whole
+ * difference between a move and a whip-pan. A fixed 0.45 s covers three metres
+ * and ninety metres in the same time — and ninety is real, because skipping the
+ * intro on its first second leaves the camera 90 m up. At a fixed duration that
+ * is a 200 m/s dive, which is a cut with extra steps.
+ *
+ * So: a rate, floored so a short hop is not instant and capped so a long one
+ * does not become a cutscene of its own. 70 m/s is about the speed the intro's
+ * own descent already moves at, so a skip reads as the same shot, hurried. */
+const CAM_GLIDE_MPS = 70;
+const CAM_GLIDE_MIN_S = 0.35;
+const CAM_GLIDE_MAX_S = 1.1;
+const blendFrom = new THREE.Vector3();
+const blendAim = new THREE.Vector3();
+let blendT = 0;
+let blendDur = 0;
+
+function beginCamGlide(target = null) {
+  blendFrom.copy(camera.position);
+  blendAim.copy(camAim);
+  blendT = 0;
+  const far = target ? camera.position.distanceTo(target) : 0;
+  blendDur = Math.max(CAM_GLIDE_MIN_S, Math.min(CAM_GLIDE_MAX_S, far / CAM_GLIDE_MPS));
+}
+
+/** Place the camera at a target pose, easing through any glide still in flight. */
+function applyCamera(dt, wantPos, wantAim) {
+  if (blendDur > 0) {
+    blendT += dt;
+    const e = easeInOut(Math.min(1, blendT / blendDur));
+    camera.position.lerpVectors(blendFrom, wantPos, e);
+    camAim.lerpVectors(blendAim, wantAim, e);
+    if (blendT >= blendDur) blendDur = 0;
+  } else {
+    camera.position.copy(wantPos);
+    camAim.copy(wantAim);
+  }
+  camera.lookAt(camAim);
+}
 
 /** The chase camera's ideal pose for the rider's current position. */
 function chasePose(p) {
@@ -673,8 +866,8 @@ function chasePose(p) {
     doc.route, Math.min(doc.route.metres, ride.s + CHASE_LOOK_AHEAD_M), ride.laneX * 0.5
   );
   return {
-    pos: new THREE.Vector3(behind.x, heightAt(behind.x, behind.z) + CHASE_UP_M + ride.y * 0.4, behind.z),
-    aim: new THREE.Vector3(ahead.x, heightAt(ahead.x, ahead.z) + 1.25, ahead.z),
+    pos: new THREE.Vector3(behind.x, rideSurfaceAt(behind.x, behind.z) + CHASE_UP_M + ride.y * 0.4, behind.z),
+    aim: new THREE.Vector3(ahead.x, rideSurfaceAt(ahead.x, ahead.z) + 1.25, ahead.z),
   };
 }
 
@@ -697,16 +890,24 @@ function stepIntro(dt) {
   const { p, gy } = placeScooter(dt, prevLaneX);
   const chase = chasePose(p);
 
-  /* How far down the shot is. Distance-driven once the scooter is rolling, so
-     the camera arrives exactly as the rider does rather than on a timer that
-     can disagree with the physics; time-driven before that, for the fall. */
+  /* ONE CLOCK FOR THE WHOLE SHOT.
+   *
+   * There used to be two. The descent ran on a timer while the hand-over fired
+   * on distance, so whenever the rider reached introEndM before the timer
+   * finished, `endIntro` copied the chase pose in while the camera was still
+   * 40 m up — a jump cut, every time, and worse the faster the launch went.
+   *
+   * Now the descent, the pull-in and the aim all ride the same `u`, so at u = 1
+   * the camera IS the chase pose in position, height and aim, and the hand-over
+   * is a no-op rather than a cut. It is the max of the two terms because both
+   * endings are real: the timer makes the descent read as a descent before
+   * anything moves, and the distance term overtakes it when the ride is quick,
+   * so the camera arrives exactly when the rider does. */
   const byDistance = introEndM > 0 ? ride.s / introEndM : 1;
-  const byTime = (introT - INTRO_LAUNCH_S) / (INTRO_FALL_S - INTRO_LAUNCH_S);
-  const u = Math.max(0, Math.min(1, Math.max(byDistance, introT <= INTRO_LAUNCH_S ? 0 : byTime)));
+  const byTime = introT / introFallS;
+  const u = Math.max(0, Math.min(1, Math.max(byDistance, byTime)));
 
-  /* The fall itself, on its own clock so the descent has begun and is already
-     reading as a descent before anything moves. */
-  const fall = easeInOut(Math.min(1, introT / INTRO_FALL_S));
+  const fall = easeInOut(u);
   const y = gy + INTRO_Y_FROM + (chase.pos.y - gy - INTRO_Y_FROM) * fall;
 
   /* Straight down the line behind the rider: the horizontal offset shrinks from
@@ -721,26 +922,43 @@ function stepIntro(dt) {
      the fall — by the time the camera is low there is nothing above it to
      look at. */
   const lift = 34 * (1 - fall);
-  camAim.set(p.x, gy + 1.1 + lift, p.z).lerp(chase.aim, easeInOut(u));
-  camera.position.copy(camPos);
-  camera.lookAt(camAim);
+  const wantAim = new THREE.Vector3(p.x, gy + 1.1 + lift, p.z).lerp(chase.aim, fall);
+  /* Through applyCamera like every other mode, so that pressing F during the
+     shot has a source pose to glide out of rather than cutting from mid-air. */
+  applyCamera(dt, camPos, wantAim);
+  /* The shot's whole subject is Eighth College's towers, and at 108 m the fog
+     written for a deck at 1.4 m turns them into a grey suggestion. */
+  scaleRideAtmosphere(camera.position.y - gy);
   trackSun(p.x, gy, p.z);
   /* Keep the panel honest during the shot. It used to sit on whatever the
      static HTML said, which meant the intro announced the previous route's
      length for seven seconds before the first real frame corrected it. */
   hud?.update(performance.now());
 
-  if (ride.s >= introEndM || introT >= INTRO_MAX_S) endIntro();
+  if (u >= 1 || introT >= INTRO_MAX_S) endIntro();
 }
 
-/** Skip or finish the intro: seat the chase camera and start the clock. */
+/** Skip or finish the intro: hand control over and let the chase camera settle. */
 function endIntro() {
   if (camMode !== "intro") return;
   camMode = "chase";
+  /* SEAT THE DAMPER, THEN GLIDE. The order matters and the reason is not
+     obvious: beginCamGlide freezes where the camera IS, and camPos is the
+     chase damper's own state, which step() then eases toward the ideal pose
+     with a 0.16 s time constant. Leaving camPos up at the intro's altitude
+     means that damper — not the glide — carries the descent, and 0.16 s to
+     fall a hundred metres is a whip-pan with a smooth curve on it. Seating
+     camPos at the chase pose puts the damper at rest so the only thing moving
+     the camera is the glide, whose duration is derived from exactly that
+     distance. */
   const chase = chasePose(ride.position());
+  beginCamGlide(chase.pos);
   camPos.copy(chase.pos);
   camAim.copy(chase.aim);
   started = true;
+  /* The lane markings are gameplay information, so they arrive with control —
+     not when the camera finishes settling. */
+  revealing = true;
   hud?.setMode("chase");
 }
 
@@ -751,16 +969,28 @@ function stepFly(dt) {
   explore.speed = stepSpeed(explore.speed, dt, held);
   const pose = explore.update(dt, held);
 
-  camera.position.set(pose.x, pose.y, pose.z);
-  const flat = Math.cos(flyPitch) * 14;
-  camera.lookAt(
-    pose.x + Math.sin(explore.yaw) * flat,
-    pose.y + Math.sin(flyPitch) * 14,
-    pose.z + Math.cos(explore.yaw) * flat
+  /* Spherical, not cylindrical — the horizontal reach shrinks by cos(pitch) as
+     the view tips, exactly as campus-walk.js does it. Without that, "straight
+     down" bottoms out at 45 degrees. */
+  const flat = Math.cos(explore.pitch) * 14;
+  applyCamera(
+    dt,
+    FLY_POS.set(pose.x, pose.y, pose.z),
+    FLY_AIM.set(
+      pose.x + Math.sin(pose.yaw) * flat,
+      pose.y + Math.sin(explore.pitch) * 14,
+      pose.z + Math.cos(pose.yaw) * flat
+    )
   );
+  /* Steady-state fly is undamped, like free roam — only the hand-over eases,
+     and applyCamera is a straight copy once the glide has run out. */
+  camPos.copy(camera.position);
+  scaleRideAtmosphere(explore.hover);
   trackSun(pose.x, pose.ground, pose.z);
   hud?.update(performance.now());
 }
+const FLY_POS = new THREE.Vector3();
+const FLY_AIM = new THREE.Vector3();
 
 /** Jump the free camera to a distance along the route. */
 function flyTo(s) {
@@ -768,7 +998,7 @@ function flyTo(s) {
   const p = positionAt(doc.route, flyS, 0);
   explore.enterAt(p.x - p.tangent.x * 14, p.z - p.tangent.z * 14, p.heading);
   explore.hover = 9;
-  flyPitch = -0.18;
+  explore.pitch = -0.18;
 }
 
 function toggleFly() {
@@ -776,16 +1006,73 @@ function toggleFly() {
   if (camMode === "fly") {
     camMode = "chase";
     started = true;
+    /* Back into the play view, so it glides — the same principle as the intro:
+       control returns immediately, the camera catches up. */
+    /* Same order as endIntro, and for the same reason: seat the damper at the
+       chase pose so the glide is the only thing travelling. */
     const chase = chasePose(ride.position());
+    beginCamGlide(chase.pos);
     camPos.copy(chase.pos);
     camAim.copy(chase.aim);
+    /* The fog needs no resetting here: step() drives it from the camera's own
+       height every frame, so it unwinds along with the glide back down. */
   } else {
     camMode = "fly";
     started = false; // the run and its clock stop dead
     flyTo(ride.s);
+    blendDur = 0;    // entering the workbench is the snap that is kept
+    /* The workbench is not the game: no speed-linked lens on a camera whose
+       speed is the slider's, not the rider's. */
+    if (camera.fov !== BASE_FOV) { camera.fov = BASE_FOV; camera.updateProjectionMatrix(); }
   }
   hud?.setMode(camMode);
 }
+
+/* THE RIDE PLANE — where "on the ground" is, for everything this mode puts on
+ * the route.
+ *
+ * Two separate mistakes used to add up to "the scooter is under the ground",
+ * and both are fixed here rather than nudged:
+ *
+ *  1. THE WRONG SURFACE. `heightAt` interpolates the full 3 m LiDAR grid, but
+ *     the terrain you can SEE is drawn from every second sample, so wherever a
+ *     skipped sample was a local low the drawn triangles bow above the sampled
+ *     height and the machine is genuinely beneath them. `surfaceAt` is the
+ *     height of the drawn triangle, which is the only surface a viewer can
+ *     compare the scooter against.
+ *  2. THE WRONG DATUM. Everything you read as ground here is a lifted decal:
+ *     campus-world drapes plazas, walks and roads on the `ground` rung and the
+ *     Eighth basketball court sits on `pad`. A machine placed at raw terrain
+ *     height therefore has 5-9 cm of drawn pavement over its wheels, and this
+ *     mode's own lane paint (`paint`, 0.17) floated 2 cm ABOVE the deck at
+ *     0.15 — the markings were literally over the scooter.
+ *
+ * The rung is `pad`, and it is a choice between two wrongs. The route crosses
+ * exactly two drawn surfaces, `ground` (0.05) and the court's `pad` (0.09), so
+ * `pad` is never more than 4 cm from either — well under the 10 cm wheel, so
+ * invisible — while putting the deck at 0.24, a clear 7 cm above the lane
+ * paint. Matching `paint` instead would make the contact patch coplanar with
+ * the stripes, which sounds tidy and is physically backwards: you ride ON the
+ * paint, not in it, and it would float the machine 12 cm over open pavement,
+ * which is the entire wheel. */
+const RIDE_RUNG = "pad";
+const rideSurfaceAt = (x, z) => surfaceAt(x, z) + overlayLift(RIDE_RUNG);
+
+/* Wheelbase, from scooter-model.js's own R.nose / R.tail. */
+const NOSE_M = 0.42;
+const TAIL_M = -0.44;
+/* Pitch is filtered, height is not. Smoothing the height is what would put the
+   wheels back under a crest; only the ANGLE needs settling, because
+   surfaceAt is continuous but its gradient steps at every triangle edge — one
+   step per second at 6.9 m/s across a 6 m mesh. 0.12 s is 0.8 m of travel:
+   quick enough to follow the court-to-pavement grade break the intro hands
+   over on, slow enough that an edge arrives as a settle rather than a snap. */
+const PITCH_LAG_S = 0.12;
+let ridePitch = 0;
+/* About 3 degrees at full hop velocity. Enough to read as leaving the ground,
+   far short of a stunt — this is a commuter scooter. */
+const HOP_PITCH_RAD = 0.055;
+let prevRideY = 0;
 
 /**
  * Put the machine where the ride says it is, and animate it accordingly.
@@ -796,9 +1083,32 @@ function toggleFly() {
  */
 function placeScooter(dt, prevLaneX) {
   const p = ride.position();
-  const gy = heightAt(p.x, p.z);
+
+  /* Both wheels touch. Sampling one point under the middle and holding the
+     machine level buries the downhill wheel and floats the uphill one on any
+     grade — the same complaint as sinking, arriving through a different door.
+     So sample at the two contact patches, sit on the plane they define, and
+     pitch to match it. */
+  const fy = rideSurfaceAt(p.x + p.tangent.x * NOSE_M, p.z + p.tangent.z * NOSE_M);
+  const ry = rideSurfaceAt(p.x + p.tangent.x * TAIL_M, p.z + p.tangent.z * TAIL_M);
+  const gy = (fy + ry) / 2;
+  /* Nose up off the kerb, nose down on the way in. Read from the sign of the
+     hop's vertical velocity rather than from the key that started it, so a hop
+     that gets cut short still lands nose-first and the two can never disagree.
+     It is the only aerial move the game has and it costs one rotation. */
+  const climb = dt > 0 ? (ride.y - prevRideY) / dt : 0;
+  prevRideY = ride.y;
+  const airborne = ride.y > 0.01;
+  const wantPitch = Math.atan2(fy - ry, NOSE_M - TAIL_M)
+    + (airborne ? Math.max(-1, Math.min(1, climb / 2)) * HOP_PITCH_RAD : 0);
+  ridePitch += (wantPitch - ridePitch) * (1 - Math.exp(-dt / PITCH_LAG_S));
+
+  /* YXZ, not the default XYZ: with XYZ the pitch is applied about the WORLD x
+     axis, so a pitched scooter heading north would also visibly yaw. */
+  scooter.group.rotation.order = "YXZ";
   scooter.group.position.set(p.x, gy + ride.y, p.z);
   scooter.group.rotation.y = p.heading;
+  scooter.group.rotation.x = -ridePitch;
 
   /* Wheels roll at the speed the ground is passing, and the machine leans by
      how fast it is actually moving sideways — both read from the ride rather
@@ -806,15 +1116,23 @@ function placeScooter(dt, prevLaneX) {
   spin -= (ride.speed * dt) / 0.1;
   scooter.spin(spin);
   const lateral = dt > 0 ? (ride.laneX - prevLaneX) / dt : 0;
-  bank += (Math.max(-1, Math.min(1, -lateral / 6)) * MAX_BANK_RAD - bank) * Math.min(1, dt * 12);
+  /* Proper exponential form. `min(1, dt * 12)` is a linear approximation to it
+     that saturates on a long frame, so the lean was subtly frame-rate
+     dependent — the same defect the chase damper above was already written to
+     avoid. Same time constant, so the feel is unchanged. */
+  bank += (Math.max(-1, Math.min(1, -lateral / 6)) * MAX_BANK_RAD - bank)
+    * (1 - Math.exp(-dt * BANK_RATE_HZ));
   scooter.bank(bank);
   return { p, gy };
 }
+const BANK_RATE_HZ = 12;
+const BASE_FOV = 70;
+const FOV_GAIN_DEG = 4;
+const FOV_LAG_S = 0.3;
 
 function step(dt, now) {
   const prevLaneX = ride.laneX;
   ride.update(dt, held);
-  drainReleases();
 
   const { p, gy } = placeScooter(dt, prevLaneX);
 
@@ -827,14 +1145,39 @@ function step(dt, now) {
     x: p.x - p.tangent.x * CHASE_BACK_M,
     z: p.z - p.tangent.z * CHASE_BACK_M,
   };
-  const targetY = heightAt(behind.x, behind.z) + CHASE_UP_M + ride.y * 0.4;
-  const k = 1 - Math.exp(-dt / CHASE_LAG_S);
-  camPos.lerp(new THREE.Vector3(behind.x, targetY, behind.z), k);
-  camera.position.copy(camPos);
+  const targetY = rideSurfaceAt(behind.x, behind.z) + CHASE_UP_M + ride.y * 0.4;
+  camPos.lerp(CHASE_POS.set(behind.x, targetY, behind.z), 1 - Math.exp(-dt / CHASE_LAG_S));
 
+  /* The aim is damped HARDER than the body — 0.10 s against 0.16 s. They used
+     to share one constant, and a laggy aim is what makes a corner feel mushy:
+     the camera is still looking where the rider was while the rider is already
+     round. Tightening only the aim keeps the body's trailing softness, which is
+     the part that reads as speed. */
   const ahead = positionAt(doc.route, Math.min(doc.route.metres, ride.s + CHASE_LOOK_AHEAD_M), ride.laneX * 0.5);
-  camAim.lerp(new THREE.Vector3(ahead.x, heightAt(ahead.x, ahead.z) + 1.25, ahead.z), k);
-  camera.lookAt(camAim);
+  camAim.lerp(
+    CHASE_AIM.set(ahead.x, rideSurfaceAt(ahead.x, ahead.z) + 1.25, ahead.z),
+    1 - Math.exp(-dt / CHASE_AIM_LAG_S)
+  );
+  /* Damped first, then handed to applyCamera so a glide still in flight
+     governs — the damper decides where the chase camera WANTS to be, the glide
+     decides how fast we are still allowed to get there. */
+  applyCamera(dt, camPos, camAim);
+  /* ONE RULE FOR ALL THREE MODES: the fog follows the CAMERA's height above
+     ground, not the rider's. Chase used to leave it wherever the last mode put
+     it, so skipping the intro at 90 m stranded the ride inside the fog written
+     for 90 m — visibility to the horizon, from a deck. Driving it here also
+     means the glide down from a skip unwinds the fog as it lands, instead of
+     snapping it back at the hand-over frame. */
+  scaleRideAtmosphere(camera.position.y - gy);
+
+  /* A few degrees of FOV as the speed comes up. It is worth the lines
+     specifically because a hit drops you to START_SPEED_MPS: the climb back to
+     top speed should be something you feel rather than something you read off
+     the HUD. Squared, so it is nothing at walking pace and only opens near the
+     top, and damped so a hit does not snap the lens. */
+  const wantFov = BASE_FOV + FOV_GAIN_DEG * (ride.speed / TOP_SPEED_MPS) ** 2;
+  const fov = camera.fov + (wantFov - camera.fov) * (1 - Math.exp(-dt / FOV_LAG_S));
+  if (Math.abs(fov - camera.fov) > 0.01) { camera.fov = fov; camera.updateProjectionMatrix(); }
 
   /* Coins spin, and vanish the moment they are taken. */
   for (const { mesh, coin } of props.coinMeshes) {
@@ -852,6 +1195,36 @@ function frame(now) {
   if (camMode === "intro") stepIntro(dt);
   else if (camMode === "fly") stepFly(dt);
   else if (started) step(dt, now);
+
+  /* EVERY MODE DRAINS, AND IT HAPPENS HERE.
+   *
+   * This used to live inside step(), which meant it only ran in chase mode. In
+   * fly mode a key entered `held` on keydown and NEVER LEFT: one press of W and
+   * the camera flew forward at 45 m/s until campus-explore.js clamped it
+   * against the edge of the corridor crop, after which W appeared dead because
+   * it was already held. Press S to back off and that stuck too, and since the
+   * two cancel exactly, the mode stopped responding at all. Q was the same bug
+   * wearing a different hat: one press sank `hover` to its floor and stayed
+   * there, and E could never win because a held Q subtracts the same climb E
+   * adds. Two symptoms, one missing line.
+   *
+   * frame() is the right home rather than a second call inside stepFly: it is
+   * the only place that runs exactly one update of exactly one mode per
+   * animation frame, and it runs after that update in all three. So the
+   * guarantee the deferred-release set exists for — that every keydown is seen
+   * by at least one update before its keyup applies — is preserved exactly as
+   * it was for chase, and extended to the two modes that never had it. */
+  drainReleases();
+
+  /* Ticked HERE rather than in step(), because pressing F during the intro goes
+     intro -> chase -> fly in one handler and step() never runs again — a ramp
+     driven from there would leave the markings permanently invisible in fly
+     mode. One comparison per frame once it has finished. */
+  if (revealing && revealT < REVEAL_S) {
+    revealT = Math.min(REVEAL_S, revealT + dt);
+    ribbon?.setReveal(easeInOut(revealT / REVEAL_S));
+  }
+
   labels?.update(camera);
   renderer.render(scene, camera);
 }
@@ -909,13 +1282,14 @@ export async function boot({ report, mode = "scooter" } = {}) {
      scene background showed through the top corners as a pale wedge. Near is
      0.5 rather than 0.25 because the nearest thing to the camera is a scooter
      3.8 m away, and buying depth precision back is free here. */
-  camera = new THREE.PerspectiveCamera(70, 1, 0.5, 1400);
+  camera = new THREE.PerspectiveCamera(BASE_FOV, 1, 0.5, 1400);
   tuneAtmosphere();
 
   rep.phase("terrain");
   await rep.paint();
   const terrain = world.createTerrain(scene, doc.lidar, doc.colors, null);
   heightAt = terrain.heightAt;
+  surfaceAt = terrain.surfaceAt;
   terrain.mesh.traverse((o) => { if (o.isMesh) o.receiveShadow = true; });
 
   rep.phase("massing");
@@ -1006,6 +1380,9 @@ export async function boot({ report, mode = "scooter" } = {}) {
      pavement to be moving. Read from the route rather than pinned, so a route
      whose lead-in changes still hands over on the pavement and not before it. */
   introEndM = Math.min(doc.route.metres * 0.25, (doc.route.leadInM || 0) + INTRO_END_PAD_M);
+  /* The launch holds for INTRO_LAUNCH_S before it moves, so the descent has to
+     cover that too if the two are to land together. */
+  introFallS = INTRO_LAUNCH_S + launchSeconds(introEndM);
 
   /* Free roam's controller, over this crop. Its own terrain bounds keep fly
      mode inside the corridor, which is exactly the right wall here. */
@@ -1020,7 +1397,7 @@ export async function boot({ report, mode = "scooter" } = {}) {
   });
   explore.speed = FLY_START_SPEED_MPS;
   const route = new THREE.Group();
-  createRibbon(route, doc.route, doc.game);
+  ribbon = createRibbon(route, doc.route, doc.game);
   scene.add(route);
   props = createProps(scene, doc.route, doc.game);
   scooter = createScooter();
@@ -1039,10 +1416,10 @@ export async function boot({ report, mode = "scooter" } = {}) {
      from the origin — a camera that flies in from 0,0,0 on load reads as a
      bug even when it settles correctly half a second later. */
   const start = ride.position();
-  const sy = heightAt(start.x, start.z);
-  scooter.group.position.set(start.x, sy, start.z);
-  scooter.group.rotation.y = start.heading;
-  trackSun(start.x, sy, start.z);
+  /* Through the same placement the frame loop uses, or the very first
+     rendered frame shows the machine on the old datum for one frame. */
+  placeScooter(0, ride.laneX);
+  trackSun(start.x, scooter.group.position.y, start.z);
 
   /* Open high over the court with the ride NOT counting — `started` stays
      false until stepIntro hands over, so the clock reads 0.0 for the whole
@@ -1064,6 +1441,9 @@ export async function boot({ report, mode = "scooter" } = {}) {
   window.__campusScooter = {
     get camera() { return camera; },
     get mode() { return camMode; },
+    get hover() { return explore?.hover ?? null; },
+    get flySpeed() { return explore?.speed ?? null; },
+    get reveal() { return revealing ? revealT / REVEAL_S : 0; },
     scene, ride, labels,
     flyTo, toggleFly, toggleSky, endIntro,
   };
@@ -1097,6 +1477,14 @@ export async function boot({ report, mode = "scooter" } = {}) {
         z: p.z,
         hover: ride.y,
         ground: heightAt(p.x, p.z),
+        /* The surface you can SEE, and the plane the machine is placed on.
+           `ground` is the bilinear sample and is NOT what the terrain mesh
+           draws; keeping both is what lets scripts/verify-ride.mjs assert the
+           contact patch against the right one. */
+        surface: surfaceAt(p.x, p.z),
+        rideY: rideSurfaceAt(p.x, p.z),
+        contact: scooter.group.position.y - ride.y,
+        pitch: ridePitch,
         heading: (p.heading * 180) / Math.PI,
         near: null,
         ride: s,

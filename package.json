@@ -22,6 +22,7 @@
     "build:corridor": "node scripts/build-corridor.mjs",
     "audit:imagery": "node scripts/audit-imagery-source.mjs",
     "verify:boot": "node scripts/verify-boot.mjs",
+    "verify:ride": "node scripts/verify-ride.mjs",
     "verify:reproducible": "node scripts/build-campus-lidar.mjs --verify",
     "check": "node scripts/build-campus-3d.mjs --check && node scripts/build-campus-lidar.mjs --check && node scripts/build-campus-satellite.mjs --check && node scripts/build-campus-colors.mjs --check && node scripts/build-campus-colleges.mjs --check && node scripts/build-corridor.mjs --check && node scripts/build-campus-lidar.mjs --verify",
     "progress": "node scripts/gauntlet-progress.mjs --print",

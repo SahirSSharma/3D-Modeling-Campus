@@ -110,14 +110,18 @@ describe("the run's route", () => {
   });
 
   test("passes every waypoint, in order", () => {
-    /* The route is described by landmarks — north through the fleet, past 64
-       Degrees, then east into the plaza. Argo is in the list because the route
-       passes it, which it must; "never runs inside a building" above is what
-       keeps "passes" from becoming "through". A router that took Ridge Walk
-       on the far side of the halls would still be a valid Eighth->Peterson
-       route and would no longer be THIS route. Note "64 Degrees" is the dining
-       hall, not a compass bearing. */
-    const order = ["64 Degrees", "Argo Hall", "Revelle Plaza", "Peterson Hall"];
+    /* The route is described by landmarks — up the corridor through the fleet,
+       east along Argo's south face, north up its east side, then into the
+       plaza. Each of these is passed, which it must be; "never runs inside a
+       building" above is what keeps "passes" from becoming "through". A router
+       that took Ridge Walk on the far side of the halls would still be a valid
+       Eighth->Peterson route and would no longer be THIS route.
+
+       "64 Degrees" USED TO BE ON THIS LIST. It is the dining hall, not a
+       compass bearing, and it sits north-WEST of Argo — the old route went
+       through it and that was most of what made the line wrong. The current
+       route passes 43 m away, and that is correct, so it is not asserted. */
+    const order = ["Atlantis Hall", "Discovery Hall", "Argo Hall", "Revelle Plaza", "Peterson Hall"];
     let lastAt = -1;
     for (const name of order) {
       const p = CAMPUS.places[name];
@@ -175,23 +179,124 @@ describe("the run's route", () => {
       `the route runs inside ${[...hits].map(([n, c]) => `${n} (${c * 2} m)`).join(", ")}`);
   });
 
+  test("keeps the fleet halls on the sides they were drawn on", () => {
+    /* THE INSTRUCTION, AS A NUMBER.
+     *
+     * "have meteor on the right and atlantis on the left go straight" — and
+     * this is the assertion that means it. Deviation from the drawn line says
+     * how far off the route is; it does not say which SIDE of a building it
+     * went, and the route being on the wrong side of Atlantis Hall was the
+     * whole defect: it used to swing west round the far side of the fleet.
+     *
+     * scooter-ride.js positionAt defines the rider's right as the heading
+     * rotated a quarter turn, `(-dz, dx)`. Dotting that with the vector to the
+     * hall is therefore positive on the right and negative on the left, and it
+     * is computed here the same way rather than copied, so a change to the
+     * frame convention breaks this loudly instead of silently inverting it.
+     *
+     * On the names: Sahir called the right-hand hall Meteor, which is what
+     * Apple's map labels it; this repo's OSM data calls that same building
+     * Galathea and puts Meteor 40 m further east. The route is fitted to the
+     * drawn geometry precisely so that neither label has to be right — but the
+     * disagreement is real and is recorded in README.md. */
+    const side = (name) => {
+      const q = CAMPUS.places[name];
+      assert.ok(q, `${name} is not a known place`);
+      let best = Infinity;
+      let at = 0;
+      DOC.route.points.forEach(([x, z], i) => {
+        const d = dist(x, z, q.x, q.z);
+        if (d < best) { best = d; at = i; }
+      });
+      const a = DOC.route.points[Math.max(0, at - 3)];
+      const b = DOC.route.points[Math.min(DOC.route.points.length - 1, at + 3)];
+      const hx = b[0] - a[0];
+      const hz = b[1] - a[1];
+      const len = Math.hypot(hx, hz) || 1;
+      const [px, pz] = DOC.route.points[at];
+      /* The rider's right, exactly as positionAt builds it. */
+      return ((-hz / len) * (q.x - px) + (hx / len) * (q.z - pz));
+    };
+
+    for (const name of ["Atlantis Hall", "Challenger Hall"]) {
+      assert.ok(side(name) < -5, `${name} should pass on the rider's LEFT, but sits ${side(name).toFixed(1)} m to the right`);
+    }
+    for (const name of ["Galathea Hall", "Discovery Hall"]) {
+      assert.ok(side(name) > 5, `${name} should pass on the rider's RIGHT, but sits ${(-side(name)).toFixed(1)} m to the left`);
+    }
+  });
+
   test("turns the way the route was described", () => {
-    /* Bearing 0 = north, 90 = east. The route runs north up past 64 Degrees,
-       turns east into Revelle Plaza — PAST Argo, not through it — and then
-       holds north for the long straight to Peterson. */
+    /* Bearing 0 = north, 90 = east. Read the route as a sentence: out of the
+       courts and east across Eighth, north up the corridor between the fleet
+       halls, east along Argo's south face, north up its east side, east into
+       Revelle Plaza, then the long straight north to Peterson.
+     *
+     * The lookahead is 10 points — 20 m — deliberately. At 40 m several of
+     * these stations average across the next corner and report a diagonal that
+     * describes neither leg. The stations themselves sit mid-straight for the
+     * same reason: a probe placed on a corner measures the corner, and then
+     * nudging the route by a metre rewrites the expected number. */
     const bearingAt = (metres) => {
       const i = Math.round(metres / DOC.route.spacing);
       const a = DOC.route.points[i];
-      const b = DOC.route.points[Math.min(DOC.route.points.length - 1, i + 20)];
+      const b = DOC.route.points[Math.min(DOC.route.points.length - 1, i + 10)];
       return ((Math.atan2(b[0] - a[0], -(b[1] - a[1])) * 180) / Math.PI + 360) % 360;
     };
     const east = (deg) => deg > 60 && deg < 130;
     const north = (deg) => deg < 25 || deg > 335;
 
-    assert.ok(east(bearingAt(280)), `at 280 m the route heads ${bearingAt(280).toFixed(0)}deg, not east (the turn into the plaza)`);
+    assert.ok(north(bearingAt(110)),
+      `at 110 m the route heads ${bearingAt(110).toFixed(0)}deg, not north (the corridor through the fleet)`);
+    assert.ok(east(bearingAt(200)),
+      `at 200 m the route heads ${bearingAt(200).toFixed(0)}deg, not east (along Argo's south face)`);
+    assert.ok(north(bearingAt(250)),
+      `at 250 m the route heads ${bearingAt(250).toFixed(0)}deg, not north (up Argo's east side)`);
+    assert.ok(east(bearingAt(290)),
+      `at 290 m the route heads ${bearingAt(290).toFixed(0)}deg, not east (the turn into the plaza)`);
     for (const m of [440, 520, 600]) {
       assert.ok(north(bearingAt(m)), `at ${m} m the route heads ${bearingAt(m).toFixed(0)}deg, not north`);
     }
+  });
+
+  test("matches the line that was drawn on the map", () => {
+    /* The builder's own gate, asserted here too against the SHIPPED file, so a
+       hand-edited corridor cannot slip past by never being rebuilt. See
+       DRAWN_REFERENCE in scripts/build-corridor.mjs for where the reference
+       comes from and why its tolerance is about 5 m rather than centimetres. */
+    const ref = builder.DRAWN_REFERENCE;
+    const end = ref[ref.length - 1];
+    const devAt = (x, z) => {
+      let best = Infinity;
+      for (let i = 0; i < ref.length - 1; i++) {
+        const [ax, az] = ref[i];
+        const [bx, bz] = ref[i + 1];
+        const vx = bx - ax;
+        const vz = bz - az;
+        const L = vx * vx + vz * vz;
+        let t = L ? ((x - ax) * vx + (z - az) * vz) / L : 0;
+        t = Math.max(0, Math.min(1, t));
+        best = Math.min(best, Math.hypot(x - (ax + t * vx), z - (az + t * vz)));
+      }
+      return best;
+    };
+    let cut = 0;
+    let cutMiss = Infinity;
+    DOC.route.points.forEach(([x, z], i) => {
+      const d = dist(x, z, end[0], end[1]);
+      if (d < cutMiss) { cutMiss = d; cut = i; }
+    });
+    let sum = 0;
+    let worst = 0;
+    for (let i = 0; i <= cut; i++) {
+      const d = devAt(DOC.route.points[i][0], DOC.route.points[i][1]);
+      sum += d;
+      worst = Math.max(worst, d);
+    }
+    assert.ok(cut * DOC.route.spacing > 250,
+      `only ${cut * DOC.route.spacing} m of route lies against the drawn line — it should cover its whole 310 m`);
+    assert.ok(sum / (cut + 1) <= 5, `route averages ${(sum / (cut + 1)).toFixed(1)} m from the drawn line`);
+    assert.ok(worst <= 12, `route strays ${worst.toFixed(1)} m from the drawn line`);
   });
 
   test("is the long way round, and evenly sampled", () => {

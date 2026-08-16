@@ -37,6 +37,12 @@ const DRAPING_MODULES = [
      not on this list is a module the local-lift-constant guard below cannot
      see, which is the whole failure mode this list exists to prevent. */
   "docs/js/campus-region-massing.js",
+  /* The scooter run drapes too — its lane markings, its finish bar, and the
+     rung its whole ride plane is measured from. It was absent from this list
+     for as long as it has existed, which meant the one module most likely to
+     invent a lift (it is the only one placing MOVING things against the
+     ladder) was the one module the guard could not see. */
+  "docs/js/campus-scooter.js",
 ];
 
 test("OVERLAY_RUNGS is the exact ground-upward order", () => {

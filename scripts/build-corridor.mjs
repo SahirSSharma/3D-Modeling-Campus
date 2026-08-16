@@ -94,15 +94,94 @@ const CHECK = process.argv.includes("--check");
  */
 const COURT_CENTRE = { x: -174.55, z: 525.2, name: "Eighth College courts" };
 
-const WAYPOINTS = [COURT_CENTRE, "64 Degrees", "Revelle Plaza", "Peterson Hall"];
+/* THE DRAWN REFERENCE — the shape the run is supposed to have, and the only
+ * thing that says so.
+ *
+ * Sahir has twice drawn the correct line onto an Apple Maps screenshot, and the
+ * second time added: "just follow the image I attached... I may have mistyped
+ * the exact building names." So the specification is a picture, not a list of
+ * halls, and it is worth saying why that is the better instruction: the two
+ * sources disagree about which hall is which. The building on the right of the
+ * northbound straight is Galathea Hall in this repo's OSM data and Meteor Hall
+ * on Apple's map. Routing on geometry needs neither label to be right.
+ *
+ * Derived, not eyeballed. The stroke is a distinct colour, so it was extracted
+ * from the pixels: threshold for it, keep the largest connected component
+ * (11,563 px — the rest are label fragments), take the geodesic path between
+ * its two tips and re-centre each point on the local stroke centroid.
+ *
+ * The screenshot is north-up, so image to world is a scale and an offset. It
+ * was fitted on two anchors — the Eighth courts centre (-174.55, 525.2 <-> px
+ * 248, 828) and Argo Hall's footprint (x -58.6..-19.7, z 365.1..404.1 <-> px x
+ * 785..965, y 87..267) — giving
+ *
+ *     x = -174.55 + (px - 248) * 0.216      z = 525.2 + (py - 828) * 0.216
+ *
+ * The two anchors agree on the scale to within 1% (0.2158 vs 0.2166 m/px),
+ * which is the check that the fit is real and not two free parameters soaking
+ * up error. It was then verified against geometry it was NOT fitted on: Argo's
+ * footprint corners land within ~5 m, and so do 64 Degrees and Beagle Hall.
+ *
+ * Simplified to 0.6 m of the full 78-vertex trace. Total length 310 m.
+ *
+ * THIS IS A GATE, NOT GEOMETRY. Not one metre of it is shipped. The centreline
+ * is still routed entirely over surveyed OSM footways; this only measures the
+ * result, in `check`. Its own uncertainty is around 5 m — pixel reading plus
+ * the width of the drawn stroke — which is why the tolerances below are what
+ * they are and should not be tightened to flatter numbers. */
+const DRAWN_REFERENCE = [
+  [-181.5, 528.3], [-181.2, 532.3], [-178.3, 534.6], [-170.0, 534.5],
+  [-168.1, 530.9], [-166.8, 514.8], [-162.8, 507.5], [-159.3, 505.4],
+  [-155.4, 504.2], [-143.0, 504.0], [-135.1, 502.8], [-120.4, 496.1],
+  [-112.3, 494.9], [-104.2, 495.5], [-96.5, 492.7], [-94.0, 489.8],
+  [-95.7, 477.8], [-94.7, 453.2], [-90.2, 437.7], [-83.1, 427.8],
+  [-78.1, 416.7], [-77.6, 408.6], [-75.8, 405.1], [-60.1, 402.2],
+  [-35.7, 402.0], [-23.4, 403.3], [-19.5, 402.6], [-17.2, 399.7],
+  [-17.4, 357.2],
+];
+
+/* Fidelity gates. The fitted route scores mean 2.9 m / worst 6.8 m, and the
+   worst point is s = 0 — the court centre, where the drawn stroke's own start
+   sits 7 m off the pinned start. These allow a little room above that and no
+   more; they are not to be relaxed to admit a route that wanders. */
+const DRAWN_MEAN_M = 5;
+const DRAWN_WORST_M = 12;
+
+/* WAYPOINTS ARE POINTS, NOT BUILDINGS.
+ *
+ * Naming a hall asks the router to reach its CENTROID, which is inside the
+ * walls, and several hall-adjacent graph nodes are degree-1 entrance spurs
+ * that turn a waypoint into an out-and-back. Both of those have already cost
+ * this route once. A raw {x,z} is legal anywhere in the list, snaps to the
+ * nearest node, and says exactly what the drawing says.
+ *
+ * Only two are needed, because the graph does the rest once the survey gap at
+ * (-90.0, 480.7) is bridged (see BRIDGE_GAP_M): the corner where the line
+ * stops going north and turns east below Argo, and the point up Argo's east
+ * side where it turns for the plaza. Adding a third in the fleet corridor
+ * changes nothing — measured, not assumed — so it is not there.
+ *
+ * "64 Degrees" USED TO BE HERE AND IS WRONG. It sits north-WEST of Argo, and
+ * routing through it sent the line diagonally across the top of the plaza. The
+ * drawing runs along Argo's south face and up its east side. That single
+ * waypoint was most of the 39 m error. */
+const WAYPOINTS = [
+  COURT_CENTRE,
+  { x: -76.7, z: 404.1, name: "below Argo, where the line turns east" },
+  { x: -17.7, z: 373.6, name: "east of Argo, where it turns for the plaza" },
+  "Revelle Plaza",
+  "Peterson Hall",
+];
 
 /* ARGO HALL IS NOT A WAYPOINT, AND MUST NOT BECOME ONE AGAIN.
  *
  * It was, and the route drove 12 m through the building. Naming a building as a
  * waypoint asks the router to reach that building's CENTROID, which is inside
- * the walls by definition; the correct instruction is "go straight north and
- * enter the plaza", which is what the 64 Degrees -> Revelle Plaza pair says.
- * The route still passes Argo — it just passes it rather than through it.
+ * the walls by definition; the correct instruction is a pair of points on the
+ * walkways that go round it, which is what WAYPOINTS now carries. The route
+ * runs along Argo's south face and up its east side — it passes the building
+ * rather than through it, and `check` walks the finished line against every
+ * footprint to keep it that way.
  *
  * That was only half the fault. The other half was in campus-route.js: plaza
  * centre-spokes are an invented shortcut and four of the courtyard plaza's
@@ -193,6 +272,20 @@ const ENTRY_CANDIDATES = 25;
    18 m entry wins comfortably, and it also wins at 2.0, so the choice is not
    balanced on the weight. */
 const LEAD_IN_WEIGHT = 1.5;
+
+/* How much of a break in the OSM footway survey to treat as a survey gap
+   rather than a wall. See campus-route.js `bridgeSurveyGaps` for the rule and
+   why it is opt-in; this is the only caller that turns it on.
+
+   10 m is not a round number chosen for comfort — it is the smallest threshold
+   that closes the break this route actually falls into. The north-south walk
+   through the fleet ends at (-90.0, 480.7); the east-west walk above it passes
+   8.8 m away at the same x. At 8 m the gap stays open and A* answers a 28 m
+   question with a 148 m detour out west and back, which is the dogleg the
+   drawn reference does not have. At 10 m the leg is 33.4 m against a 28.2 m
+   straight line. Every bridge laid along the shipped line is recorded in
+   `route.bridges` and re-checked by `check`. */
+const BRIDGE_GAP_M = 10;
 
 /* ------------------------------------------------------ the invented part */
 
@@ -475,7 +568,7 @@ function bestEntry(campus, graph, spec) {
 /* ---------------------------------------------------------------- the cut */
 
 function centreline(campus, spec) {
-  const graph = buildGraph(campus);
+  const graph = buildGraph(campus, { bridgeGaps: BRIDGE_GAP_M });
 
   /* WHERE THE RIDE JOINS THE PATH NETWORK.
    *
@@ -552,6 +645,15 @@ function centreline(campus, spec) {
      lead-in, and tests/corridor.test.mjs holds it to 0.1 m. */
   if (spec.startAt) points[0] = { x: spec.startAt.x, z: spec.startAt.z };
 
+  /* Which inferred links the shipped line actually uses. The graph offers 208
+     of them campus-wide; declaring only the ones this centreline crosses is the
+     difference between "the router had a bridge available" and "you ride over
+     one", and it is the latter a reader of this file needs to know. */
+  const bridges = graph.bridges.filter(({ from, to }) => {
+    const mx = (from[0] + to[0]) / 2, mz = (from[1] + to[1]) / 2;
+    return points.some((p) => Math.hypot(p.x - mx, p.z - mz) <= BRIDGE_GAP_M);
+  });
+
   return {
     from: spec.from,
     to: spec.to,
@@ -560,6 +662,7 @@ function centreline(campus, spec) {
     routedMetres: round1(found.metres),
     leadInM: round1(gap),
     spacing: SAMPLE_M,
+    bridges,
     points: points.map((p) => [round1(p.x), round1(p.z)]),
   };
 }
@@ -810,6 +913,114 @@ function check(doc, sources, spec = ROUTES.scooter) {
     fail(`route is ${doc.route.metres} m — expected ${lo}-${hi} m`);
   }
   if (doc.route.spacing !== SAMPLE_M) fail("route spacing is not the fixed sample");
+
+  /* THE ROUTE IS THE SHAPE THAT WAS DRAWN.
+   *
+   * Every gate above says the route is legal. None of them says it is the right
+   * route — the old line started in the right place, ended in the right place,
+   * was the right length and touched no building, and was still 39 m away from
+   * where it was supposed to go. "Looks right on the site" is not a gate, and
+   * asking Sahir to re-draw the line a third time is not a process.
+   *
+   * So the drawn line is the gate. Measured over the extent the drawing covers
+   * — from the start to the route point nearest the drawing's last vertex,
+   * because the drawing stops at the edge of its screenshot while the route
+   * carries on another 700 m to Peterson, and beyond that edge there is nothing
+   * to compare against. */
+  {
+    const ref = DRAWN_REFERENCE;
+    const end = ref[ref.length - 1];
+    const devAt = (x, z) => {
+      let best = Infinity;
+      for (let i = 0; i < ref.length - 1; i++) {
+        const [ax, az] = ref[i];
+        const [bx, bz] = ref[i + 1];
+        const vx = bx - ax, vz = bz - az;
+        const L = vx * vx + vz * vz;
+        let t = L ? ((x - ax) * vx + (z - az) * vz) / L : 0;
+        t = Math.max(0, Math.min(1, t));
+        best = Math.min(best, Math.hypot(x - (ax + t * vx), z - (az + t * vz)));
+      }
+      return best;
+    };
+
+    let cut = 0, cutMiss = Infinity;
+    doc.route.points.forEach(([x, z], i) => {
+      const d = Math.hypot(x - end[0], z - end[1]);
+      if (d < cutMiss) { cutMiss = d; cut = i; }
+    });
+
+    let sum = 0, worst = 0, worstAt = 0;
+    for (let i = 0; i <= cut; i++) {
+      const d = devAt(doc.route.points[i][0], doc.route.points[i][1]);
+      sum += d;
+      if (d > worst) { worst = d; worstAt = i * SAMPLE_M; }
+    }
+    const mean = sum / (cut + 1);
+    if (mean > DRAWN_MEAN_M) {
+      fail(`route averages ${mean.toFixed(1)} m from the drawn line over its first `
+        + `${cut * SAMPLE_M} m — allowed ${DRAWN_MEAN_M} m`);
+    }
+    if (worst > DRAWN_WORST_M) {
+      fail(`route is ${worst.toFixed(1)} m from the drawn line at ${worstAt} m `
+        + `— allowed ${DRAWN_WORST_M} m`);
+    }
+
+    /* AND IT ONLY EVER GOES FORWARDS ALONG IT.
+     *
+     * Deviation alone cannot see a doubling-back: a route that runs 20 m up the
+     * corridor, returns, and runs up again is never far from the drawn line and
+     * is a hook you ride round. This is the same defect as the 12.6 m backwards
+     * start that bestEntry exists to prevent, arriving mid-route instead —
+     * every waypoint that snapped to a degree-1 entrance spur produced one. So
+     * project onto the drawn line and require the projection never to retreat.
+     *
+     * The 2 m allowance is projection noise at the corners, where a point can
+     * legitimately be nearest to either arm; it is far below the 12 m and 20 m
+     * out-and-backs the spur waypoints actually produced. */
+    const along = (x, z) => {
+      let best = Infinity, at = 0, run = 0;
+      for (let i = 0; i < ref.length - 1; i++) {
+        const [ax, az] = ref[i];
+        const [bx, bz] = ref[i + 1];
+        const vx = bx - ax, vz = bz - az;
+        const L = Math.hypot(vx, vz);
+        let t = L ? ((x - ax) * vx + (z - az) * vz) / (L * L) : 0;
+        t = Math.max(0, Math.min(1, t));
+        const d = Math.hypot(x - (ax + t * vx), z - (az + t * vz));
+        if (d < best) { best = d; at = run + t * L; }
+        run += L;
+      }
+      return at;
+    };
+    let peak = 0, back = 0, backAt = 0;
+    for (let i = 0; i <= cut; i++) {
+      const s = along(doc.route.points[i][0], doc.route.points[i][1]);
+      if (s < peak - back) { back = peak - s; backAt = i * SAMPLE_M; }
+      peak = Math.max(peak, s);
+    }
+    if (back > 2) {
+      fail(`route doubles back ${back.toFixed(1)} m along the drawn line at ${backAt} m`);
+    }
+  }
+
+  /* THE INFERRED LINKS ARE DECLARED AND SMALL.
+   *
+   * Bridging a survey gap is the one place this builder adds connectivity that
+   * OSM does not record, so the shipped file has to name every one the line
+   * crosses and they have to stay the size of a gap rather than the size of a
+   * shortcut. */
+  for (const b of doc.route.bridges || []) {
+    if (b.metres > BRIDGE_GAP_M) {
+      fail(`the route crosses an inferred link of ${b.metres} m — the limit is ${BRIDGE_GAP_M} m`);
+    }
+    for (const f of doc.campus.buildings) {
+      if (!f?.p) continue;
+      if (pointInRing((b.from[0] + b.to[0]) / 2, (b.from[1] + b.to[1]) / 2, f.p)) {
+        fail(`an inferred link runs inside ${f.n || "an unnamed building"}`);
+      }
+    }
+  }
 
   /* THE ROUTE DOES NOT GO THROUGH BUILDINGS.
    *
@@ -1088,4 +1299,5 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
 
 export { build, check, load, summarize, placeGame, mulberry32, centreline };
 export { CORRIDOR_M, SKYLINE_M, SAMPLE_M, SEED, OBSTACLE_GAP_M, LANE_OFFSET_M };
+export { DRAWN_REFERENCE, DRAWN_MEAN_M, DRAWN_WORST_M, BRIDGE_GAP_M };
 export { ROUTES, TARGETS, DATA };
