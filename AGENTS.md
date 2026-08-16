@@ -126,12 +126,9 @@ report a result you did not actually run.
 ## Publishing
 
 This site is live at `https://sahirssharma.github.io/3D-Modeling-Campus/`.
-Local commits are always fine. Because `?mode=staging` is a dedicated review
-surface — Sahir reviews on the website, not locally — **pushing work whose
-review surface is staging is allowed once every gate has passed** (`npm test`,
-`npm run check`, `npm run verify:ride`); Sahir asked for this rule on
-2026-08-16. Anything that changes what the LIVE RUN plays — its route, its
-props, its rules — is still Sahir's explicit call, every time; when a change
-touches both, ask. Never push failing gates. During a gauntlet run a
-`pre-push` hook is armed and will reject you — do not work around it or
-delete `gauntlet-loop/.no-push`.
+**Commit and push once every gate has passed** (`npm test`, `npm run check`,
+`npm run verify:ride`) — the workbench, `?mode=staging`, is where Sahir
+reviews, and he can only review on the website, so finished work always goes
+live to it; Sahir set this rule on 2026-08-16. Never push failing gates.
+During a gauntlet run a `pre-push` hook is armed and will reject you — do
+not work around it or delete `gauntlet-loop/.no-push`.
