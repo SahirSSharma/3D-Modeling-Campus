@@ -553,12 +553,28 @@ async function phaseRide(mode) {
      0.86 m wheelbase buries a wheel. */
   const startS = await page.evaluate(() => window.campusWalk.status().ride.s);
   const rows = [];
-  const deadline = Date.now() + 90_000;
+  /* The behavioural claim is about SIMULATED time: 100 m at the ES2's 6.9 m/s
+     top speed is ~15.5 s of ride clock, so a ride that needs more than 25 s of
+     its own clock has genuinely stalled or slowed and fails. The wall deadline
+     is only the environment's allowance: the sim advances one <=0.05 s step
+     per frame, and under SwiftShader this scene runs at ~2 fps, so 100 m of
+     ride needs minutes of wall time while claiming nothing about the game.
+     The old 90 s wall deadline was standing in for the sim assertion and
+     started failing purely on renderer throughput as the scene grew. */
+  const deadline = Date.now() + 420_000;
+  let rideClock = 0;
   for (;;) {
     await page.waitForTimeout(2000);
     rows.push(...await page.evaluate(() => window.__rideProbe.drain()));
-    const s = await page.evaluate(() => window.campusWalk.status().ride.s);
-    if (s - startS >= 100 || Date.now() > deadline) { console.log(`  rode ${(s - startS).toFixed(0)} m`); if (s - startS < 100) fail(mode, `only rode ${(s - startS).toFixed(0)} m in 90 s`); break; }
+    const st = await page.evaluate(() => window.campusWalk.status());
+    const s = st.ride.s;
+    rideClock = st.clock ?? st.ride.clock ?? rideClock;
+    if (s - startS >= 100 || Date.now() > deadline) {
+      console.log(`  rode ${(s - startS).toFixed(0)} m in ${rideClock.toFixed(1)} s of ride clock`);
+      if (s - startS < 100) fail(mode, `only rode ${(s - startS).toFixed(0)} m before the wall deadline`);
+      else if (rideClock > 25) fail(mode, `100 m took ${rideClock.toFixed(1)} s of ride clock — the ride has slowed`);
+      break;
+    }
   }
   await page.evaluate(() => window.__rideProbe.stop());
   rows.push(...await page.evaluate(() => window.__rideProbe.drain()));

@@ -616,7 +616,11 @@ test("every LIT ground surface faces up, and says so in its normals", () => {
   const { group } = createEighth(new THREE.Group(), { arcgis, eighth, markings, heightAt });
   let checked = 0;
   group.traverse((o) => {
-    if (!o.isMesh || !o.material.polygonOffset || !o.material.isMeshLambertMaterial) return;
+    /* "Lit" was Lambert until the 2026-08-16 PBR migration; Standard is the
+       same test for the same reason — an unlit Basic material has no normal
+       to get wrong. */
+    if (!o.isMesh || !o.material.polygonOffset) return;
+    if (!o.material.isMeshLambertMaterial && !o.material.isMeshStandardMaterial) return;
     const pos = o.geometry.getAttribute("position");
     const nrm = o.geometry.getAttribute("normal");
     assert.ok(nrm, "a lit ground mesh ships without normals");

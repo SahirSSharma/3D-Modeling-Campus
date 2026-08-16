@@ -199,13 +199,16 @@ const ROUTES = {
     to: "Peterson Hall",
     startAt: COURT_CENTRE,
     eighth: true,
-    props: true,
+    /* Sahir, 2026-08-16: the run mirrors staging — a clean ride, no invented
+       props. placeGame stays: tests exercise it directly, and switching props
+       back on is this one flag. */
+    props: false,
     metres: [950, 1200],
   },
-  /* THE BENCH. Same route, same crop, same gates — the difference is that it
-     carries no obstacles and no coins, because what is being worked on is the
-     map and the ride, and invented props are in the way of looking at either.
-     It was briefly the old 732 m Argo->Peterson stretch, which made it a
+  /* THE BENCH. Same route, same crop, same gates — the difference is not the
+     cargo any more (both corridors are prop-free) but the promise: whatever is
+     being built next lands here first and is allowed to be broken; the run is
+     not. It was briefly the old 732 m Argo->Peterson stretch, which made it a
      staging area that was behind what it was staging for. */
   staging: {
     target: "staging",
@@ -767,7 +770,7 @@ function centreline(campus, spec) {
 }
 
 function build(sources, spec = ROUTES.scooter) {
-  const { campus, lidar, arcgis, colors, facades, markings, landmarks } = sources;
+  const { campus, lidar, arcgis, colors, facades, markings, landmarks, photo } = sources;
   /* Only the route that runs through Eighth College carries its survey. */
   const eighth = spec.eighth ? sources.eighth : null;
   const route = centreline(campus, spec);
@@ -867,9 +870,21 @@ function build(sources, spec = ROUTES.scooter) {
   });
   const groundColors = ground.map((g, i) => (g ? colors?.ground?.[i] ?? null : null));
 
-  const massing = (arcgis?.massing || []).map(
-    (m) => (m?.r?.[0] && near.ringNear(m.r[0], CORRIDOR_M, 0.1) ? m : null)
+  /* Whole buildings, never stray masses. A building the GIS splits into
+     several masses can straddle the corridor radius — Survivance's 2-storey
+     base fell inside 130 m while its 11-storey tower fell just outside, so
+     the run drew a detailed base with a flattened skyline slab behind it:
+     half a building, and nothing on screen to say so. If ANY mass of a named
+     building is in the corridor, every mass of that name comes with it. */
+  const nearMass = (arcgis?.massing || []).map(
+    (m) => !!(m?.r?.[0] && near.ringNear(m.r[0], CORRIDOR_M, 0.1))
   );
+  const keptNames = new Set();
+  (arcgis?.massing || []).forEach((m, i) => { if (nearMass[i] && m?.n) keptNames.add(m.n); });
+  const keepMass = (arcgis?.massing || []).map(
+    (m, i) => nearMass[i] || !!(m?.r?.[0] && m?.n && keptNames.has(m.n))
+  );
+  const massing = (arcgis?.massing || []).map((m, i) => (keepMass[i] ? m : null));
   const massingColors = massing.map((m, i) => (m ? colors?.massing?.[i] ?? null : null));
 
   /* ---- the skyline tier ---- */
@@ -879,7 +894,7 @@ function build(sources, spec = ROUTES.scooter) {
   const skyline = [];
   (arcgis?.massing || []).forEach((m, i) => {
     if (!m?.r?.[0]) return;
-    if (near.ringNear(m.r[0], CORRIDOR_M, 0.1)) return; // already in the corridor
+    if (keepMass[i]) return; // already in the corridor (by distance or by name)
     if ((m.h ?? 0) < SKYLINE_MIN_H) return;
     if (!near.ringNear(m.r[0], SKYLINE_M, 0.1)) return;
     skyline.push({
@@ -959,6 +974,12 @@ function build(sources, spec = ROUTES.scooter) {
     eighth,
     markings,
     landmarks,
+    /* The photo-sourced detail class, carried whole for the same reasons —
+       and verbatim BY GATE: check() fails if a single byte differs from the
+       parent file. Invented content rides along; it is never edited here.
+       Spread, not a bare key: load() answers null for an absent file, and a
+       "photo":null the parent never wrote would break byte-reproducibility. */
+    ...(photo ? { photo } : {}),
   };
 }
 
@@ -1173,6 +1194,16 @@ function check(doc, sources, spec = ROUTES.scooter) {
   if (spec.eighth && !doc.eighth) fail("this route runs through Eighth College but carries no survey of it");
   if (!spec.eighth && doc.eighth) fail("this route does not reach Eighth College but carries its survey");
 
+  /* The photo-sourced detail class rides through VERBATIM or not at all. It is
+     invented (modeled off dated web photographs and labelled so in its file);
+     the corridor's licence over it is transport, never editing — a corridor
+     that "improves" an invented entity in passing has made a third, unlabelled
+     class nothing declares. */
+  if (sources.photo && JSON.stringify(doc.photo) !== JSON.stringify(sources.photo)) {
+    fail("the photo-sourced detail differs from campus-photo-detail.json — the corridor must carry it verbatim");
+  }
+  if (!sources.photo && doc.photo) fail("the corridor carries photo-sourced detail its parent file does not have");
+
   /* Every waypoint has to actually be on the route. This is what stops the
      router quietly taking Ridge Walk on the far side of the fleet the day a
      path is retagged — the shape would still be a valid Eighth->Peterson
@@ -1221,7 +1252,19 @@ function check(doc, sources, spec = ROUTES.scooter) {
     doc.arcgis.ground.map((g, i) => (g && !exempt.has(i) ? g.r[0] : null)).filter(Boolean),
     tol, 0.1
   );
-  outside("massing", doc.arcgis.massing.filter(Boolean).map((m) => m.r[0]), tol, 0.1);
+  /* Masses ride the whole-building rule (see build): one outside the radius
+     is legitimate exactly when a same-named mass is inside it. Anything else
+     outside is still a crop failure. */
+  const namesInside = new Set();
+  for (const m of doc.arcgis.massing) {
+    if (m?.n && m?.r?.[0] && near.ringNear(m.r[0], tol, 0.1)) namesInside.add(m.n);
+  }
+  for (const m of doc.arcgis.massing) {
+    if (!m) continue;
+    if (near.ringNear(m.r[0], tol, 0.1)) continue;
+    if (m.n && namesInside.has(m.n)) continue;
+    fail("massing: a kept mass is outside the corridor and shares no name with one inside");
+  }
   outside("skyline", doc.skyline.map((s) => s.r), SKYLINE_M + 1);
   for (const t of doc.lidar.trees) {
     if (near.distance(t[0], t[1]) > tol) fail("trees: a kept tree is outside the corridor");
@@ -1385,6 +1428,11 @@ function load() {
     eighth: read("campus-eighth.json", false),
     markings: read("campus-markings.json", false),
     landmarks: read("campus-landmarks.json", false),
+    /* Photo-sourced detail — the SECOND declared invented class (the game
+       props were the first). Modeled off dated web photographs, labelled as
+       such inside the file, and copied through VERBATIM: the corridor never
+       edits it, and nothing measured may ever read from it. */
+    photo: read("campus-photo-detail.json", false),
   };
 }
 

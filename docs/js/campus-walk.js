@@ -36,6 +36,9 @@ import { createMinimap } from "./campus-minimap.js";
 import { makeSolidSampler } from "./campus-clearance.js";
 import { nullReporter } from "./campus-boot.js";
 import { surveyFacts, geometryFacts, sourceLines } from "./campus-facts.js";
+import { createPostfx } from "./campus-postfx.js";
+import { createPhotoEighth } from "./campus-photo-eighth.js";
+import { createPhotoRevelle } from "./campus-photo-revelle.js";
 import {
   createExplore, scaleAtmosphere, stepSpeed, EYE, sliderToSpeed, speedToSlider,
   MAX_SPEED_MPS,
@@ -55,6 +58,9 @@ const DATA = [
   { key: "boundary", file: "campus-boundary.json", required: false, what: "campus boundary" },
   { key: "markings", file: "campus-markings.json", required: false, what: "sports markings" },
   { key: "eighth", file: "campus-eighth.json", required: false, what: "Eighth College survey" },
+  /* Invented, declared: the photo-sourced detail class — see the README's
+     content-class section. Absent, the measured campus renders unchanged. */
+  { key: "photo", file: "campus-photo-detail.json", required: false, what: "photo-sourced detail" },
   { key: "region", file: "region.json", required: false, what: "region outline" },
   { key: "regionTerrain", file: "region-terrain.json", required: false, what: "regional terrain" },
   /* The regional heights are 1.5 million samples. As JSON that is ~30 MB of
@@ -101,6 +107,8 @@ const state = {
 };
 
 let scene, camera, renderer, campus, lidar, heightAt, explore;
+let postfx = null; // the pass chain; frame() falls back to a bare render until it exists
+let sunRig = null; // the shadow-casting sun and its camera-following target
 let massInfo = new Map(); // building name -> { x, z, topY, h, ring } from the massing
 let labels = null;
 let minimap = { update() {} };
@@ -261,7 +269,31 @@ function frame(now) {
   labels?.update(camera);
   minimap.update(explore.x, explore.z, explore.yaw);
   adapt(dt);
-  renderer.render(scene, camera);
+  trackShadow();
+  if (postfx) postfx.render(); else renderer.render(scene, camera);
+}
+
+/* Keep the sun's shadow box centred on the explorer, sized by altitude —
+   street level gets a tight, crisp box; high flight trades sharpness for
+   coverage. The ortho camera caches its projection, so it is only rebuilt
+   when the wanted size has moved meaningfully. */
+function trackShadow() {
+  if (!sunRig || !explore) return;
+  const { sun, target, off } = sunRig;
+  const gy = heightAt ? heightAt(explore.x, explore.z) : 0;
+  target.position.set(explore.x, gy, explore.z);
+  target.updateMatrixWorld();
+  sun.position.set(explore.x + off.x, gy + off.y, explore.z + off.z);
+  sun.updateMatrixWorld();
+  const altitude = Math.max(0, camera.position.y - gy);
+  const want = Math.min(380, 60 + altitude * 1.15);
+  if (Math.abs(want - sunRig.half) > 6) {
+    sunRig.half = want;
+    const c = sun.shadow.camera;
+    c.left = -want; c.right = want; c.top = want; c.bottom = -want;
+    c.near = 1; c.far = Math.max(320, want * 3.2);
+    c.updateProjectionMatrix();
+  }
 }
 
 function resize() {
@@ -269,6 +301,7 @@ function resize() {
   const w = canvas.clientWidth || 1;
   const h = canvas.clientHeight || 1;
   renderer.setSize(w, h, false);
+  postfx?.setSize(w, h);
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
 }
@@ -408,8 +441,36 @@ export async function boot({ report } = {}) {
   const canvas = document.getElementById("walk-canvas");
   renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setPixelRatio(Math.min(1.5, devicePixelRatio)); // full-viewport 2x on a 5K display is pure fill-rate pain
+  /* Free roam used to skip tone mapping so nothing sat between you and the
+     measured colour. Sahir's 2026-08-16 call — "upgrade everything" — trades
+     that purity for the lit look: the same ACES curve the scooter run ships,
+     plus shadows and the postfx chain. The measured colours still feed the
+     materials; what changed is how they resolve to pixels. */
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.06;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   scene = world.createScene();
+  world.applyEnvironment(renderer, scene);
   camera = new THREE.PerspectiveCamera(68, 1, 0.4, 900);
+  postfx = createPostfx({ renderer, scene, camera });
+
+  /* The scene's sun, promoted to a shadow caster that follows the explorer —
+     the same rig the scooter run uses, with the box scaled by altitude so
+     street level gets crisp contact shadows and 500 m up still has SOME. */
+  sunRig = (() => {
+    const sun = scene.children.find((c) => c.isDirectionalLight && c.intensity > 1);
+    if (!sun) return null;
+    const target = new THREE.Object3D();
+    scene.add(target);
+    sun.target = target;
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.bias = -0.0008;
+    sun.shadow.normalBias = 0.035;
+    const off = sun.position.clone();
+    return { sun, target, off, half: 0 };
+  })();
   rep.log(`WebGL ready · ${renderer.getPixelRatio().toFixed(2)}× pixel ratio`);
 
   /* ------------------------------------------------------------- terrain */
@@ -429,6 +490,7 @@ export async function boot({ report } = {}) {
     rep.log("region — incomplete, going without");
   }
   const terrain = world.createTerrain(scene, lidar, colors, regionData);
+  terrain.mesh.traverse((o) => { if (o.isMesh) o.receiveShadow = true; });
   heightAt = terrain.heightAt;
   rep.facts(geometryFacts({ terrain: terrain.mesh }));
   if (terrain.region) {
@@ -572,6 +634,28 @@ export async function boot({ report } = {}) {
       },
     });
   }
+
+  /* The photo-sourced detail class — invented, declared, quarantined (see
+     README). Both college modules read the one labelled document; placement
+     samples surfaceAt, the drawn triangle, because these stand ON the visible
+     ground. Absent file, absent detail: the measured campus is complete
+     without it. */
+  const photoZone = new THREE.Group();
+  if (data.photo) {
+    const surfaceAt = terrain.surfaceAt;
+    photoZone.add(createPhotoEighth(null, { photo: data.photo, heightAt: surfaceAt }).group);
+    createPhotoRevelle(photoZone, { photo: data.photo, heightAt: surfaceAt, surfaceAt });
+  }
+  scene.add(photoZone);
+
+  /* Everything that stands on the ground casts and catches the sun. The
+     terrain already receives (set where it is built); markings and other
+     lifted decals are left out — a decal that casts is a stripe of shadow
+     floating a centimetre over its own paint. */
+  for (const made of [built.group, trees.group, details, athleticsZone, eighthZone, landmarksGroup, photoZone]) {
+    const g = made?.group ?? (made?.isObject3D ? made : null);
+    g?.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  }
   await rep.paint();
 
   /* -------------------------------------------------------------- chrome */
@@ -707,7 +791,7 @@ export async function boot({ report } = {}) {
      reads as a crash for the half-second before the first rAF lands. */
   state.lastTime = performance.now();
   update(0);
-  renderer.render(scene, camera);
+  postfx.render();
   rep.facts(geometryFacts({ scene }));
   rep.log("standing 110 m over Argo Hall");
   await rep.paint();
@@ -730,6 +814,7 @@ export async function boot({ report } = {}) {
       details: details.group,
       athletics: athleticsZone,
       eighth: eighthZone,
+      photo: photoZone,
       regionMassing: regionZone,
       labels: labels.group,
       ...(landmarksGroup ? { landmarks: landmarksGroup } : {}),

@@ -390,9 +390,11 @@ describe("the staging corridor", () => {
     assert.equal(STAGING.game.props, false);
     assert.equal(STAGING.game.obstacles.length, 0);
     assert.equal(STAGING.game.coins.length, 0);
-    /* And the run still does, or the switch is wired to the wrong corridor. */
-    assert.equal(DOC.game.props, true);
-    assert.ok(DOC.game.obstacles.length > 20);
+    /* Since 2026-08-16 the run mirrors staging: a clean ride. Both corridors
+       must SAY they are deliberately empty — an accidental empty and this
+       decision look identical in the file. */
+    assert.equal(DOC.game.props, false);
+    assert.equal(DOC.game.obstacles.length + DOC.game.coins.length, 0);
   });
 });
 
@@ -680,3 +682,51 @@ for (const { spec, doc } of CORRIDORS) {
 
   });
 }
+
+describe("placeGame (the course the clean run no longer ships)", () => {
+  /* Both shipped corridors are deliberately prop-free, but the placer and its
+     guarantees stay load-bearing: switching props back on is one flag in
+     ROUTES, and that flip must not resurrect a broken slalom. Generate the
+     course the run WOULD carry and hold it to the bars the shipped file used
+     to be held to. */
+  const game = builder.placeGame(DOC.route, builder.mulberry32(DOC.game.seed), true);
+  const span = game.halfWidth - RIDER_HALF_W;
+
+  test("places a full course", () => {
+    assert.ok(game.obstacles.length > 20, "too few obstacles for a 1 km run");
+    assert.ok(game.coins.length > 50, "too few coins for a 1 km run");
+    assert.ok(game.obstacles.filter((o) => !o.hop).length > 5,
+      "nothing on the route actually requires a dodge");
+  });
+
+  test("keeps the clearances, stays on the track, and leaves every group a gap", () => {
+    const byS = new Map();
+    for (const o of game.obstacles) {
+      assert.ok(o.s >= game.startClear && o.s <= DOC.route.metres - game.finishClear,
+        `obstacle at ${o.s} m is in a clearance zone`);
+      assert.ok(Math.abs(o.off) + o.w / 2 <= game.halfWidth + 0.01,
+        `a ${o.kind} at offset ${o.off} m sticks out past the track's edge`);
+      if (!byS.has(o.s)) byS.set(o.s, []);
+      byS.get(o.s).push(o);
+    }
+    for (const [s, group] of byS) {
+      const blocked = group
+        .map((o) => [o.off - o.w / 2 - RIDER_HALF_W, o.off + o.w / 2 + RIDER_HALF_W])
+        .sort((a, b) => a[0] - b[0]);
+      let cursor = -span;
+      let widest = 0;
+      for (const [a, b] of blocked) {
+        widest = Math.max(widest, Math.min(a, span) - cursor);
+        cursor = Math.max(cursor, b);
+      }
+      widest = Math.max(widest, span - cursor);
+      assert.ok(widest >= builder.FREE_GAP_MIN_M,
+        `the group at ${s} m leaves only a ${widest.toFixed(2)} m gap`);
+    }
+    const stops = [...byS.keys()].sort((a, b) => a - b);
+    for (let i = 1; i < stops.length; i++) {
+      assert.ok(stops[i] - stops[i - 1] >= builder.OBSTACLE_GAP_M,
+        `groups at ${stops[i - 1]} m and ${stops[i]} m are too close`);
+    }
+  });
+});

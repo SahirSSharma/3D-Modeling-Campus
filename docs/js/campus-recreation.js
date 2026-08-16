@@ -262,7 +262,9 @@ export function placeRecreation(markings) {
 
 /* ------------------------------------------------------------- rendering */
 
-const lambert = (color) => new THREE.MeshLambertMaterial({ color });
+/* Steel frames share this with concrete curbs, tent fabric and table tops, so
+   it stays matte rather than making the non-metal callers metallic. */
+const lambert = (color) => new THREE.MeshStandardMaterial({ color, roughness: 0.95 });
 
 function instanced(geo, mat, items, place) {
   const mesh = new THREE.InstancedMesh(geo, mat, items.length);
@@ -508,7 +510,8 @@ export function createRecreation(scene, { campus, arcgis, markings, heightAt } =
   }
 
   /* --- the Gymnasium Lot's parked cars. */
-  group.add(instanced(new THREE.BoxGeometry(1.8, 1.45, 4.4), new THREE.MeshLambertMaterial({ color: 0xffffff }),
+  group.add(instanced(new THREE.BoxGeometry(1.8, 1.45, 4.4),
+    new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.45, metalness: 0.6 }),
     r.cars, (c) => ({ x: c.x, y: heightAt(c.x, c.z) + 0.73, z: c.z, color: c.colour })));
 
   scene.add(group);

@@ -341,7 +341,10 @@ function grid(out, frame, heightAt, lift, cells = 12) {
   }
 }
 
-const lambert = (color) => new THREE.MeshLambertMaterial({ color });
+/* Only the standing work uses this — goal frames and fence posts, all of it
+   painted metal. */
+const lambert = (color) =>
+  new THREE.MeshStandardMaterial({ color, roughness: 0.45, metalness: 0.65 });
 
 /**
  * The standing work — goal frames and fence posts — collected by box size

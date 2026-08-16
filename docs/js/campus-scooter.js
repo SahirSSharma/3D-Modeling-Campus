@@ -43,6 +43,9 @@ import {
 import { createExplore, stepSpeed, EYE } from "./campus-explore.js";
 import { makeSolidSampler } from "./campus-clearance.js";
 import { createScooter, createObstacle, coinFactory } from "./scooter-model.js";
+import { createPostfx } from "./campus-postfx.js";
+import { createPhotoEighth } from "./campus-photo-eighth.js";
+import { createPhotoRevelle } from "./campus-photo-revelle.js";
 
 /* The corridors this module can boot, keyed by the ?mode= that asks for one.
    Same renderer, same ride, same everything — a different cut of the same
@@ -116,6 +119,7 @@ let skyDome = null;
 let hemi = null;
 
 let renderer, scene, camera, heightAt, surfaceAt, ride, doc, scooter;
+let postfx = null; // the pass chain; bare renders until boot has built it
 let labels = null;
 let hud = null;
 const held = new Set();
@@ -371,8 +375,9 @@ function createRibbon(group, route, game) {
      frame and pulls the eye off the campus, which is the opposite of the
      point. It still reads clearly against grass, plaza and asphalt alike. */
   const stripes = drape(new THREE.Mesh(geo, applyOverlayDepth(
-    new THREE.MeshLambertMaterial({
+    new THREE.MeshStandardMaterial({
       color: 0xf6f4ea, side: THREE.DoubleSide, transparent: true, opacity: 0.82,
+      roughness: 0.95,
     }), "paint"
   )), "paint");
   group.add(stripes);
@@ -387,8 +392,8 @@ function createRibbon(group, route, game) {
        frame after the fade starts. It already has depthWrite:false and an
        explicit renderOrder from applyOverlayDepth/drape, so joining the
        transparent pass does not change what it draws over. */
-    applyOverlayDepth(new THREE.MeshLambertMaterial({
-      color: 0xf2f0e6, transparent: true,
+    applyOverlayDepth(new THREE.MeshStandardMaterial({
+      color: 0xf2f0e6, transparent: true, roughness: 0.95,
     }), "logo")
   );
   bar.position.set(fin.x, surfaceAt(fin.x, fin.z) + overlayLift("logo") + 0.03, fin.z);
@@ -422,12 +427,13 @@ function createRibbon(group, route, game) {
 function createSkyline(scene, skyline) {
   if (!skyline?.length) return null;
   const group = new THREE.Group();
-  const mat = new THREE.MeshLambertMaterial({ color: 0x9aa3ab });
+  const mat = new THREE.MeshStandardMaterial({ color: 0x9aa3ab, roughness: 0.95 });
   for (const m of skyline) {
     const shape = new THREE.Shape(m.r.map(([x, z]) => new THREE.Vector2(x, z)));
     const geo = new THREE.ExtrudeGeometry(shape, { depth: m.h, bevelEnabled: false });
     geo.rotateX(Math.PI / 2);
-    const mesh = new THREE.Mesh(geo, m.c ? new THREE.MeshLambertMaterial({ color: m.c }) : mat);
+    const mesh = new THREE.Mesh(geo,
+      m.c ? new THREE.MeshStandardMaterial({ color: m.c, roughness: 0.95 }) : mat);
     /* Sat on the terrain at the ring's own centre — a skyline building is
        never walked to, so one sample is the right amount of precision. */
     let cx = 0, cz = 0;
@@ -658,6 +664,7 @@ function resize() {
   const w = canvas.clientWidth || 1;
   const h = canvas.clientHeight || 1;
   renderer.setSize(w, h, false);
+  postfx?.setSize(w, h);
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
 }
@@ -1231,7 +1238,7 @@ function frame(now) {
   }
 
   labels?.update(camera);
-  renderer.render(scene, camera);
+  if (postfx) postfx.render(); else renderer.render(scene, camera);
 }
 
 /* ---------------------------------------------------------------- the boot */
@@ -1282,12 +1289,14 @@ export async function boot({ report, mode = "scooter" } = {}) {
      fetch and draw it. */
   world.primeOverlay(null);
   scene = world.createScene();
+  world.applyEnvironment(renderer, scene);
   /* The far plane must clear campus-world's sky dome, which has a radius of
      1000 and follows the camera. At 700 the dome was being sliced open and the
      scene background showed through the top corners as a pale wedge. Near is
      0.5 rather than 0.25 because the nearest thing to the camera is a scooter
      3.8 m away, and buying depth precision back is free here. */
   camera = new THREE.PerspectiveCamera(BASE_FOV, 1, 0.5, 1400);
+  postfx = createPostfx({ renderer, scene, camera });
   tuneAtmosphere();
 
   rep.phase("terrain");
@@ -1388,6 +1397,17 @@ export async function boot({ report, mode = "scooter" } = {}) {
     });
   }
 
+  /* The photo-sourced detail class rides the corridor verbatim under doc.photo
+     (see the builder's gate). Same modules as free roam, same rule: placement
+     samples surfaceAt because these stand on the drawn ground. */
+  const photoZone = new THREE.Group();
+  if (doc.photo) {
+    photoZone.add(createPhotoEighth(null, { photo: doc.photo, heightAt: surfaceAt }).group);
+    createPhotoRevelle(photoZone, { photo: doc.photo, heightAt: surfaceAt, surfaceAt });
+    photoZone.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  }
+  scene.add(photoZone);
+
   /* Building names, in the ride style: constant-screen-size pills that fade in
      as they come into range, so you can read what you are passing at 25 km/h
      instead of squinting at a roof sign that only gets legible once it is
@@ -1452,7 +1472,7 @@ export async function boot({ report, mode = "scooter" } = {}) {
   camMode = "intro";
   introT = 0;
   stepIntro(0);
-  renderer.render(scene, camera);
+  if (postfx) postfx.render(); else renderer.render(scene, camera);
   await rep.paint();
 
   last = performance.now();
@@ -1485,6 +1505,7 @@ export async function boot({ report, mode = "scooter" } = {}) {
       details: details.group,
       ...(recreationGroup ? { recreation: recreationGroup } : {}),
       eighth: eighthZone,
+      photo: photoZone,
       route,
       props: props.group,
       scooter: scooter.group,

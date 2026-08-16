@@ -435,7 +435,10 @@ function paintMesh(lines, colour, heightAt) {
   return mesh;
 }
 
-const lambert = (color) => new THREE.MeshLambertMaterial({ color });
+/* Every caller is hoop hardware — pole, arm, backboard, ring — so one painted
+   metal response covers them all. */
+const lambert = (color) =>
+  new THREE.MeshStandardMaterial({ color, roughness: 0.45, metalness: 0.65 });
 
 /* Rec.601 luma of a hex — a DECISION helper (how far a raw fill moved), not a
    second colour transform; the one real transform is still sceneTone. */
@@ -532,8 +535,9 @@ export function createEighthCourt(parent, { points, colors, heightAt } = {}) {
     ring.rotateX(-Math.PI / 2);
     mk(ring, lambert(colors.ring), h.x, y + 3.05, h.z, 0);
     const net = new THREE.CylinderGeometry(0.225, 0.13, 0.4, 12, 1, true);
-    mk(net, new THREE.MeshLambertMaterial({
+    mk(net, new THREE.MeshStandardMaterial({
       color: colors.net, side: THREE.DoubleSide, transparent: true, opacity: 0.55,
+      roughness: 0.85,
     }), h.x, y + 2.85, h.z, 0);
     counts.hoops++;
   }

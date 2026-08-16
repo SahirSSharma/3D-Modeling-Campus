@@ -118,13 +118,14 @@ The site opens on a choice, and `?mode=` skips it.
 |---|---|---|
 | **Free roam** (`?mode=campus`) | the whole campus, North Torrey Pines Road to I-5, fly anywhere | ~10 MB |
 | **Eighth → Peterson** (`?mode=scooter`) | one ~1,000 m route on a scooter, steered freely across a marked track, against a clock | ~1.5 MB |
-| **Eighth → Peterson** (`?mode=staging`) | the same route with no obstacles or coins, as a workbench | ~1.5 MB |
+| **Eighth → Peterson** (`?mode=staging`) | the same clean ride, one build ahead, as a workbench | ~1.5 MB |
 
 `staging` exists so there is somewhere to try things. Work in progress lands there
 first, where it can be looked at on the live site without touching the run. It rides
 the **same line** — a staging area on a different route would be staging for something
-else — and differs only in carrying no invented props, because you cannot judge the map
-through a slalom. It is **not a lesser build**: same builder, same crop, same gates, and
+else. Since 2026-08-16 the run mirrors staging exactly — a clean ride, no obstacles
+and no coins — so the two documents differ only in their stamp and their promise:
+staging is allowed to be broken, the run is not. It is **not a lesser build**: same builder, same crop, same gates, and
 the full test suite runs over both corridors. What it is allowed to be is broken, and it
 says so on screen. The two are
 different files, each stamped with the mode it was built for, and both the builder's
@@ -220,15 +221,32 @@ the corridor exists to show. Two continuous edge stripes bound the rideable widt
 the way a real carriageway marks an edge you should not cross — and the rider steers
 freely between them; there are no lanes to divide.
 
-**The obstacles, coins and track are invented.** They are the only invented entities in
-this repository. They live under one `game` key that no measured consumer reads, they
-are placed by a seeded PRNG so the run is identical on every build, and they are
-labelled as invented in the data file, in the loading log and on screen. What they are
+**The obstacles, coins and track are invented.** They live under one `game` key that
+no measured consumer reads, they are placed by a seeded PRNG so the run is identical
+on every build, and they are labelled as invented in the data file. What they are
 *not* is guessed measurement — nothing about the campus moved to make room for them.
-They are held to their own gates instead: every obstacle group must leave a free gap
-the rider fits through — re-derived from the placed widths, not assumed — never two
-groups closer than 12 m, and a headless test rides the whole route to prove a clean
-line beats par.
+Since 2026-08-16 both corridors ship the arrays **empty** (the run is a clean ride),
+but the placer and its gates stay live: every obstacle group it would place must
+leave a free gap the rider fits through — re-derived from the placed widths, not
+assumed — never two groups closer than 12 m, and a headless test rides the generated
+course to prove a clean line beats par. Flipping props back on is one flag in
+`ROUTES`, already gated.
+
+**Photo-sourced detail is the second declared invented class.** Small-scale detail —
+courtyard furniture, garden beds, staircases, facade character in Eighth and Revelle —
+is modeled off dated web photographs, which are the *newest* epoch this project has:
+photos decide what exists and what it looks like; LiDAR and OSM keep deciding scale
+and position wherever they cover the same thing. Everything in this class lives in
+`campus-photo-detail.json`, labelled with its sources and epoch; the corridor builder
+carries it **verbatim** (its `--check` fails on a single changed byte), and nothing
+measured may ever read from it. Where no photo resolves an item, it stays unbuilt —
+better absent than wrong still applies to invented content.
+
+**The lit look is art direction, everywhere.** ACES tone mapping, soft shadows,
+ambient occlusion, bloom and a neutral image-based light now run in every mode
+(free roam included, as of 2026-08-16). None of it moves, sizes or recolours an
+entity; the measured colours still feed the materials — what changed is how they
+resolve to pixels.
 
 ### The machine sits on the surface you can see
 

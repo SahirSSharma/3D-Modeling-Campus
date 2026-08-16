@@ -604,8 +604,8 @@ function surfaceMeshes(surfaces, heightAt, scoring) {
     const normals = new Float32Array(b.pos.length);
     for (let i = 1; i < normals.length; i += 3) normals[i] = 1;
     geo.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
-    const mat = applyOverlayDepth(new THREE.MeshLambertMaterial({
-      color: b.colour, side: THREE.DoubleSide,
+    const mat = applyOverlayDepth(new THREE.MeshStandardMaterial({
+      color: b.colour, side: THREE.DoubleSide, roughness: 0.95,
       ...(b.scored && scoring ? { map: scoring } : {}),
     }), rung);
     const mesh = new THREE.Mesh(geo, mat);
@@ -650,7 +650,8 @@ function boulderMesh(boulders, heightAt) {
   const geo = new THREE.BufferGeometry();
   geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
   geo.computeVertexNormals();
-  return new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ color: EIGHTH_COLORS.boulder }));
+  return new THREE.Mesh(geo,
+    new THREE.MeshStandardMaterial({ color: EIGHTH_COLORS.boulder, roughness: 0.95 }));
 }
 
 /**

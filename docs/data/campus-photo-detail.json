@@ -1,0 +1,2327 @@
+{
+  "_": "INVENTED, PHOTO-SOURCED CONTENT — epoch 2024-2025. NEVER A SOURCE FOR ANY MEASURED CONSUMER. Every entity in this document is modelled from published architectural photography and a 2021 design site plan, not from OSM, not from LiDAR, and not from the ArcGIS survey. Positions are INFERRED: each item names the surveyed polygon it was anchored to (`anchor`), and that anchor is the only measured fact behind it. Nothing here may be read back as a measurement of the campus, quoted as a height, a colour or a position by campus-eighth.js, campus-eighth-furniture.js, the corridor builders, or any gate. It renders and it is labelled; it does not inform. Class rule: docs/js/campus-photo-eighth.js header, and the README's photo-sourced section.",
+  "sources": [
+    "https://www.eyrc.com/work/uc-san-diego-theatre-district-living-learning-neighborhood",
+    "https://sdarchitecture.org/project/uc-san-diego-theatre-district-living-learning-neighborhood/",
+    "https://www.swagroup.com/projects/ucsd-theater-district-living-and-learning-neighborhood/",
+    "https://revelle.ucsd.edu/_files/tdlln.pdf",
+    "https://eighth.ucsd.edu/residential-life/living-at-eighth.html",
+    "https://hdhughousing.ucsd.edu/_files/neighborhood-overview-eighth.pdf"
+  ],
+  "eighth": {
+    "label": "Eighth College / Theatre District Living & Learning Neighborhood — photo-sourced detail",
+    "bounds": {
+      "x0": -220,
+      "x1": -40,
+      "z0": 500,
+      "z1": 640
+    },
+    "seed": 20240816,
+    "colorSources": {
+      "counter": "[measured] crop_grill.png — light warm-grey CMU counter run",
+      "grillLid": "[measured] crop_grill.png — cobalt drop-in grill lid",
+      "grillFascia": "[measured] crop_grill.png — blue cabinet fascia below the lid",
+      "extinguisher": "[measured] crop_grill.png — red bollard-mounted cabinet at the counter's west end",
+      "canopyDeck": "[measured] crop_grill.png — dark navy-slate mono-pitch canopy deck",
+      "canopyPost": "[estimated] crop_grill.png — slim square steel post, read against the canopy",
+      "stucco": "[measured] crop_grill.png / z_teahouse.png — tan stucco service enclosure and retaining wall",
+      "tableTop": "[measured] crop_grill.png — light grey/white solid picnic top",
+      "tableLeg": "[estimated] crop_grill.png — tubular metal A-frame leg",
+      "cafeChair": "[measured] crop_grill.png — loose sage/olive metal cafe chair",
+      "seatTier": "[estimated] siteplan.png + inventory — tan cast-concrete seating tier",
+      "pavilionFascia": "[measured] EYRC phf47 — dark roof fascia of the meditation pavilion",
+      "woodScreen": "[measured] EYRC phf47, relit from warm night light to daylight — blond timber screen",
+      "teaWood": "[measured] z_teahouse.png, relit from warm night light to daylight — blond batten",
+      "teaShoe": "[measured] z_teahouse.png — dark metal shoe plate at the batten bases",
+      "concrete": "[measured] z_teahouse.png — cast concrete bench and plinth",
+      "deckConcrete": "[measured] crop_grill.png — broom-finished concrete walk",
+      "boulder": "[measured] z_teahouse.png — rounded granite boulder, grey-buff",
+      "slabStone": "[measured] EYRC phf47 — flat grey slab stone in the raked gravel",
+      "gravelDark": "[measured] EYRC phf47, relit to daylight — raked fine gravel / decomposed granite",
+      "gravelPale": "[measured] z_teahouse.png — pale angular gravel of the tea house setting",
+      "mulch": "[measured] EYRC phf44 — shredded bark mulch band",
+      "grassBlue": "[measured] z_teahouse.png — blue-green rush / bunch grass",
+      "grassStraw": "[measured] EYRC phf44 — straw-yellow flowering grass spike",
+      "railing": "[measured] EYRC phf44 — clear-anodised picket guardrail",
+      "planterWhite": "[measured] EYRC phf22 — white precast planter cube",
+      "poleDark": "[measured] crop_grill.png — near-black slim light pole",
+      "adirondack": "[measured] EYRC phf22 — apple/olive green moulded Adirondack chair",
+      "fireGlass": "[estimated] inventory — glass-fronted linear firebox, unlit state",
+      "metal": "[estimated] inventory — bike hoop / handrail aluminium"
+    },
+    "colors": {
+      "counter": "#c9c4b8",
+      "grillLid": "#2a6fd0",
+      "grillFascia": "#1f5fbf",
+      "extinguisher": "#b02318",
+      "canopyDeck": "#2e3a4a",
+      "canopyPost": "#8a8f94",
+      "stucco": "#c6b291",
+      "tableTop": "#d5d2cb",
+      "tableLeg": "#9ea3a8",
+      "cafeChair": "#7a9a5b",
+      "seatTier": "#cfc3ac",
+      "pavilionFascia": "#3a3b38",
+      "woodScreen": "#b99a6e",
+      "teaWood": "#b08d5e",
+      "teaShoe": "#3f4a57",
+      "concrete": "#ada396",
+      "deckConcrete": "#cfcac0",
+      "boulder": "#9a958c",
+      "slabStone": "#7e8288",
+      "gravelDark": "#8b7f70",
+      "gravelPale": "#b8b2a4",
+      "mulch": "#6e4a32",
+      "grassBlue": "#7e9478",
+      "grassStraw": "#c9c05a",
+      "railing": "#a8adb2",
+      "planterWhite": "#e4e2dc",
+      "poleDark": "#2b2b2e",
+      "adirondack": "#6e9a3a",
+      "fireGlass": "#2e3a3f",
+      "metal": "#9ea3a8"
+    },
+    "areas": {
+      "bbq": {
+        "anchor": "arcgis.ground#2375 (courtyard-2375)",
+        "note": "Position inferred from photo geometry. The inventory could not resolve the grill station in the repo frame; it is placed on the north-east edge of the surveyed paved courtyard directly north of Pulse Tower, facing north across the (unsurveyed) lawn, which is the arrangement crop_grill.png shows — grills in front of a paved picnic terrace with a tower behind the camera-facing enclosure. `rotY` aligns every piece with that courtyard's own measured north-east edge (-121.2,524.9)-(-144.3,533.6)."
+      },
+      "amphitheatre": {
+        "anchor": "band between arcgis.ground#3898 (basketball-court) east edge and arcgis.ground#2144",
+        "note": "Position inferred from the 2021 site plan's zigzag tiered edge between court J and lawn A. Only the BAND is anchored — the court's surveyed east edge at x -163.2 and the surveyed planting bed at x -158.9 bracket it. Tier count, length and riser are estimated. Kept 0.9 m clear of the painted court."
+      },
+      "meditation": {
+        "anchor": "open paved spine between arcgis.ground#328 and arcgis.ground#329",
+        "note": "Location confirmed twice (Eighth's own page: 'between the Pulse and Azad buildings'; the site plan's B label). The photo-to-label assignment of EYRC phf47 is likely-but-unconfirmed. SCALE IS REDUCED FROM THE PHOTO ESTIMATE ON PURPOSE: phf47 reads a 26-30 m roof, but the surveyed open spine between the two courtyard rings is only ~11 x 8 m, and the two planted rings are measured. The composition is fitted to the surveyed opening rather than overrunning it."
+      },
+      "teaHouse": {
+        "anchor": "arcgis.ground#331 (planting-bed-331)",
+        "note": "The plan scales the TEA HOUSE label to about (-145, 592), which lands in the unsurveyed gap between two planting beds. Moved ~6 m south-east onto the nearest surveyed Ramble polygon, per the inventory's own instruction to tie it to a real polygon before shipping. Form, batten module and setting are from z_teahouse.png."
+      },
+      "ramble": {
+        "anchor": "arcgis.ground#331, #332, #326, #353, #364, #410, #2703",
+        "note": "SWA's restored drainage corridor. Every position here is inferred: each field, patch and cluster is placed inside a surveyed planting bed or courtyard, and the extents are fitted to that polygon rather than to the photograph. The scatter inside each is deterministic from `seed`, never Math.random. Species schedule is unsourced — the grasses are generic bunch-grass cones, not an identified plant."
+      },
+      "furniture": {
+        "anchor": "arcgis.ground#2369, #2375, #2703, #3238",
+        "note": "Site furniture positions are inferred. Each run is placed on a surveyed walkway or courtyard and kept clear of the plaza objects campus-eighth-furniture.js measures."
+      }
+    },
+    "items": [
+      {
+        "type": "grill-counter",
+        "key": "bbq-counter",
+        "area": "bbq",
+        "x": -132.05,
+        "z": 531.12,
+        "w": 4.6,
+        "d": 0.75,
+        "h": 0.92,
+        "rotY": 0.36,
+        "color": "counter",
+        "source": "[measured] crop_grill.png — counter run reads ~4.6 m over two bays; 0.92 m is standard counter height read against the standing figure. Depth [estimated]."
+      },
+      {
+        "type": "grill-bay",
+        "key": "bbq-bay-w",
+        "area": "bbq",
+        "x": -133.13,
+        "z": 531.53,
+        "w": 0.9,
+        "d": 0.62,
+        "h": 0.35,
+        "sill": 0.92,
+        "rotY": 0.36,
+        "color": "grillLid",
+        "fascia": "grillFascia",
+        "source": "[measured] crop_grill.png — cobalt lid ~0.9 m wide x 0.35 m tall, drop-in."
+      },
+      {
+        "type": "grill-bay",
+        "key": "bbq-bay-e",
+        "area": "bbq",
+        "x": -130.97,
+        "z": 530.72,
+        "w": 0.9,
+        "d": 0.62,
+        "h": 0.35,
+        "sill": 0.92,
+        "rotY": 0.36,
+        "color": "grillLid",
+        "fascia": "grillFascia",
+        "source": "[measured] crop_grill.png — the second of exactly two photographed bays. A third is NOT modelled."
+      },
+      {
+        "type": "extinguisher-bollard",
+        "key": "bbq-extinguisher",
+        "area": "bbq",
+        "x": -134.67,
+        "z": 532.11,
+        "r": 0.18,
+        "h": 1.1,
+        "color": "extinguisher",
+        "source": "[measured] crop_grill.png — red bollard-mounted cabinet at the counter's west end. Height [estimated]."
+      },
+      {
+        "type": "shade-canopy",
+        "key": "bbq-canopy",
+        "area": "bbq",
+        "x": -130.46,
+        "z": 535.33,
+        "w": 6,
+        "d": 4,
+        "clear": 2.9,
+        "deck": 0.18,
+        "post": 0.12,
+        "rotY": 0.36,
+        "color": "canopyDeck",
+        "postColor": "canopyPost",
+        "source": "[estimated] crop_grill.png — flat mono-pitch canopy roughly 6 x 4 m, clear height ~2.9 m, on slim square steel posts."
+      },
+      {
+        "type": "service-enclosure",
+        "key": "bbq-enclosure",
+        "area": "bbq",
+        "x": -129.23,
+        "z": 538.61,
+        "w": 4,
+        "d": 2.5,
+        "h": 2.6,
+        "rotY": 0.36,
+        "color": "stucco",
+        "source": "[estimated] crop_grill.png — tan stucco service box immediately behind the canopy. Plan size and height both estimated."
+      },
+      {
+        "type": "picnic-table",
+        "key": "bbq-table-1",
+        "area": "bbq",
+        "x": -135.85,
+        "z": 535.22,
+        "w": 1.8,
+        "d": 0.8,
+        "h": 0.75,
+        "rotY": 0.36,
+        "color": "tableTop",
+        "legColor": "tableLeg",
+        "source": "[measured] crop_grill.png — ~1.8 x 0.8 m solid top on tubular A-frame legs. Position [estimated]."
+      },
+      {
+        "type": "picnic-table",
+        "key": "bbq-table-2",
+        "area": "bbq",
+        "x": -131.17,
+        "z": 533.46,
+        "w": 1.8,
+        "d": 0.8,
+        "h": 0.75,
+        "rotY": 0.36,
+        "color": "tableTop",
+        "legColor": "tableLeg",
+        "source": "[measured] crop_grill.png. Position [estimated]."
+      },
+      {
+        "type": "picnic-table",
+        "key": "bbq-table-3",
+        "area": "bbq",
+        "x": -126.49,
+        "z": 531.7,
+        "w": 1.8,
+        "d": 0.8,
+        "h": 0.75,
+        "rotY": 0.36,
+        "color": "tableTop",
+        "legColor": "tableLeg",
+        "source": "[measured] crop_grill.png. Position [estimated]."
+      },
+      {
+        "type": "picnic-table",
+        "key": "bbq-table-4",
+        "area": "bbq",
+        "x": -132.1,
+        "z": 538.09,
+        "w": 1.8,
+        "d": 0.8,
+        "h": 0.75,
+        "rotY": 0.36,
+        "color": "tableTop",
+        "legColor": "tableLeg",
+        "source": "[measured] crop_grill.png — 4 of the 4-6 tables visible are modelled. Position [estimated]."
+      },
+      {
+        "type": "cafe-chair",
+        "key": "bbq-chair-1",
+        "area": "bbq",
+        "x": -135.59,
+        "z": 535.92,
+        "w": 0.55,
+        "d": 0.55,
+        "h": 0.85,
+        "rotY": 0.36,
+        "color": "cafeChair",
+        "source": "[measured] crop_grill.png colour; position [estimated]."
+      },
+      {
+        "type": "cafe-chair",
+        "key": "bbq-chair-2",
+        "area": "bbq",
+        "x": -136.11,
+        "z": 534.52,
+        "w": 0.55,
+        "d": 0.55,
+        "h": 0.85,
+        "rotY": 0.36,
+        "color": "cafeChair",
+        "source": "[measured] crop_grill.png colour; position [estimated]."
+      },
+      {
+        "type": "cafe-chair",
+        "key": "bbq-chair-3",
+        "area": "bbq",
+        "x": -130.91,
+        "z": 534.16,
+        "w": 0.55,
+        "d": 0.55,
+        "h": 0.85,
+        "rotY": 0.36,
+        "color": "cafeChair",
+        "source": "[measured] crop_grill.png colour; position [estimated]."
+      },
+      {
+        "type": "cafe-chair",
+        "key": "bbq-chair-4",
+        "area": "bbq",
+        "x": -131.43,
+        "z": 532.76,
+        "w": 0.55,
+        "d": 0.55,
+        "h": 0.85,
+        "rotY": 0.36,
+        "color": "cafeChair",
+        "source": "[measured] crop_grill.png colour; position [estimated]."
+      },
+      {
+        "type": "cafe-chair",
+        "key": "bbq-chair-5",
+        "area": "bbq",
+        "x": -126.23,
+        "z": 532.4,
+        "w": 0.55,
+        "d": 0.55,
+        "h": 0.85,
+        "rotY": 0.36,
+        "color": "cafeChair",
+        "source": "[measured] crop_grill.png colour; position [estimated]."
+      },
+      {
+        "type": "cafe-chair",
+        "key": "bbq-chair-6",
+        "area": "bbq",
+        "x": -126.75,
+        "z": 531,
+        "w": 0.55,
+        "d": 0.55,
+        "h": 0.85,
+        "rotY": 0.36,
+        "color": "cafeChair",
+        "source": "[measured] crop_grill.png colour; position [estimated]."
+      },
+      {
+        "type": "cafe-chair",
+        "key": "bbq-chair-7",
+        "area": "bbq",
+        "x": -131.84,
+        "z": 538.79,
+        "w": 0.55,
+        "d": 0.55,
+        "h": 0.85,
+        "rotY": 0.36,
+        "color": "cafeChair",
+        "source": "[measured] crop_grill.png colour; position [estimated]."
+      },
+      {
+        "type": "cafe-chair",
+        "key": "bbq-chair-8",
+        "area": "bbq",
+        "x": -132.36,
+        "z": 537.39,
+        "w": 0.55,
+        "d": 0.55,
+        "h": 0.85,
+        "rotY": 0.36,
+        "color": "cafeChair",
+        "source": "[measured] crop_grill.png colour; position [estimated]."
+      },
+      {
+        "type": "amphitheatre-tier",
+        "key": "amph-tier-1",
+        "area": "amphitheatre",
+        "x": -161.8,
+        "z": 524.5,
+        "w": 1,
+        "d": 17,
+        "h": 1.2,
+        "rotY": 0,
+        "color": "seatTier",
+        "source": "[estimated] siteplan.png zigzag — 3 of the plan's 4-5 tiers; only those the surveyed band can hold are built. Riser 0.4 m = seat height."
+      },
+      {
+        "type": "amphitheatre-tier",
+        "key": "amph-tier-2",
+        "area": "amphitheatre",
+        "x": -160.8,
+        "z": 524.5,
+        "w": 1,
+        "d": 17,
+        "h": 0.8,
+        "rotY": 0,
+        "color": "seatTier",
+        "source": "[estimated] siteplan.png zigzag — stepping down eastward into the lawn."
+      },
+      {
+        "type": "amphitheatre-tier",
+        "key": "amph-tier-3",
+        "area": "amphitheatre",
+        "x": -159.8,
+        "z": 524.5,
+        "w": 1,
+        "d": 17,
+        "h": 0.4,
+        "rotY": 0,
+        "color": "seatTier",
+        "source": "[estimated] siteplan.png zigzag — lowest tier, meets grade at the lawn."
+      },
+      {
+        "type": "pavilion-plinth",
+        "key": "medit-plinth",
+        "area": "meditation",
+        "x": -173.5,
+        "z": 586.5,
+        "w": 6,
+        "d": 4,
+        "h": 0.6,
+        "rotY": 0,
+        "color": "concrete",
+        "source": "[estimated] EYRC phf47 — raised deck ~0.6 m above the garden. Plan size fitted to the surveyed spine, not to the photo."
+      },
+      {
+        "type": "pavilion-roof",
+        "key": "medit-roof",
+        "area": "meditation",
+        "x": -173.5,
+        "z": 586.5,
+        "w": 6.6,
+        "d": 4.6,
+        "slab": 0.35,
+        "soffit": 3.8,
+        "post": 0.25,
+        "inset": 0.5,
+        "rotY": 0,
+        "color": "pavilionFascia",
+        "postColor": "concrete",
+        "source": "[measured] EYRC phf47 — thin cantilevered flat roof plane, dark fascia, soffit ~3.8 m above the deck. Extent fitted to the surveyed spine."
+      },
+      {
+        "type": "pavilion-screen",
+        "key": "medit-screen-w",
+        "area": "meditation",
+        "cx": -173.5,
+        "cz": 586.5,
+        "r": 1.9,
+        "from": 2.05,
+        "to": 4.25,
+        "h": 3.2,
+        "t": 0.12,
+        "slats": 13,
+        "color": "woodScreen",
+        "source": "[measured] EYRC phf47 — curved full-height blond timber screen, ~3.2 m tall. The two screens share ONE arc centre, so they are concave toward the alcove between them; that is what makes the plan's circle motif, and a pair bowing the other way closes the alcove off instead of forming it."
+      },
+      {
+        "type": "pavilion-screen",
+        "key": "medit-screen-e",
+        "area": "meditation",
+        "cx": -173.5,
+        "cz": 586.5,
+        "r": 1.9,
+        "from": -1.1,
+        "to": 1.1,
+        "h": 3.2,
+        "t": 0.12,
+        "slats": 13,
+        "color": "woodScreen",
+        "source": "[measured] EYRC phf47 — the opposing arc on the same centre. The two gaps between the arcs are the way in."
+      },
+      {
+        "type": "standing-boulder",
+        "key": "medit-boulder",
+        "area": "meditation",
+        "x": -173.5,
+        "z": 586.5,
+        "w": 0.7,
+        "d": 0.6,
+        "h": 1.6,
+        "color": "boulder",
+        "source": "[measured] EYRC phf47 — a single upright boulder as the alcove's focal object."
+      },
+      {
+        "type": "gravel-field",
+        "key": "medit-gravel",
+        "area": "meditation",
+        "rect": {
+          "x0": -176.5,
+          "x1": -170.5,
+          "z0": 589,
+          "z1": 591.5
+        },
+        "color": "gravelDark",
+        "source": "[measured] EYRC phf47 — raked fine gravel / decomposed granite field in front of the pavilion. Extent fitted to the surveyed spine (photo reads ~20 x 12 m)."
+      },
+      {
+        "type": "slab-stone",
+        "key": "medit-slab-1",
+        "area": "meditation",
+        "x": -175.3,
+        "z": 590,
+        "w": 1.4,
+        "d": 1.1,
+        "h": 0.12,
+        "rotY": 0.2,
+        "color": "slabStone",
+        "source": "[measured] EYRC phf47 — flat low-lying slab stone, 1.2-2.0 m across."
+      },
+      {
+        "type": "slab-stone",
+        "key": "medit-slab-2",
+        "area": "meditation",
+        "x": -173.4,
+        "z": 590.6,
+        "w": 1.5,
+        "d": 1.2,
+        "h": 0.12,
+        "rotY": -0.3,
+        "color": "slabStone",
+        "source": "[measured] EYRC phf47."
+      },
+      {
+        "type": "slab-stone",
+        "key": "medit-slab-3",
+        "area": "meditation",
+        "x": -171.5,
+        "z": 589.8,
+        "w": 1.3,
+        "d": 1.1,
+        "h": 0.12,
+        "rotY": 0.5,
+        "color": "slabStone",
+        "source": "[measured] EYRC phf47."
+      },
+      {
+        "type": "ramp-light-edge",
+        "key": "medit-ramp",
+        "area": "meditation",
+        "x0": -177.6,
+        "z0": 584.2,
+        "x1": -177.6,
+        "z1": 591.8,
+        "h": 1.05,
+        "t": 0.09,
+        "color": "railing",
+        "source": "[measured] EYRC phf47 — ramp with a continuous linear light strip under its rail on the garden's west side. Photo reads ~14 m; fitted to the surveyed spine at 7.6 m."
+      },
+      {
+        "type": "tea-house",
+        "key": "tea-house",
+        "area": "teaHouse",
+        "x": -142.3,
+        "z": 599,
+        "w": 4.2,
+        "d": 4.2,
+        "ridge": 4.9,
+        "eave": 3.9,
+        "plinth": 0.35,
+        "batten": 0.05,
+        "pitch": 0.1,
+        "portalW": 2.2,
+        "portalH": 2.6,
+        "frame": 0.28,
+        "benchH": 0.45,
+        "benchD": 0.6,
+        "rotY": 0.35,
+        "color": "teaWood",
+        "plinthColor": "concrete",
+        "benchColor": "concrete",
+        "shoeColor": "teaShoe",
+        "source": "[measured] z_teahouse.png — ~4.2 x 4.2 m x ~4.9 m to an ASYMMETRIC (off-centre) gable peak, on a ~0.35 m concrete plinth. Batten module ~50 mm face at ~100 mm centres is the detail that makes it recognisable. Portal ~2.6 x 2.2 m in a heavy solid frame, cut through two adjacent faces. Interior L-shaped concrete bench, seat 0.45 m, 0.6 m deep. All +/-15%. Rotation [estimated]."
+      },
+      {
+        "type": "boulder-cluster",
+        "key": "tea-boulders",
+        "area": "teaHouse",
+        "x": -144.5,
+        "z": 595.5,
+        "r": 2.6,
+        "count": 5,
+        "minR": 0.25,
+        "maxR": 0.55,
+        "color": "boulder",
+        "source": "[measured] z_teahouse.png — rounded granite boulders 0.5-1.1 m in the tea house setting."
+      },
+      {
+        "type": "gravel-patch",
+        "key": "tea-gravel",
+        "area": "teaHouse",
+        "rect": {
+          "x0": -145,
+          "x1": -139.9,
+          "z0": 594.2,
+          "z1": 601.8
+        },
+        "color": "gravelPale",
+        "source": "[measured] z_teahouse.png — pale angular gravel around the tea house."
+      },
+      {
+        "type": "boulder-cluster",
+        "key": "ramble-boulders-1",
+        "area": "ramble",
+        "x": -141,
+        "z": 605,
+        "r": 3,
+        "count": 4,
+        "minR": 0.2,
+        "maxR": 0.6,
+        "color": "boulder",
+        "source": "[measured] EYRC phf44 — loose boulder clusters, 0.4-1.2 m, the Ramble's dominant landscape object. Position [estimated]."
+      },
+      {
+        "type": "boulder-cluster",
+        "key": "ramble-boulders-2",
+        "area": "ramble",
+        "x": -141.5,
+        "z": 578,
+        "r": 2.5,
+        "count": 4,
+        "minR": 0.2,
+        "maxR": 0.6,
+        "color": "boulder",
+        "source": "[measured] EYRC phf44. Position [estimated]."
+      },
+      {
+        "type": "boulder-cluster",
+        "key": "ramble-boulders-3",
+        "area": "ramble",
+        "x": -122,
+        "z": 586,
+        "r": 3,
+        "count": 5,
+        "minR": 0.2,
+        "maxR": 0.6,
+        "color": "boulder",
+        "source": "[measured] EYRC phf44. Position [estimated]."
+      },
+      {
+        "type": "boulder-cluster",
+        "key": "ramble-boulders-4",
+        "area": "ramble",
+        "x": -118,
+        "z": 620,
+        "r": 3.5,
+        "count": 6,
+        "minR": 0.2,
+        "maxR": 0.6,
+        "color": "boulder",
+        "source": "[measured] EYRC phf44. Position [estimated]."
+      },
+      {
+        "type": "grass-field",
+        "key": "ramble-grass-1",
+        "area": "ramble",
+        "rect": {
+          "x0": -145,
+          "x1": -139.9,
+          "z0": 602,
+          "z1": 609
+        },
+        "count": 34,
+        "h": 0.85,
+        "r": 0.22,
+        "color": "grassBlue",
+        "spikeColor": "grassStraw",
+        "source": "[measured] z_teahouse.png / EYRC phf44 — native bunch grasses and rushes, 0.5-1.2 m tall at ~0.6 m spacing. Drawn as cones, not per-blade. Species schedule unsourced."
+      },
+      {
+        "type": "grass-field",
+        "key": "ramble-grass-2",
+        "area": "ramble",
+        "rect": {
+          "x0": -143.1,
+          "x1": -139.5,
+          "z0": 575,
+          "z1": 585.5
+        },
+        "count": 26,
+        "h": 0.85,
+        "r": 0.22,
+        "color": "grassBlue",
+        "spikeColor": "grassStraw",
+        "source": "[measured] EYRC phf44. Position [estimated]."
+      },
+      {
+        "type": "grass-field",
+        "key": "ramble-grass-3",
+        "area": "ramble",
+        "rect": {
+          "x0": -127.8,
+          "x1": -116.2,
+          "z0": 584.9,
+          "z1": 588
+        },
+        "count": 30,
+        "h": 0.85,
+        "r": 0.22,
+        "color": "grassBlue",
+        "spikeColor": "grassStraw",
+        "source": "[measured] EYRC phf44. Position [estimated]."
+      },
+      {
+        "type": "mulch-patch",
+        "key": "ramble-mulch-1",
+        "area": "ramble",
+        "rect": {
+          "x0": -125.8,
+          "x1": -110.2,
+          "z0": 617.3,
+          "z1": 624.4
+        },
+        "color": "mulch",
+        "source": "[measured] EYRC phf44 — shredded bark mulch field. Extent [estimated] from the host bed."
+      },
+      {
+        "type": "mulch-patch",
+        "key": "ramble-mulch-2",
+        "area": "ramble",
+        "rect": {
+          "x0": -120.1,
+          "x1": -113,
+          "z0": 579,
+          "z1": 581.1
+        },
+        "color": "mulch",
+        "source": "[measured] EYRC phf44. Extent [estimated]."
+      },
+      {
+        "type": "gravel-patch",
+        "key": "ramble-gravel-1",
+        "area": "ramble",
+        "rect": {
+          "x0": -150.9,
+          "x1": -149.1,
+          "z0": 605.4,
+          "z1": 615.5
+        },
+        "color": "gravelPale",
+        "source": "[measured] EYRC phf44 — pale gravel field alternating with the mulch. Extent [estimated]."
+      },
+      {
+        "type": "picket-bridge",
+        "key": "ramble-bridge-1",
+        "area": "ramble",
+        "x": -145.1,
+        "z": 605.2,
+        "span": 5,
+        "width": 2.4,
+        "deck": 0.25,
+        "rail": 1.07,
+        "picket": 0.02,
+        "pitch": 0.11,
+        "rotY": 0,
+        "color": "deckConcrete",
+        "railColor": "railing",
+        "source": "[measured] EYRC phf44 — flat concrete deck with vertical metal picket guardrails, pickets ~20 mm at ~110 mm centres, top rail 1.07 m. Placed on surveyed walkway-2990; span shortened to fit it (photo reads ~8 m)."
+      },
+      {
+        "type": "picket-bridge",
+        "key": "ramble-bridge-2",
+        "area": "ramble",
+        "x": -124.8,
+        "z": 609.5,
+        "span": 7,
+        "width": 3,
+        "deck": 0.25,
+        "rail": 1.07,
+        "picket": 0.02,
+        "pitch": 0.11,
+        "rotY": 1.5708,
+        "color": "deckConcrete",
+        "railColor": "railing",
+        "source": "[measured] EYRC phf44 — the ~8 m span bridge, placed on surveyed walkway-4039."
+      },
+      {
+        "type": "planter-cube",
+        "key": "ramble-planter-1",
+        "area": "ramble",
+        "x": -135.5,
+        "z": 602,
+        "w": 1.8,
+        "d": 1.8,
+        "h": 0.9,
+        "rotY": 0,
+        "color": "planterWhite",
+        "source": "[measured] EYRC phf22 — white precast planter cube ~1.8 x 1.8 x 0.9 m. Position [estimated]."
+      },
+      {
+        "type": "planter-cube",
+        "key": "ramble-planter-2",
+        "area": "ramble",
+        "x": -135.5,
+        "z": 606,
+        "w": 1.8,
+        "d": 1.8,
+        "h": 0.9,
+        "rotY": 0,
+        "color": "planterWhite",
+        "source": "[measured] EYRC phf22. Position [estimated]."
+      },
+      {
+        "type": "planter-cube",
+        "key": "ramble-planter-3",
+        "area": "ramble",
+        "x": -135.5,
+        "z": 610,
+        "w": 1.8,
+        "d": 1.8,
+        "h": 0.9,
+        "rotY": 0,
+        "color": "planterWhite",
+        "source": "[measured] EYRC phf22. Position [estimated]."
+      },
+      {
+        "type": "planter-cube",
+        "key": "ramble-planter-4",
+        "area": "ramble",
+        "x": -135.5,
+        "z": 614,
+        "w": 1.8,
+        "d": 1.8,
+        "h": 0.9,
+        "rotY": 0,
+        "color": "planterWhite",
+        "source": "[measured] EYRC phf22. Position [estimated]."
+      },
+      {
+        "type": "light-pole",
+        "key": "pole-1",
+        "area": "furniture",
+        "x": -133,
+        "z": 530,
+        "h": 5.5,
+        "r": 0.09,
+        "headR": 0.275,
+        "headH": 0.3,
+        "color": "poleDark",
+        "source": "[measured] crop_grill.png — ~5.5 m slim round pole, inverted-cone/trumpet head ~0.55 m across. Position [estimated]."
+      },
+      {
+        "type": "light-pole",
+        "key": "pole-2",
+        "area": "furniture",
+        "x": -124,
+        "z": 534,
+        "h": 5.5,
+        "r": 0.09,
+        "headR": 0.275,
+        "headH": 0.3,
+        "color": "poleDark",
+        "source": "[measured] crop_grill.png. Position [estimated]."
+      },
+      {
+        "type": "light-pole",
+        "key": "pole-3",
+        "area": "furniture",
+        "x": -130,
+        "z": 568.5,
+        "h": 5.5,
+        "r": 0.09,
+        "headR": 0.275,
+        "headH": 0.3,
+        "color": "poleDark",
+        "source": "[measured] crop_grill.png. Position [estimated]."
+      },
+      {
+        "type": "light-pole",
+        "key": "pole-4",
+        "area": "furniture",
+        "x": -118,
+        "z": 570,
+        "h": 5.5,
+        "r": 0.09,
+        "headR": 0.275,
+        "headH": 0.3,
+        "color": "poleDark",
+        "source": "[measured] crop_grill.png. Position [estimated]."
+      },
+      {
+        "type": "light-pole",
+        "key": "pole-5",
+        "area": "furniture",
+        "x": -100,
+        "z": 575,
+        "h": 5.5,
+        "r": 0.09,
+        "headR": 0.275,
+        "headH": 0.3,
+        "color": "poleDark",
+        "source": "[measured] crop_grill.png. Position [estimated]."
+      },
+      {
+        "type": "light-pole",
+        "key": "pole-6",
+        "area": "furniture",
+        "x": -92,
+        "z": 575,
+        "h": 5.5,
+        "r": 0.09,
+        "headR": 0.275,
+        "headH": 0.3,
+        "color": "poleDark",
+        "source": "[measured] crop_grill.png. Position [estimated]."
+      },
+      {
+        "type": "light-pole",
+        "key": "pole-7",
+        "area": "furniture",
+        "x": -135,
+        "z": 604,
+        "h": 5.5,
+        "r": 0.09,
+        "headR": 0.275,
+        "headH": 0.3,
+        "color": "poleDark",
+        "source": "[measured] crop_grill.png. Position [estimated]."
+      },
+      {
+        "type": "light-pole",
+        "key": "pole-8",
+        "area": "furniture",
+        "x": -130,
+        "z": 612,
+        "h": 5.5,
+        "r": 0.09,
+        "headR": 0.275,
+        "headH": 0.3,
+        "color": "poleDark",
+        "source": "[measured] crop_grill.png. Position [estimated]."
+      },
+      {
+        "type": "bollard-light",
+        "key": "bollard-1",
+        "area": "furniture",
+        "x": -144,
+        "z": 594.8,
+        "h": 1,
+        "r": 0.08,
+        "color": "poleDark",
+        "source": "[measured] inventory — ~1.0 m bollard lights along the Ramble paths. Position [estimated]."
+      },
+      {
+        "type": "bollard-light",
+        "key": "bollard-2",
+        "area": "furniture",
+        "x": -144.9,
+        "z": 600,
+        "h": 1,
+        "r": 0.08,
+        "color": "poleDark",
+        "source": "[measured] inventory. Position [estimated]."
+      },
+      {
+        "type": "bollard-light",
+        "key": "bollard-3",
+        "area": "furniture",
+        "x": -143,
+        "z": 606,
+        "h": 1,
+        "r": 0.08,
+        "color": "poleDark",
+        "source": "[measured] inventory. Position [estimated]."
+      },
+      {
+        "type": "bollard-light",
+        "key": "bollard-4",
+        "area": "furniture",
+        "x": -141,
+        "z": 608.5,
+        "h": 1,
+        "r": 0.08,
+        "color": "poleDark",
+        "source": "[measured] inventory. Position [estimated]."
+      },
+      {
+        "type": "bollard-light",
+        "key": "bollard-5",
+        "area": "furniture",
+        "x": -142,
+        "z": 576,
+        "h": 1,
+        "r": 0.08,
+        "color": "poleDark",
+        "source": "[measured] inventory. Position [estimated]."
+      },
+      {
+        "type": "bollard-light",
+        "key": "bollard-6",
+        "area": "furniture",
+        "x": -141,
+        "z": 581,
+        "h": 1,
+        "r": 0.08,
+        "color": "poleDark",
+        "source": "[measured] inventory. Position [estimated]."
+      },
+      {
+        "type": "bollard-light",
+        "key": "bollard-7",
+        "area": "furniture",
+        "x": -126,
+        "z": 586,
+        "h": 1,
+        "r": 0.08,
+        "color": "poleDark",
+        "source": "[measured] inventory. Position [estimated]."
+      },
+      {
+        "type": "bollard-light",
+        "key": "bollard-8",
+        "area": "furniture",
+        "x": -120,
+        "z": 586.5,
+        "h": 1,
+        "r": 0.08,
+        "color": "poleDark",
+        "source": "[measured] inventory. Position [estimated]."
+      },
+      {
+        "type": "bollard-light",
+        "key": "bollard-9",
+        "area": "furniture",
+        "x": -124,
+        "z": 619,
+        "h": 1,
+        "r": 0.08,
+        "color": "poleDark",
+        "source": "[measured] inventory. Position [estimated]."
+      },
+      {
+        "type": "bollard-light",
+        "key": "bollard-10",
+        "area": "furniture",
+        "x": -115,
+        "z": 620,
+        "h": 1,
+        "r": 0.08,
+        "color": "poleDark",
+        "source": "[measured] inventory. Position [estimated]."
+      },
+      {
+        "type": "seat-wall",
+        "key": "fire-seat-wall",
+        "area": "furniture",
+        "x": -112.5,
+        "z": 570.4,
+        "w": 3.6,
+        "d": 0.5,
+        "h": 1.1,
+        "rotY": 0,
+        "color": "stucco",
+        "source": "[measured] inventory — precast/CMU seat wall ~1.1 m tall, ~0.5 m thick, holding the linear fire feature. Position [estimated] at the surveyed lawn's east edge in courtyard-2369."
+      },
+      {
+        "type": "fire-feature",
+        "key": "fire-feature",
+        "area": "furniture",
+        "x": -112.5,
+        "z": 570.4,
+        "w": 2.6,
+        "d": 0.22,
+        "h": 0.45,
+        "sill": 0.62,
+        "rotY": 0,
+        "color": "fireGlass",
+        "source": "[measured] inventory — 2.6 m x 0.45 m glass-fronted linear gas firebox. Rendered unlit; no flame is modelled."
+      },
+      {
+        "type": "adirondack-chair",
+        "key": "adirondack-1",
+        "area": "furniture",
+        "x": -115,
+        "z": 568.6,
+        "w": 0.78,
+        "d": 0.9,
+        "h": 0.95,
+        "rotY": 2.4,
+        "color": "adirondack",
+        "source": "[measured] EYRC phf22 — 0.78 w x 0.9 d x 0.95 h, grouped in fours around the fire feature."
+      },
+      {
+        "type": "adirondack-chair",
+        "key": "adirondack-2",
+        "area": "furniture",
+        "x": -115,
+        "z": 572.2,
+        "w": 0.78,
+        "d": 0.9,
+        "h": 0.95,
+        "rotY": 0.7,
+        "color": "adirondack",
+        "source": "[measured] EYRC phf22."
+      },
+      {
+        "type": "adirondack-chair",
+        "key": "adirondack-3",
+        "area": "furniture",
+        "x": -113,
+        "z": 567.8,
+        "w": 0.78,
+        "d": 0.9,
+        "h": 0.95,
+        "rotY": 3,
+        "color": "adirondack",
+        "source": "[measured] EYRC phf22."
+      },
+      {
+        "type": "adirondack-chair",
+        "key": "adirondack-4",
+        "area": "furniture",
+        "x": -113,
+        "z": 573,
+        "w": 0.78,
+        "d": 0.9,
+        "h": 0.95,
+        "rotY": 0.2,
+        "color": "adirondack",
+        "source": "[measured] EYRC phf22."
+      },
+      {
+        "type": "bike-rack",
+        "key": "bike-rack-a",
+        "area": "furniture",
+        "x": -161,
+        "z": 551.5,
+        "count": 8,
+        "spacing": 0.8,
+        "hoopW": 0.6,
+        "hoopH": 0.75,
+        "tube": 0.025,
+        "rotY": 0,
+        "color": "metal",
+        "source": "[measured] inventory — inverted-U hoops ~0.75 m tall at ~0.8 m spacing, runs of 8-12. Placed on surveyed walkway-3238. Position [estimated]."
+      },
+      {
+        "type": "bike-rack",
+        "key": "bike-rack-b",
+        "area": "furniture",
+        "x": -135.5,
+        "z": 617,
+        "count": 8,
+        "spacing": 0.8,
+        "hoopW": 0.6,
+        "hoopH": 0.75,
+        "tube": 0.025,
+        "rotY": 0,
+        "color": "metal",
+        "source": "[measured] inventory. Placed in surveyed courtyard-2703. Position [estimated]."
+      }
+    ],
+    "absent": [
+      "Basketball hoop, backboard, court fencing and court-side seating — no legible photo in the reference set. Left unbuilt.",
+      "A third grill bay — exactly two are photographed. The inventory says do not model a third.",
+      "Survivance Hall — 11 storeys and a southern position are documented, its facade is not, and it is missing from the repo dossier too. Massing is not this module's job in any case.",
+      "Podemos low-rise and the dining pavilion — no source.",
+      "Meditation pavilion and tea house interiors beyond the bench — no source.",
+      "Plant species — the grasses are generic bunch-grass cones, deliberately not an identified species.",
+      "The public-art mural, the balcony stack, the facade window reveals and every other facade feature — facade work belongs to the measured massing pass, not to an invented overlay.",
+      "The lawn panel itself — the big turf panel north of the terrace is not in the ArcGIS survey, so its outline is unknown. Better absent than a guessed polygon.",
+      "Young multi-trunk staked trees — campus-trees.js owns trees from a measured source; adding invented ones here would put two tree populations on one ground."
+    ]
+  },
+  "revelle": {
+    "label": "Revelle College — photo-sourced detail",
+    "epoch": "photo, 2006-2026 (newest source wins)",
+    "note": "INVENTED, photo-sourced class. Modelled from dated photographs of Revelle College listed in `sources`; positions are anchored to the MEASURED plaza polygon and building rings in campus-3d.json, and every solid item here was checked at least 3 m clear of the corridor-staging centreline when this file was generated. Nothing measured reads from this file. Items with no photograph are deliberately absent — see `absent`.",
+    "sources": [
+      "https://en.wikipedia.org/wiki/Revelle_College",
+      "https://en.wikipedia.org/wiki/Galbraith_Hall",
+      "https://en.wikipedia.org/wiki/Urey_Hall",
+      "https://www.structuremag.org/article/shipshape-the-seismic-rehabilitation-of-york-hall/",
+      "https://lpadesignstudios.com/projects/york-hall-ucsd",
+      "https://emeriti.ucsd.edu/resources/Know-Your-Campus.pdf",
+      "https://jasonrwoods.com/2018/07/18/ucsd-a-brief-introduction/",
+      "https://commons.wikimedia.org/wiki/File:Revelle_Plaza.jpg",
+      "https://commons.wikimedia.org/wiki/File:Revelle_Plaza,_UCSD.JPG",
+      "https://commons.wikimedia.org/wiki/File:Revelle_Plaza_looking_south.jpg",
+      "https://commons.wikimedia.org/wiki/File:York_Hall,_UCSD.JPG",
+      "https://commons.wikimedia.org/wiki/File:Argo_Hall.jpg",
+      "https://commons.wikimedia.org/wiki/File:Revelle_College_breezeway.jpg",
+      "https://commons.wikimedia.org/wiki/File:Urey_Hall_UCSD_base.jpg",
+      "https://commons.wikimedia.org/wiki/File:Galbraith_Hall_UCSD_from_below.jpg"
+    ],
+    "colors": {
+      "panel": "#d8cdb8",
+      "brick": "#9e7a6a",
+      "brickLight": "#b59281",
+      "lavaRock": "#6e4b3b",
+      "lavaRockPale": "#8e6b54",
+      "benchConcrete": "#c8c3b6",
+      "benchWood": "#8e6b60",
+      "kioskBody": "#8d8d88",
+      "kioskBand": "#1d1d1f",
+      "flyerWhite": "#f2f0ea",
+      "flyerPink": "#e8a0b4",
+      "flyerYellow": "#ecd66a",
+      "flyerCyan": "#8fd0dd",
+      "lampPole": "#3a3a38",
+      "luminaire": "#2e2e2c",
+      "bannerNavy": "#1c2b4a",
+      "bannerGold": "#ecc02c",
+      "globe": "#eae7de",
+      "bin": "#bfbab0",
+      "rack": "#2c2c2e",
+      "arcadeColumn": "#e6e1d6",
+      "yorkFin": "#d2cdc2",
+      "galbraithColumn": "#e4dccb",
+      "galbraithSoffit": "#cfc3a8",
+      "galbraithGlass": "#3a3833",
+      "ureySlab": "#ddd6c8",
+      "ureySlot": "#3b3b39",
+      "breezewayColumn": "#e2dccd",
+      "breezewayDeck": "#ded7c6",
+      "rail": "#9a9a96"
+    },
+    "paving": {
+      "source": "Revelle_Plaza.jpg (2006), Argo_Hall.jpg (2012) — panel/band widths measured against 1.7 m figures",
+      "pitch": 6.4,
+      "band": 0.42,
+      "radius": 1.8,
+      "runnerX": 20,
+      "runnerWidth": 1.2,
+      "runnerLength": 4,
+      "cells": [
+        [
+          -10,
+          333.1
+        ],
+        [
+          -10,
+          339.5
+        ],
+        [
+          -10,
+          390.7
+        ],
+        [
+          -10,
+          397.1
+        ],
+        [
+          -3.6,
+          333.1
+        ],
+        [
+          -3.6,
+          339.5
+        ],
+        [
+          -3.6,
+          345.9
+        ],
+        [
+          -3.6,
+          352.3
+        ],
+        [
+          -3.6,
+          358.7
+        ],
+        [
+          -3.6,
+          365.1
+        ],
+        [
+          -3.6,
+          371.5
+        ],
+        [
+          -3.6,
+          377.9
+        ],
+        [
+          -3.6,
+          384.3
+        ],
+        [
+          -3.6,
+          390.7
+        ],
+        [
+          -3.6,
+          397.1
+        ],
+        [
+          2.8,
+          333.1
+        ],
+        [
+          2.8,
+          339.5
+        ],
+        [
+          2.8,
+          345.9
+        ],
+        [
+          2.8,
+          352.3
+        ],
+        [
+          2.8,
+          358.7
+        ],
+        [
+          2.8,
+          365.1
+        ],
+        [
+          2.8,
+          371.5
+        ],
+        [
+          9.2,
+          333.1
+        ],
+        [
+          9.2,
+          339.5
+        ],
+        [
+          9.2,
+          345.9
+        ],
+        [
+          9.2,
+          352.3
+        ],
+        [
+          9.2,
+          358.7
+        ],
+        [
+          9.2,
+          365.1
+        ],
+        [
+          9.2,
+          371.5
+        ],
+        [
+          15.6,
+          333.1
+        ],
+        [
+          15.6,
+          339.5
+        ],
+        [
+          15.6,
+          345.9
+        ],
+        [
+          15.6,
+          352.3
+        ],
+        [
+          15.6,
+          358.7
+        ],
+        [
+          15.6,
+          365.1
+        ],
+        [
+          15.6,
+          371.5
+        ],
+        [
+          22,
+          333.1
+        ],
+        [
+          22,
+          339.5
+        ],
+        [
+          22,
+          345.9
+        ],
+        [
+          22,
+          352.3
+        ],
+        [
+          22,
+          358.7
+        ],
+        [
+          22,
+          365.1
+        ],
+        [
+          22,
+          371.5
+        ],
+        [
+          28.4,
+          333.1
+        ],
+        [
+          28.4,
+          339.5
+        ],
+        [
+          28.4,
+          345.9
+        ],
+        [
+          28.4,
+          352.3
+        ],
+        [
+          28.4,
+          358.7
+        ],
+        [
+          28.4,
+          365.1
+        ],
+        [
+          28.4,
+          371.5
+        ],
+        [
+          34.8,
+          333.1
+        ],
+        [
+          34.8,
+          339.5
+        ],
+        [
+          34.8,
+          345.9
+        ],
+        [
+          34.8,
+          352.3
+        ],
+        [
+          34.8,
+          358.7
+        ],
+        [
+          34.8,
+          365.1
+        ],
+        [
+          34.8,
+          371.5
+        ],
+        [
+          41.2,
+          333.1
+        ],
+        [
+          41.2,
+          339.5
+        ],
+        [
+          41.2,
+          345.9
+        ],
+        [
+          41.2,
+          352.3
+        ],
+        [
+          41.2,
+          358.7
+        ],
+        [
+          41.2,
+          365.1
+        ],
+        [
+          41.2,
+          371.5
+        ],
+        [
+          47.6,
+          333.1
+        ],
+        [
+          47.6,
+          339.5
+        ],
+        [
+          47.6,
+          345.9
+        ],
+        [
+          47.6,
+          352.3
+        ],
+        [
+          47.6,
+          358.7
+        ],
+        [
+          47.6,
+          365.1
+        ],
+        [
+          47.6,
+          371.5
+        ],
+        [
+          47.6,
+          377.9
+        ],
+        [
+          47.6,
+          384.3
+        ],
+        [
+          47.6,
+          390.7
+        ],
+        [
+          54,
+          384.3
+        ],
+        [
+          54,
+          390.7
+        ]
+      ],
+      "runner": [
+        331.9,
+        335.9,
+        339.9,
+        343.9,
+        347.9,
+        351.9,
+        355.9,
+        359.9,
+        363.9,
+        367.9,
+        371.9,
+        375.9
+      ]
+    },
+    "benchesA": {
+      "source": "Revelle_Plaza,_UCSD.JPG (2011)",
+      "length": 2.7,
+      "seatHeight": 0.43,
+      "depth": 0.45,
+      "slab": 0.12,
+      "items": [
+        {
+          "x": 2,
+          "z": 410.5,
+          "rot": 0
+        },
+        {
+          "x": 5.6,
+          "z": 410.5,
+          "rot": 0
+        },
+        {
+          "x": 9.2,
+          "z": 410.5,
+          "rot": 0
+        },
+        {
+          "x": 12.8,
+          "z": 410.5,
+          "rot": 0
+        },
+        {
+          "x": 16.4,
+          "z": 410.5,
+          "rot": 0
+        },
+        {
+          "x": 20,
+          "z": 410.5,
+          "rot": 0
+        },
+        {
+          "x": 23.6,
+          "z": 410.5,
+          "rot": 0
+        },
+        {
+          "x": 27.2,
+          "z": 410.5,
+          "rot": 0
+        },
+        {
+          "x": 30.8,
+          "z": 410.5,
+          "rot": 0
+        },
+        {
+          "x": 34.4,
+          "z": 410.5,
+          "rot": 0
+        },
+        {
+          "x": 38,
+          "z": 410.5,
+          "rot": 0
+        },
+        {
+          "x": 41.6,
+          "z": 410.5,
+          "rot": 0
+        },
+        {
+          "x": 47.5,
+          "z": 380,
+          "rot": 1.5708
+        },
+        {
+          "x": 47.5,
+          "z": 383.6,
+          "rot": 1.5708
+        },
+        {
+          "x": 47.5,
+          "z": 387.2,
+          "rot": 1.5708
+        },
+        {
+          "x": 47.5,
+          "z": 390.8,
+          "rot": 1.5708
+        },
+        {
+          "x": 47.5,
+          "z": 394.4,
+          "rot": 1.5708
+        },
+        {
+          "x": 47.5,
+          "z": 398,
+          "rot": 1.5708
+        },
+        {
+          "x": 47.5,
+          "z": 401.6,
+          "rot": 1.5708
+        },
+        {
+          "x": 47.5,
+          "z": 405.2,
+          "rot": 1.5708
+        },
+        {
+          "x": 20,
+          "z": 379.2,
+          "rot": 0
+        },
+        {
+          "x": 23.6,
+          "z": 379.2,
+          "rot": 0
+        },
+        {
+          "x": 27.2,
+          "z": 379.2,
+          "rot": 0
+        },
+        {
+          "x": 30.8,
+          "z": 379.2,
+          "rot": 0
+        },
+        {
+          "x": 34.4,
+          "z": 379.2,
+          "rot": 0
+        },
+        {
+          "x": 38,
+          "z": 379.2,
+          "rot": 0
+        },
+        {
+          "x": 41.6,
+          "z": 379.2,
+          "rot": 0
+        }
+      ]
+    },
+    "benchesB": {
+      "source": "Revelle_Plaza_Path,_UCSD.jpg (2011)",
+      "length": 4.5,
+      "seatHeight": 0.43,
+      "depth": 0.5,
+      "planks": 3,
+      "items": [
+        {
+          "x": 48,
+          "z": 292,
+          "rot": 1.5708
+        },
+        {
+          "x": 48,
+          "z": 302,
+          "rot": 1.5708
+        },
+        {
+          "x": 48,
+          "z": 312,
+          "rot": 1.5708
+        }
+      ]
+    },
+    "kiosks": {
+      "source": "Argo_Hall.jpg (2012)",
+      "width": 1.2,
+      "depth": 0.5,
+      "height": 2.35,
+      "plinth": 0.15,
+      "items": [
+        {
+          "x": -12,
+          "z": 358,
+          "rot": 1.5708,
+          "top": "navy"
+        },
+        {
+          "x": 48,
+          "z": 340,
+          "rot": -1.5708,
+          "top": "gold"
+        }
+      ]
+    },
+    "lamps": {
+      "source": "Revelle_Plaza.jpg (2006), York_Hall,_UCSD.JPG (2011)",
+      "pole": 0.12,
+      "height": 5,
+      "head": [
+        0.5,
+        0.12,
+        0.3
+      ],
+      "bannerSize": [
+        0.45,
+        1.4
+      ],
+      "bannerY": 3,
+      "items": [
+        {
+          "x": 79,
+          "z": 345,
+          "rot": 1.5708,
+          "banner": true
+        },
+        {
+          "x": 79,
+          "z": 370,
+          "rot": 1.5708,
+          "banner": true
+        },
+        {
+          "x": 79,
+          "z": 395,
+          "rot": 1.5708,
+          "banner": true
+        },
+        {
+          "x": 79,
+          "z": 420,
+          "rot": 1.5708,
+          "banner": true
+        },
+        {
+          "x": -10,
+          "z": 340,
+          "rot": -1.5708,
+          "banner": true
+        },
+        {
+          "x": -10,
+          "z": 365,
+          "rot": -1.5708,
+          "banner": true
+        },
+        {
+          "x": 10,
+          "z": 414,
+          "rot": 0,
+          "banner": false
+        },
+        {
+          "x": 40,
+          "z": 414,
+          "rot": 0,
+          "banner": false
+        }
+      ]
+    },
+    "globes": {
+      "source": "Mayer_Hall,_UCSD.JPG (2011)",
+      "radius": 0.175,
+      "post": 1.1,
+      "items": [
+        {
+          "x": 50,
+          "z": 285,
+          "rot": 0
+        },
+        {
+          "x": 50,
+          "z": 295,
+          "rot": 0
+        },
+        {
+          "x": 50,
+          "z": 305,
+          "rot": 0
+        },
+        {
+          "x": 50,
+          "z": 315,
+          "rot": 0
+        }
+      ]
+    },
+    "bins": {
+      "source": "York_Hall,_UCSD.JPG (2011)",
+      "radius": 0.3,
+      "height": 0.9,
+      "items": [
+        {
+          "x": 81.5,
+          "z": 345,
+          "rot": 0
+        },
+        {
+          "x": 81.5,
+          "z": 360,
+          "rot": 0
+        },
+        {
+          "x": 81.5,
+          "z": 375,
+          "rot": 0
+        },
+        {
+          "x": 81.5,
+          "z": 390,
+          "rot": 0
+        },
+        {
+          "x": 81.5,
+          "z": 405,
+          "rot": 0
+        },
+        {
+          "x": 81.5,
+          "z": 420,
+          "rot": 0
+        },
+        {
+          "x": -11,
+          "z": 350,
+          "rot": 0
+        },
+        {
+          "x": 46,
+          "z": 344,
+          "rot": 0
+        }
+      ]
+    },
+    "racks": {
+      "source": "Argo_Hall.jpg (2012), York_Hall,_UCSD.JPG (2011)",
+      "hoops": 5,
+      "spacing": 0.42,
+      "hoopHeight": 0.78,
+      "hoopWidth": 0.72,
+      "items": [
+        {
+          "x": -53,
+          "z": 362.5,
+          "rot": 0
+        },
+        {
+          "x": -50.8,
+          "z": 362.5,
+          "rot": 0
+        },
+        {
+          "x": -48.6,
+          "z": 362.5,
+          "rot": 0
+        },
+        {
+          "x": -46.4,
+          "z": 362.5,
+          "rot": 0
+        },
+        {
+          "x": -44.2,
+          "z": 362.5,
+          "rot": 0
+        },
+        {
+          "x": -42,
+          "z": 362.5,
+          "rot": 0
+        },
+        {
+          "x": -39.8,
+          "z": 362.5,
+          "rot": 0
+        },
+        {
+          "x": -37.6,
+          "z": 362.5,
+          "rot": 0
+        },
+        {
+          "x": -35.4,
+          "z": 362.5,
+          "rot": 0
+        },
+        {
+          "x": -33.2,
+          "z": 362.5,
+          "rot": 0
+        },
+        {
+          "x": -31,
+          "z": 362.5,
+          "rot": 0
+        },
+        {
+          "x": 81,
+          "z": 346,
+          "rot": 1.5708
+        },
+        {
+          "x": 81,
+          "z": 351,
+          "rot": 1.5708
+        },
+        {
+          "x": 81,
+          "z": 356,
+          "rot": 1.5708
+        },
+        {
+          "x": 81,
+          "z": 361,
+          "rot": 1.5708
+        },
+        {
+          "x": 81,
+          "z": 366,
+          "rot": 1.5708
+        },
+        {
+          "x": 81,
+          "z": 371,
+          "rot": 1.5708
+        },
+        {
+          "x": 81,
+          "z": 376,
+          "rot": 1.5708
+        },
+        {
+          "x": 81,
+          "z": 381,
+          "rot": 1.5708
+        },
+        {
+          "x": 81,
+          "z": 386,
+          "rot": 1.5708
+        },
+        {
+          "x": 81,
+          "z": 391,
+          "rot": 1.5708
+        },
+        {
+          "x": 81,
+          "z": 396,
+          "rot": 1.5708
+        },
+        {
+          "x": 81,
+          "z": 401,
+          "rot": 1.5708
+        },
+        {
+          "x": 81,
+          "z": 406,
+          "rot": 1.5708
+        },
+        {
+          "x": 81,
+          "z": 411,
+          "rot": 1.5708
+        },
+        {
+          "x": 81,
+          "z": 416,
+          "rot": 1.5708
+        },
+        {
+          "x": 81,
+          "z": 421,
+          "rot": 1.5708
+        }
+      ]
+    },
+    "lavaWalls": {
+      "source": "Revelle_Plaza.jpg (2006), Argo_Hall.jpg (2012)",
+      "height": 0.75,
+      "thickness": 0.7,
+      "segment": 2,
+      "rocks": 9,
+      "items": [
+        {
+          "x": 32,
+          "z": 300,
+          "rot": 1.5708
+        },
+        {
+          "x": 32,
+          "z": 302,
+          "rot": 1.5708
+        },
+        {
+          "x": 32,
+          "z": 304,
+          "rot": 1.5708
+        },
+        {
+          "x": 32,
+          "z": 306,
+          "rot": 1.5708
+        },
+        {
+          "x": 32,
+          "z": 308,
+          "rot": 1.5708
+        },
+        {
+          "x": 32,
+          "z": 310,
+          "rot": 1.5708
+        },
+        {
+          "x": 32,
+          "z": 312,
+          "rot": 1.5708
+        },
+        {
+          "x": 32,
+          "z": 314,
+          "rot": 1.5708
+        },
+        {
+          "x": 32,
+          "z": 316,
+          "rot": 1.5708
+        },
+        {
+          "x": 32,
+          "z": 318,
+          "rot": 1.5708
+        },
+        {
+          "x": 32,
+          "z": 320,
+          "rot": 1.5708
+        },
+        {
+          "x": 32,
+          "z": 322,
+          "rot": 1.5708
+        },
+        {
+          "x": 32,
+          "z": 324,
+          "rot": 1.5708
+        },
+        {
+          "x": 32,
+          "z": 326,
+          "rot": 1.5708
+        },
+        {
+          "x": 32,
+          "z": 328,
+          "rot": 1.5708
+        },
+        {
+          "x": 45,
+          "z": 300,
+          "rot": 1.5708
+        },
+        {
+          "x": 45,
+          "z": 302,
+          "rot": 1.5708
+        },
+        {
+          "x": 45,
+          "z": 304,
+          "rot": 1.5708
+        },
+        {
+          "x": 45,
+          "z": 306,
+          "rot": 1.5708
+        },
+        {
+          "x": 45,
+          "z": 308,
+          "rot": 1.5708
+        },
+        {
+          "x": 45,
+          "z": 310,
+          "rot": 1.5708
+        },
+        {
+          "x": 45,
+          "z": 312,
+          "rot": 1.5708
+        },
+        {
+          "x": 45,
+          "z": 314,
+          "rot": 1.5708
+        },
+        {
+          "x": 45,
+          "z": 316,
+          "rot": 1.5708
+        },
+        {
+          "x": 45,
+          "z": 318,
+          "rot": 1.5708
+        },
+        {
+          "x": 45,
+          "z": 320,
+          "rot": 1.5708
+        },
+        {
+          "x": 45,
+          "z": 322,
+          "rot": 1.5708
+        },
+        {
+          "x": 45,
+          "z": 324,
+          "rot": 1.5708
+        },
+        {
+          "x": 45,
+          "z": 326,
+          "rot": 1.5708
+        },
+        {
+          "x": 45,
+          "z": 328,
+          "rot": 1.5708
+        },
+        {
+          "x": -53,
+          "z": 357.5,
+          "rot": 0
+        },
+        {
+          "x": -51,
+          "z": 357.5,
+          "rot": 0
+        },
+        {
+          "x": -49,
+          "z": 357.5,
+          "rot": 0
+        },
+        {
+          "x": -47,
+          "z": 357.5,
+          "rot": 0
+        },
+        {
+          "x": -45,
+          "z": 357.5,
+          "rot": 0
+        },
+        {
+          "x": -43,
+          "z": 357.5,
+          "rot": 0
+        },
+        {
+          "x": -41,
+          "z": 357.5,
+          "rot": 0
+        },
+        {
+          "x": -39,
+          "z": 357.5,
+          "rot": 0
+        },
+        {
+          "x": -37,
+          "z": 357.5,
+          "rot": 0
+        },
+        {
+          "x": -35,
+          "z": 357.5,
+          "rot": 0
+        },
+        {
+          "x": -33,
+          "z": 357.5,
+          "rot": 0
+        },
+        {
+          "x": -31,
+          "z": 357.5,
+          "rot": 0
+        },
+        {
+          "x": -29,
+          "z": 357.5,
+          "rot": 0
+        },
+        {
+          "x": -27,
+          "z": 357.5,
+          "rot": 0
+        },
+        {
+          "x": -25,
+          "z": 357.5,
+          "rot": 0
+        }
+      ]
+    },
+    "systems": {
+      "yorkArcade": {
+        "faceX": 83.9,
+        "z0": 338.7,
+        "z1": 431.3,
+        "columns": 35,
+        "standoff": 0.5,
+        "shaftBase": 0.3,
+        "shaftWaist": 0.25,
+        "capital": 1.3,
+        "height": 4.5
+      },
+      "yorkFins": {
+        "faceX": 83.9,
+        "z0": 338.7,
+        "z1": 431.3,
+        "spacing": 1.5,
+        "storeys": 3,
+        "storeyHeight": 3.6,
+        "base": 5,
+        "width": 0.25,
+        "depth": 0.55
+      },
+      "galbraith": {
+        "faceZ": 428.9,
+        "x0": -7.8,
+        "x1": 54.2,
+        "height": 12,
+        "overhang": 5.5,
+        "coffer": 1.1,
+        "ribWidth": 0.25,
+        "slab": 1.4,
+        "columns": 10,
+        "columnBase": 0.3,
+        "columnHead": 0.58,
+        "columnStandoff": 3.4,
+        "glassStandoff": 0.5,
+        "glassBase": 1,
+        "glassTop": 10.5,
+        "railY": 5.8,
+        "railStandoff": 3.1,
+        "picket": 0.11,
+        "railHeight": 1.05
+      },
+      "ureyCorner": {
+        "faceZ": 315.8,
+        "standoff": 0.4,
+        "height": 30,
+        "thickness": 0.5,
+        "slabA": [
+          12,
+          18
+        ],
+        "slot": [
+          18,
+          22.5
+        ],
+        "slabB": [
+          22.5,
+          27.5
+        ]
+      },
+      "breezeway": {
+        "z0": 246.1,
+        "z1": 279.8,
+        "centreX": 71.25,
+        "deckWidth": 6,
+        "columnRows": [
+          68.25,
+          74.25
+        ],
+        "columnSpacing": 3.06,
+        "columns": 12,
+        "levels": 3,
+        "levelHeight": 3.6,
+        "shaft": 0.22,
+        "capital": 1.45,
+        "deckThickness": 0.35,
+        "scallop": 0.5,
+        "picket": 0.14,
+        "railHeight": 1.05
+      }
+    },
+    "absent": [
+      "May 1970 Peace Memorial — no photograph found; wall radius, height, materials and constellation layout all unknown",
+      "El Mac mural 'An Enduring Spell' on Argo — sourced as present, but no photograph, no palette, no placement",
+      "Fountain basin plan geometry — circular vs straight-sided seat wall unresolved between the 2006 and 2024 photos; the measured water polygon is left exactly as it is",
+      "Six fleet halls (Atlantis, Beagle, Challenger, Discovery, Galathea, Meteor) — no verified imagery",
+      "Revelle Commons / 64 Degrees frontage — the 2014 re-clad has no usable photograph; every cached frame shows the demolished pre-2014 facade",
+      "Blake Hall facade style — Argo's fins are a reasonable inference there, but only an inference",
+      "'Urey Hall' and 'Galbraith Hall' lettering — the repo has no text mechanism and inventing one is not detail",
+      "Galbraith roof monitors — read off a 2012 aerial only, too coarse to dimension"
+    ]
+  }
+}

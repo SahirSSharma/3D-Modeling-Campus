@@ -206,7 +206,10 @@ export function placeDetails(campus) {
 
 /* ------------------------------------------------------------- rendering */
 
-const lambert = (color) => new THREE.MeshLambertMaterial({ color });
+/* Street furniture: poles, benches, racks, hydrants, bins — painted metal
+   every one of them. */
+const lambert = (color) =>
+  new THREE.MeshStandardMaterial({ color, roughness: 0.5, metalness: 0.6 });
 
 function instanced(geo, mat, items, place) {
   const mesh = new THREE.InstancedMesh(geo, mat, items.length);
@@ -252,7 +255,8 @@ export function createDetails(scene, campus, heightAt) {
   const withBanners = d.lamps.filter((l) => l.banner);
   for (const side of [-0.42, 0.42]) {
     group.add(instanced(
-      new THREE.BoxGeometry(0.6, 1.9, 0.05), new THREE.MeshLambertMaterial({ color: 0xffffff }),
+      new THREE.BoxGeometry(0.6, 1.9, 0.05),
+    new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8 }),
       withBanners,
       (l) => ({
         x: l.x + Math.cos(l.rot) * side,

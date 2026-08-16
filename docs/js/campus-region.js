@@ -305,8 +305,8 @@ export function buildRegionMesh(
      at build time into one colour per terrain cell and the photograph itself
      never reaches the browser. */
   const material = colorAt
-    ? new THREE.MeshLambertMaterial({ vertexColors: true })
-    : new THREE.MeshLambertMaterial({ color });
+    ? new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 })
+    : new THREE.MeshStandardMaterial({ color, roughness: 0.95 });
   let quads = 0;
 
   const nearCoast = (c, r) => coast[r * cols + c] !== 255;

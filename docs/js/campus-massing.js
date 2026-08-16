@@ -922,10 +922,14 @@ export function createBuildings(scene, { campus, lidar, arcgis, colors, facades,
       const map = style === "geisel"
         ? geiselTexture(accents["Geisel Library"])
         : tiles[style] || tiles.band;
-      wallMats.set(matKey, new THREE.MeshLambertMaterial({ color: new THREE.Color(wallHex), map }));
+      wallMats.set(matKey, new THREE.MeshStandardMaterial({
+        color: new THREE.Color(wallHex), map, roughness: 0.9,
+      }));
     }
     if (!roofMats.has(roofHex)) {
-      roofMats.set(roofHex, new THREE.MeshLambertMaterial({ color: new THREE.Color(roofHex) }));
+      roofMats.set(roofHex, new THREE.MeshStandardMaterial({
+        color: new THREE.Color(roofHex), roughness: 0.95,
+      }));
     }
     const geo = mergeBucket(bucket);
     if (geo) group.add(new THREE.Mesh(geo, [roofMats.get(roofHex), wallMats.get(matKey)]));

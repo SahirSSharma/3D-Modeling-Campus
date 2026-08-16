@@ -72,8 +72,10 @@ inherits this project's gates instead of only the global operating model in
 - **Work in progress goes to `?mode=staging`, not to the run.** There are two
   corridors and `scripts/build-corridor.mjs` builds both from one `ROUTES`
   table: `corridor-eighth-peterson.json` is the run people ride, and
-  `corridor-staging.json` is the workbench — the SAME route with no obstacles or coins. Try things on staging. It is
-  allowed to be broken; the run is not. Staging is **not** exempt from any gate
+  `corridor-staging.json` is the workbench. Since 2026-08-16 both are the SAME
+  clean ride — no obstacles, no coins (Sahir: the run mirrors staging); the
+  placer stays gated by tests so flipping `props` back on is safe. Try things
+  on staging. It is allowed to be broken; the run is not. Staging is **not** exempt from any gate
   — the same `--check` and the whole of `tests/corridor.test.mjs` run over both
   — it is exempt only from being finished. Each file is stamped with
   `built.target` and both the builder and `campus-scooter.js` refuse a mismatch,
@@ -92,9 +94,18 @@ inherits this project's gates instead of only the global operating model in
   live under the single `game` key: seeded from a pinned constant, never read by
   a measured consumer, and labelled as invented in the file, the README and the
   on-screen HUD. Do not widen that key's reach, and do not let anything under it
-  become a source for anything else. Scooter mode's *look* (shadows, tone
-  mapping, the sunset sky) is art direction and is deliberately allowed to
-  diverge from free roam; its *geometry* is not.
+  become a source for anything else. The lit *look* (ACES tone mapping,
+  shadows, GTAO, bloom, image-based light — `campus-postfx.js`) is art
+  direction and since 2026-08-16 runs in EVERY mode; look may change,
+  *geometry* may not.
+- **Photo-sourced detail is the second declared invented class.** Detail in
+  Eighth and Revelle (furniture, gardens, staircases, facade character) is
+  modeled off dated web photographs — the newest epoch. Photos decide what
+  exists and how it looks; LiDAR/OSM keep deciding scale and position wherever
+  they cover the same thing. It all lives in `campus-photo-detail.json`,
+  labelled with sources and epoch; the corridor builder carries it VERBATIM
+  (`--check` fails on one changed byte) and nothing measured may ever read
+  from it. No photo for an item → it stays unbuilt.
 
 ## Verification
 

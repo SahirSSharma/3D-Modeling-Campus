@@ -359,8 +359,8 @@ function turfMesh(panels, heightAt) {
   const normals = new Float32Array(pos.length);
   for (let i = 1; i < normals.length; i += 3) normals[i] = 1;
   geo.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
-  const mat = applyOverlayDepth(new THREE.MeshLambertMaterial({
-    color: FURNITURE_COLORS.turf, side: THREE.DoubleSide,
+  const mat = applyOverlayDepth(new THREE.MeshStandardMaterial({
+    color: FURNITURE_COLORS.turf, side: THREE.DoubleSide, roughness: 0.95,
   }), rung);
   const mesh = new THREE.Mesh(geo, mat);
   mesh.renderOrder = OVERLAY[rung].renderOrder;

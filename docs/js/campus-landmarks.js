@@ -203,7 +203,9 @@ export function createLabels(scene, info, opts = {}) {
 
 /* --------------------------------------------------------------- landmarks */
 
-const lambert = (color) => new THREE.MeshLambertMaterial({ color });
+/* Callers span stucco, stone, water, fabric and gilt, so this stays at the
+   matte end; anything that wants a different response builds its own. */
+const lambert = (color) => new THREE.MeshStandardMaterial({ color, roughness: 0.95 });
 
 /* Outboard unit direction per corner tag, in the world's axes: +x east,
    +z south. `corner: "SW"` means the piece hangs west and south. */

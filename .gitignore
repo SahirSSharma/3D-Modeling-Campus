@@ -18,3 +18,7 @@ gauntlet-loop/.no-push
 
 # Machine-local: symlinks into ~/.claude, and Claude Code worktrees.
 .claude/
+
+# Claude Code session trail (local, feeds /recap)
+.claude/session-log.jsonl
+.claude/.keep-going-*

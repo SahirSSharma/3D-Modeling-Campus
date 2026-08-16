@@ -24,6 +24,7 @@ const {
   TOP_SPEED_MPS, START_SPEED_MPS, HIT_PENALTY_S, COIN_BONUS_S,
   HOP_HEIGHT_M, HOP_S, TRACK_HALF_W, RIDER_HALF_W, STEER_MPS,
 } = await import(path.join(ROOT, "docs/js/scooter-ride.js"));
+const builder = await import(path.join(ROOT, "scripts/build-corridor.mjs"));
 
 /* Where the rider's centre may go — the same clamp createRide applies. */
 const SPAN = TRACK_HALF_W - RIDER_HALF_W;
@@ -231,11 +232,22 @@ describe("the shipped corridor", () => {
     readFileSync(path.join(ROOT, "docs/data/corridor-eighth-peterson.json"), "utf8")
   );
 
+  /* The shipped run is deliberately prop-free (it mirrors staging, Sahir
+     2026-08-16), so the slalom under test is the one placeGame WOULD ship if
+     the props flag were flipped back on — the placement logic stays gated
+     either way. */
+  const GAME = builder.placeGame(DOC.route, builder.mulberry32(DOC.game.seed), true);
+
+  test("ships clean, and says the empty is deliberate", () => {
+    assert.equal(DOC.game.props, false);
+    assert.equal(DOC.game.obstacles.length + DOC.game.coins.length, 0);
+  });
+
   /* The widest free window of rider-centre positions through a group — the
      same arithmetic the builder's check() runs, re-derived here so the test
      cannot inherit the builder's own mistake. */
   const freeCentre = (group) => {
-    const span = DOC.game.halfWidth - RIDER_HALF_W;
+    const span = GAME.halfWidth - RIDER_HALF_W;
     const blocked = group
       .map((o) => [o.off - o.w / 2 - RIDER_HALF_W, o.off + o.w / 2 + RIDER_HALF_W])
       .sort((a, b) => a[0] - b[0]);
@@ -254,7 +266,7 @@ describe("the shipped corridor", () => {
     /* The whole promise of "every group leaves a gap" is that the run is
        finishable. This is the end-to-end version of that assertion: it will
        cost hits, but it must terminate at the finish line. */
-    const ride = createRide({ route: DOC.route, game: DOC.game });
+    const ride = createRide({ route: DOC.route, game: GAME });
     const seconds = run(ride, { maxSeconds: 600 });
     assert.equal(ride.finished, true, `the run did not finish in ${seconds.toFixed(0)} s`);
     assert.ok(Math.abs(ride.s - DOC.route.metres) < 0.01, "finished somewhere other than the end");
@@ -269,7 +281,7 @@ describe("the shipped corridor", () => {
        a bug in the driver, not the game, and the point of this test is the
        game. */
     const byS = new Map();
-    for (const o of DOC.game.obstacles) {
+    for (const o of GAME.obstacles) {
       if (!byS.has(o.s)) byS.set(o.s, []);
       byS.get(o.s).push(o);
     }
@@ -281,7 +293,7 @@ describe("the shipped corridor", () => {
       plan.set(s, gap.centre);
     }
 
-    const ride = createRide({ route: DOC.route, game: DOC.game });
+    const ride = createRide({ route: DOC.route, game: GAME });
     run(ride, {
       maxSeconds: 600,
       keysAt: (s) => {
@@ -293,7 +305,7 @@ describe("the shipped corridor", () => {
       },
     });
     assert.equal(ride.hits, 0, `a clean line still hit ${ride.hits} things`);
-    assert.ok(ride.clock() <= DOC.game.par,
-      `a clean run took ${ride.clock().toFixed(1)} s against a par of ${DOC.game.par} s`);
+    assert.ok(ride.clock() <= GAME.par,
+      `a clean run took ${ride.clock().toFixed(1)} s against a par of ${GAME.par} s`);
   });
 });

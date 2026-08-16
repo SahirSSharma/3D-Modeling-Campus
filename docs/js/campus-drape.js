@@ -134,7 +134,8 @@ export function solids() {
         const geo = new THREE.BufferGeometry();
         geo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
         geo.computeVertexNormals();
-        group.add(new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ color: colour })));
+        group.add(new THREE.Mesh(geo,
+          new THREE.MeshStandardMaterial({ color: colour, roughness: 0.95 })));
       }
     },
   };

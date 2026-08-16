@@ -398,7 +398,7 @@ export function createAthletics(scene, { campus, heightAt, massInfo }) {
   if (!spec) return null;
   const c = ATHLETICS_COLORS;
   const group = new THREE.Group();
-  const opaque = new THREE.MeshLambertMaterial({ vertexColors: true });
+  const opaque = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9 });
 
   /* -------- Main Gym: eleven-ish vaults over a shadowed deck -------- */
   const gym = spec.gym;
@@ -487,8 +487,10 @@ export function createAthletics(scene, { campus, heightAt, massInfo }) {
     }
     const waterGeo = water.build();
     if (waterGeo) {
-      poolMesh = new THREE.Mesh(waterGeo, new THREE.MeshLambertMaterial({
+      poolMesh = new THREE.Mesh(waterGeo, new THREE.MeshStandardMaterial({
         vertexColors: true, transparent: true, opacity: 0.88,
+        /* Pool water is the one smooth surface here — it takes the sky. */
+        roughness: 0.25,
       }));
       group.add(poolMesh);
     }

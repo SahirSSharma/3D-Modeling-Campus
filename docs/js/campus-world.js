@@ -31,6 +31,7 @@
 // Nothing here knows anything about walking or gameplay. It makes the world and
 // hands back a height field; campus-walk.js moves through it.
 import * as THREE from "../vendor/three/three.module.min.js";
+import { RoomEnvironment } from "../vendor/three/addons/environments/RoomEnvironment.js";
 import { prepareGround } from "./campus-ground.js";
 import {
   makeHeightSampler, makeSurfaceSampler, chunkGrid, STEP, axisSamples,
@@ -62,7 +63,7 @@ const WATER_COLOR = 0x4a80a8; // real water reads deeper blue than a swatch
 const DRAPE = overlayLift("ground");
 const drapeMaterial = (color) =>
   applyOverlayDepth(
-    new THREE.MeshLambertMaterial({ color, side: THREE.DoubleSide }),
+    new THREE.MeshStandardMaterial({ color, side: THREE.DoubleSide, roughness: 0.95 }),
     "ground"
   );
 
@@ -246,8 +247,8 @@ export function createTerrain(scene, lidar, colors, region) {
     }
     geo.setIndex(index);
     const material = colorAt && rgb.length === position.length
-      ? new THREE.MeshLambertMaterial({ vertexColors: true })
-      : new THREE.MeshLambertMaterial({ color: GROUND_COLOR });
+      ? new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 })
+      : new THREE.MeshStandardMaterial({ color: GROUND_COLOR, roughness: 0.95 });
     const mesh = new THREE.Mesh(geo, material);
     mesh.userData.chunk = chunk;
     chunkMeshes.push(mesh);
@@ -353,7 +354,7 @@ function buildApron(terrain, h) {
   geo.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
   return new THREE.Mesh(
     geo,
-    new THREE.MeshLambertMaterial({ color: GROUND_COLOR, side: THREE.DoubleSide })
+    new THREE.MeshStandardMaterial({ color: GROUND_COLOR, side: THREE.DoubleSide, roughness: 0.95 })
   );
 }
 
@@ -449,6 +450,19 @@ export function createScene() {
   scene.add(fill);
 
   return scene;
+}
+
+/* Image-based lighting for the PBR materials: a PMREM-filtered neutral studio
+   environment, kept WEAK. The hemisphere + sun above carry the measured
+   November light; the environment's job is only the specular life a
+   MeshStandardMaterial cannot get from analytic lights — window glass, rails
+   and wet-look pavement picking up a sky instead of rendering dead black.
+   Look, not geometry, and deliberately not a photograph of anywhere. */
+export function applyEnvironment(renderer, scene) {
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  scene.environmentIntensity = 0.22;
+  pmrem.dispose();
 }
 
 /* The measured sky: zenith #3a7cc8 falling to #b5d2e6 at the horizon, with
@@ -686,9 +700,10 @@ export function createSurfaces(scene, campus, heightAt, arcgis, colors) {
       for (let i = 1; i < normals.length; i += 3) normals[i] = 1;
       geo.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
       if (!matByKind.has(kind)) {
-        const base = new THREE.MeshLambertMaterial({
+        const base = new THREE.MeshStandardMaterial({
           vertexColors: true,
           side: THREE.DoubleSide,
+          roughness: 0.95,
           /* Only pavement is scored; lawns and water read as surfaces, not tiles. */
           ...(kind === "walk" || kind === "plaza" ? { map: scoring } : {}),
         });
@@ -864,8 +879,8 @@ export function createTrees(scene, lidar, heightAt, zoneSources = {}) {
     const leafGeo = new THREE.IcosahedronGeometry(1, form === "umbrella" ? 1 : 0);
     /* White base; the real colour rides per instance so one mesh can carry a
        stressed canyon eucalyptus and a lush lawn one. */
-    const trunkMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
-    const leafMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+    const trunkMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.95 });
+    const leafMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.95 });
     const trunks = new THREE.InstancedMesh(trunkGeo, trunkMat, list.length);
     const leaves = new THREE.InstancedMesh(leafGeo, leafMat, list.length);
 
@@ -909,15 +924,15 @@ export function createWalker() {
   const g = new THREE.Group();
   const torso = new THREE.Mesh(
     new THREE.BoxGeometry(0.46, 0.66, 0.28),
-    new THREE.MeshLambertMaterial({ color: 0xffcd00 })
+    new THREE.MeshStandardMaterial({ color: 0xffcd00, roughness: 0.8 })
   );
   torso.position.y = 1.16;
   const head = new THREE.Mesh(
     new THREE.SphereGeometry(0.19, 12, 10),
-    new THREE.MeshLambertMaterial({ color: 0xc98d63 })
+    new THREE.MeshStandardMaterial({ color: 0xc98d63, roughness: 0.8 })
   );
   head.position.y = 1.62;
-  const legMat = new THREE.MeshLambertMaterial({ color: 0x3b4a63 });
+  const legMat = new THREE.MeshStandardMaterial({ color: 0x3b4a63, roughness: 0.8 });
   const legs = [];
   for (const dx of [-0.13, 0.13]) {
     const leg = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.8, 0.2), legMat);

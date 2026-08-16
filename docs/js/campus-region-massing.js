@@ -739,10 +739,11 @@ export function createRegionMassing(
      built. */
   const anyRoofColour = p.buildings.some((b) => b.roofColor);
   const materials = {
-    wall: new THREE.MeshLambertMaterial({ color: REGION_WALL_COLOR }),
-    roof: new THREE.MeshLambertMaterial({
+    wall: new THREE.MeshStandardMaterial({ color: REGION_WALL_COLOR, roughness: 0.9 }),
+    roof: new THREE.MeshStandardMaterial({
       color: anyRoofColour ? 0xffffff : REGION_ROOF_COLOR,
       vertexColors: anyRoofColour,
+      roughness: 0.95,
     }),
     roofVertexColors: anyRoofColour,
   };
@@ -754,7 +755,9 @@ export function createRegionMassing(
   counts.drawCalls += built.meshes.length * 2;
 
   const roadMat = applyOverlayDepth(
-    new THREE.MeshLambertMaterial({ color: REGION_ROAD_COLOR, side: THREE.DoubleSide }), "pad");
+    new THREE.MeshStandardMaterial({
+      color: REGION_ROAD_COLOR, side: THREE.DoubleSide, roughness: 0.95,
+    }), "pad");
   const roads = roadMeshes(p.roads, heightAt, roadMat);
   for (const m of roads.meshes) group.add(m);
   counts.roadChunks = roads.meshes.length;
@@ -762,7 +765,9 @@ export function createRegionMassing(
   counts.drawCalls += roads.meshes.length;
 
   const waterMat = applyOverlayDepth(
-    new THREE.MeshLambertMaterial({ color: REGION_WATER_COLOR, side: THREE.DoubleSide }), "ground");
+    new THREE.MeshStandardMaterial({
+      color: REGION_WATER_COLOR, side: THREE.DoubleSide, roughness: 0.3,
+    }), "ground");
   const water = waterMeshes(p.water, heightAt, waterMat);
   for (const m of water.meshes) group.add(m);
   counts.waterChunks = water.meshes.length;
