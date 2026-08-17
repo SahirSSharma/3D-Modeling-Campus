@@ -42,6 +42,7 @@ import { createPhotoRevelle } from "./campus-photo-revelle.js";
 import { createPhotoRady } from "./campus-photo-rady.js";
 import { createPhotoErc } from "./campus-photo-erc.js";
 import { createPhotoKeeling } from "./campus-photo-keeling.js";
+import { createPhotoGalbraith } from "./campus-photo-galbraith.js";
 import {
   createExplore, scaleAtmosphere, stepSpeed, EYE, sliderToSpeed, speedToSlider,
   MAX_SPEED_MPS,
@@ -656,6 +657,7 @@ export async function boot({ report } = {}) {
        the datum campus-massing.js used for the walls they float off — and
        ground items on surfaceAt, or they sink under the drawn terrain. */
     photoZone.add(createPhotoKeeling(null, { photo: data.photo, heightAt, surfaceAt }).group);
+    photoZone.add(createPhotoGalbraith(null, { photo: data.photo, heightAt, surfaceAt }).group);
   }
   scene.add(photoZone);
 

@@ -4,7 +4,7 @@
 // (2006-2026), not off LiDAR or OSM. Photos decide WHAT EXISTS and HOW IT
 // LOOKS; the measured data keeps deciding WHERE and HOW BIG. So every one of
 // these things is anchored to something surveyed — the arcade to York's
-// measured west face, the coffered soffit to Galbraith's measured north face,
+// measured west face, the stair towers to Urey's measured plaza face,
 // the breezeway to the real gap between the Bonner and Mayer rings, the
 // paving to the measured Revelle Plaza polygon — and nothing here is ever
 // read back by a measured consumer.
@@ -389,78 +389,6 @@ function buildYork(section, group, ground) {
   ));
 }
 
-/* ------------------------------------------------- Galbraith Hall, north */
-
-function buildGalbraith(section, group, ground) {
-  const { colors } = section;
-  const g = section.systems.galbraith;
-  const base = ground((g.x0 + g.x1) / 2, g.faceZ);
-  const width = g.x1 - g.x0;
-  const soffitY = base + g.height - g.slab;
-
-  /* The waffle slab that oversails the facade, and the rib lattice under it
-     that is the reason Galbraith wears `eggcrate`. The ribs are the geometry;
-     the recesses are the gaps between them. */
-  const overhangMid = g.faceZ - g.overhang / 2;
-  const plate = new THREE.Mesh(
-    new THREE.BoxGeometry(width, 0.18, g.overhang), concrete(colors.galbraithSoffit)
-  );
-  plate.position.set((g.x0 + g.x1) / 2, base + g.height - 0.09, overhangMid);
-  plate.castShadow = true;
-  plate.receiveShadow = true;
-  group.add(plate);
-
-  const acrossRibs = [];
-  for (let x = g.x0; x <= g.x1 + 0.01; x += g.coffer) acrossRibs.push(x);
-  group.add(instanced(
-    new THREE.BoxGeometry(g.ribWidth, g.slab - 0.18, g.overhang), concrete(colors.galbraithSoffit),
-    acrossRibs, (x) => ({ x, y: soffitY + (g.slab - 0.18) / 2, z: overhangMid })
-  ));
-  const longRibs = [];
-  for (let d = 0; d <= g.overhang + 0.01; d += g.coffer) longRibs.push(g.faceZ - d);
-  group.add(instanced(
-    new THREE.BoxGeometry(width, g.slab - 0.18, g.ribWidth), concrete(colors.galbraithSoffit),
-    longRibs, (z) => ({ x: (g.x0 + g.x1) / 2, y: soffitY + (g.slab - 0.18) / 2, z })
-  ));
-
-  /* Tapered columns, flaring WIDER toward the head — the inverted taper that
-     is the single most misread thing about this facade. Nine bays. */
-  const colZ = g.faceZ - g.columnStandoff;
-  const colXs = [];
-  for (let i = 0; i < g.columns; i++) colXs.push(g.x0 + (width * i) / (g.columns - 1));
-  const colH = g.height - g.slab;
-  const col = new THREE.CylinderGeometry(g.columnHead, g.columnBase, colH, 4);
-  col.rotateY(Math.PI / 4);
-  group.add(instanced(col, concrete(colors.galbraithColumn), colXs,
-    (x) => ({ x, y: base + colH / 2, z: colZ })));
-
-  /* Dark curtain wall set well back behind them. Double-sided because it is
-     a single plane and the plaza is on its -z side: a default plane faces +z
-     and would be back-face culled from exactly where you stand to look at it. */
-  const pane = new THREE.Mesh(
-    new THREE.PlaneGeometry(width, g.glassTop - g.glassBase),
-    Object.assign(glass(colors.galbraithGlass), { side: THREE.DoubleSide })
-  );
-  pane.position.set((g.x0 + g.x1) / 2, base + (g.glassBase + g.glassTop) / 2, g.faceZ - g.glassStandoff);
-  group.add(pane);
-
-  /* The mid-level circulation balcony: thin silver pickets and a top rail. */
-  const pickets = [];
-  for (let x = g.x0; x <= g.x1 + 0.01; x += g.picket) pickets.push(x);
-  const railZ = g.faceZ - g.railStandoff;
-  group.add(instanced(
-    new THREE.BoxGeometry(0.02, g.railHeight, 0.02), painted(colors.rail), pickets,
-    (x) => ({ x, y: base + g.railY + g.railHeight / 2, z: railZ })
-  ));
-  const rail = new THREE.Mesh(new THREE.BoxGeometry(width, 0.05, 0.05), painted(colors.rail));
-  rail.position.set((g.x0 + g.x1) / 2, base + g.railY + g.railHeight, railZ);
-  group.add(rail);
-  const deck = new THREE.Mesh(new THREE.BoxGeometry(width, 0.3, g.railStandoff), concrete(colors.galbraithColumn));
-  deck.position.set((g.x0 + g.x1) / 2, base + g.railY - 0.15, g.faceZ - g.railStandoff / 2);
-  deck.castShadow = true;
-  group.add(deck);
-}
-
 /* ------------------------------------------------ Urey Hall, plaza corner */
 
 function buildUrey(section, group, ground) {
@@ -601,7 +529,6 @@ export function createPhotoRevelle(scene, { photo, heightAt, surfaceAt } = {}) {
   buildPaving(section, group, ground);
   buildFurniture(section, group, ground);
   buildYork(section, group, ground);
-  buildGalbraith(section, group, ground);
   buildUrey(section, group, ground);
   buildBreezeway(section, group, ground);
 

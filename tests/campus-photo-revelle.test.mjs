@@ -75,11 +75,6 @@ function systemPoints() {
   }
   const f = s.yorkFins;
   for (let z = f.z0; z <= f.z1; z += f.spacing) out.push([f.faceX - f.depth / 2 + 0.05, z]);
-  const g = s.galbraith;
-  for (let x = g.x0; x <= g.x1; x += 2) {
-    out.push([x, g.faceZ - g.columnStandoff]);
-    out.push([x, g.faceZ - g.overhang]);
-  }
   const u = s.ureyCorner;
   for (let x = u.slabA[0]; x <= u.slabB[1]; x += 1) out.push([x, u.faceZ + u.standoff]);
   const b = s.breezeway;
@@ -208,7 +203,6 @@ test("every architectural system is anchored to a measured ring", () => {
 
   assert.equal(s.yorkArcade.faceX, minX(ringOf("York Hall")), "the arcade must sit on York's measured west face");
   assert.equal(s.yorkFins.faceX, s.yorkArcade.faceX, "the fins ride the same face as the arcade");
-  assert.equal(s.galbraith.faceZ, minZ(ringOf("Galbraith Hall")), "the soffit must sit on Galbraith's measured north face");
   assert.equal(s.ureyCorner.faceZ, maxZ(ringOf("Urey Hall")), "the stair towers must sit on Urey's measured plaza face");
   assert.equal(s.breezeway.z0, maxZ(ringOf("Bonner Hall")), "the breezeway must start at Bonner's measured face");
 
