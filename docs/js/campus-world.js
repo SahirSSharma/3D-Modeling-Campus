@@ -853,9 +853,15 @@ export function createTrees(scene, lidar, heightAt, zoneSources = {}) {
     tall: [0.16, 0.26], umbrella: [0.3, 0.44], round: [0.22, 0.34],
   };
 
-  /* Bucket instances by form first — InstancedMesh needs its count up front. */
+  /* Bucket instances by form first — InstancedMesh needs its count up front.
+     skipKeys ("x,z" exactly as the trunk appears in campus-lidar.json) names
+     trunks a photo module re-skins with a full model; drawing the blob too
+     would put two trees on one measured stem. The trunk stays measured — only
+     its rendering moves. */
+  const skip = zoneSources.skipKeys;
   const byForm = { tall: [], umbrella: [], round: [] };
   for (const t of trees) {
+    if (skip && skip.has(`${t[0]},${t[1]}`)) continue;
     const species = treeSpecies(t[0], t[1], t[2], t[3]);
     byForm[SPECIES[species].form].push({ t, species });
   }

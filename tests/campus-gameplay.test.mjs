@@ -157,8 +157,12 @@ describe("spawn altitude and speed cap are the promised numbers", () => {
        hardcoded copy cannot drift: boot must enter at Argo and set the hover
        from the constant. */
     const src = readFileSync(path.join(ROOT, "docs/js/campus-walk.js"), "utf8");
-    assert.match(src, /explore\.enterAt\(argo\.x,\s*argo\.z/,
-      "boot must spawn free roam at Argo Hall");
+    /* Since the game pause (2026-08-17) the spawn point is per-mode, but the
+       default — free roam — must still fall through to Argo Hall. */
+    assert.match(src, /const at = SPAWNS\[mode\] \|\| argo/,
+      "free roam must fall through to the Argo Hall spawn");
+    assert.match(src, /explore\.enterAt\(at\.x,\s*at\.z/,
+      "boot must spawn at the mode's spawn point");
     assert.match(src, /explore\.hover\s*=\s*SPAWN_ALTITUDE_M/,
       "spawn height must come from SPAWN_ALTITUDE_M, not a copy of it");
   });

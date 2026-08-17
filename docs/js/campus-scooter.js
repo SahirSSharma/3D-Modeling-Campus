@@ -48,6 +48,7 @@ import { createPhotoEighth } from "./campus-photo-eighth.js";
 import { createPhotoRevelle } from "./campus-photo-revelle.js";
 import { createPhotoKeeling } from "./campus-photo-keeling.js";
 import { createPhotoGalbraith } from "./campus-photo-galbraith.js";
+import { createPhotoPlaza } from "./campus-photo-plaza.js";
 
 /* The corridors this module can boot, keyed by the ?mode= that asks for one.
    Same renderer, same ride, same everything — a different cut of the same
@@ -1328,8 +1329,12 @@ export async function boot({ report, mode = "scooter" } = {}) {
 
   rep.phase("trees");
   await rep.paint();
+  /* Same rule as free roam: trunks the plaza photo module re-skins are
+     skipped here or each draws twice. */
+  const treeSkipKeys = doc.photo?.plaza?.treeOverrides?.skipMeasuredKeys;
   const trees = world.createTrees(scene, doc.lidar, heightAt, {
     campus3d: doc.campus, arcgis: doc.arcgis, markings: doc.markings,
+    ...(treeSkipKeys ? { skipKeys: new Set(treeSkipKeys) } : {}),
   });
   trees.group?.traverse((o) => { if (o.isMesh) o.castShadow = true; });
 
@@ -1389,6 +1394,11 @@ export async function boot({ report, mode = "scooter" } = {}) {
     landmarksGroup = createLandmarks(scene, doc.landmarks, {
       origin: doc.campus.origin,
       heightAt: surfaceAt,
+      /* The plaza photo fountain replaces the landmark ring's water at the
+         same surveyed point; the flagpole stands. */
+      ...(doc.photo?.plaza?.fountain?.replacesLandmark
+        ? { waterReplacedBy: new Set([doc.photo.plaza.fountain.replacesLandmark]) }
+        : {}),
       roofTopOf: (name) => {
         let best = null;
         for (const [n, entry] of built.info) {
@@ -1412,6 +1422,9 @@ export async function boot({ report, mode = "scooter" } = {}) {
     /* Galbraith fronts Revelle Plaza ~30 m off the line — the run looks
        straight at its colonnade. Same two-sampler contract as Keeling. */
     photoZone.add(createPhotoGalbraith(null, { photo: doc.photo, heightAt, surfaceAt }).group);
+    /* The plaza landscape rides the corridor too — the run crosses Revelle
+       Plaza through the middle of it. Ground module — surfaceAt. */
+    photoZone.add(createPhotoPlaza(null, { photo: doc.photo, heightAt, surfaceAt }).group);
     photoZone.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   }
   scene.add(photoZone);

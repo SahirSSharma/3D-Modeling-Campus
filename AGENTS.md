@@ -69,6 +69,18 @@ inherits this project's gates instead of only the global operating model in
   overlayLift("pad")`, because what reads as ground is a lifted decal. Obstacles
   are not cosmetic here: `scooter-ride.js` clears a hop with `ride.y > o.h`, so
   a second datum makes that comparison lie.
+- **THE GAME IS PAUSED (Sahir, 2026-08-17).** The world is the product until
+  Sahir is satisfied with it; then the scooter run (and a walking mode) come
+  back. Concretely: every tab — `?mode=campus`, `?mode=scooter`,
+  `?mode=staging` — boots `campus-walk.js` on the FULL campus and differs only
+  in spawn point (`SPAWNS` in campus-walk.js; staging spawns over the active
+  zone — move it when the zone moves). `campus-scooter.js` is loaded by no
+  tab and gets NO new wiring; new photo modules wire into campus-walk only.
+  Push gates while paused: `npm test` + `npm run check` + the visual audit
+  (scripts/visual-audit.mjs + critic agents). `npm run verify:ride` is
+  suspended — do not run it per push, do not delete it. Corridor files keep
+  being rebuilt by `npm run check`'s builder gates so the data stays honest
+  for the game's return.
 - **Work in progress goes to `?mode=staging`, not to the run.** There are two
   corridors and `scripts/build-corridor.mjs` builds both from one `ROUTES`
   table: `corridor-eighth-peterson.json` is the run people ride, and
@@ -105,7 +117,17 @@ inherits this project's gates instead of only the global operating model in
   they cover the same thing. It all lives in `campus-photo-detail.json`,
   labelled with sources and epoch; the corridor builder carries it VERBATIM
   (`--check` fails on one changed byte) and nothing measured may ever read
-  from it. No photo for an item → it stays unbuilt.
+  from it.
+- **The ultra standard (2026-08-17).** A treated building is never partially
+  detailed — every face it touches ships complete or the treatment does not
+  ship. Per face, climb the ladder: photos → Street View → drone/video →
+  planning docs/drawings → archives. Only when every rung fails, extend the
+  same building's sourced pattern across the gap, labelled `[estimated]` in
+  `campus-photo-detail.json` (third invented tier, same quarantine, records
+  which pattern it extends, replaced when a real source appears). Nothing
+  hovers or intersects — everything seats on `surfaceAt` or its carrying
+  structure. Texture maps are code-generated, never photo/satellite pixels;
+  sourced colours still feed the materials.
 
 ## Verification
 

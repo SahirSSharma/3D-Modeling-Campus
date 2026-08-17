@@ -33,17 +33,17 @@
       <button type="button" class="mode-card" data-mode="scooter">
         <span class="mode-art mode-art-scooter" aria-hidden="true"></span>
         <b>Eighth &rarr; Peterson</b>
-        <i>One route, 1,026 m, on a scooter. Off the Eighth College courts, north
-           through the fleet, past 64 Degrees, into Revelle Plaza and on to Peterson.
-           A clean ride on the measured campus.</i>
-        <em>~1.5 MB &middot; the run</em>
+        <i>The route corridor, viewed from over the Eighth College courts. The
+           scooter run is paused while the world gets built — this tab starts
+           you where the ride begins.</i>
+        <em>~10 MB &middot; the corridor, on hold</em>
       </button>
       <button type="button" class="mode-card mode-card-staging" data-mode="staging">
         <span class="mode-art mode-art-staging" aria-hidden="true"></span>
         <b>The workbench <span class="mode-tag">staging</span></b>
-        <i>The same clean ride, one build ahead. Whatever is being built next lands
-           here first. Expect it to be broken sometimes.</i>
-        <em>~1.5 MB &middot; work in progress</em>
+        <i>Starts you over whatever is being built right now. Whatever lands next
+           lands here first. Expect it to be rough sometimes.</i>
+        <em>~10 MB &middot; work in progress</em>
       </button>
     </div>
   </div>
@@ -188,19 +188,17 @@
   const MODES = ['campus', 'scooter', 'staging'];
   const mode = await chooseMode();
   document.body.classList.add(`mode-${mode}`);
-  /* Everything that is not free roam is a route, and the two routes want the
-     same chrome hidden. One class for the family, one for the specific mode. */
-  if (mode !== 'campus') document.body.classList.add('mode-ride');
+  /* The game is paused (2026-08-17): every mode is a world view on the same
+     free-roam engine, so no tab wants the ride chrome. The scooter machinery
+     stays in the repo, dormant, for when the world is finished. */
 
   const report = createBootScreen();
   try {
     report.phase('code');
-    /* Both corridor modes are the same module on a different cut of the
-       campus, so the mode goes through to boot() rather than picking a file
-       here — campus-scooter.js owns which corridor each one loads. */
-    const { boot } = await import(
-      mode === 'campus' ? './js/campus-walk.js' : './js/campus-scooter.js'
-    );
+    /* Game paused: every mode boots the free-roam engine on the FULL campus;
+       the mode only picks where the camera starts (campus-walk.js SPAWNS).
+       campus-scooter.js is not loaded by any tab until the game returns. */
+    const { boot } = await import('./js/campus-walk.js');
     const walk = await boot({ report, mode });
     await report.finish();
     wireDevPanel(walk);

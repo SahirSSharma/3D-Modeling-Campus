@@ -43,6 +43,7 @@ import { createPhotoRady } from "./campus-photo-rady.js";
 import { createPhotoErc } from "./campus-photo-erc.js";
 import { createPhotoKeeling } from "./campus-photo-keeling.js";
 import { createPhotoGalbraith } from "./campus-photo-galbraith.js";
+import { createPhotoPlaza } from "./campus-photo-plaza.js";
 import {
   createExplore, scaleAtmosphere, stepSpeed, EYE, sliderToSpeed, speedToSlider,
   MAX_SPEED_MPS,
@@ -413,7 +414,7 @@ async function download(rep) {
   return out;
 }
 
-export async function boot({ report } = {}) {
+export async function boot({ report, mode = "campus" } = {}) {
   const rep = report || nullReporter();
 
   /* ---------------------------------------------------------------- data */
@@ -571,8 +572,12 @@ export async function boot({ report } = {}) {
   await rep.paint();
   /* Crown sizing needs the sports-pad facilities to compute clearance —
      optional, and createTrees degrades to no crown-intrusion cap without it. */
+  /* The plaza photo module re-skins named trunks with full tree models —
+     skipKeys keeps the blob renderer off those stems so no tree draws twice. */
+  const skipKeys = data.photo?.plaza?.treeOverrides?.skipMeasuredKeys;
   const trees = world.createTrees(scene, lidar, heightAt, {
     campus3d: campus, arcgis, markings,
+    ...(skipKeys ? { skipKeys: new Set(skipKeys) } : {}),
   });
   rep.facts(geometryFacts({ trees: trees.group }));
   await rep.paint();
@@ -627,6 +632,11 @@ export async function boot({ report } = {}) {
     landmarksGroup = createLandmarks(scene, landmarkData, {
       origin: campus.origin,
       heightAt,
+      /* The plaza photo module's fountain replaces the landmark ring fountain
+         at the same surveyed point (basin+jet only — the flagpole stands). */
+      ...(data.photo?.plaza?.fountain?.replacesLandmark
+        ? { waterReplacedBy: new Set([data.photo.plaza.fountain.replacesLandmark]) }
+        : {}),
       /* "Jacobs Hall" must resolve to the tallest mass of the complex — the
          7-storey tower Fallen Star actually sits on — not the low wings. */
       roofTopOf: (name) => {
@@ -658,6 +668,10 @@ export async function boot({ report } = {}) {
        ground items on surfaceAt, or they sink under the drawn terrain. */
     photoZone.add(createPhotoKeeling(null, { photo: data.photo, heightAt, surfaceAt }).group);
     photoZone.add(createPhotoGalbraith(null, { photo: data.photo, heightAt, surfaceAt }).group);
+    /* The plaza landscape: ultra trees on measured trunks (the blob renderer
+       skips those keys above), the square-plinth fountain that replaces the
+       landmark ring, lawns, paving arcs, furniture. Ground module — surfaceAt. */
+    photoZone.add(createPhotoPlaza(null, { photo: data.photo, heightAt, surfaceAt }).group);
   }
   scene.add(photoZone);
 
@@ -769,6 +783,14 @@ export async function boot({ report } = {}) {
        end. */
     teleport(x, z) { explore.enterAt(x, z, explore.yaw); },
     places: () => campus.places,
+    /* The massing as the labeller sees it: name -> { x, z, topY, h, ring }.
+       Read-only, and exposed for the same reason `probe` is — `places` carries
+       a POINT, and you cannot frame a building from a point. The screenshot
+       harness (scripts/visual-audit.mjs) needs the outer ring and the roof
+       height to work out how far back to stand. Tallest mass per name, so a
+       building split across several named masses is resolved by matching the
+       names, not by reading one entry. */
+    massInfo: () => massInfo,
     /* Ground height and roof height under any point. Exposed because a roof map
        is invisible from the screen — a gap in it looks like nothing at all until
        Q sends you up at thirty metres a second over a building the sampler could
@@ -794,9 +816,18 @@ export async function boot({ report } = {}) {
   /* SPAWN: hanging SPAWN_ALTITUDE_M over Argo Hall, looking north across the
      whole campus. Free roam holds its height over the ground — nothing falls
      until you press a key — so the first frame is the surveyor's view. */
+  /* The game modes are paused (Sahir, 2026-08-17): ?mode=scooter and
+     ?mode=staging boot THIS module as world-building views of the full
+     campus, parked over the stretch each tab is about — the run's start on
+     the Eighth courts, and the workbench over the zone being built. */
+  const SPAWNS = {
+    scooter: { x: -174.5, z: 525.2 },
+    staging: { x: 38, z: 380 },
+  };
   const argo = campus.places["Argo Hall"];
-  if (argo) {
-    explore.enterAt(argo.x, argo.z, Math.PI);
+  const at = SPAWNS[mode] || argo;
+  if (at) {
+    explore.enterAt(at.x, at.z, Math.PI);
     explore.hover = SPAWN_ALTITUDE_M;
     explore.pitch = -0.35;
   }

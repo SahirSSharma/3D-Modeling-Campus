@@ -34,46 +34,71 @@
 // document's `keeling` section. Repeats are InstancedMesh: the facades alone are
 // ~14,000 instances in about a dozen draws.
 //
-// What is NOT here is in the section's `absent` array, and one entry there is
-// the whole south side: the two basketball courts and the parking lot that the
-// 2013 landscape aerials show below the South Tower have been DEMOLISHED. The
-// satellite chunks fetched 2026-08-04 show an active construction site on that
-// ground. Newest source wins on what exists, so they are not built.
+// What is NOT here is in the section's `absent` array. The south side is the
+// section's declared epoch conflict: the 2013 aerials show dark green courts,
+// the gap-closure reading of the current orthophoto shows them resurfaced
+// BLUE, and the 2026-08-04 chunks show construction shading over part of that
+// strip. Newest reading wins on appearance — the courts are built BLUE, as
+// flat decals only, and everything above the surface stays in `absent`.
+//
+// Surfaces come from the procedural material library (campus-materials.js):
+// the colours stay this section's sourced hexes, the library only supplies
+// microstructure — precast reads as sand-blasted concrete, the courtyard as
+// jointed unit paving, the dry slope as decomposed granite. Deterministic:
+// the library is seeded, and this file's own irregularity comes from `hash`.
 import * as THREE from "../vendor/three/three.module.min.js";
 import { applyOverlayDepth, OVERLAY, overlayLift } from "./campus-overlay.js";
+import { createMaterialLibrary } from "./campus-materials.js";
 
 /* Ground decals ride the overlay ladder so they paint over the measured
    terrain in a fixed order instead of z-fighting it. */
 const PAD = "pad";
 const CARPET = "carpet";
 const PAINT = "paint";
+const LOGO = "logo";
 
-const concrete = (color) =>
-  new THREE.MeshStandardMaterial({ color, roughness: 0.9, metalness: 0.0 });
+/* One material library for the whole module, created on first build. Every
+   opaque surface routes through it; the colours stay the section's hexes and
+   the library multiplies its computed variation into them. */
+let LIB = null;
+const lib = () => (LIB ??= createMaterialLibrary(THREE));
+
+/* Sand-blasted precast, cast-in-place frames, copings. */
+const concrete = (color) => lib().get("smoothConcrete", { color });
+/* Board-formed: seat walls, lawn frames, wall pilasters — the visible grain. */
+const boardformed = (color) =>
+  lib().get("boardFormedConcrete", { color, normalScale: 0.6 });
+/* FRP grating bars/fins/posts: barely metallic, warm tan stays the caller's. */
 const grating = (color) =>
-  new THREE.MeshStandardMaterial({ color, roughness: 0.7, metalness: 0.05 });
+  lib().get("metalPanel", { color, metalness: 0.12, roughness: 0.68 });
+/* Painted steel and painted mouldings. */
 const painted = (color) =>
-  new THREE.MeshStandardMaterial({ color, roughness: 0.55, metalness: 0.25 });
-const metal = (color) =>
-  new THREE.MeshStandardMaterial({ color, roughness: 0.35, metalness: 0.8 });
-const glassMat = (color) =>
-  new THREE.MeshStandardMaterial({ color, roughness: 0.12, metalness: 0.3, side: THREE.DoubleSide });
-const rock = (color) =>
-  new THREE.MeshStandardMaterial({ color, roughness: 1.0, metalness: 0.0 });
+  lib().get("metalPanel", { color, metalness: 0.35, roughness: 0.55 });
+const metal = (color) => lib().get("metalPanel", { color });
+const glassMat = (color) => lib().get("glass", { color });
+const rock = (color) => lib().get("lavaRock", { color });
+/* Plant clumps stay a plain lambert-ish standard material: the library's
+   foliage class is an alpha-cut CARD map, and cutting holes in cone/sphere
+   clump geometry would shred it. */
 const foliage = (color) =>
   new THREE.MeshStandardMaterial({ color, roughness: 0.95, metalness: 0.0 });
 
-function decal(color, rung) {
-  return applyOverlayDepth(
-    new THREE.MeshStandardMaterial({ color, roughness: 0.95, metalness: 0.0 }),
-    rung
-  );
+/**
+ * A ground decal in a named material class. `repeat` is the per-surface
+ * lever: pass the quad's world size and the class's real-world tile size and
+ * the microstructure lands at true scale (e.g. 1.2 m unit pavers).
+ */
+function decal(color, rung, cls = "smoothConcrete", repeat) {
+  return applyOverlayDepth(lib().get(cls, { color, repeat }), rung);
 }
 
 /** The aggregate screen: tan bars over open air, so it is tinted AND see-through. */
 function screen(color, openness) {
+  const maps = lib().textures("metalPanel");
   return new THREE.MeshStandardMaterial({
     color,
+    map: maps.map,
+    roughnessMap: maps.roughnessMap,
     roughness: 0.8,
     metalness: 0.05,
     transparent: true,
@@ -274,6 +299,10 @@ function collectSystemB(section, f, frame, base, bins) {
   const M = section.grid.module;
   const F = section.grid.floorToFloor;
   const { rot, length } = frame;
+  /* Rain-screen: the full panels stand PROUD of the wall (cote15_westtower),
+     with the windows and their spandrels recessed behind and between them.
+     The strong vertical shadow lines on this facade are panel edges. */
+  const proud = B.rainScreen?.proud ?? 0;
   const bayCount = Math.max(1, Math.floor(length / M));
   const pad = (length - bayCount * M) / 2;
   const uOf = (bay) => pad + bay * M;
@@ -320,7 +349,7 @@ function collectSystemB(section, f, frame, base, bins) {
       if (!isWindow) {
         bins.panels.push({
           tone: pick(tones, B.panel.seed + 2, lv, b0, frame.length),
-          ...frame.at(uc, B.standoff + B.panel.thickness / 2, y0 + bandH / 2),
+          ...frame.at(uc, B.standoff + proud - B.panel.thickness / 2, y0 + bandH / 2),
           rot,
           scale: [w, bandH, B.panel.thickness],
         });
@@ -507,10 +536,21 @@ function buildRoofs(section, group, ground, roofY, bins) {
   const { colors, roofs } = section;
   const C = roofs.coping;
 
-  /* Parapet coping: a thin square-edged cap following every ring segment. */
+  /* The 1.20 m white concrete parapet band on EVERY face (a7_topband): the
+     top of the measured height read back as fair-faced white, brighter and
+     smoother than the precast field below it, with a crisp square coping, a
+     thin shadow reveal at its base, and a slender fall-protection rail
+     standing inboard the full length of every roof edge. */
+  const PB = roofs.parapet;
   const copes = [];
+  const bands = [];
+  const reveals = [];
+  const railPosts = [];
+  const railBars = [];
   for (const key of ["north", "south", "bar"]) {
     const ring = ringOf(section, key);
+    const cx = ring.reduce((s, p) => s + p[0], 0) / ring.length;
+    const cz = ring.reduce((s, p) => s + p[1], 0) / ring.length;
     const y = roofY[key];
     for (let i = 0; i < ring.length; i++) {
       const [ax, az] = ring[i];
@@ -519,49 +559,128 @@ function buildRoofs(section, group, ground, roofY, bins) {
       if (len < 0.2) continue;
       const ux = (bx - ax) / len;
       const uz = (bz - az) / len;
+      const mx = (ax + bx) / 2;
+      const mz = (az + bz) / 2;
+      /* Outward normal for this segment: the perpendicular that points away
+         from the ring's centroid, so proud/inboard never depend on winding. */
+      let nx = uz;
+      let nz = -ux;
+      if (nx * (mx - cx) + nz * (mz - cz) < 0) { nx = -nx; nz = -nz; }
+      const rot = Math.atan2(-uz, ux);
       copes.push({
-        x: (ax + bx) / 2 + uz * (C.width / 2 - 0.05),
-        y: y + C.height / 2,
-        z: (az + bz) / 2 - ux * (C.width / 2 - 0.05),
-        rot: Math.atan2(-uz, ux),
+        x: mx, y: y + C.height / 2, z: mz, rot,
         scale: [len, C.height, C.width],
       });
+      /* Band: mostly buried in the measured wall, outer face proud PB.proud. */
+      const bandDepth = 0.4;
+      bands.push({
+        x: mx + nx * (PB.proud - bandDepth / 2),
+        y: y - PB.height / 2,
+        z: mz + nz * (PB.proud - bandDepth / 2),
+        rot,
+        scale: [len, PB.height, bandDepth],
+      });
+      reveals.push({
+        x: mx + nx * (PB.proud + 0.012),
+        y: y - PB.height + PB.revealHeight / 2,
+        z: mz + nz * (PB.proud + 0.012),
+        rot,
+        scale: [len, PB.revealHeight, 0.025],
+      });
+      /* The inboard rail: posts plus two horizontal bars, continuous. */
+      const R = PB.rail;
+      const rx = mx - nx * R.inset;
+      const rz = mz - nz * R.inset;
+      const n = Math.max(1, Math.round(len / R.postSpacing));
+      for (let p = 0; p <= n; p++) {
+        const u = (p / n - 0.5) * (len - 0.3);
+        railPosts.push({
+          x: rx + ux * u, y: y + R.height / 2, z: rz + uz * u, rot,
+          scale: [R.bar, R.height, R.bar],
+        });
+      }
+      for (const h of [R.height, R.height * 0.55]) {
+        railBars.push({
+          x: rx, y: y + h, z: rz, rot,
+          scale: [len - 0.3, R.bar, R.bar],
+        });
+      }
     }
   }
-  group.add(instanced(new THREE.BoxGeometry(1, 1, 1), concrete(colors.parapetCoping), copes,
-    (it) => it));
+  const unitBox = new THREE.BoxGeometry(1, 1, 1);
+  group.add(instanced(unitBox, concrete(colors.parapetWhite), copes, (it) => it));
+  group.add(instanced(unitBox, concrete(colors.parapetWhite), bands, (it) => it));
+  group.add(instanced(unitBox, concrete(colors.gallerySoffit), reveals, (it) => it));
+  group.add(instanced(unitBox, painted(colors.railSteel), railPosts, (it) => it));
+  group.add(instanced(unitBox, painted(colors.railSteel), railBars, (it) => it));
+  bins.counts.parapetRail = railPosts.length;
 
-  /* PV: low-tilt rows in two banks with a yellow service walkway between,
-     inset from the measured roof. Row count follows the roof, not a count in
-     the photograph. */
+  /* PV: low ballasted tilt racks directly ON the tower membranes — the
+     earlier canopy was invented and is gone. Single-module landscape rows
+     parallel to each tower's long axis, all tilted the same way, split into
+     two blocks by a cross service walkway, on slender legs over pale ballast
+     trays, inset from the parapet. Row counts and clips are DATA; the clips
+     keep hardware off the notch at each tower's east end, where the bounding
+     box oversails the measured ring. */
   const P = roofs.pv;
+  const sin = Math.sin(P.tilt);
+  const cos = Math.cos(P.tilt);
+  const backLegH = P.lowEdge + P.panel[1] * sin;
   const panels = [];
+  const legs = [];
+  const trays = [];
   const walks = [];
   for (const bank of P.banks) {
     const bb = bboxOf(ringOf(section, bank.roof));
     const y = roofY[bank.roof];
-    const x0 = bb.x0 + bank.inset;
-    const x1 = bb.x1 - bank.inset;
-    const z0 = bb.z0 + bank.inset;
-    const z1 = bb.z1 - bank.inset;
-    const gapZ = (z1 - z0) / (bank.rows * 2 + 1);
-    for (let side = 0; side < 2; side++) {
-      for (let r = 0; r < bank.rows; r++) {
-        const z = z0 + gapZ * (side * (bank.rows + 1) + r + 0.5);
-        for (let x = x0 + P.panel[0] / 2; x <= x1 - P.panel[0] / 2; x += P.panel[0] + 0.06) {
-          panels.push({ x, y: y + P.postHeight + 0.05, z, rotX: -P.tilt });
+    const x0 = bb.x0 + P.inset;
+    const x1 = bb.x1 - P.inset;
+    const z0 = bb.z0 + P.inset;
+    const z1 = bb.z1 - P.inset;
+    const zc = (z0 + z1) / 2;
+    const xm = (x0 + x1) / 2;
+    for (let r = 0; r < bank.rows; r++) {
+      const z = zc + (r - (bank.rows - 1) / 2) * P.rowPitch;
+      /* Clip the row's x-extent off any declared notch it crosses. */
+      let rx1 = x1;
+      for (const c of bank.clips || []) {
+        if (z + P.panel[1] / 2 > c.z0 && z - P.panel[1] / 2 < c.z1) {
+          rx1 = Math.min(rx1, c.x1 - 0.4);
+        }
+      }
+      for (const [bx0, bx1] of [
+        [x0, xm - P.walkway / 2],
+        [xm + P.walkway / 2, rx1],
+      ]) {
+        for (let x = bx0 + P.panel[0] / 2; x <= bx1 - P.panel[0] / 2; x += P.panel[0] + 0.06) {
+          /* Panel centre height: low (south) edge at lowEdge, tilted up
+             toward the north so the face looks south. */
+          panels.push({
+            x, z,
+            y: y + P.lowEdge + (P.panel[1] / 2) * sin + 0.04,
+            rotX: P.tilt,
+          });
+          for (const side of [-1, 1]) {
+            const lx = x + side * P.panel[0] * 0.4;
+            /* Back (north, -z) legs carry the high edge; front the low. */
+            for (const [dz, h] of [[-P.panel[1] * 0.42 * cos, backLegH], [P.panel[1] * 0.42 * cos, P.lowEdge]]) {
+              legs.push({ x: lx, y: y + h / 2 + 0.06, z: z + dz, scale: [0.05, h, 0.05] });
+              trays.push({ x: lx, y: y + P.ballastTray[1] / 2, z: z + dz, scale: P.ballastTray });
+            }
+          }
         }
       }
     }
-    walks.push({ x: (x0 + x1) / 2, y, z: z0 + gapZ * (bank.rows + 0.5), w: x1 - x0, d: P.walkway });
-    walks.push({ x: (x0 + x1) / 2, y, z: z0 - 0.6, w: x1 - x0, d: P.walkway });
-    walks.push({ x: (x0 + x1) / 2, y, z: z1 + 0.6, w: x1 - x0, d: P.walkway });
+    const span = bank.rows * P.rowPitch + 0.8;
+    /* The cross service walkway between the two blocks, plus a connector
+       toward the plant end — yellow paint on the membrane. */
+    walks.push({ x: xm, y, z: zc, w: P.walkway, d: span });
+    walks.push({ x: (xm + x1) / 2, y, z: zc + (bank.rows % 2 === 0 ? P.rowPitch / 2 : 0), w: x1 - xm, d: P.walkway });
   }
-  group.add(instanced(new THREE.BoxGeometry(P.panel[0], 0.06, P.panel[1]), painted(colors.pvPanel),
+  group.add(instanced(new THREE.BoxGeometry(P.panel[0], 0.05, P.panel[1]), painted(colors.pvPanel),
     panels, (it) => it));
-  group.add(instanced(new THREE.BoxGeometry(P.panel[0] - 0.2, P.postHeight, 0.06),
-    metal(colors.pvFrame), panels,
-    (it) => ({ x: it.x, y: it.y - P.postHeight / 2 - 0.05, z: it.z })));
+  group.add(instanced(unitBox, metal(colors.pvFrame), legs, (it) => it));
+  group.add(instanced(unitBox, concrete(colors.ballastTray), trays, (it) => it));
   for (const w of walks) {
     const mesh = new THREE.Mesh(quad(w.w, w.d), decal(colors.walkYellow, PAINT));
     mesh.position.set(w.x, w.y + 0.03, w.z);
@@ -569,17 +688,22 @@ function buildRoofs(section, group, ground, roofY, bins) {
     group.add(mesh);
   }
 
-  /* Mechanical penthouses and the stair overrun. */
+  /* Mechanical penthouses, two per tower: the cream stair-and-lift overrun
+     and the lower grey plant box (ls_004, ls_006). */
   const houses = roofs.penthouses.map((p) => {
     const bb = bboxOf(ringOf(section, p.roof));
     return {
+      kind: p.kind,
       x: bb.x0 + (bb.x1 - bb.x0) * p.u,
       y: roofY[p.roof] + p.size[1] / 2,
       z: bb.z0 + (bb.z1 - bb.z0) * p.v,
       scale: p.size,
     };
   });
-  group.add(instanced(new THREE.BoxGeometry(1, 1, 1), concrete(colors.penthouse), houses, (it) => it));
+  group.add(instanced(unitBox, concrete(colors.penthouse),
+    houses.filter((h) => h.kind !== "plant"), (it) => it));
+  group.add(instanced(unitBox, metal(colors.plantBox),
+    houses.filter((h) => h.kind === "plant"), (it) => it));
 
   /* The West Bar's vegetated roof: the photographed rectangular bands, each
      clipped to the bar's own width at that z, plus low clumps on top of them. */
@@ -614,10 +738,14 @@ function buildRoofs(section, group, ground, roofY, bins) {
     if (!band.clump) continue;
     const n = Math.round((x1 - x0) * (band.z1 - band.z0) * band.density * 1.1);
     for (let k = 0; k < n; k++) {
+      const px = x0 + hash(k, band.z0, 1) * (x1 - x0);
+      const pz = band.z0 + hash(k, band.z0, 2) * (band.z1 - band.z0);
+      /* Nothing planted grows up through a terrace deck. */
+      if ((roofs.terrace?.decks || []).some((d) => pz >= d.z0 - 0.4 && pz <= d.z1 + 0.4)) continue;
       clumps[band.clump].push({
-        x: x0 + hash(k, band.z0, 1) * (x1 - x0),
+        x: px,
         y: y + 0.16,
-        z: band.z0 + hash(k, band.z0, 2) * (band.z1 - band.z0),
+        z: pz,
         rot: hash(k, band.z0, 3) * Math.PI,
         scale: [0.8 + hash(k, band.z0, 4) * 0.5, 0.8 + hash(k, band.z0, 5) * 0.6, 0.8 + hash(k, band.z0, 4) * 0.5],
       });
@@ -629,6 +757,63 @@ function buildRoofs(section, group, ground, roofY, bins) {
   walkMesh.position.set(bb.x1 - 2.2, y + 0.17, (bb.z0 + bb.z1) / 2);
   walkMesh.renderOrder = OVERLAY[PAINT].renderOrder;
   group.add(walkMesh);
+
+  /* The roof terrace near the North Tower junction: decks on the bar roof
+     with white pergola/trellis frames SEATED on them (ls_007, ls_006) — the
+     only elevated frames anywhere on these roofs, and the thing the deleted
+     PV canopy was most likely mistaken for. */
+  const T = roofs.terrace;
+  if (T) {
+    const deckAt = (zc) => {
+      const xb = edgeX(zc, 1);
+      return xb == null ? null : { x1: xb - 0.9 - G.walkWidth, x0: xb - 0.9 - G.walkWidth - T.deckWidth };
+    };
+    for (const d of T.decks) {
+      const zc = (d.z0 + d.z1) / 2;
+      const span = deckAt(zc);
+      if (!span) continue;
+      const mesh = new THREE.Mesh(
+        quad(span.x1 - span.x0, d.z1 - d.z0),
+        decal(colors.deckGrey, PAINT, "woodSlat", [(span.x1 - span.x0) / 1.4, (d.z1 - d.z0) / 1.4])
+      );
+      mesh.position.set((span.x0 + span.x1) / 2, y + 0.18, zc);
+      mesh.renderOrder = OVERLAY[PAINT].renderOrder;
+      group.add(mesh);
+    }
+    const PG = T.pergola;
+    const pgParts = [];
+    for (const p of T.pergolas) {
+      const span = deckAt(p.z);
+      if (!span) continue;
+      const cx = (span.x0 + span.x1) / 2;
+      /* Four posts, two beams, and the slat lid — everything stands on the
+         bar's roof plane, nothing floats. */
+      for (const sx of [-1, 1]) {
+        for (const sz of [-1, 1]) {
+          pgParts.push({
+            x: cx + (sx * (PG.w - PG.post)) / 2, y: y + PG.h / 2,
+            z: p.z + (sz * (PG.d - PG.post)) / 2,
+            scale: [PG.post, PG.h, PG.post],
+          });
+        }
+      }
+      for (const sz of [-1, 1]) {
+        pgParts.push({
+          x: cx, y: y + PG.h + PG.beam / 2, z: p.z + (sz * (PG.d - PG.beam)) / 2,
+          scale: [PG.w + 0.3, PG.beam, PG.beam],
+        });
+      }
+      for (let u = -PG.w / 2 + PG.slatPitch / 2; u < PG.w / 2; u += PG.slatPitch) {
+        pgParts.push({
+          x: cx + u, y: y + PG.h + PG.beam + PG.slat[1] / 2, z: p.z,
+          scale: [PG.slat[0], PG.slat[1], PG.d + 0.4],
+        });
+      }
+    }
+    group.add(instanced(new THREE.BoxGeometry(1, 1, 1), painted(colors.pergolaWhite), pgParts,
+      (it) => it));
+    bins.counts.pergolas = T.pergolas.length;
+  }
 
   /* Two tones per planting type, because a band of one colour reads as paint
      rather than as the succulent/grass mats in ls_024 and kt_keeling4. */
@@ -657,9 +842,16 @@ function buildGround(section, group, ground) {
   const carpetLift = overlayLift(CARPET);
   const on = (x, z) => ground(x, z) + carpetLift;
 
-  const flat = (rects, color, rung, lift) => {
+  /* `tile` is the class's real-world tile size in metres — the per-surface
+     repeat lever that puts the microstructure at true scale. */
+  const flat = (rects, color, rung, lift, cls, tile) => {
     for (const r of rects) {
-      const mesh = new THREE.Mesh(quad(r.x1 - r.x0, r.z1 - r.z0), decal(color, rung));
+      const w = r.x1 - r.x0;
+      const d = r.z1 - r.z0;
+      const mesh = new THREE.Mesh(
+        quad(w, d),
+        decal(color, rung, cls, tile ? [w / tile, d / tile] : undefined)
+      );
       mesh.position.set((r.x0 + r.x1) / 2, ground((r.x0 + r.x1) / 2, (r.z0 + r.z1) / 2) + lift, (r.z0 + r.z1) / 2);
       mesh.renderOrder = OVERLAY[rung].renderOrder;
       group.add(mesh);
@@ -667,8 +859,9 @@ function buildGround(section, group, ground) {
   };
 
   /* Sawn-jointed cast-in-place paving, then the planted troughs on top. The
-     joints are what stop a 40 m courtyard reading as one poured white sheet. */
-  flat(C.paving, colors.paving, PAD, padLift);
+     joints are what stop a 40 m courtyard reading as one poured white sheet.
+     Unit-paver class at 7.2 m/tile puts the cast units at 1.2 m — the module. */
+  flat(C.paving, colors.paving, PAD, padLift, "pavingConcreteUnit", 7.2);
   const joints = [];
   for (const r of C.paving) {
     for (let x = Math.ceil(r.x0 / C.jointPitch) * C.jointPitch; x < r.x1; x += C.jointPitch) {
@@ -682,11 +875,38 @@ function buildGround(section, group, ground) {
     (j) => ({ x: j.x, y: ground(j.x, j.z) + carpetLift, z: j.z, scale: [j.w, 1, j.d] }));
   jointMesh.renderOrder = OVERLAY[CARPET].renderOrder;
   group.add(jointMesh);
-  flat(section.southSide.apron, colors.paving, PAD, padLift);
-  flat(W.slope.filter((s) => s.kind === "dg"), colors.dg, PAD, padLift);
-  flat(W.slope.filter((s) => s.kind === "cobble"), colors.cobble, PAD, padLift);
+  flat(section.southSide.apron, colors.paving, PAD, padLift, "pavingConcreteUnit", 7.2);
+  flat(W.slope.filter((s) => s.kind === "dg"), colors.dg, PAD, padLift, "decomposedGranite", 2.5);
+  flat(W.slope.filter((s) => s.kind === "cobble"), colors.cobble, PAD, padLift, "decomposedGranite", 1.6);
   flat(C.swales.filter((s) => s.kind === "grass"), colors.shrub, CARPET, carpetLift);
-  flat(C.swales.filter((s) => s.kind === "dg"), colors.dg, CARPET, carpetLift);
+  flat(C.swales.filter((s) => s.kind === "dg"), colors.dg, CARPET, carpetLift, "decomposedGranite", 2.5);
+
+  /* The two basketball courts south-west of the South Tower — the declared
+     epoch conflict, resolved newest-first: dark green in every 2013 aerial,
+     resurfaced BLUE in the gap-closure reading of the current orthophoto, so
+     blue is what is built. FLAT DECALS ONLY: the staging route crosses their
+     north-east corner, and nothing above the surface has a current source. */
+  const SS = section.southSide;
+  if (SS.courts) {
+    flat([SS.surround], colors.courtSurround, CARPET, carpetLift, "asphalt", 3);
+    flat(SS.courts, colors.courtBlue, PAINT, overlayLift(PAINT), "asphalt", 3);
+    const lines = [];
+    for (const c of SS.courts) {
+      const w = c.x1 - c.x0;
+      const d = c.z1 - c.z0;
+      const cx = (c.x0 + c.x1) / 2;
+      const cz = (c.z0 + c.z1) / 2;
+      lines.push({ x: cx, z: c.z0 + SS.line / 2, w, d: SS.line });
+      lines.push({ x: cx, z: c.z1 - SS.line / 2, w, d: SS.line });
+      lines.push({ x: c.x0 + SS.line / 2, z: cz, w: SS.line, d });
+      lines.push({ x: c.x1 - SS.line / 2, z: cz, w: SS.line, d });
+      lines.push({ x: cx, z: cz, w, d: SS.line });
+    }
+    const lineMesh = instanced(quad(1, 1), decal(colors.courtLine, LOGO), lines,
+      (l) => ({ x: l.x, y: ground(l.x, l.z) + overlayLift(LOGO), z: l.z, scale: [l.w, 1, l.d] }));
+    lineMesh.renderOrder = OVERLAY[LOGO].renderOrder;
+    group.add(lineMesh);
+  }
 
   /* Raised lawn panels in low board-formed frames, crisp square corners. */
   const frames = [];
@@ -698,7 +918,7 @@ function buildGround(section, group, ground) {
     frames.push({ x: cx, y: g + l.lift / 2, z: cz, scale: [l.x1 - l.x0, l.lift, l.z1 - l.z0] });
     turf.push({ x: cx, y: g + l.lift + 0.02, z: cz, scale: [l.x1 - l.x0 - 2 * C.frameWidth, 1, l.z1 - l.z0 - 2 * C.frameWidth] });
   }
-  group.add(instanced(new THREE.BoxGeometry(1, 1, 1), concrete(colors.seatWall), frames, (it) => it));
+  group.add(instanced(new THREE.BoxGeometry(1, 1, 1), boardformed(colors.seatWall), frames, (it) => it));
   group.add(instanced(quad(1, 1), foliage(colors.lawn), turf, (it) => it));
 
   /* Corten seams flush in the paving — long straight rust-coloured lines that
@@ -737,7 +957,7 @@ function buildGround(section, group, ground) {
 
   /* Circular board-formed seat walls around the planted islands. */
   const seats = C.seatWalls.map((s) => ({ x: s.x, y: ground(s.x, s.z) + s.height / 2, z: s.z, scale: [s.radius, s.height, s.radius] }));
-  group.add(instanced(new THREE.CylinderGeometry(1, 1, 1, 22, 1, true), concrete(colors.seatWall), seats, (it) => it));
+  group.add(instanced(new THREE.CylinderGeometry(1, 1, 1, 22, 1, true), boardformed(colors.seatWall), seats, (it) => it));
   group.add(instanced(new THREE.CylinderGeometry(1, 1, 1, 22), concrete(colors.seatWall),
     C.seatWalls.map((s) => ({ x: s.x, y: ground(s.x, s.z) + s.height, z: s.z, scale: [s.radius, 0.09, s.radius] })), (it) => it));
 
@@ -861,7 +1081,7 @@ function buildLavaWalls(section, group, ground) {
   group.add(instanced(box, rock(colors.lavaRockDark), rocks.filter((r) => r.dark), (it) => it));
   group.add(instanced(box, painted(colors.cortenSteel), cortens, (it) => it));
   group.add(instanced(box, concrete(colors.wallCoping), copings, (it) => it));
-  group.add(instanced(box, concrete(colors.wallCoping), piers, (it) => it));
+  group.add(instanced(box, boardformed(colors.wallCoping), piers, (it) => it));
 }
 
 /* ------------------------------------------------------------------- api */
@@ -964,6 +1184,9 @@ export function createPhotoKeeling(scene, { photo, heightAt, surfaceAt } = {}) {
       bars: bins.bars.length,
       pv: bins.counts.pv || 0,
       greenRoofBands: bins.counts.greenRoofBands || 0,
+      parapetRail: bins.counts.parapetRail || 0,
+      pergolas: bins.counts.pergolas || 0,
+      courts: section.southSide.courts?.length || 0,
       lamps: section.courtyard.lamps.length,
       boulders: section.west.boulders.length,
       draws: group.children.length,

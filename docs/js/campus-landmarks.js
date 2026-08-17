@@ -553,7 +553,7 @@ function flagRibbon(fly, hoist, t0, t1) {
  * thing on a plaza of pale concrete — and the JSON entry carries the daylight
  * lift of that reading, with the raw sample written down beside it.
  */
-function buildFountain(lm, toLocal, heightAt) {
+function buildFountain(lm, toLocal, heightAt, flagpoleOnly = false) {
   const c = lm.colors || {};
   const f = lm.fountain || {};
   const g = new THREE.Group();
@@ -562,6 +562,11 @@ function buildFountain(lm, toLocal, heightAt) {
   const r = (f.diameter_m || 8) / 2;
   const rim = f.rimHeight_m || 0.55;
 
+  /* flagpoleOnly: a photo module has declared (via `replacesLandmark`) that it
+     builds this water feature at the same surveyed point — two basins would
+     interpenetrate. The flagpole further down is NOT replaced and always
+     stands, so only the water parts are skipped. */
+  if (!flagpoleOnly) {
   const basin = new THREE.Mesh(new THREE.CylinderGeometry(r, r, rim, 28), lambert(c.basin));
   basin.position.set(x, y + rim / 2, z);
   g.add(basin);
@@ -587,6 +592,7 @@ function buildFountain(lm, toLocal, heightAt) {
   crown.position.set(x, y + rim + jetH, z);
   crown.scale.y = 0.42;
   g.add(jet, crown);
+  }
 
   const fp = lm.flagpole || {};
   const poleH = fp.height_m || 15;
@@ -928,7 +934,7 @@ function buildFoldedPlate(lm, roofTopOf, heightAt) {
  * Place every landmark worth geometry. `roofTopOf(name)` lets roof-mounted
  * pieces (Fallen Star) sit on the measured building they belong to.
  */
-export function createLandmarks(scene, data, { origin, heightAt, roofTopOf }) {
+export function createLandmarks(scene, data, { origin, heightAt, roofTopOf, waterReplacedBy } = {}) {
   const toLocal = (lat, lng) => [
     (lng - origin.lng) * origin.mPerDegLng,
     -(lat - origin.lat) * origin.mPerDegLat,
@@ -941,7 +947,7 @@ export function createLandmarks(scene, data, { origin, heightAt, roofTopOf }) {
   for (const lm of data.landmarks || []) {
     if (lm.name === "Sun God") group.add(buildSunGod(lm, toLocal, heightAt));
     else if (/Warren Bear/.test(lm.name)) group.add(buildBear(lm, toLocal, heightAt));
-    else if (lm.fountain) group.add(buildFountain(lm, toLocal, heightAt));
+    else if (lm.fountain) group.add(buildFountain(lm, toLocal, heightAt, waterReplacedBy?.has(lm.name)));
     else if (lm.pergola) group.add(buildPergola(lm, toLocal, heightAt));
     else if (lm.canopy) group.add(buildFoldedPlate(lm, roofTopOf, heightAt));
   }

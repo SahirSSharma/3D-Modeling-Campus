@@ -15,21 +15,21 @@
  *   - and every facade element lands on the declared module.
  *
  * The section lives under the `keeling` key of docs/data/campus-photo-detail.json,
- * merged 2026-08-17.
+ * merged 2026-08-17. Until the main session merges the 2026-08-17 gap-closure
+ * rebuild, it is read from the build-side file the Keeling agent wrote, so
+ * this test does not depend on the merge having happened; the fallback goes
+ * away with the merge, exactly as ERC's did.
  */
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (p) => JSON.parse(readFileSync(p, "utf8"));
 
-const MERGED = join(root, "docs/data/campus-photo-detail.json");
-const loadSection = () => read(MERGED).keeling;
-
-const section = loadSection();
+const section = read(join(root, "docs/data/campus-photo-detail.json")).keeling;
 const campus = read(join(root, "docs/data/campus-3d.json"));
 const staging = read(join(root, "docs/data/corridor-staging.json"));
 
@@ -108,7 +108,11 @@ function decals() {
   if (!section) return [];
   const C = section.courtyard;
   const out = [];
-  const rects = [...C.paving, ...C.swales, ...section.southSide.apron, ...section.west.slope];
+  const rects = [
+    ...C.paving, ...C.swales, ...section.southSide.apron, ...section.west.slope,
+    ...(section.southSide.courts || []),
+    ...(section.southSide.surround ? [section.southSide.surround] : []),
+  ];
   for (const r of rects) {
     for (const x of [r.x0, r.x1]) for (const z of [r.z0, r.z1]) out.push([x, z]);
   }
@@ -142,7 +146,7 @@ function facadePoints() {
 /* ---------------------------------------------------------------- gates */
 
 test("the section exists and is reachable", () => {
-  assert.ok(section, `no keeling key in ${MERGED}`);
+  assert.ok(section, "no keeling key in docs/data/campus-photo-detail.json");
 });
 
 test("it says what it is, where it came from, and what it left out", () => {
@@ -226,6 +230,7 @@ test("no facade layer floats more than a metre off its measured face", () => {
     A.balustrade.standoff + A.fins.depth,
     A.balustrade.standoff + A.tabPlate.width,
     B.standoff + B.panel.thickness,
+    B.standoff + B.rainScreen.proud + B.panel.thickness,
     B.standoff + B.frameBand.depth,
     B.standoff + section.stairSlots.landing.depth,
     B.ground.recess + B.ground.columnSize,
@@ -309,19 +314,151 @@ test("the roof furniture belongs to a roof that exists", () => {
   for (const p of [...section.roofs.pv.banks, ...section.roofs.penthouses]) {
     assert.ok(section.buildings[p.roof], `roof item names unknown building ${p.roof}`);
   }
-  /* PV on both towers, per every aerial in the set. */
+  /* PV on both towers, per every aerial in the set — and NEVER on the bar,
+     whose roof is the vegetated one. */
   const roofs = new Set(section.roofs.pv.banks.map((b) => b.roof));
   assert.ok(roofs.has("north") && roofs.has("south"), "both towers carry PV");
+  assert.ok(!roofs.has("bar"), "the West Bar roof carries NO PV");
+  /* Two penthouses per tower: a ~3 m stair overrun and a ~2.5 m plant box. */
+  for (const key of ["north", "south"]) {
+    const kinds = section.roofs.penthouses.filter((p) => p.roof === key).map((p) => p.kind).sort();
+    assert.deepEqual(kinds, ["plant", "stair"], `${key} roof penthouses`);
+  }
 });
 
-test("the demolished south side is not built", () => {
-  /* The 2013 landscape aerials show two basketball courts and a parking lot
-     below the South Tower. The satellite fetched 2026-08-04 shows a
-     construction site on that ground. Newest source wins on what EXISTS, so
-     the only thing this section may put there is paving. */
-  assert.deepEqual(Object.keys(section.southSide).sort(), ["apron", "note", "source"]);
-  assert.match(section.southSide.note, /demolished/i);
-  const built = JSON.stringify([section.courtyard, section.southSide.apron, section.west]);
-  assert.ok(!/\bcourts?\b|backboard|chain-?link|fence|chain-?link|parking|stall/i.test(built),
-    "a court, a fence or a parking stall has been built on ground that no longer carries one");
+test("the PV canopy is gone: low ballasted racks on the membrane", () => {
+  /* Gap-closure 2026-08-17: there is no canopy, no columns, nothing to walk
+     under — four independent images agree. What is there is low ballasted
+     tilt racking directly on the tower membranes. */
+  const P = section.roofs.pv;
+  assert.ok(!("postHeight" in P), "the canopy-era rack schema is gone");
+  assert.ok(P.panel[0] > P.panel[1], "single-module rows are LANDSCAPE");
+  assert.ok(P.tilt <= 0.175 && P.tilt > 0.05, `tilt ${P.tilt} rad is not the sourced 5-10 deg`);
+  assert.ok(P.lowEdge >= 0.15 && P.lowEdge <= 0.25, `low edge ${P.lowEdge} off the sourced 0.15-0.25 m`);
+  assert.ok(P.rowPitch >= 2.0 && P.rowPitch <= 2.3, `row pitch ${P.rowPitch} off the measured 2.0-2.3 m`);
+  assert.ok(P.inset >= 1.5 && P.inset <= 2.5, `parapet inset ${P.inset} off the sourced 1.5-2.5 m`);
+  assert.ok(Array.isArray(P.ballastTray), "the racks stand on ballast trays");
+  for (const b of P.banks) {
+    assert.ok(b.rows >= 5 && b.rows <= 7, `${b.roof}: ${b.rows} rows off the sourced 5-7`);
+    /* The clips that keep hardware off each tower's notch must stay. */
+    assert.ok(Array.isArray(b.clips) && b.clips.length >= 1, `${b.roof} bank has no notch clip`);
+  }
+  assert.match(P.note, /DELETED/i, "the deletion of the invented canopy must stay on the record");
+});
+
+test("the white band is the 1.20 m parapet, with the rail, on all faces", () => {
+  const PB = section.roofs.parapet;
+  assert.equal(PB.height, section.grid.parapet,
+    "the parapet band IS the derived 1.20 m parapet, not a new number");
+  assert.ok(PB.revealHeight > 0 && PB.revealHeight < 0.2, "thin shadow reveal at the base");
+  assert.ok(PB.rail.height >= 1.0 && PB.rail.height <= 1.2, "the inboard rail is ~1.1 m");
+  assert.ok(PB.rail.inset > 0, "the rail stands INBOARD of the coping");
+  /* Brighter and smoother than the precast field (a7_topband). */
+  const luma = (hex) =>
+    0.299 * parseInt(hex.slice(1, 3), 16) + 0.587 * parseInt(hex.slice(3, 5), 16) + 0.114 * parseInt(hex.slice(5, 7), 16);
+  assert.ok(luma(section.colors.parapetWhite) > luma(section.colors.precastPanel),
+    "parapetWhite must read brighter than the precast field");
+});
+
+test("the north faces are System B rain-screen, and the estimate is declared", () => {
+  const B = section.systemB;
+  assert.ok(B.rainScreen.proud >= 0.15 && B.rainScreen.proud <= 0.25,
+    `rain-screen proud ${B.rainScreen.proud} off the sourced 0.15-0.25 m`);
+  const nn = section.facades.find((f) => f.id === "north-north");
+  const sn = section.facades.find((f) => f.id === "south-north");
+  assert.equal(nn.system, "B");
+  assert.equal(sn.system, "B");
+  /* South Tower's north face is photographed; the North Tower's extends it
+     and must SAY so. */
+  assert.match(sn.source, /a7_northface|ls_007/, "south-north must cite its head-on photograph");
+  assert.equal(nn.estimated, true, "north-north's arrangement is [estimated] and must be declared");
+  assert.equal(nn.patternRef, "south-north", "the estimate must name the pattern it extends");
+  assert.match(nn.source, /estimated/i);
+  assert.match(section.systemOrientation.estimated, /\[estimated\]/);
+});
+
+test("the terrace pergolas stand on the bar roof, inside the bar", () => {
+  const T = section.roofs.terrace;
+  assert.equal(T.roof, "bar", "the pergola terrace is the West Bar's");
+  const ring = ringOf(RINGS.bar);
+  const z0 = Math.min(...ring.map((p) => p[1]));
+  const z1 = Math.max(...ring.map((p) => p[1]));
+  for (const d of [...T.decks, ...T.pergolas.map((p) => ({ z0: p.z - T.pergola.d / 2, z1: p.z + T.pergola.d / 2 }))]) {
+    assert.ok(d.z0 >= z0 && d.z1 <= z1, `terrace piece ${d.z0}-${d.z1} runs off the measured bar`);
+  }
+});
+
+test("the courts are the CURRENT epoch: blue, flat, and honest about it", () => {
+  /* The declared epoch conflict: dark green in every 2013 aerial, resurfaced
+     BLUE in the gap-closure reading of the current orthophoto. Newest reading
+     wins on appearance. And because the staging route crosses their NE
+     corner, the courts are DECALS — nothing above the surface. */
+  const S = section.southSide;
+  assert.equal(S.courts.length, 2, "two courts, per every source that shows them");
+  const hex = (h, i) => parseInt(h.slice(i, i + 2), 16);
+  const blue = section.colors.courtBlue;
+  assert.ok(hex(blue, 5) > hex(blue, 1) && hex(blue, 5) > hex(blue, 3),
+    `courtBlue ${blue} is not blue — the 2013 green is a dead epoch`);
+  assert.match(S.note, /epoch/i, "the epoch conflict must stay on the record");
+  assert.match(S.note, /estimated/i, "the unsampled court hex must be declared estimated");
+  for (const c of S.courts) {
+    assert.deepEqual(Object.keys(c).sort(), ["x0", "x1", "z0", "z1"],
+      "a court is a flat rect — no height, no furniture");
+  }
+  /* Scan the DATA, not the prose — the note rightly names what is absent. */
+  const { note: _n, source: _s, ...builtSouth } = S;
+  const built = JSON.stringify([section.courtyard, builtSouth, section.west]);
+  assert.ok(!/backboard|chain-?link|\bfence\b|\bstall\b|\bpole\b.{0,20}court/i.test(built),
+    "nothing may stand above the court surface — the route crosses it");
+  assert.ok(section.absent.some((a) => /hoops|backboard/i.test(a)),
+    "the unbuilt court furniture must be declared absent");
+});
+
+/* ----------------------------------------------- the module, run for real */
+
+test("the module builds the section: structure, seating, determinism", async () => {
+  const THREE = await import("../docs/vendor/three/three.module.min.js");
+  const { createPhotoKeeling } = await import("../docs/js/campus-photo-keeling.js");
+  const photo = { keeling: section };
+  const ground = () => 12.4;
+  const build = () =>
+    createPhotoKeeling(null, { photo, heightAt: () => 12.2, surfaceAt: ground });
+
+  const a = build();
+  assert.ok(a.group instanceof THREE.Group);
+  assert.equal(a.counts.facades, section.facades.length);
+  assert.equal(a.counts.courts, 2);
+  assert.equal(a.counts.pergolas, section.roofs.terrace.pergolas.length);
+  assert.ok(a.counts.parapetRail > 0, "the fall-protection rail is built");
+  assert.ok(a.counts.pv > 100, "the PV rows are built");
+  assert.ok(a.counts.panels > 0 && a.counts.windows > 0);
+
+  /* Determinism: an identical second build produces identical instance
+     transforms — no Math.random, no Date.now, anywhere in the chain. */
+  const b = build();
+  assert.deepEqual(a.counts, b.counts);
+  const mats = (r) =>
+    r.group.children
+      .filter((c) => c.isInstancedMesh)
+      .map((c) => Array.from(c.instanceMatrix.array));
+  assert.deepEqual(mats(a), mats(b), "two builds must be byte-identical");
+
+  /* Seating: every instanced transform stays above the surface it stands on
+     minus a burial allowance — nothing floats below the world, and nothing
+     roof-mounted floats above the parapet plane plus its own declared height. */
+  const maxRoof = Math.max(...Object.values(section.buildings).map((x) => x.height));
+  for (const c of a.group.children.filter((x) => x.isInstancedMesh)) {
+    const m = c.instanceMatrix.array;
+    for (let i = 0; i < c.count; i++) {
+      const y = m[i * 16 + 13];
+      assert.ok(y > 12.4 - 2, `an instance sits at y=${y}, under the ground`);
+      assert.ok(y < 12.2 + maxRoof + 4, `an instance floats at y=${y}, above the roofscape`);
+    }
+  }
+});
+
+test("the module uses the material library, and only deterministic sources", () => {
+  const src = readFileSync(join(root, "docs/js/campus-photo-keeling.js"), "utf8");
+  assert.match(src, /createMaterialLibrary/, "surfaces come from campus-materials.js");
+  assert.ok(!/Math\.random|Date\.now/.test(src), "no nondeterminism in the builder");
 });

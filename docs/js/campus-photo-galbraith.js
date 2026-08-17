@@ -18,18 +18,23 @@
 //      eight, 1.354 m, and 46 of them fit each measured face. Everything on
 //      this building solves on one grid or it is wrong.
 //
-//   2. The heights had to be re-reconciled, and the ground survey won. The
-//      earlier reading said LiDAR 16.6 was the roof above a south lawn and
-//      ArcGIS 12.8 the same roof above a north plaza one storey higher. The
-//      2014 terrain, sampled on a 2 m grid, is FLAT at 23.6 m under the whole
-//      footprint and for forty metres on every side: there is no step. On
-//      flat ground the two numbers reconcile the other way — 12.8 is the
-//      EAVES and 16.6 is the highest return, which over this roof is the
-//      monitor field. So the coffered roof plane sits 3.8 m BELOW the top of
-//      the measured mass, and that 3.8 m of measured box standing above it is
-//      the monitors, which are otherwise absent. 12.8 - 1.4 of roof slab is
-//      two 5.7 m levels, and two glazed bands split by the mid-level balcony
-//      is exactly what the north, south and west photographs show.
+//   2. The heights had to be re-reconciled, and the ground survey won — but
+//      only where it actually speaks. The 2014 drawn surface is flat at
+//      23.5-23.9 m under the whole footprint and across the north apron
+//      (sampled on a 2 m grid against makeSurfaceSampler), so there is no
+//      storey-high step between the north plaza and the ground at the
+//      building's own south edge, and LiDAR 16.6 is simply the roof above
+//      grade at the ring: the eaves ride 0.35 m below the measured top, the
+//      soffit 1.25 m, and the 16.6 divides into two 7.675 m glazed levels
+//      plus the roof zone (section.levels). That flat pad is LOCAL, though:
+//      the same sampler puts a ~26.8 m ridge eight metres west of the ring,
+//      27.1 m within 25 m to the south and ~26.8 m under the east tree band —
+//      which is why every ground field here is DRAPED over the drawn terrain
+//      and every solid seated per-item on it (see 4), never hung on a 23.6
+//      level line. The 3.8 m between ArcGIS 12.8 and LiDAR 16.6 belongs to
+//      the roofscape the orthophoto later confirmed, and is expressed as
+//      curb-scale relief on the measured box top (roof.datumNote), never
+//      stacked on top of it.
 //
 //   3. The struts are the building. A straight box reads as a car park; the
 //      real thing is thin at the waist, sweeps out below into a wide flat foot
@@ -47,14 +52,21 @@
 // named there. Repeats are InstancedMesh: the coffers alone are ~5,000 pans
 // and rib bosses in a handful of draws.
 //
-// What is NOT here is in the section's `absent` array, and two entries there
-// are deliberate refusals rather than oversights: the roof monitors, because
-// no photograph has ever seen this roof from outside, and the ENTIRE east
-// ground plane, because no photograph has ever seen that elevation at all.
-// The east face gets the colonnade and roof it must share with the other
-// three and not one thing more.
+// What is NOT here is in the section's `absent` array. Two long-standing
+// refusals CLOSED on 2026-08-17, when the repo's own Google orthophoto
+// (docs/data/textures, a legitimate build-time measurement source) finally
+// saw this roof and the east ground from directly above: the "barrel-vault
+// monitors" turn out to be a 9x9 grid of white-capped skylights on a raised
+// central block (buildRoof), and the east strip gets its shaded recess,
+// unit-paver walk, DG tree band and SE lawn (buildEastGround). What replaced
+// them in `absent` is every HEIGHT up on that roof — the orthophoto is nadir
+// and casts no usable shadow, so the roofscape is drawn as curb-scale relief
+// on the measured box top rather than as guessed storeys — and the ground
+// east of x ~90, which the current epoch shows as active construction.
 import * as THREE from "../vendor/three/three.module.min.js";
 import { applyOverlayDepth, OVERLAY, overlayLift } from "./campus-overlay.js";
+import { ribbon } from "./campus-drape.js";
+import { createMaterialLibrary } from "./campus-materials.js";
 
 /* Ground decals ride the overlay ladder so they paint over the measured
    terrain in a fixed order instead of z-fighting it. */
@@ -62,30 +74,43 @@ const PAD = "pad";
 const CARPET = "carpet";
 const PAINT = "paint";
 
-const concrete = (color) =>
-  new THREE.MeshStandardMaterial({ color, roughness: 0.92, metalness: 0.0 });
-/* The colonnade soffit is the one surface in every reference frame that is
-   BRIGHTER than the sky-lit walls around it, because eleven metres of pale
-   concrete bounces the plaza back up into it. Direct light never reaches it,
-   so that bounce has to be carried by the material or the whole underside of
-   the building goes grey. */
-const soffit = (color) =>
-  new THREE.MeshStandardMaterial({
-    color, roughness: 0.92, metalness: 0.0, emissive: color, emissiveIntensity: 0.3,
-  });
+/* Surfaces big enough to carry microstructure come from the procedural
+   material library (campus-materials.js): smooth or board-formed concrete,
+   unit pavers, decomposed granite, lava rock, glass with the environment
+   reflection. The library's maps are seeded grey VARIATION that multiplies
+   the sourced hexes below, so no class can move a colour off its sample.
+   `makeMats` builds the per-call helpers; small painted metalwork keeps the
+   plain materials — a 28 mm picket has no room for grain. */
+function makeMats() {
+  const lib = createMaterialLibrary(THREE);
+  return {
+    lib,
+    /* Poured-and-floated concrete; `repeat` is the per-surface lever, tuned
+       so one tile reads ~2.5 m of real wall or paving. */
+    conc: (color, repeat = [4, 4]) => lib.get("smoothConcrete", { color, repeat }),
+    /* The colonnade soffit is the one surface in every reference frame that
+       is BRIGHTER than the sky-lit walls around it, because eleven metres of
+       pale concrete bounces the plaza back up into it. Direct light never
+       reaches it, so that bounce has to be carried by the material or the
+       whole underside of the building goes grey. The soffit itself is
+       SMOOTH-cast (the pans were formed on steel), hence smoothConcrete. */
+    soff: (color, repeat = [24, 4]) =>
+      lib.get("smoothConcrete", { color, repeat, emissive: color, emissiveIntensity: 0.3 }),
+    /* Dark bronze curtain wall standing under an eleven-metre oversail is in
+       permanent shade; the library's glass carries the PMREM environment
+       reflection, and a little self-light keeps it a surface, not a hole. */
+    glass: (color) => lib.get("glass", { color, emissive: color, emissiveIntensity: 0.15 }),
+    /* The 1965 fluted aggregate wall is board-formed; ~0.45 m per board at
+       this repeat against the ~7.4 m panel height. */
+    board: (color, repeat = [8, 2]) => lib.get("boardFormedConcrete", { color, repeat }),
+    lava: (color) => lib.get("lavaRock", { color, repeat: [2, 2] }),
+    seam: (color, repeat = [8, 8]) => lib.get("metalPanel", { color, standingSeam: true, repeat }),
+  };
+}
 const painted = (color) =>
   new THREE.MeshStandardMaterial({ color, roughness: 0.55, metalness: 0.3 });
 const metal = (color) =>
   new THREE.MeshStandardMaterial({ color, roughness: 0.3, metalness: 0.8 });
-/* Dark bronze curtain wall standing under an eleven-metre oversail is in
-   permanent shade, and a pure diffuse dark grey there renders as a HOLE in
-   the elevation rather than as glass. It carries a little of its own light so
-   it reads the way every reference frame reads: dark, but a surface. */
-const glassMat = (color) =>
-  new THREE.MeshStandardMaterial({
-    color, roughness: 0.12, metalness: 0.45, side: THREE.DoubleSide,
-    emissive: color, emissiveIntensity: 0.22,
-  });
 const rock = (color) =>
   new THREE.MeshStandardMaterial({ color, roughness: 1.0, metalness: 0.0 });
 const foliage = (color) =>
@@ -146,6 +171,41 @@ function quad(w, d) {
   const g = new THREE.PlaneGeometry(w, d);
   g.rotateX(-Math.PI / 2);
   return g;
+}
+
+/* One drape vertex every 2 m: the drawn terrain is piecewise linear on a 6 m
+   triangle grid, so 2 m sampling reproduces it to centimetres. */
+const DRAPE_SEG = 2;
+
+/**
+ * A ground-field decal DRAPED over the drawn terrain. The ground around this
+ * building is only flat under the footprint itself — the west court climbs
+ * 3.3 m to a ridge, the south lawn rises 3.4 m and the east DG band rolls
+ * through 4 m — and a single flat quad seated at the rect centre reads as a
+ * hole where the ground rises through it and as a sheet in mid-air where it
+ * falls away. So the quad is subdivided and every vertex is seated on
+ * `ground` itself; the mesh origin stays at the rect centre so the overlay
+ * lift still rides in `position.y`.
+ */
+function drapedQuad(r, ground, lift) {
+  const w = r.x1 - r.x0;
+  const d = r.z1 - r.z0;
+  const cx = (r.x0 + r.x1) / 2;
+  const cz = (r.z0 + r.z1) / 2;
+  const geo = new THREE.PlaneGeometry(w, d,
+    Math.max(1, Math.ceil(w / DRAPE_SEG)), Math.max(1, Math.ceil(d / DRAPE_SEG)));
+  geo.rotateX(-Math.PI / 2);
+  const base = ground(cx, cz);
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    pos.setY(i, ground(cx + pos.getX(i), cz + pos.getZ(i)) - base);
+  }
+  geo.computeVertexNormals();
+  const place = (mesh) => {
+    mesh.position.set(cx, base + lift, cz);
+    mesh.name = "ground-decal";
+  };
+  return { geo, place };
 }
 
 /* ------------------------------------------------------------ face frames */
@@ -584,7 +644,7 @@ function buildEntry(section, group, frame, f, ctx) {
   for (const s of [-1, 1]) {
     const u = L / 2 + (s * section.grid.pairGap) / 2 + s * headSplay + E.beam.width / 2;
     const p = frame.at(u, 0, 0);
-    const mesh = new THREE.Mesh(beamGeo, concrete(colors.entryBeam));
+    const mesh = new THREE.Mesh(beamGeo, ctx.mats.conc(colors.entryBeam, [6, 2]));
     mesh.position.set(p.x, eavesY, p.z);
     mesh.rotation.y = frame.rot;
     mesh.castShadow = true;
@@ -673,11 +733,11 @@ function buildStair(section, group, ctx) {
     });
   }
   group.add(instanced(
-    new THREE.BoxGeometry(S.width, 0.06, run / treads + 0.04), concrete(colors.deck),
+    new THREE.BoxGeometry(S.width, 0.06, run / treads + 0.04), ctx.mats.conc(colors.deck, [1, 1]),
     steps, (s) => ({ x: S.x, y: s.y, z: s.z })
   ));
   group.add(instanced(
-    new THREE.BoxGeometry(S.width, rise / treads, 0.05), concrete(colors.deck),
+    new THREE.BoxGeometry(S.width, rise / treads, 0.05), ctx.mats.conc(colors.deck, [1, 1]),
     steps, (s) => ({ x: S.x, y: s.y - rise / treads / 2, z: s.z + run / treads / 2 })
   ));
 
@@ -713,7 +773,7 @@ function buildStair(section, group, ctx) {
   /* The landing that carries the top of the flight across to the terrace
      edge, so the stair arrives somewhere instead of stopping in mid-air. */
   const land = new THREE.Mesh(
-    new THREE.BoxGeometry(S.landing, 0.22, S.width), concrete(colors.deck)
+    new THREE.BoxGeometry(S.landing, 0.22, S.width), ctx.mats.conc(colors.deck, [2, 1])
   );
   land.position.set(S.x + S.landing / 2, topY - 0.11, S.z0);
   land.castShadow = true;
@@ -726,33 +786,54 @@ function buildGround(section, group, ctx) {
   const { colors } = section;
   const ground = ctx.ground;
 
-  const flat = (rects, color, rung) => {
+  /* Ground fields carry their material class from the library; the repeat is
+     computed per rect from the class's real-world tile size, so a paver stays
+     a paver whether the field is 12 m or 60 m across. `cls: null` keeps the
+     plain decal for fields with no microstructure worth carrying. Every field
+     is DRAPED (drapedQuad): the west court and the south lawn each carry
+     metres of real relief, and a flat quad there is a hole or a hover. */
+  const flat = (rects, color, rung, cls = "smoothConcrete", tile = 2.5) => {
     for (const r of rects) {
-      const cx = (r.x0 + r.x1) / 2;
-      const cz = (r.z0 + r.z1) / 2;
-      const mesh = new THREE.Mesh(quad(r.x1 - r.x0, r.z1 - r.z0), decal(color, rung));
-      mesh.position.set(cx, ground(cx, cz) + overlayLift(rung), cz);
+      const w = r.x1 - r.x0;
+      const d = r.z1 - r.z0;
+      const mat = cls
+        ? applyOverlayDepth(ctx.mats.lib.get(cls, {
+            color,
+            repeat: [Math.max(1, Math.round(w / tile)), Math.max(1, Math.round(d / tile))],
+          }), rung)
+        : decal(color, rung);
+      const { geo, place } = drapedQuad(r, ground, overlayLift(rung));
+      const mesh = new THREE.Mesh(geo, mat);
+      place(mesh);
       mesh.renderOrder = OVERLAY[rung].renderOrder;
+      mesh.receiveShadow = true;
       group.add(mesh);
     }
   };
 
   /* Sawn-jointed cast-in-place paving on three sides, at two different
      scales: the big 2.4 m slabs of the entry plaza in ad01, and the finer
-     1.35 m court grid in ucsdmap. */
+     1.35 m court grid in ucsdmap. Each joint is a ribbon draped over the
+     drawn terrain (campus-drape.js), merged into one mesh per field — a
+     56 m flat instance across the west court's 3.3 m of relief would bury
+     its own ends. */
   const scored = (rects, pitch, width) => {
-    const joints = [];
+    const verts = [];
     for (const r of rects) {
       for (let x = Math.ceil(r.x0 / pitch) * pitch; x < r.x1; x += pitch) {
-        joints.push({ x, z: (r.z0 + r.z1) / 2, w: width, d: r.z1 - r.z0 });
+        ribbon(verts, [[x, r.z0], [x, r.z1]], width / 2, ground, overlayLift(CARPET));
       }
       for (let z = Math.ceil(r.z0 / pitch) * pitch; z < r.z1; z += pitch) {
-        joints.push({ x: (r.x0 + r.x1) / 2, z, w: r.x1 - r.x0, d: width });
+        ribbon(verts, [[r.x0, z], [r.x1, z]], width / 2, ground, overlayLift(CARPET));
       }
     }
-    const m = instanced(quad(1, 1), decal(colors.pavingJoint, CARPET), joints,
-      (j) => ({ x: j.x, y: ground(j.x, j.z) + overlayLift(CARPET), z: j.z, scale: [j.w, 1, j.d] }), false);
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(verts, 3));
+    geo.computeVertexNormals();
+    const m = new THREE.Mesh(geo, decal(colors.pavingJoint, CARPET));
+    m.name = "ground-joints";
     m.renderOrder = OVERLAY[CARPET].renderOrder;
+    m.receiveShadow = true;
     group.add(m);
   };
 
@@ -772,14 +853,15 @@ function buildGround(section, group, ctx) {
      the same one. */
   /* Running bond as JOINTS, not as one quad per paver. A quad per paver was
      1,600 instances in the same colour as the field beneath them — invisible,
-     and the single most expensive thing this file drew. */
-  flat(W.pavers, colors.unitPaver, PAD);
+     and the single most expensive thing this file drew. The library's unit
+     tile is 6 pavers, so one tile is six of the measured 0.42 m pitch. */
+  flat(W.pavers, colors.unitPaver, PAD, "pavingConcreteUnit", W.paverPitch * 6);
   scored(W.pavers, W.paverPitch * 2, 0.03);
 
   /* The lava-rock retaining wall along the measured grade break, and the
      groundcover spilling over it off the bank above. */
   buildLavaWall(section, group, ctx);
-  flat(W.groundcover, colors.groundcover, CARPET);
+  flat(W.groundcover, colors.groundcover, CARPET, null);
 
   /* Dark picket railings along the court and ramp edges. */
   const posts = [];
@@ -801,8 +883,8 @@ function buildGround(section, group, ctx) {
 
   /* South: the 1.8 m walk running perpendicular out of the lower colonnade
      into the lawn, with a continuous planting bed on either side of it. */
-  flat(S.lawn, colors.lawn, CARPET);
-  flat(S.beds, colors.dg, CARPET);
+  flat(S.lawn, colors.lawn, CARPET, null);
+  flat(S.beds, colors.dg, CARPET, "decomposedGranite", 1.5);
   flat([{ x0: S.walk.x - S.walk.width / 2, x1: S.walk.x + S.walk.width / 2, z0: S.walk.z0, z1: S.walk.z1 }],
     colors.pavingBuff, PAINT);
 
@@ -826,7 +908,7 @@ function buildGround(section, group, ctx) {
   /* The precast cylinder bins that stand either side of the entry doors. */
   const B = section.entry.bins;
   group.add(instanced(new THREE.CylinderGeometry(B.radius, B.radius * 0.94, B.height, 14),
-    concrete(colors.bin), N.bins,
+    ctx.mats.conc(colors.bin, [2, 1]), N.bins,
     (b) => ({ x: b.x, y: ground(b.x, b.z) + B.height / 2, z: b.z })));
   group.add(instanced(new THREE.CylinderGeometry(B.radius + 0.01, B.radius + 0.01, B.bandHeight, 14),
     painted(colors.binBand), N.bins.filter((b) => b.recycling),
@@ -862,13 +944,201 @@ function buildLavaWall(section, group, ctx) {
   }
   const box = new THREE.BoxGeometry(1, 1, 1);
   for (const tone of ["lavaRock", "lavaRockRed"]) {
-    group.add(instanced(box, rock(colors[tone]), rocks.filter((r) => r.tone === tone), (it) => it));
+    group.add(instanced(box, ctx.mats.lava(colors[tone]), rocks.filter((r) => r.tone === tone), (it) => it));
   }
   /* Yellow lichen as its own scatter of small patches, because a lichen-toned
      rock reads as a different rock and a patched one reads as lichen. */
   group.add(instanced(new THREE.BoxGeometry(0.22, 0.14, 0.04), rock(colors.lichen),
     rocks.filter((r) => r.lichen),
     (it) => ({ x: it.x, y: it.y, z: it.z, rot: it.rot, rotX: it.rotX }), false));
+}
+
+/* ---------------------------------------------------------- the roofscape */
+
+/**
+ * The 9x9 skylight grid, the block rim, the three penthouses and the six mech
+ * enclosures — all read off the repo's own Google orthophoto (section.roof).
+ *
+ * DATUM, and the reason nothing here is tall: LiDAR 16.6 is a MAXIMUM return
+ * and campus-massing.js extrudes the whole footprint to it, so the drawn box
+ * top already stands at the highest real point of this roof. The true low
+ * deck is buried inside that box. Everything here therefore seats ON the box
+ * top (`ctx.roofY` — the structure it stands on) and rises only curb-scale
+ * above it; stacking the [estimated] 2 m block on top of 16.6 would
+ * double-count the very metres the block explains. See roof.datumNote.
+ */
+function buildRoof(section, group, ctx) {
+  const R = section.roof;
+  if (!R) return { skylights: 0, penthouses: 0, mechUnits: 0 };
+  const { colors } = section;
+  const y0 = ctx.roofY;
+  const roof = new THREE.Group();
+  roof.name = "galbraith-roof";
+
+  /* The skylight field: white-capped curbs on every second coffer, with a
+     pale glass pane set into each. From directly above the caps are the
+     brightest thing on this roof, which is exactly how the orthophoto reads. */
+  const K = R.skylights;
+  const [cx, cz] = K.centre;
+  const cells = [];
+  for (let i = 0; i < K.grid; i++) {
+    for (let j = 0; j < K.grid; j++) {
+      cells.push({
+        x: cx + (i - (K.grid - 1) / 2) * K.pitch,
+        z: cz + (j - (K.grid - 1) / 2) * K.pitch,
+      });
+    }
+  }
+  roof.add(instanced(
+    new THREE.BoxGeometry(K.size, K.curb, K.size), ctx.mats.conc(colors.skylightCap, [1, 1]),
+    cells, (c) => ({ x: c.x, y: y0 + K.curb / 2, z: c.z })
+  ));
+  const paneMesh = instanced(
+    quad(K.size - K.glassInset * 2, K.size - K.glassInset * 2),
+    ctx.mats.glass(colors.skylightGlass),
+    cells, (c) => ({ x: c.x, y: y0 + K.curb - 0.02, z: c.z }), false
+  );
+  roof.add(paneMesh);
+
+  /* The block rim and its dark reveal, as curb-scale relief on the box top. */
+  const B = R.block;
+  const rim = [];
+  const reveal = [];
+  const w = B.rim.width;
+  const midX = (B.x0 + B.x1) / 2;
+  const midZ = (B.z0 + B.z1) / 2;
+  const lenX = B.x1 - B.x0;
+  const lenZ = B.z1 - B.z0;
+  for (const [x, z, sx, sz] of [
+    [midX, B.z0 + w / 2, lenX, w], [midX, B.z1 - w / 2, lenX, w],
+    [B.x0 + w / 2, midZ, w, lenZ - 2 * w], [B.x1 - w / 2, midZ, w, lenZ - 2 * w],
+  ]) {
+    rim.push({ x, y: y0 + B.rim.curb / 2, z, scale: [sx, B.rim.curb, sz] });
+  }
+  const rw = B.reveal.width;
+  for (const [x, z, sx, sz] of [
+    [midX, B.z0 - rw / 2, lenX + 2 * rw, rw], [midX, B.z1 + rw / 2, lenX + 2 * rw, rw],
+    [B.x0 - rw / 2, midZ, rw, lenZ], [B.x1 + rw / 2, midZ, rw, lenZ],
+  ]) {
+    reveal.push({ x, y: y0 + 0.015, z, scale: [sx, 0.03, sz] });
+  }
+  const unit = new THREE.BoxGeometry(1, 1, 1);
+  roof.add(instanced(unit, ctx.mats.conc(colors.fascia, [8, 1]), rim, (it) => it, false));
+  roof.add(instanced(unit, decalFree(colors.blockReveal), reveal, (it) => it, false));
+
+  /* Penthouses: plan-exact, expression height only. The south one wears the
+     pale seamed metal roof the orthophoto shows; the north pair are cream. */
+  const boxes = (rects, h, matOf) => {
+    for (const r of rects) {
+      const mesh = new THREE.Mesh(
+        new THREE.BoxGeometry(r.x1 - r.x0, h, r.z1 - r.z0), matOf(r)
+      );
+      mesh.position.set((r.x0 + r.x1) / 2, y0 + h / 2, (r.z0 + r.z1) / 2);
+      mesh.castShadow = false;
+      mesh.receiveShadow = true;
+      roof.add(mesh);
+    }
+  };
+  boxes(R.penthouses, R.penthouseExpression, (r) =>
+    r.top === "penthouseMetal"
+      ? ctx.mats.seam(colors.penthouseMetal, [6, 6])
+      : ctx.mats.conc(colors.penthouseTop, [4, 4]));
+
+  /* Mech enclosures: dark walls, pale equipment standing slightly proud. */
+  boxes(R.mech, R.mechExpression, () => ctx.mats.conc(colors.mechWall, [4, 4]));
+  const equip = R.mech.map((r) => {
+    const ex = (r.x1 - r.x0) * 0.55;
+    const ez = (r.z1 - r.z0) * 0.55;
+    return {
+      x: (r.x0 + r.x1) / 2, y: y0 + R.mechExpression + 0.03, z: (r.z0 + r.z1) / 2,
+      scale: [ex, 0.06, ez],
+    };
+  });
+  roof.add(instanced(unit, ctx.mats.conc(colors.mechEquip, [2, 2]), equip, (it) => it, false));
+
+  group.add(roof);
+  return {
+    skylights: cells.length,
+    penthouses: R.penthouses.length,
+    mechUnits: R.mech.length,
+  };
+}
+
+/* A plain matte colour for roof-top relief that needs no microstructure. */
+function decalFree(color) {
+  return new THREE.MeshStandardMaterial({ color, roughness: 0.97, metalness: 0.0 });
+}
+
+/* -------------------------------------------------- the east ground plane */
+
+/**
+ * The east ground, from the same orthophoto (section.east): the shaded recess
+ * under the oversail, the full-length tan unit-paver walk, the colonnade foot
+ * pads, the decomposed-granite band under the tree canopies, and the SE lawn.
+ * Everything is a decal draped over the drawn terrain — nothing solid, so
+ * the corridor gate has nothing new to hit. It STOPS at x 89: beyond x ~90
+ * the current epoch is active construction and stays unbuilt (declared).
+ */
+function buildEastGround(section, group, ctx, frames) {
+  const E = section.east;
+  if (!E) return { eastRects: 0, eastPads: 0 };
+  const { colors } = section;
+  const ground = ctx.ground;
+  const east = new THREE.Group();
+  east.name = "galbraith-east-ground";
+
+  let rects = 0;
+  /* DRAPED, like buildGround's fields: the DG band rolls through 4 m of real
+     relief on its way out to the tree line, and a flat quad seated at its
+     centre is buried at the ridge and airborne at the building edge. */
+  const flat = (list, color, rung, cls, tile) => {
+    for (const r of list) {
+      const w = r.x1 - r.x0;
+      const d = r.z1 - r.z0;
+      const mat = cls
+        ? applyOverlayDepth(ctx.mats.lib.get(cls, {
+            color,
+            repeat: [Math.max(1, Math.round(w / tile)), Math.max(1, Math.round(d / tile))],
+          }), rung)
+        : decal(color, rung);
+      const { geo, place } = drapedQuad(r, ground, overlayLift(rung));
+      const mesh = new THREE.Mesh(geo, mat);
+      place(mesh);
+      mesh.renderOrder = OVERLAY[rung].renderOrder;
+      mesh.receiveShadow = true;
+      east.add(mesh);
+      rects++;
+    }
+  };
+
+  flat(E.recess, colors.eastRecess, PAD, null);
+  /* One library tile is 6 pavers, so a tile is six of the banding pitch. */
+  flat(E.walk, colors.eastWalk, PAD, "pavingConcreteUnit", E.walkPitch * 6);
+  flat(E.dg, colors.eastDg, CARPET, "decomposedGranite", 1.5);
+  /* The lawn rides one rung above the DG band it partly overlaps. */
+  flat(E.lawn, colors.eastLawn, PAINT, null);
+
+  /* The colonnade foot pads, drawn under the BUILT east strut pairs — pads on
+     the orthophoto's raw 11-12 m rhythm would miss their own columns (the
+     tension is recorded in east.footPadNote, not resolved here). */
+  const face = section.faces.find((f) => f.id === "east");
+  const frame = frames.get("east");
+  const pads = [];
+  for (const k of section.grid.pairIndices) {
+    const u = frame.length / 2 + k * face.pairSpacing;
+    const p = frame.at(u, section.facade.wallStandoff + section.column.standoff, 0);
+    pads.push({ x: p.x, z: p.z, rot: frame.rot });
+  }
+  const padMesh = instanced(
+    quad(E.footPads.size, E.footPads.size),
+    applyOverlayDepth(ctx.mats.conc(colors.footPad, [1, 1]), PAINT),
+    pads, (p) => ({ x: p.x, y: ground(p.x, p.z) + overlayLift(PAINT), z: p.z, rot: p.rot }), false
+  );
+  padMesh.renderOrder = OVERLAY[PAINT].renderOrder;
+  east.add(padMesh);
+
+  group.add(east);
+  return { eastRects: rects, eastPads: pads.length };
 }
 
 /* ------------------------------------------------------------------- api */
@@ -907,8 +1177,10 @@ export function createPhotoGalbraith(scene, { photo, heightAt, surfaceAt } = {})
   const roofY = Math.max(median + section.measured.lidarHeight, highest);
 
   const LV = section.levels;
+  const mats = makeMats();
   const ctx = {
     ground,
+    mats,
     roofY,
     eavesY: roofY - LV.eavesBelowRoof,
     soffitY: roofY - LV.soffitBelowRoof,
@@ -950,16 +1222,16 @@ export function createPhotoGalbraith(scene, { photo, heightAt, surfaceAt } = {})
 
   /* The soffit, from the recess back downward, so the pale rib grid always
      wins the depth test against the darker pan field behind it. */
-  add(unit, soffit(colors.cofferPan), bins.cofferPan);
-  add(unit, soffit(colors.soffitRib), bins.ribAcross);
-  add(unit, soffit(colors.soffitRib), bins.ribAlong);
+  add(unit, mats.soff(colors.cofferPan, [32, 6]), bins.cofferPan);
+  add(unit, mats.soff(colors.soffitRib, [24, 1]), bins.ribAcross);
+  add(unit, mats.soff(colors.soffitRib, [24, 1]), bins.ribAlong);
   add(new THREE.CylinderGeometry(section.soffit.ribWidth / 2 + section.soffit.fillet,
     section.soffit.ribWidth / 2 + section.soffit.fillet, 1, section.soffit.filletSegments),
-    soffit(colors.soffitRib), bins.ribBoss, false);
-  add(unit, soffit(colors.soffitRib), bins.solidStrip);
-  add(unit, concrete(colors.fascia), bins.fascia);
+    mats.soff(colors.soffitRib, [1, 1]), bins.ribBoss, false);
+  add(unit, mats.soff(colors.soffitRib, [24, 1]), bins.solidStrip);
+  add(unit, mats.conc(colors.fascia, [24, 2]), bins.fascia);
   add(unit, metal(colors.dripCap), bins.dripCap);
-  add(unit, concrete(colors.birdSpike), bins.birdSpike);
+  add(unit, mats.conc(colors.birdSpike, [24, 1]), bins.birdSpike);
   add(new THREE.BoxGeometry(0.012, 1, 0.012), metal(colors.birdSpike), bins.needles, false);
   add(new THREE.CylinderGeometry(section.soffit.lightRadius, section.soffit.lightRadius,
     section.soffit.lightHeight, 10), painted(colors.downlight), bins.downlight, false);
@@ -970,28 +1242,31 @@ export function createPhotoGalbraith(scene, { photo, heightAt, surfaceAt } = {})
      the two horizontal axes and only stretches the vertical. */
   const strutGeo = strutGeometry(section.column.profile, 1);
   if (bins.struts.length) {
-    group.add(instanced(strutGeo, concrete(colors.column), bins.struts,
+    group.add(instanced(strutGeo, mats.conc(colors.column, [2, 5]), bins.struts,
       (it) => ({ ...it, scale: [1, it.height, 1] })));
   }
-  add(unit, concrete(colors.columnHead), bins.brackets);
+  add(unit, mats.conc(colors.columnHead, [1, 1]), bins.brackets);
 
-  add(unit, concrete(colors.spandrel), bins.spandrel);
-  add(plane, glassMat(colors.glass), bins.glass);
+  add(unit, mats.conc(colors.spandrel, [24, 1]), bins.spandrel);
+  add(plane, mats.glass(colors.glass), bins.glass);
   add(unit, painted(colors.mullion), bins.mullion);
-  add(unit, concrete(colors.deck), bins.deck);
+  add(unit, mats.conc(colors.deck, [24, 1]), bins.deck);
   add(unit, painted(colors.terraceRed), bins.redBand);
   add(unit, painted(colors.picket), bins.picket, false);
   add(unit, painted(colors.picket), bins.railCap, false);
-  add(unit, concrete(colors.lowerColumn), bins.lowerColumn);
-  add(plane, glassMat(colors.glassLower), bins.lowerGlass);
-  add(unit, concrete(colors.flutedPanel), bins.flutedWall);
-  add(unit, concrete(colors.flutedPanel), bins.flute, false);
+  add(unit, mats.conc(colors.lowerColumn, [1, 2]), bins.lowerColumn);
+  add(plane, mats.glass(colors.glassLower), bins.lowerGlass);
+  /* The 1965 aggregate wall is the one board-formed surface on the building. */
+  add(unit, mats.board(colors.flutedPanel), bins.flutedWall);
+  add(unit, mats.conc(colors.flutedPanel, [1, 2]), bins.flute, false);
   add(unit, painted(colors.doorBronze), bins.doorBronze);
 
   const north = section.faces.find((f) => f.entry);
   if (north) buildEntry(section, group, frames.get(north.id), north, ctx);
   buildStair(section, group, ctx);
   buildGround(section, group, ctx);
+  const roofCounts = buildRoof(section, group, ctx);
+  const eastCounts = buildEastGround(section, group, ctx, frames);
 
   scene?.add(group);
   return {
@@ -1003,6 +1278,8 @@ export function createPhotoGalbraith(scene, { photo, heightAt, surfaceAt } = {})
       downlights: bins.downlight.length,
       pickets: bins.picket.length,
       lowerColumns: bins.lowerColumn.length,
+      ...roofCounts,
+      ...eastCounts,
       absent: section.absent.length,
       draws: group.children.length,
     },
