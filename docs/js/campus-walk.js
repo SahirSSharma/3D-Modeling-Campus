@@ -41,6 +41,7 @@ import { createPhotoEighth } from "./campus-photo-eighth.js";
 import { createPhotoRevelle } from "./campus-photo-revelle.js";
 import { createPhotoRady } from "./campus-photo-rady.js";
 import { createPhotoErc } from "./campus-photo-erc.js";
+import { createPhotoKeeling } from "./campus-photo-keeling.js";
 import {
   createExplore, scaleAtmosphere, stepSpeed, EYE, sliderToSpeed, speedToSlider,
   MAX_SPEED_MPS,
@@ -651,6 +652,10 @@ export async function boot({ report } = {}) {
        corridor's crop, so the run never has the terrain under them. */
     photoZone.add(createPhotoRady(null, { photo: data.photo, heightAt: surfaceAt, surfaceAt }).group);
     photoZone.add(createPhotoErc(null, { photo: data.photo, heightAt: surfaceAt, surfaceAt }).group);
+    /* Keeling wants BOTH samplers distinctly: facade layers seat on heightAt —
+       the datum campus-massing.js used for the walls they float off — and
+       ground items on surfaceAt, or they sink under the drawn terrain. */
+    photoZone.add(createPhotoKeeling(null, { photo: data.photo, heightAt, surfaceAt }).group);
   }
   scene.add(photoZone);
 
