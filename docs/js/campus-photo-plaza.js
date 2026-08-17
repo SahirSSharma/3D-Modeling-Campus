@@ -62,6 +62,7 @@ function instanced(geo, mat, items, place) {
   const e = new THREE.Euler();
   const s = new THREE.Vector3();
   const pos = new THREE.Vector3();
+  const tint = new THREE.Color();
   items.forEach((it, i) => {
     const p = place(it, i);
     e.set(p.rotX || 0, p.rot || 0, p.rotZ || 0, "YXZ");
@@ -70,8 +71,12 @@ function instanced(geo, mat, items, place) {
     pos.set(p.x, p.y, p.z);
     m.compose(pos, q, s);
     mesh.setMatrixAt(i, m);
+    /* Per-instance tone: a VALUE multiplier only, so a lobe can be a lighter
+       or darker version of the section's sourced hex but never another hue. */
+    if (p.tone !== undefined) mesh.setColorAt(i, tint.setScalar(p.tone));
   });
   mesh.instanceMatrix.needsUpdate = true;
+  if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
   mesh.castShadow = true;
   mesh.receiveShadow = true;
   return mesh;
@@ -124,76 +129,164 @@ function treeRng(seed, x, z) {
 /* ------------------------------------------------------------------ trees */
 
 /* Each species collects into shared bins so the whole zone's canopy is a
-   handful of instanced draws: one trunk mesh, one limb mesh, two card
-   materials (sun/shade), one lobe material per species. Cards are cutout
-   foliage planes (alpha from the procedural map); lobes are the same class
-   with alphaTest 0 — solid, for the dense ficus/coral domes. */
+   handful of instanced draws: one trunk mesh, one limb mesh, and one lobe
+   mesh per foliage tone.
 
-function collectPine(item, seed, ground, bins) {
+   CANOPIES ARE VOLUMES, NOT CARDS. An earlier pass hung crossed alpha-cutout
+   planes off the limb tips. It passed every count gate and looked like a bare
+   pole holding a few moth-eaten sheets: edge-on the canopy vanished, and from
+   above there was nothing there. A canopy here is a cluster of overlapping
+   squashed ellipsoids ("lobes") that occupies the measured crown volume, so
+   the tree has a silhouette from any angle and self-shadows into a mass. The
+   structural limbs still exist, but every one of them ENDS INSIDE a lobe —
+   `limbTo` aims each limb at a lobe centre — so no limb is ever a stick in
+   open air. */
+
+/** A limb instance running from `a` to `b` (unit cylinder, +Y, centred). */
+function limbTo(a, b) {
+  const dx = b[0] - a[0];
+  const dy = b[1] - a[1];
+  const dz = b[2] - a[2];
+  const len = Math.hypot(dx, dy, dz) || 0.01;
+  /* A YXZ euler of (tilt, yaw) sends +Y to (sin·sin, cos, sin·cos), so the
+     yaw is atan2(dx, dz) — not the negated pair the older collectors used,
+     which only went unnoticed because their yaw was random anyway. */
+  return {
+    x: (a[0] + b[0]) / 2, y: (a[1] + b[1]) / 2, z: (a[2] + b[2]) / 2,
+    rot: Math.atan2(dx, dz),
+    rotX: Math.acos(Math.max(-1, Math.min(1, dy / len))),
+    scale: [1, len, 1],
+  };
+}
+
+/**
+ * The shared lobe body: a low sphere pushed around by a closed-form ripple so
+ * it is a lumpy blob rather than a billiard ball. One geometry for every lobe
+ * on the zone — the variety comes from the per-instance yaw and non-uniform
+ * scale — and the displacement is a pure function of the vertex, so duplicated
+ * seam and pole vertices move together and the surface stays closed.
+ */
+function lobeGeometry() {
+  const geo = new THREE.SphereGeometry(1, 10, 7);
+  const pos = geo.attributes.position;
+  const v = new THREE.Vector3();
+  for (let i = 0; i < pos.count; i++) {
+    v.fromBufferAttribute(pos, i);
+    const n =
+      Math.sin(v.x * 3.1 + 1.7) * Math.sin(v.y * 2.6 + 0.4) * Math.sin(v.z * 3.7 + 2.2) +
+      0.5 * Math.sin(v.x * 6.3 + 0.9) * Math.sin(v.z * 5.5 + 1.3);
+    v.multiplyScalar(1 + n * 0.15);
+    pos.setXYZ(i, v.x, v.y, v.z);
+  }
+  geo.computeVertexNormals();
+  return geo;
+}
+
+/** A lobe placement: squashed ellipsoid of horizontal radius `rad`. */
+function lobe(x, y, z, rad, squash, rng) {
+  return {
+    x, y, z,
+    rot: rng() * Math.PI * 2,
+    scale: [rad, rad * squash, rad * (0.85 + rng() * 0.3)],
+    tone: 0.82 + rng() * 0.36,
+  };
+}
+
+/**
+ * Torrey pine: a broad FLATTENED UMBRELLA on a long clear bole. The crown is
+ * a ring of big overlapping lobes at the measured radius with a shallower
+ * inner cap, all squashed hard in Y — the species' signature is that it is
+ * much wider than it is deep. Heavy ascending limbs reach from the bole top
+ * out into the ring lobes.
+ */
+function collectPine(item, seed, ground, bins, boleFrac) {
   const { x, z, h, r } = item;
   const rng = treeRng(seed, x, z);
   const g = ground(x, z);
-  const boleH = h * 0.6; // clear bole 55-65% of height [measured]
+  const boleH = h * boleFrac; // clear bole 55-65% of height [measured]
   bins.pineTrunks.push({ x, y: g + boleH / 2, z, scale: [1, boleH, 1] });
 
-  const limbs = 2 + Math.floor(rng() * 3); // 2-4 heavy ascending limbs
-  for (let l = 0; l < limbs; l++) {
-    const yaw = rng() * Math.PI * 2;
-    const tilt = 0.5 + rng() * 0.4;
-    const len = h * (0.22 + rng() * 0.08);
-    const s = Math.sin(tilt);
-    const dir = [-s * Math.sin(yaw), Math.cos(tilt), -s * Math.cos(yaw)];
-    const bx = x + dir[0] * (len / 2);
-    const by = g + boleH * 0.92 + dir[1] * (len / 2);
-    const bz = z + dir[2] * (len / 2);
-    bins.pineLimbs.push({ x: bx, y: by, z: bz, rot: yaw, rotX: tilt, scale: [1, len, 1] });
+  const crownH = h - boleH;
+  const deck = g + boleH + crownH * 0.45; // the umbrella's underside plane
+  const ring = [];
 
-    /* Needle tufts at the limb end: two crossed cards, kept inside the
-       measured crown radius. ~40-50% of the crown must stay sky. */
-    const tipX = x + dir[0] * len * 0.95;
-    const tipY = g + boleH * 0.92 + dir[1] * len * 0.95;
-    const tipZ = z + dir[2] * len * 0.95;
-    const w = Math.min(r * (0.8 + rng() * 0.3), r * 1.1);
-    for (let c = 0; c < 2; c++) {
-      const bin = rng() < 0.55 ? bins.cardsSun : bins.cardsShade;
-      bin.push({
-        x: tipX, y: Math.min(tipY, g + h - w * 0.2), z: tipZ,
-        rot: rng() * Math.PI, scale: [w, w * 0.5, 1],
-      });
-    }
+  /* The umbrella rim: 7-9 lobes round the measured crown radius. Their
+     heights are scattered across a third of the crown depth rather than sitting
+     on one plane — a rim at a single height renders as a clean disc, and a
+     row of discs on poles is the silhouette this rework exists to kill. */
+  const rimCount = 7 + Math.floor(rng() * 3);
+  const phase = rng() * Math.PI * 2;
+  for (let i = 0; i < rimCount; i++) {
+    const a = phase + (i / rimCount) * Math.PI * 2 + (rng() - 0.5) * 0.3;
+    const d = r * (0.48 + rng() * 0.2);
+    const rad = r * (0.36 + rng() * 0.14);
+    const p = [x + Math.sin(a) * d, deck + crownH * (0.02 + rng() * 0.3), z + Math.cos(a) * d];
+    ring.push(p);
+    bins[rng() < 0.55 ? "pineSun" : "pineShade"].push(lobe(p[0], p[1], p[2], rad, 0.62, rng));
   }
-  /* Crown-top tufts so the tree does not read decapitated. */
-  for (let c = 0; c < 2; c++) {
-    const w = r * (0.6 + rng() * 0.25);
-    const bin = c === 0 ? bins.cardsSun : bins.cardsShade;
-    bin.push({
-      x: x + (rng() - 0.5) * r * 0.5,
-      y: g + h * (0.86 + rng() * 0.08),
-      z: z + (rng() - 0.5) * r * 0.5,
-      rot: rng() * Math.PI, scale: [w, w * 0.5, 1],
-    });
+  /* The inner cap, sitting proud of the rim so the crown domes. */
+  const capCount = 2 + Math.floor(rng() * 2);
+  for (let i = 0; i < capCount; i++) {
+    const a = rng() * Math.PI * 2;
+    const d = r * rng() * 0.3;
+    const rad = r * (0.34 + rng() * 0.14);
+    bins[i === 0 ? "pineSun" : "pineShade"].push(lobe(
+      x + Math.sin(a) * d, deck + crownH * (0.32 + rng() * 0.18), z + Math.cos(a) * d, rad, 0.6, rng
+    ));
+  }
+  /* A broken skirt hanging under the rim, so the underside is lumpy rather
+     than a flat plate you can read as a cardboard cutout from below. */
+  const skirt = 2 + Math.floor(rng() * 2);
+  for (let i = 0; i < skirt; i++) {
+    const a = phase + rng() * Math.PI * 2;
+    const d = r * (0.4 + rng() * 0.25);
+    const rad = r * (0.26 + rng() * 0.1);
+    bins[rng() < 0.5 ? "pineSun" : "pineShade"].push(lobe(
+      x + Math.sin(a) * d, deck - crownH * (0.02 + rng() * 0.2), z + Math.cos(a) * d, rad, 0.6, rng
+    ));
+  }
+  /* Heavy ascending limbs. Each one runs from the bole top to the CENTRE of
+     a rim lobe, so it is buried in the canopy mass for its last few metres
+     instead of ending as a stick in open air. */
+  const from = [x, g + boleH * 0.9, z];
+  for (let i = 0; i < ring.length; i += ring.length > 6 ? 2 : 1) {
+    bins.pineLimbs.push(limbTo(from, ring[i]));
   }
 }
 
+/**
+ * Eucalyptus: a pale pole carrying SMALL HIGH CLUMPS. Airy by species — the
+ * clumps are small relative to the crown radius and sit in the top third —
+ * but each clump is a solid little mass, not a sheet.
+ */
 function collectEucalyptus(item, seed, ground, bins) {
   const { x, z, h, r } = item;
   const rng = treeRng(seed, x, z);
   const g = ground(x, z);
   const trunkH = h * 0.62;
   bins.eucTrunks.push({ x, y: g + trunkH / 2, z, rot: rng() * Math.PI, scale: [1, trunkH, 1] });
-  /* A sparse, airy crown: small grey-green cards high on the pole. */
-  const cards = 4 + Math.floor(rng() * 3);
-  for (let c = 0; c < cards; c++) {
-    const w = 2.2 + rng() * Math.min(r * 0.45, 1.6);
-    bins.eucCards.push({
-      x: x + (rng() - 0.5) * r,
-      y: g + h * (0.68 + rng() * 0.28),
-      z: z + (rng() - 0.5) * r,
-      rot: rng() * Math.PI, scale: [w, w * 0.6, 1],
-    });
+
+  const from = [x, g + trunkH * 0.95, z];
+  const clumps = 5 + Math.floor(rng() * 3);
+  const phase = rng() * Math.PI * 2;
+  for (let c = 0; c < clumps; c++) {
+    /* Spaced round the pole, not scattered: purely random bearings leave a
+       tree with three clumps on one side and a hole you can see through. */
+    const a = phase + (c / clumps) * Math.PI * 2 + (rng() - 0.5) * 0.5;
+    const d = r * (0.3 + rng() * 0.45);
+    const p = [x + Math.sin(a) * d, g + h * (0.7 + rng() * 0.26), z + Math.cos(a) * d];
+    const rad = Math.min(r * 0.42, 1.3 + rng() * 1.5);
+    bins.eucLobes.push(lobe(p[0], p[1], p[2], rad, 0.8, rng));
+    /* Two of the clumps are carried on a visible branch, run into the clump. */
+    if (c < 2) bins.eucLimbs.push(limbTo(from, p));
   }
 }
 
+/**
+ * Ficus: a DENSE BROAD DOME on the pale sinuous multi-stem trunk. The dome is
+ * a solid core ellipsoid wrapped in two shells of overlapping lobes, so the
+ * canopy is opaque from below and rounded from every side.
+ */
 function collectFicus(item, seed, ground, bins) {
   const { x, z, h, r } = item;
   const rng = treeRng(seed, x, z);
@@ -201,6 +294,9 @@ function collectFicus(item, seed, ground, bins) {
   /* Pale sinuous multi-stem trunk: 3-5 stems fusing low, leaning outward. */
   const stems = 3 + Math.floor(rng() * 3);
   const stemH = h * 0.5;
+  /* Girth scales with the crown. A fixed 0.3 m stem under a 15 m dome reads
+     as a canopy balanced on wires. */
+  const girth = Math.max(1, r / 4.5);
   for (let s = 0; s < stems; s++) {
     const yaw = (s / stems) * Math.PI * 2 + rng() * 0.8;
     const lean = 0.12 + rng() * 0.16;
@@ -208,26 +304,27 @@ function collectFicus(item, seed, ground, bins) {
     const dir = [-si * Math.sin(yaw), Math.cos(lean), -si * Math.cos(yaw)];
     bins.ficusStems.push({
       x: x + dir[0] * (stemH / 2), y: g + dir[1] * (stemH / 2), z: z + dir[2] * (stemH / 2),
-      rot: yaw, rotX: lean, scale: [1, stemH, 1],
+      rot: yaw, rotX: lean, scale: [girth, stemH, girth],
     });
   }
-  /* Tight dark dome: one carrying lobe plus satellites, all solid. */
-  const cy = g + h * 0.72;
-  bins.ficusLobes.push({ x, y: cy, z, rot: rng() * Math.PI, scale: [r * 0.85, r * 0.42, r * 0.85] });
-  const lobes = 5 + Math.floor(rng() * 3);
-  for (let l = 0; l < lobes; l++) {
-    const a = rng() * Math.PI * 2;
-    const d = r * (0.25 + rng() * 0.3);
-    const s = r * (0.4 + rng() * 0.22);
-    bins.ficusLobes.push({
-      x: x + Math.sin(a) * d,
-      y: cy + (rng() - 0.35) * h * 0.1,
-      z: z + Math.cos(a) * d,
-      rot: rng() * Math.PI, scale: [s, s * 0.6, s],
-    });
+  /* The carrying core, then a shoulder ring and a crown ring over it. */
+  const cy = g + h * 0.7;
+  const domeH = Math.min(h - stemH, r * 1.1);
+  bins.ficusLobes.push(lobe(x, cy, z, r * 0.62, 0.72, rng));
+  for (const [n, dFrac, yFrac, sFrac] of [[7, 0.62, -0.1, 0.42], [5, 0.34, 0.28, 0.4]]) {
+    const phase = rng() * Math.PI * 2;
+    for (let i = 0; i < n; i++) {
+      const a = phase + (i / n) * Math.PI * 2 + (rng() - 0.5) * 0.4;
+      const d = r * dFrac * (0.85 + rng() * 0.3);
+      bins.ficusLobes.push(lobe(
+        x + Math.sin(a) * d, cy + domeH * (yFrac + (rng() - 0.5) * 0.12), z + Math.cos(a) * d,
+        r * sFrac * (0.85 + rng() * 0.3), 0.7, rng
+      ));
+    }
   }
 }
 
+/** Coral tree: SPARSE OPEN lobes, widely spaced on a low multi-stem frame. */
 function collectCoral(coral, seed, ground, bins) {
   const { x, z, h, spread } = coral;
   const rng = treeRng(seed, x, z);
@@ -244,18 +341,17 @@ function collectCoral(coral, seed, ground, bins) {
       rot: yaw, rotX: lean, scale: [1, stemH, 1],
     });
   }
-  /* Sparse open canopy of large light-green lobes. */
   const R = spread / 2;
-  for (let l = 0; l < 5; l++) {
-    const a = rng() * Math.PI * 2;
-    const d = R * (0.15 + rng() * 0.5);
-    const s = R * (0.34 + rng() * 0.18);
-    bins.coralLobes.push({
-      x: x + Math.sin(a) * d,
-      y: g + h * (0.6 + rng() * 0.3),
-      z: z + Math.cos(a) * d,
-      rot: rng() * Math.PI, scale: [s, s * 0.55, s],
-    });
+  const from = [x, g + stemH * 0.95, z];
+  const n = 6;
+  const phase = rng() * Math.PI * 2;
+  for (let l = 0; l < n; l++) {
+    const a = phase + (l / n) * Math.PI * 2 + (rng() - 0.5) * 0.5;
+    const d = R * (0.3 + rng() * 0.45);
+    const rad = R * (0.3 + rng() * 0.14);
+    const p = [x + Math.sin(a) * d, g + h * (0.66 + rng() * 0.28), z + Math.cos(a) * d];
+    bins.coralLobes.push(lobe(p[0], p[1], p[2], rad, 0.62, rng));
+    bins.coralStems.push(limbTo(from, p));
   }
 }
 
@@ -264,34 +360,50 @@ function buildTrees(section, group, ground, mats, counts) {
   const C = section.colors;
   const seed = section.seed;
   const bins = {
-    pineTrunks: [], pineLimbs: [], cardsSun: [], cardsShade: [],
-    eucTrunks: [], eucCards: [], ficusStems: [], ficusLobes: [],
+    pineTrunks: [], pineLimbs: [], pineSun: [], pineShade: [],
+    eucTrunks: [], eucLimbs: [], eucLobes: [], ficusStems: [], ficusLobes: [],
     coralStems: [], coralLobes: [],
   };
-  for (const it of T.pines.items) collectPine(it, seed, ground, bins);
+  for (const it of T.pines.items) collectPine(it, seed, ground, bins, T.pines.boleFrac);
   for (const it of T.eucalyptus.items) collectEucalyptus(it, seed, ground, bins);
   for (const it of T.ficus.items) collectFicus(it, seed, ground, bins);
   collectCoral(T.coral, seed, ground, bins);
 
-  const card = new THREE.PlaneGeometry(1, 1);
-  const lobe = new THREE.SphereGeometry(1, 7, 5);
-  const add = (geo, mat, items) => { if (items.length) group.add(instanced(geo, mat, items, (it) => it)); };
+  const lobeGeo = lobeGeometry();
+  /* Named, because the tests address the canopy meshes directly — a gate that
+     has to guess which child is foliage is a gate that stops working. */
+  const add = (name, geo, mat, items) => {
+    if (!items.length) return;
+    const mesh = instanced(geo, mat, items, (it) => it);
+    mesh.name = name;
+    group.add(mesh);
+  };
+  /* Solid foliage: the procedural foliage class WITHOUT its alpha cut. The
+     class's alpha channel is a leaf-clump silhouette meant for a card, and on
+     a closed lobe it only punches holes; its albedo mottle and normal relief
+     are exactly what a leaf mass wants, so they stay. FrontSide because these
+     are closed surfaces. */
+  const foliage = (color) => mats.get("foliage", {
+    color, alphaTest: 0, side: THREE.FrontSide, repeat: [3, 2],
+  });
 
-  add(new THREE.CylinderGeometry(0.3, 0.5, 1, 7),
+  add("pine-trunks", new THREE.CylinderGeometry(0.3, 0.5, 1, 7),
     mats.get("barkPine", { color: C.pineBark, repeat: [2, 6] }), bins.pineTrunks);
-  add(new THREE.CylinderGeometry(0.09, 0.16, 1, 5),
+  add("pine-limbs", new THREE.CylinderGeometry(0.09, 0.16, 1, 5),
     mats.get("barkPine", { color: C.pineBark, repeat: [1, 3] }), bins.pineLimbs);
-  add(card, mats.get("foliage", { color: C.pineFoliageSun }), bins.cardsSun);
-  add(card, mats.get("foliage", { color: C.pineFoliageShade }), bins.cardsShade);
-  add(new THREE.CylinderGeometry(0.18, 0.3, 1, 7),
+  add("canopy-pine-sun", lobeGeo, foliage(C.pineFoliageSun), bins.pineSun);
+  add("canopy-pine-shade", lobeGeo, foliage(C.pineFoliageShade), bins.pineShade);
+  add("euc-trunks", new THREE.CylinderGeometry(0.18, 0.3, 1, 7),
     mats.get("barkEucalyptus", { color: C.eucTrunk, repeat: [2, 8] }), bins.eucTrunks);
-  add(card, mats.get("foliage", { color: C.eucLeaf }), bins.eucCards);
-  add(new THREE.CylinderGeometry(0.12, 0.17, 1, 6),
+  add("euc-limbs", new THREE.CylinderGeometry(0.07, 0.13, 1, 5),
+    mats.get("barkEucalyptus", { color: C.eucTrunk, repeat: [1, 3] }), bins.eucLimbs);
+  add("canopy-eucalyptus", lobeGeo, foliage(C.eucLeaf), bins.eucLobes);
+  add("ficus-stems", new THREE.CylinderGeometry(0.12, 0.17, 1, 6),
     mats.get("smoothConcrete", { color: C.ficusTrunk, roughness: 0.8 }), bins.ficusStems);
-  add(lobe, mats.get("foliage", { color: C.ficusLeaf, alphaTest: 0 }), bins.ficusLobes);
-  add(new THREE.CylinderGeometry(0.13, 0.19, 1, 6),
+  add("canopy-ficus", lobeGeo, foliage(C.ficusLeaf), bins.ficusLobes);
+  add("coral-stems", new THREE.CylinderGeometry(0.13, 0.19, 1, 6),
     mats.get("smoothConcrete", { color: C.coralBark, roughness: 0.75 }), bins.coralStems);
-  add(lobe, mats.get("foliage", { color: C.coralLeaf, alphaTest: 0 }), bins.coralLobes);
+  add("canopy-coral", lobeGeo, foliage(C.coralLeaf), bins.coralLobes);
 
   /* The coral tree's circular bare-earth ring, set in the lawn. */
   const ring = new THREE.Mesh(
@@ -306,8 +418,10 @@ function buildTrees(section, group, ground, mats, counts) {
   counts.ficus = T.ficus.items.length;
   counts.eucalyptus = T.eucalyptus.items.length;
   counts.coral = 1;
-  counts.foliageCards = bins.cardsSun.length + bins.cardsShade.length + bins.eucCards.length;
-  counts.foliageLobes = bins.ficusLobes.length + bins.coralLobes.length;
+  counts.foliageCards = 0; // no canopy anywhere is a card any more
+  counts.foliageLobes =
+    bins.pineSun.length + bins.pineShade.length + bins.eucLobes.length +
+    bins.ficusLobes.length + bins.coralLobes.length;
 }
 
 /* ----------------------------------------------------------------- ground */

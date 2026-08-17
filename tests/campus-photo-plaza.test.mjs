@@ -337,7 +337,8 @@ test("the module builds headless and reports its inventory", () => {
   assert.equal(counts.binPairs, section.furniture.binPairs.items.length);
   assert.equal(counts.umbrellas, section.furniture.terraces.items.length);
   assert.ok(counts.brickArcCrossings > 20, `only ${counts.brickArcCrossings} band crossings found`);
-  assert.ok(counts.foliageCards > 60, "the canopies must be genuinely modelled, not blobs");
+  assert.ok(counts.foliageLobes > 250, `only ${counts.foliageLobes} canopy lobes across 41 trees`);
+  assert.equal(counts.foliageCards, 0, "no canopy may be a flat card");
   assert.equal(counts.draws, group.children.length);
 });
 
@@ -412,8 +413,8 @@ test("tree canopies stay on their measured trunks", () => {
   /* Every pine trunk instance must stand at exactly its LiDAR (x, z), at
      half its bole height — the re-skin never moves the measured tree. */
   const { group } = createPhotoPlaza(null, { photo: photoFor(), surfaceAt: () => 0 });
-  const pineTrunks = group.children.find((c) => c.isInstancedMesh && c.count === 12);
-  assert.ok(pineTrunks, "no 12-instance pine trunk mesh found");
+  const pineTrunks = group.getObjectByName("pine-trunks");
+  assert.ok(pineTrunks?.isInstancedMesh && pineTrunks.count === 12, "no 12-instance pine trunk mesh found");
   const P = section.treeOverrides.pines;
   for (let k = 0; k < 12; k++) {
     const e = pineTrunks.instanceMatrix.array;
@@ -424,4 +425,128 @@ test("tree canopies stay on their measured trunks", () => {
       `pine ${k} moved off its measured trunk`);
     assert.ok(Math.abs(y - (it.h * P.boleFrac) / 2) < 1e-3, `pine ${k} bole is not seated`);
   }
+});
+
+/* --------------------------------------------------- the canopies are solid
+ *
+ * The gates above all passed on a canopy built from crossed alpha-cutout
+ * cards, which on screen was a bare pole holding a few moth-eaten sheets:
+ * invisible edge-on, absent from above. Counting instances cannot see that.
+ * These four gates check the SHAPE instead — that every canopy is a set of
+ * three-dimensional lobes, that the lobes actually fill the measured crown,
+ * that they surround the trunk so the tree has a silhouette from any bearing,
+ * and that no structural limb ends in open air.
+ */
+
+const CANOPIES = ["canopy-pine-sun", "canopy-pine-shade", "canopy-eucalyptus", "canopy-ficus", "canopy-coral"];
+
+/** Every canopy instance as {x, y, z, sx, sy, sz}, decomposed from the matrix. */
+function lobesOf(group) {
+  const out = [];
+  const m = new THREE.Matrix4();
+  const p = new THREE.Vector3();
+  const q = new THREE.Quaternion();
+  const s = new THREE.Vector3();
+  for (const name of CANOPIES) {
+    const mesh = group.getObjectByName(name);
+    assert.ok(mesh?.isInstancedMesh, `${name} is missing — a species lost its canopy`);
+    for (let i = 0; i < mesh.count; i++) {
+      mesh.getMatrixAt(i, m);
+      m.decompose(p, q, s);
+      out.push({ x: p.x, y: p.y, z: p.z, sx: s.x, sy: s.y, sz: s.z, name });
+    }
+  }
+  return out;
+}
+
+test("no canopy is a flat card — every lobe is a three-dimensional volume", () => {
+  const { group } = createPhotoPlaza(null, { photo: photoFor(), surfaceAt: () => 0 });
+  for (const name of CANOPIES) {
+    const mesh = group.getObjectByName(name);
+    /* A PlaneGeometry has no depth attribute to check, so check the source:
+       the canopy geometry must be closed, and closed means its own bounding
+       box has extent on all three axes before any instance scale. */
+    mesh.geometry.computeBoundingBox();
+    const b = mesh.geometry.boundingBox;
+    for (const [axis, e] of [["x", b.max.x - b.min.x], ["y", b.max.y - b.min.y], ["z", b.max.z - b.min.z]]) {
+      assert.ok(e > 0.5, `${name} geometry is flat in ${axis} (${e.toFixed(3)}) — that is a card, not a canopy`);
+    }
+  }
+  for (const l of lobesOf(group)) {
+    const min = Math.min(l.sx, l.sy, l.sz);
+    const max = Math.max(l.sx, l.sy, l.sz);
+    assert.ok(min > 0.25, `a ${l.name} lobe is scaled to ${min.toFixed(3)} on an axis — squashed to a sheet`);
+    assert.ok(max / min < 4, `a ${l.name} lobe has aspect ${(max / min).toFixed(1)} — that reads as a plane`);
+  }
+});
+
+test("every canopy fills its measured crown from every bearing", () => {
+  /* For each measured tree: gather the lobes over it, and demand they (a) are
+     numerous enough to overlap into a mass, (b) reach out toward the surveyed
+     crown radius rather than huddling on the trunk, and (c) occupy at least
+     six of the eight compass sectors, so the tree still has a silhouette when
+     you walk round it. A ring of cards fails (c) hard. */
+  const { group } = createPhotoPlaza(null, { photo: photoFor(), surfaceAt: () => 0 });
+  const lobes = lobesOf(group);
+  const T = section.treeOverrides;
+  const trees = [
+    ...T.pines.items.map((t) => ({ ...t, kind: "pine", crown: t.r })),
+    ...T.eucalyptus.items.map((t) => ({ ...t, kind: "eucalyptus", crown: t.r })),
+    ...T.ficus.items.map((t) => ({ ...t, kind: "ficus", crown: t.r })),
+    { ...T.coral, kind: "coral", crown: T.coral.spread / 2 },
+  ];
+  /* Eucalyptus is airy by species and its clumps are small — the survey's
+     crown radius is the outer limit, not a shell it has to reach. */
+  const minLobes = { pine: 9, eucalyptus: 5, ficus: 12, coral: 6 };
+  const minSectors = { pine: 6, eucalyptus: 4, ficus: 6, coral: 5 };
+  for (const t of trees) {
+    const mine = lobes.filter((l) =>
+      Math.hypot(l.x - t.x, l.z - t.z) <= t.crown * 1.35 && l.y > t.h * 0.35 && l.y < t.h * 1.15);
+    assert.ok(mine.length >= minLobes[t.kind],
+      `${t.kind} at (${t.x}, ${t.z}) has ${mine.length} lobes over it — too few to read as a mass`);
+    const reach = Math.max(...mine.map((l) => Math.hypot(l.x - t.x, l.z - t.z) + Math.max(l.sx, l.sz)));
+    assert.ok(reach >= t.crown * 0.6,
+      `${t.kind} at (${t.x}, ${t.z}) reaches only ${reach.toFixed(1)} m of its ${t.crown} m crown`);
+    const sectors = new Set(mine
+      .filter((l) => Math.hypot(l.x - t.x, l.z - t.z) > t.crown * 0.15)
+      .map((l) => Math.floor(((Math.atan2(l.x - t.x, l.z - t.z) + Math.PI * 2) % (Math.PI * 2)) / (Math.PI / 4))));
+    assert.ok(sectors.size >= minSectors[t.kind],
+      `${t.kind} at (${t.x}, ${t.z}) occupies only ${sectors.size}/8 bearings — it disappears from some angles`);
+  }
+});
+
+test("no structural limb ends in open air", () => {
+  /* The old canopy hung cards off limb tips; when a card turned edge-on the
+     limb was a bare stick. Every limb tip must now land inside a lobe. */
+  const { group } = createPhotoPlaza(null, { photo: photoFor(), surfaceAt: () => 0 });
+  const lobes = lobesOf(group);
+  const m = new THREE.Matrix4();
+  const p = new THREE.Vector3();
+  const q = new THREE.Quaternion();
+  const s = new THREE.Vector3();
+  const tip = new THREE.Vector3();
+  for (const name of ["pine-limbs", "euc-limbs"]) {
+    const mesh = group.getObjectByName(name);
+    assert.ok(mesh?.isInstancedMesh, `${name} is missing`);
+    for (let i = 0; i < mesh.count; i++) {
+      mesh.getMatrixAt(i, m);
+      m.decompose(p, q, s);
+      tip.set(0, s.y / 2, 0).applyQuaternion(q).add(p);
+      const inside = lobes.some((l) =>
+        (tip.x - l.x) ** 2 / l.sx ** 2 + (tip.y - l.y) ** 2 / l.sy ** 2 + (tip.z - l.z) ** 2 / l.sz ** 2 <= 1);
+      assert.ok(inside, `${name} instance ${i} ends at (${tip.x.toFixed(1)}, ${tip.y.toFixed(1)}, ${tip.z.toFixed(1)}), outside every lobe`);
+    }
+  }
+});
+
+test("the canopies stay inside a sane triangle budget", () => {
+  const { group } = createPhotoPlaza(null, { photo: photoFor(), surfaceAt: () => 0 });
+  let tris = 0;
+  for (const c of group.children) {
+    if (!c.isInstancedMesh) continue;
+    if (!/^(canopy-|pine-|euc-|ficus-|coral-)/.test(c.name)) continue;
+    const idx = c.geometry.index;
+    tris += ((idx ? idx.count : c.geometry.attributes.position.count) / 3) * c.count;
+  }
+  assert.ok(tris < 150000, `the 41 trees cost ${Math.round(tris)} triangles`);
 });
