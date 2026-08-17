@@ -621,8 +621,15 @@ async function phaseFlyDuringIntro(mode) {
   if (await page.evaluate(() => window.__campusScooter.mode) !== "intro") fail(mode, "intro was over before F could be pressed");
   await page.keyboard.press("f");
   await page.waitForFunction(() => window.__campusScooter.mode === "fly", null, { timeout: 15_000 });
+  /* The reveal ramp is 0.6 s of SIM time, and dt clamps at 0.05 s — so it
+     needs 12 frames, however long those frames take. Under SwiftShader this
+     scene runs near 1 fps and a wall-clock wait was really asserting frame
+     rate: the check failed the moment the scene grew, with the ribbon still
+     revealing correctly. Wait in FRAMES (with a generous wall ceiling), then
+     hold the reveal to exactly the same bar. */
   let done = true;
-  await page.waitForFunction(() => window.__campusScooter.reveal >= 1, null, { timeout: 10_000 })
+  await waitFrames(page, 16);
+  await page.waitForFunction(() => window.__campusScooter.reveal >= 1, null, { timeout: 30_000 })
     .catch(() => { done = false; });
   const parts = await page.evaluate(() => window.campusWalk.layers.route.children.map((m) => ({ visible: m.visible, opacity: m.material.opacity })));
   console.log(`  mode ${await page.evaluate(() => window.__campusScooter.mode)}, ribbon ${JSON.stringify(parts)}`);

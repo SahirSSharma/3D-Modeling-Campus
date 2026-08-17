@@ -47,6 +47,7 @@ import { createPostfx } from "./campus-postfx.js";
 import { createPhotoEighth } from "./campus-photo-eighth.js";
 import { createPhotoRevelle } from "./campus-photo-revelle.js";
 import { createPhotoKeeling } from "./campus-photo-keeling.js";
+import { createPhotoGalbraith } from "./campus-photo-galbraith.js";
 
 /* The corridors this module can boot, keyed by the ?mode= that asks for one.
    Same renderer, same ride, same everything — a different cut of the same
@@ -1408,6 +1409,9 @@ export async function boot({ report, mode = "scooter" } = {}) {
     /* Keeling is INSIDE the corridor crop — the run rides past its east face.
        Facade layers seat on heightAt (the massing datum); ground on surfaceAt. */
     photoZone.add(createPhotoKeeling(null, { photo: doc.photo, heightAt, surfaceAt }).group);
+    /* Galbraith fronts Revelle Plaza ~30 m off the line — the run looks
+       straight at its colonnade. Same two-sampler contract as Keeling. */
+    photoZone.add(createPhotoGalbraith(null, { photo: doc.photo, heightAt, surfaceAt }).group);
     photoZone.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   }
   scene.add(photoZone);
