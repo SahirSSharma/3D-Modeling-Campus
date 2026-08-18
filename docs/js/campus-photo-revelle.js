@@ -3,8 +3,8 @@
 // Everything this file draws is modelled off dated web photographs of Revelle
 // (2006-2026), not off LiDAR or OSM. Photos decide WHAT EXISTS and HOW IT
 // LOOKS; the measured data keeps deciding WHERE and HOW BIG. So every one of
-// these things is anchored to something surveyed — the arcade to York's
-// measured west face, the stair towers to Urey's measured plaza face,
+// these things is anchored to something surveyed — the stair towers to
+// Urey's measured plaza face,
 // the breezeway to the real gap between the Bonner and Mayer rings, the
 // paving to the measured Revelle Plaza polygon — and nothing here is ever
 // read back by a measured consumer.
@@ -24,7 +24,7 @@
 // Colours are DATA. Every hex comes from the `colors` block of the photo
 // document's `revelle` section — the same rule campus-landmarks.js learned
 // the hard way. Repeats are InstancedMesh: the plaza is ~130 discrete
-// objects and the York fins alone are 186 blades.
+// objects. (York Hall moved to its own module, campus-photo-york.js.)
 //
 // What is deliberately NOT here is listed in the section's `absent` array,
 // and it is a long list: no Peace Memorial (no photograph exists), no El Mac
@@ -310,20 +310,49 @@ function buildFurniture(section, group, ground) {
     (it) => ({ x: it.x, y: on(it.x, it.z) + bn.height / 2, z: it.z })
   ));
 
-  /* Bike-rack runs: a loaded row of loop hoops. */
+  /* Bike-rack runs: inverted-U loop hoops, as a swept tube.
+     These were five rows of thin dark BOXES, which is the abbreviation
+     campus-details.js uses for a rack station scattered along a walk. It does
+     not survive being run 24 m end to end: the Blake visual audit read the
+     Argo row as one untextured black stepped block, because at a grazing
+     angle 55 near-black slats at 0.42 m centres close up into a solid
+     silhouette. A hoop is mostly air from every angle, so it cannot. One
+     tube geometry, one instance per hoop, one draw for every rack on the
+     plaza — cheaper than what it replaces. */
   const rk = section.racks;
-  for (let h = 0; h < rk.hoops; h++) {
-    const at = (h - (rk.hoops - 1) / 2) * rk.spacing;
-    group.add(instanced(
-      new THREE.BoxGeometry(0.06, rk.hoopHeight, rk.hoopWidth), painted(colors.rack), rk.items,
-      (it) => ({
+  /* Straight legs, then a flat rounded crown — an inverted U. Running the
+     curve straight from leg to apex instead gives a pointed gothic arch,
+     which is York's arcade, not a bike rack. */
+  const hw = rk.hoopWidth / 2;
+  const hoopPath = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(0, 0, -hw),
+    new THREE.Vector3(0, rk.hoopHeight * 0.62, -hw),
+    new THREE.Vector3(0, rk.hoopHeight, -hw * 0.34),
+    new THREE.Vector3(0, rk.hoopHeight, hw * 0.34),
+    new THREE.Vector3(0, rk.hoopHeight * 0.62, hw),
+    new THREE.Vector3(0, 0, hw),
+  ]);
+  const hoops = [];
+  for (const it of rk.items) {
+    for (let h = 0; h < rk.hoops; h++) {
+      const at = (h - (rk.hoops - 1) / 2) * rk.spacing;
+      hoops.push({
         x: it.x + Math.sin(it.rot) * at,
-        y: on(it.x, it.z) + rk.hoopHeight / 2,
+        y: on(it.x, it.z),
         z: it.z + Math.cos(it.rot) * at,
         rot: it.rot,
-      })
-    ));
+      });
+    }
   }
+  group.add(instanced(
+    /* Not `painted()`: at metalness 0.35 against this scene's 0.22 IBL
+       intensity a 25 mm tube renders near-black whatever its albedo, which is
+       half of why the audit called this a black block. Galvanised steel in
+       daylight is a light mid grey, so the diffuse term carries it. */
+    new THREE.TubeGeometry(hoopPath, 14, rk.tube, 5, false),
+    new THREE.MeshStandardMaterial({ color: colors.rack, roughness: 0.5, metalness: 0.2 }),
+    hoops, (h) => h
+  ));
 
   /* Lava-rock retaining walls: angular volcanic rubble, no cap course. Each
      segment is a cluster of displaced blocks, deterministically jittered off
@@ -350,44 +379,10 @@ function buildFurniture(section, group, ground) {
   }
 }
 
-/* ------------------------------------------------------- York Hall, west */
-
-function buildYork(section, group, ground) {
-  const { colors } = section;
-  const arc = section.systems.yorkArcade;
-  const fins = section.systems.yorkFins;
-
-  /* The 300-foot arcade. Column count and arcade length are both SOURCED, so
-     the spacing between them is arithmetic, not taste: 35 columns over the
-     measured 92.6 m west face. Their capitals flare until adjacent ones
-     nearly touch, and the void left between two of them is the pointed arch. */
-  const step = (arc.z1 - arc.z0) / (arc.columns - 1);
-  const columns = [];
-  for (let i = 0; i < arc.columns; i++) columns.push(arc.z0 + i * step);
-  const x = arc.faceX - arc.standoff;
-  group.add(instanced(
-    flareColumn(arc.shaftBase, arc.shaftWaist, arc.capital, arc.height),
-    concrete(colors.arcadeColumn), columns,
-    (z) => ({ x, y: ground(x, z), z })
-  ));
-
-  /* Three fin storeys above the arcade, as a thin instanced blade layer
-     floating just off the measured wall — the measured massing is untouched.
-     805 story-tall precast fins wrap York; this is the west face's share. */
-  const blades = [];
-  const count = Math.floor((fins.z1 - fins.z0) / fins.spacing);
-  for (let s = 0; s < fins.storeys; s++) {
-    for (let i = 0; i <= count; i++) {
-      blades.push({ z: fins.z0 + i * fins.spacing, y: fins.base + s * fins.storeyHeight });
-    }
-  }
-  const finX = fins.faceX - fins.depth / 2 + 0.05;
-  group.add(instanced(
-    new THREE.BoxGeometry(fins.depth, fins.storeyHeight - 0.3, fins.width),
-    concrete(colors.yorkFin), blades,
-    (b) => ({ x: finX, y: ground(fins.faceX, b.z) + b.y + (fins.storeyHeight - 0.3) / 2, z: b.z })
-  ));
-}
+/* York Hall is NOT built here any more: campus-photo-york.js supersedes the
+   old west-face arcade/fin sketch with the full four-structure build. The
+   revelle section may still carry its legacy yorkArcade/yorkFins keys until
+   the merge deletes them; nothing below reads them either way. */
 
 /* ------------------------------------------------ Urey Hall, plaza corner */
 
@@ -528,7 +523,6 @@ export function createPhotoRevelle(scene, { photo, heightAt, surfaceAt } = {}) {
 
   buildPaving(section, group, ground);
   buildFurniture(section, group, ground);
-  buildYork(section, group, ground);
   buildUrey(section, group, ground);
   buildBreezeway(section, group, ground);
 
@@ -541,7 +535,6 @@ export function createPhotoRevelle(scene, { photo, heightAt, surfaceAt } = {}) {
       lamps: section.lamps.items.length,
       kiosks: section.kiosks.items.length,
       lavaWallSegments: section.lavaWalls.items.length,
-      arcadeColumns: section.systems.yorkArcade.columns,
       breezewayLevels: section.systems.breezeway.levels,
       draws: group.children.length,
     },

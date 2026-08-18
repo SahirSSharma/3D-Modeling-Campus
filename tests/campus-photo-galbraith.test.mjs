@@ -35,6 +35,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import * as THREE from "../docs/vendor/three/three.module.min.js";
 import { createPhotoGalbraith } from "../docs/js/campus-photo-galbraith.js";
+import { SPECIES, treeSpecies } from "../docs/js/campus-species.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (p) => JSON.parse(readFileSync(join(root, p), "utf8"));
@@ -664,6 +665,159 @@ test("two builds are byte-identical — no hidden randomness", () => {
   assert.deepEqual(sig(a), sig(b));
 });
 
+test("the curtain wall is a near-opaque dark surface, not a tint over the massing", () => {
+  /* The visual audit caught the massing box's punched-window texture reading
+     straight through the declared bronze on all four faces: the library's
+     default 0.35-opacity glass tints what is behind it instead of covering
+     it. The facade bands and the lower glazing must be near-opaque and must
+     write depth; the skylight panes may stay at the library default. */
+  const { group } = build();
+  let curtain = 0;
+  group.traverse((o) => {
+    if (o.isInstancedMesh && o.geometry.type === "PlaneGeometry" &&
+        o.material.transparent && o.material.opacity >= 0.9) {
+      assert.ok(o.material.depthWrite, "a near-opaque pane must write depth to occlude the massing");
+      curtain += o.count;
+    }
+  });
+  assert.ok(curtain >= 5, `only ${curtain} near-opaque curtain-wall panes — the massing shows through`);
+});
+
+test("tree re-skins carry measured rows verbatim and keep the canopy clear of the slab", (t) => {
+  const T = section.treeOverrides;
+  if (!T) {
+    t.skip("no treeOverrides in this document yet (pre-merge shipped doc)");
+    return;
+  }
+  /* The trunks are MEASURED: every item must be a campus-lidar row, verbatim,
+     and every skip key must have a re-skin item so no stem simply vanishes. */
+  const lidar = read("docs/data/campus-lidar.json");
+  for (const it of T.items) {
+    const row = lidar.trees.find((r) => `${r[0]},${r[1]}` === it.key);
+    assert.ok(row, `treeOverrides item ${it.key} names no measured trunk`);
+    assert.deepEqual([it.x, it.z, it.h, it.r], row,
+      `treeOverrides item ${it.key} does not copy its measured row verbatim`);
+  }
+  assert.deepEqual(
+    [...T.skipMeasuredKeys].sort(), T.items.map((i) => i.key).sort(),
+    "every skipped measured trunk must be re-skinned, and nothing else may be skipped");
+  assert.match(T.note, /INVENTED/, "the canopy re-shape must declare its class");
+  assert.ok(T.wiringNote, "the walk/scooter skip-set wiring dependency has to be written down");
+
+  /* The whole point: the rendered canopy stays below the soffit plane. And,
+     since round 3, that it looks like a pruned tree while doing it — the
+     first pass cleared the slab with ONE smooth flat-shaded dome on an
+     untextured pole, which passed the physics and read as a placeholder. */
+  const { group, counts } = build();
+  assert.equal(counts.reskinnedTrees, T.items.length);
+  const soffitY = flatGround() + section.measured.lidarHeight - section.levels.soffitBelowRoof;
+  const cap = soffitY - (T.clearBelowSoffit ?? 0.5);
+  const sub = group.children.find((c) => c.name === "galbraith-tree-reskins");
+  assert.ok(sub, "no re-skin group built");
+
+  const byName = (n) => {
+    const m = sub.children.find((o) => o.name === n);
+    assert.ok(m, `no ${n} mesh`);
+    return m;
+  };
+  const lobes = byName("galbraith-canopy-lobes");
+  const boles = byName("galbraith-tree-boles");
+
+  /* Lobes, not a single sphere. A canopy carried by one body is the defect
+     round 3 named, so the floor is per tree and the geometry may not be the
+     old faceted icosahedron. */
+  sub.traverse((o) => {
+    assert.notEqual(o.geometry?.type, "IcosahedronGeometry",
+      "a single flat-shaded dome is the placeholder this replaced");
+  });
+  assert.equal(counts.canopyLobes, lobes.count);
+  assert.ok(lobes.count >= 6 * T.items.length,
+    `${lobes.count} lobes for ${T.items.length} trees — that is a dome, not a canopy`);
+  assert.ok(lobes.instanceColor, "lobes must carry per-instance tone or the mass reads flat");
+
+  const rows = (mesh) => {
+    const out = [];
+    const p = new THREE.Vector3();
+    const q = new THREE.Quaternion();
+    const s = new THREE.Vector3();
+    const m = new THREE.Matrix4();
+    for (let i = 0; i < mesh.count; i++) {
+      mesh.getMatrixAt(i, m);
+      m.decompose(p, q, s);
+      out.push({ x: p.x, y: p.y, z: p.z, sx: s.x, sy: s.y, sz: s.z });
+    }
+    return out;
+  };
+
+  /* EVERY lobe below the slab, not just the crown's nominal top. */
+  for (const l of rows(lobes)) {
+    assert.ok(l.y + l.sy <= cap + 0.01,
+      `a canopy lobe tops out at ${(l.y + l.sy).toFixed(2)}, into the soffit at ${soffitY.toFixed(2)}`);
+  }
+
+  /* Bark the whole way down, standing ON the ground: the untextured lower
+     trunk was the other half of the round-3 defect. */
+  assert.ok(boles.material.map && boles.material.normalMap,
+    "the bole carries no bark texture");
+  for (const b of rows(boles)) {
+    assert.ok(Math.abs((b.y - b.sy / 2) - flatGround()) < 0.05,
+      `a bole starts ${(b.y - b.sy / 2 - flatGround()).toFixed(2)} m off the ground`);
+    assert.ok(b.sy > 3, "a bole that short is a stump, not a trunk");
+  }
+
+  /* Pruned AWAY from the building: the canopy's centre of mass has to sit
+     outboard of the trunk, on the bearing from the nearest ring corner. */
+  for (const it of T.items) {
+    let bx = 1;
+    let bz = 0;
+    let best = Infinity;
+    for (const [cx, cz] of section.ring) {
+      const d = Math.hypot(it.x - cx, it.z - cz);
+      if (d < best && d > 1e-6) { best = d; bx = (it.x - cx) / d; bz = (it.z - cz) / d; }
+    }
+    const mine = rows(lobes).filter((l) => Math.hypot(l.x - it.x, l.z - it.z) < it.r * 3);
+    const cx = mine.reduce((s, l) => s + l.x, 0) / mine.length;
+    const cz = mine.reduce((s, l) => s + l.z, 0) / mine.length;
+    assert.ok((cx - it.x) * bx + (cz - it.z) * bz > 0.2,
+      "the canopy is centred on its trunk — the prune away from the slab is not expressed");
+  }
+
+  /* THE PRUNE IS A CLEARANCE, NOT A LEAN. Round 4 caught the crown pressed
+     into the facade: leaning the inboard clumps shortened their reach but a
+     lobe is a BODY, and its SURFACE was still standing 1.5 m inside the
+     measured ring and through the curtain wall. Every lobe's horizontal
+     radius must clear the outermost thing on that wall — the corner pier
+     face at wallStandoff + 0.14. */
+  const faceOut = section.facade.wallStandoff + 0.14;
+  for (const l of rows(lobes)) {
+    const reach = Math.max(l.sx, l.sz);
+    const d = toRing(l.x, l.z);
+    assert.ok(d - reach >= faceOut,
+      `a canopy lobe's surface reaches to ${(d - reach).toFixed(2)} m off the ring, inside the facade at ${faceOut.toFixed(2)}`);
+  }
+
+  const one = T.items[0];
+  const pick = [one.x, one.z, one.h, one.r];
+
+  /* Colour space. campus-species hands back hexToRgb of a hex string — plain
+     sRGB byte fractions — and putting those into THREE's LINEAR working space
+     renders the bark 60% too bright and the leaf nearly 3x, which is what made
+     this tree read as pale sage next to plaza trees reaching the SAME hexes
+     through THREE's hex parser. The gate is against the species hex itself, so
+     it fails the moment the conversion is dropped again. */
+  for (const [mesh, hex, what] of [
+    [boles, SPECIES[treeSpecies(...pick)].trunk, "bark"],
+    [lobes, SPECIES[treeSpecies(...pick)].leaf, "leaf"],
+  ]) {
+    const want = new THREE.Color(hex);
+    const got = mesh.material.color;
+    for (const ch of ["r", "g", "b"]) {
+      assert.ok(Math.abs(got[ch] - want[ch]) <= want[ch] * 0.25 + 0.02,
+        `the ${what} is ${got[ch].toFixed(3)} against the species hex ${hex} at ${want[ch].toFixed(3)} — sRGB fractions stored as linear`);
+    }
+  }
+});
+
 test("the material library is actually on the surfaces", () => {
   const { group } = build();
   let textured = 0;
@@ -676,4 +830,201 @@ test("the material library is actually on the surfaces", () => {
   });
   assert.ok(textured >= 20, `only ${textured} textured meshes — the library is not applied`);
   assert.ok(glass >= 2, "the glazing does not carry the library's reflective glass");
+});
+
+test("the corners are solid end panels, not the massing box's window grid", () => {
+  /* The round-2 visual audit caught the measured massing showing at every
+     corner: the glazing planes hang proud of their own faces and stop at
+     their own ends, so the drawn box's corner stood bare between them and
+     wore campus-massing's punched-window texture — a dozen mini-storeys of
+     office windows on a two-storey building. The inventory has solid end
+     panels there and nothing fenestrated, so the gates are: one pier per
+     corner, each one covering the DRAWN corner in plan, standing at least as
+     proud as the glass on both of the faces that can see it, spanning the
+     whole glazed height, and opaque in the curtain wall's own sampled tone. */
+  const { group, counts } = build();
+  const piers = group.children.find((c) => c.name === "galbraith-corner-piers");
+  assert.ok(piers, "no corner piers built");
+  assert.equal(counts.cornerPiers, section.faces.length, "one pier per ring corner");
+  assert.equal(piers.count, section.faces.length);
+
+  assert.ok(!piers.material.transparent, "an end PANEL is solid, not glazed");
+  assert.equal(new THREE.Color(section.colors.glass).getHexString(),
+    piers.material.color.getHexString(),
+    "the pier must wear the curtain wall's own sampled bronze, not a new hex");
+
+  const pos = new THREE.Vector3();
+  const quat = new THREE.Quaternion();
+  const scl = new THREE.Vector3();
+  const m = new THREE.Matrix4();
+  const boxes = [];
+  for (let i = 0; i < piers.count; i++) {
+    piers.getMatrixAt(i, m);
+    m.decompose(pos, quat, scl);
+    const r = new THREE.Euler().setFromQuaternion(quat, "YXZ").y;
+    const ex = [Math.cos(r), -Math.sin(r)];
+    const ez = [Math.sin(r), Math.cos(r)];
+    const c = [];
+    for (const a of [-0.5, 0.5]) {
+      for (const b of [-0.5, 0.5]) {
+        c.push([pos.x + ex[0] * scl.x * a + ez[0] * scl.z * b,
+                pos.z + ex[1] * scl.x * a + ez[1] * scl.z * b]);
+      }
+    }
+    boxes.push({ corners: c, y0: pos.y - scl.y / 2, y1: pos.y + scl.y / 2 });
+  }
+
+  /* A convex-quad point test, since the piers are square but not axis-aligned. */
+  const covers = (b, x, z) => {
+    const q = [b.corners[0], b.corners[1], b.corners[3], b.corners[2]];
+    let sign = 0;
+    for (let i = 0; i < 4; i++) {
+      const [ax, az] = q[i];
+      const [bx, bz] = q[(i + 1) % 4];
+      const s = Math.sign((bx - ax) * (z - az) - (bz - az) * (x - ax));
+      if (s === 0) continue;
+      if (sign === 0) sign = s;
+      else if (s !== sign) return false;
+    }
+    return true;
+  };
+
+  /* Along a face the drawn ring is already behind a glazing plane (the
+     standoff gate above pins that); what stood bare is the drawn ring where
+     it turns the corner, so every drawn vertex within 1.5 m of a measured
+     corner has to be inside a pier, and every corner has to have one. */
+  for (const [cx, cz] of RING) {
+    const near = section.drawnRing.filter(([x, z]) => Math.hypot(x - cx, z - cz) <= 1.5);
+    assert.ok(near.length, `no drawn vertex turns the corner at (${cx}, ${cz})`);
+    for (const [x, z] of near) {
+      assert.ok(boxes.some((b) => covers(b, x, z)),
+        `the drawn massing corner (${x}, ${z}) is not covered by any pier`);
+    }
+  }
+
+  /* Proud of the glazing on both faces, so no corner of the box peeks out
+     alongside a pane that already stands 0.99 m off the ring. */
+  const glassOut = section.facade.wallStandoff + 0.04;
+  for (const f of section.faces) {
+    const frame = frameOf(f);
+    const [ox, oz] = frame.at(0, 0);
+    const [nx, nz] = [frame.at(0, 1)[0] - ox, frame.at(0, 1)[1] - oz];
+    for (const end of [0, frame.length]) {
+      const [ex, ez] = frame.at(end, 0);
+      const near = boxes
+        .map((b) => ({ b, d: Math.min(...b.corners.map(([x, z]) => Math.hypot(x - ex, z - ez))) }))
+        .sort((a, c) => a.d - c.d)[0].b;
+      const reach = Math.max(...near.corners.map(([x, z]) => (x - ox) * nx + (z - oz) * nz));
+      assert.ok(reach >= glassOut,
+        `the ${f.id} face's pier reaches ${reach.toFixed(2)} m, inside its own glass at ${glassOut}`);
+    }
+  }
+
+  /* Full height: below the grade the module was handed, up to the soffit. */
+  const roofY = flatGround() + section.measured.lidarHeight;
+  for (const b of boxes) {
+    assert.ok(b.y0 <= flatGround(), `a pier starts ${b.y0.toFixed(2)} m above the ground`);
+    assert.ok(b.y1 >= roofY - section.levels.soffitBelowRoof,
+      `a pier tops out at ${b.y1.toFixed(2)}, short of the soffit`);
+  }
+});
+
+/** How far the DRAWN mass stands outside this one face of the OSM ring. */
+function drawnClearanceOf(f) {
+  const frame = frameOf(f);
+  const [ax, az] = frame.at(0, 0);
+  const [bx, bz] = frame.at(frame.length, 0);
+  const tx = (bx - ax) / frame.length;
+  const tz = (bz - az) / frame.length;
+  const [ox, oz] = frame.at(0, 1);
+  let worst = 0;
+  for (const [px, pz] of section.drawnRing) {
+    const du = (px - ax) * tx + (pz - az) * tz;
+    if (du < -1 || du > frame.length + 1) continue;
+    worst = Math.max(worst, (px - ax) * (ox - ax) + (pz - az) * (oz - az));
+  }
+  return worst;
+}
+
+test("every glazing band has an opaque backing between it and the massing", () => {
+  /* The curtain wall keeps the library's reflective glass, so it is
+     transparent by construction and the measured massing's punched-window
+     texture read through it as pale grey squares on all four elevations. The
+     fix is something opaque for the pane to be transparent AGAINST. The gates:
+     a backing for every pane, opaque, in a colour the section already carries,
+     and — the part that is easy to get wrong — INBOARD of its own glass but
+     still OUTBOARD of the drawn mass on ITS OWN FACE. wallStandoff is pinned
+     to the east elevation's 0.80 m disagreement; the south and west are at
+     0.13. One depth for all four buries the east backing inside the box. */
+  const { group, counts } = build();
+  const back = group.children.find((c) => c.name === "galbraith-glass-backing");
+  assert.ok(back, "no glazing backing built");
+
+  const panes = [];
+  group.traverse((o) => {
+    if (o.isInstancedMesh && o.geometry.type === "PlaneGeometry" &&
+        o.material.transparent && o.material.opacity >= 0.9) panes.push(o);
+  });
+  const paneCount = panes.reduce((n, o) => n + o.count, 0);
+  assert.equal(counts.glassBackings, paneCount,
+    `${paneCount} near-opaque panes but ${counts.glassBackings} backings`);
+  assert.equal(back.count, paneCount);
+
+  assert.ok(!back.material.transparent, "the backing is what the glass is seen against — it must be opaque");
+  assert.equal(new THREE.Color(section.colors.glassLower).getHexString(),
+    back.material.color.getHexString(),
+    "the backing must use a tone the section already samples, not a new hex");
+
+  /* Pull every backing and every pane out as (x, y, z, halfWidth). */
+  const rows = (mesh) => {
+    const out = [];
+    const p = new THREE.Vector3();
+    const q = new THREE.Quaternion();
+    const s = new THREE.Vector3();
+    const m = new THREE.Matrix4();
+    for (let i = 0; i < mesh.count; i++) {
+      mesh.getMatrixAt(i, m);
+      m.decompose(p, q, s);
+      out.push({ x: p.x, y: p.y, z: p.z, w: s.x, h: s.y });
+    }
+    return out;
+  };
+  const backs = rows(back);
+  const glass = panes.flatMap(rows);
+
+  for (const f of section.faces) {
+    const frame = frameOf(f);
+    const [ox, oz] = frame.at(0, 0);
+    const [nx, nz] = [frame.at(0, 1)[0] - ox, frame.at(0, 1)[1] - oz];
+    const off = (r) => (r.x - ox) * nx + (r.z - oz) * nz;
+    const along = (r) => {
+      const [bx, bz] = frame.at(frame.length, 0);
+      const u = ((r.x - ox) * (bx - ox) + (r.z - oz) * (bz - oz)) / frame.length;
+      return u >= -1 && u <= frame.length + 1;
+    };
+    const clear = drawnClearanceOf(f);
+    const mine = backs.filter((r) => along(r) && Math.abs(off(r) - (section.facade.wallStandoff + 0.04)) < 1);
+    for (const b of mine) {
+      const d = off(b);
+      assert.ok(d > clear,
+        `the ${f.id} backing sits at ${d.toFixed(2)} m, inside its own drawn mass at ${clear.toFixed(2)}`);
+      assert.ok(d < section.facade.wallStandoff + 0.04,
+        `the ${f.id} backing at ${d.toFixed(2)} m is not behind its glass`);
+      /* Every pane on this face at this height must be in front of it, and
+         the backing must be no smaller than the pane it hides. */
+      const pane = glass.find((g) => along(g) && Math.abs(g.y - b.y) < 0.35 &&
+        Math.abs(off(g) - (section.facade.wallStandoff + 0.04)) < 0.2);
+      assert.ok(pane, `a ${f.id} backing at y ${b.y.toFixed(1)} covers no pane`);
+      assert.ok(off(pane) > d, "the glass must stand outboard of its own backing");
+      assert.ok(b.w >= pane.w - 0.01 && b.h >= pane.h - 0.01,
+        `the ${f.id} backing is smaller than the pane it hides`);
+    }
+  }
+
+  /* The east elevation is the reason the depth is per-face: it has under a
+     quarter of a metre to work in, the south and west most of a metre. */
+  const east = section.faces.find((f) => f.id === "east");
+  const west = section.faces.find((f) => f.id === "west");
+  assert.ok(drawnClearanceOf(east) > drawnClearanceOf(west) + 0.4,
+    "if the faces ever agree, the per-face depth stops being load-bearing — re-read this test");
 });

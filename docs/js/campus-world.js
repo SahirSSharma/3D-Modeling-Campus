@@ -531,13 +531,88 @@ function scoringTexture() {
   return tex;
 }
 
+/* How far a draped surface may stand off the ground between its vertices, and
+   the edge below which splitting stops.
+
+   The target is the DRAWN terrain (callers pass surfaceAt — see below), which
+   is piecewise-linear over 6 m facets, and this subdivision does NOT share
+   that lattice: a 6 m triangle straddling a facet edge still chords across
+   it. Measured over the three Galbraith audit poses, worst sheet-to-drawn-
+   terrain gap: MIN_EDGE 6 -> 0.47 m, 3 -> 0.17 m, 1.5 -> 0.16 m. 1.5 is the
+   setting worth paying for, and not for the worst case — it is where the
+   residual stops going NEGATIVE. A sheet below the terrain is not a cosmetic
+   error like a sheet above it; the ground punches up through the paving,
+   because the ground rung has only 0.05 m of lift to give. At 3 m two of the
+   sixteen probes sat at -0.16 and -0.14; at 1.5 m the worst is -0.01.
+   Campus-wide cost: 7.2 M draped vertices against 1.65 M unsubdivided, with
+   time-to-interactive unchanged (31.7 s vs 31.3 s, software raster). */
+const CHORD_TOL = 0.1;
+const MIN_EDGE = 1.5;
+const MAX_SPLITS = 6;
+
+/**
+ * Emit one draped triangle, splitting it until the terrain underneath stays
+ * within CHORD_TOL of the triangle's own plane. Points are world [x, z].
+ *
+ * WHY. The drape samples the terrain only where a triangle has a VERTEX, and
+ * `ShapeUtils.triangulateShape` only ever emits the polygon's OWN boundary
+ * points — it never adds an interior one. So a single earcut triangle can
+ * span the whole width of a plaza and bridge STRAIGHT ACROSS whatever the
+ * ground does in between. Measured on Revelle Plaza before this existed:
+ * all 28,551 vertices of the ground chunk sat at exactly the 0.05 m lift, and
+ * the DRAWN surface still stood 1.34 m above the terrain mid-triangle — high
+ * enough to occlude the base of every tree standing on it, which is what the
+ * cream band across the Torrey pine trunks actually was.
+ *
+ * buildPaths already does the segment-length version of this for footways
+ * ("follows the ground through a swale, not across it"); surfaces never got
+ * it. Splitting is driven by measured sag rather than by edge length, so flat
+ * ground stays as cheap as it was and only real relief costs vertices.
+ *
+ * `groundAt` is whatever sampler createSurfaces was handed, and it MUST be
+ * surfaceAt — the drawn triangle — not heightAt. Following heightAt precisely
+ * is following the wrong surface: see the note on the createSurfaces caller.
+ */
+function drapeTriangle(out, groundAt, a, b, c, depth = 0) {
+  const mid = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
+  const len = (p, q) => Math.hypot(p[0] - q[0], p[1] - q[1]);
+  if (depth < MAX_SPLITS && Math.max(len(a, b), len(b, c), len(c, a)) > MIN_EDGE) {
+    const ab = mid(a, b), bc = mid(b, c), ca = mid(c, a);
+    /* On the triangle's own plane an edge midpoint is the mean of that
+       edge's two ends, so the gap to the terrain there IS the chord error. */
+    const sag = Math.max(
+      Math.abs(groundAt(ab[0], ab[1]) - (groundAt(a[0], a[1]) + groundAt(b[0], b[1])) / 2),
+      Math.abs(groundAt(bc[0], bc[1]) - (groundAt(b[0], b[1]) + groundAt(c[0], c[1])) / 2),
+      Math.abs(groundAt(ca[0], ca[1]) - (groundAt(c[0], c[1]) + groundAt(a[0], a[1])) / 2),
+    );
+    if (sag > CHORD_TOL) {
+      drapeTriangle(out, groundAt, a, ab, ca, depth + 1);
+      drapeTriangle(out, groundAt, ab, b, bc, depth + 1);
+      drapeTriangle(out, groundAt, ca, bc, c, depth + 1);
+      drapeTriangle(out, groundAt, ab, bc, ca, depth + 1);
+      return;
+    }
+  }
+  out.push(a, b, c);
+}
+
 /**
  * The ground cover: UCSD's surveyed polygons, each tinted with its own
  * colour sampled from NAIP aerial imagery, merged into ONE mesh per kind —
  * 4,000+ polygons over the full campus as six draw calls, not four thousand.
  * OSM's plazas and lawns remain the fallback when the survey is absent.
+ *
+ * `groundAt` MUST be surfaceAt, the drawn triangle — never heightAt. This
+ * sheet lies ON the visible ground, so it has to be measured against the
+ * visible ground. heightAt is the 3 m bilinear LiDAR field while the terrain
+ * mesh is built from every second sample, and on the Revelle mesa the two
+ * disagree by up to 1.2 m. Draping on heightAt put the ground sheet 0.47 m
+ * over the drawn terrain at the Galbraith east DG band and 1.20 m over it on
+ * the north apron — hard-edged planes slicing through column feet, wall
+ * ground lines and tree trunks, in both directions (where heightAt fell
+ * BELOW, the terrain punched up through the paving instead).
  */
-export function createSurfaces(scene, campus, heightAt, arcgis, colors) {
+export function createSurfaces(scene, campus, groundAt, arcgis, colors) {
   const group = new THREE.Group();
   const scoring = scoringTexture();
   const matByKind = new Map();
@@ -635,14 +710,15 @@ export function createSurfaces(scene, campus, heightAt, arcgis, colors) {
       /* A fountain is a BASIN, not a puddle: water rides 0.35 m up on a rim so
          it reads as the raised concrete basin it is. Everything else drapes. */
       const rim = kind === "water" ? 0.35 : 0;
+      const draped = [];
       for (const tri of tris) {
-        for (const vi of tri) {
-          const x = verts[vi].x;
-          const z = -verts[vi].y;
-          b.pos.push(x, heightAt(x, z) + lift + rim, z);
-          b.col.push(color.r, color.g, color.b);
-          b.uv.push(x / 3, z / 3); // scoring joints every 3 m, world-aligned
-        }
+        const [p, q, r] = tri.map((vi) => [verts[vi].x, -verts[vi].y]);
+        drapeTriangle(draped, groundAt, p, q, r);
+      }
+      for (const [x, z] of draped) {
+        b.pos.push(x, groundAt(x, z) + lift + rim, z);
+        b.col.push(color.r, color.g, color.b);
+        b.uv.push(x / 3, z / 3); // scoring joints every 3 m, world-aligned
       }
       if (rim) {
         /* The basin wall: a quad strip from the raised water edge to the
@@ -651,8 +727,8 @@ export function createSurfaces(scene, campus, heightAt, arcgis, colors) {
         for (let i = 0; i < outer.length; i++) {
           const [ax, az] = outer[i];
           const [bx, bz] = outer[(i + 1) % outer.length];
-          const ay = heightAt(ax, az);
-          const by = heightAt(bx, bz);
+          const ay = groundAt(ax, az);
+          const by = groundAt(bx, bz);
           const quad = [
             [ax, ay + lift + rim, az], [bx, by + lift + rim, bz], [ax, ay - 0.2, az],
             [bx, by + lift + rim, bz], [bx, by - 0.2, bz], [ax, ay - 0.2, az],
@@ -901,14 +977,17 @@ export function createTrees(scene, lidar, heightAt, zoneSources = {}) {
       pos.set(x, ground + trunkH / 2, z);
       m.compose(pos, q, scale);
       trunks.setMatrixAt(i, m);
-      col.setRGB(trunk[0], trunk[1], trunk[2]);
+      /* treeTint returns sRGB byte fractions; setRGB without the tag stores
+         them as LINEAR, rendering every tree ~60% brighter than the measured
+         hex. Same bug bit campus-photo-galbraith.js on 2026-08-18. */
+      col.setRGB(trunk[0], trunk[1], trunk[2], THREE.SRGBColorSpace);
       trunks.setColorAt(i, col);
 
       scale.set(crownR, crownV, crownR);
       pos.set(x, ground + centre, z);
       m.compose(pos, q, scale);
       leaves.setMatrixAt(i, m);
-      col.setRGB(leaf[0], leaf[1], leaf[2]);
+      col.setRGB(leaf[0], leaf[1], leaf[2], THREE.SRGBColorSpace);
       leaves.setColorAt(i, col);
     });
 

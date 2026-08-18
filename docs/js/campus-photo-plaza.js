@@ -193,6 +193,16 @@ function lobe(x, y, z, rad, squash, rng) {
 }
 
 /**
+ * A ROOT FLARE: the short swelling where a trunk meets grade. A bare cylinder
+ * cut off flat at the ground reads as a pole pushed into sand — real trunks
+ * widen into a buttress over the last metre. Seated `sink` BELOW the drawn
+ * surface as well, so a trunk on a slope never shows daylight under one side.
+ */
+function flare(x, g, z, height, sink) {
+  return { x, y: g - sink + (height + sink) / 2, z, scale: [1, height + sink, 1] };
+}
+
+/**
  * Torrey pine: a broad FLATTENED UMBRELLA on a long clear bole. The crown is
  * a ring of big overlapping lobes at the measured radius with a shallower
  * inner cap, all squashed hard in Y — the species' signature is that it is
@@ -205,6 +215,7 @@ function collectPine(item, seed, ground, bins, boleFrac) {
   const g = ground(x, z);
   const boleH = h * boleFrac; // clear bole 55-65% of height [measured]
   bins.pineTrunks.push({ x, y: g + boleH / 2, z, scale: [1, boleH, 1] });
+  bins.pineFlares.push(flare(x, g, z, 1.1, 0.35));
 
   const crownH = h - boleH;
   const deck = g + boleH + crownH * 0.45; // the umbrella's underside plane
@@ -265,6 +276,7 @@ function collectEucalyptus(item, seed, ground, bins) {
   const g = ground(x, z);
   const trunkH = h * 0.62;
   bins.eucTrunks.push({ x, y: g + trunkH / 2, z, rot: rng() * Math.PI, scale: [1, trunkH, 1] });
+  bins.eucFlares.push(flare(x, g, z, 0.8, 0.3));
 
   const from = [x, g + trunkH * 0.95, z];
   const clumps = 5 + Math.floor(rng() * 3);
@@ -301,12 +313,22 @@ function collectFicus(item, seed, ground, bins) {
     const yaw = (s / stems) * Math.PI * 2 + rng() * 0.8;
     const lean = 0.12 + rng() * 0.16;
     const si = Math.sin(lean);
-    const dir = [-si * Math.sin(yaw), Math.cos(lean), -si * Math.cos(yaw)];
+    /* Same convention as limbTo: a YXZ euler of (lean, yaw) points the stem
+       along (sin·sin, cos, sin·cos). Offsetting by the NEGATED pair — as this
+       did — leans the stem one way and moves it the other, so its foot lands
+       up to 2.5 m off the measured trunk instead of fusing at it. Nothing
+       showed until the root flares went in at the true trunk and stood apart
+       from the stems they belong to. */
+    const dir = [si * Math.sin(yaw), Math.cos(lean), si * Math.cos(yaw)];
     bins.ficusStems.push({
       x: x + dir[0] * (stemH / 2), y: g + dir[1] * (stemH / 2), z: z + dir[2] * (stemH / 2),
       rot: yaw, rotX: lean, scale: [girth, stemH, girth],
     });
   }
+  /* The stems fuse at the measured trunk, so the flare is one per TREE. */
+  const ff = flare(x, g, z, 0.8 * girth, 0.25);
+  ff.scale = [girth * 1.15, ff.scale[1], girth * 1.15];
+  bins.ficusFlares.push(ff);
   /* The carrying core, then a shoulder ring and a crown ring over it. */
   const cy = g + h * 0.7;
   const domeH = Math.min(h - stemH, r * 1.1);
@@ -335,12 +357,13 @@ function collectCoral(coral, seed, ground, bins) {
     const yaw = (s / stems) * Math.PI * 2 + rng() * 0.6;
     const lean = 0.18 + rng() * 0.14;
     const si = Math.sin(lean);
-    const dir = [-si * Math.sin(yaw), Math.cos(lean), -si * Math.cos(yaw)];
+    const dir = [si * Math.sin(yaw), Math.cos(lean), si * Math.cos(yaw)];
     bins.coralStems.push({
       x: x + dir[0] * (stemH / 2), y: g + dir[1] * (stemH / 2), z: z + dir[2] * (stemH / 2),
       rot: yaw, rotX: lean, scale: [1, stemH, 1],
     });
   }
+  bins.coralFlares.push(flare(x, g, z, 0.5, 0.2));
   const R = spread / 2;
   const from = [x, g + stemH * 0.95, z];
   const n = 6;
@@ -363,6 +386,7 @@ function buildTrees(section, group, ground, mats, counts) {
     pineTrunks: [], pineLimbs: [], pineSun: [], pineShade: [],
     eucTrunks: [], eucLimbs: [], eucLobes: [], ficusStems: [], ficusLobes: [],
     coralStems: [], coralLobes: [],
+    pineFlares: [], eucFlares: [], ficusFlares: [], coralFlares: [],
   };
   for (const it of T.pines.items) collectPine(it, seed, ground, bins, T.pines.boleFrac);
   for (const it of T.eucalyptus.items) collectEucalyptus(it, seed, ground, bins);
@@ -389,20 +413,28 @@ function buildTrees(section, group, ground, mats, counts) {
 
   add("pine-trunks", new THREE.CylinderGeometry(0.3, 0.5, 1, 7),
     mats.get("barkPine", { color: C.pineBark, repeat: [2, 6] }), bins.pineTrunks);
+  add("pine-flares", new THREE.CylinderGeometry(0.5, 0.95, 1, 7),
+    mats.get("barkPine", { color: C.pineBark, repeat: [2, 1] }), bins.pineFlares);
   add("pine-limbs", new THREE.CylinderGeometry(0.09, 0.16, 1, 5),
     mats.get("barkPine", { color: C.pineBark, repeat: [1, 3] }), bins.pineLimbs);
   add("canopy-pine-sun", lobeGeo, foliage(C.pineFoliageSun), bins.pineSun);
   add("canopy-pine-shade", lobeGeo, foliage(C.pineFoliageShade), bins.pineShade);
   add("euc-trunks", new THREE.CylinderGeometry(0.18, 0.3, 1, 7),
     mats.get("barkEucalyptus", { color: C.eucTrunk, repeat: [2, 8] }), bins.eucTrunks);
+  add("euc-flares", new THREE.CylinderGeometry(0.3, 0.55, 1, 7),
+    mats.get("barkEucalyptus", { color: C.eucTrunk, repeat: [2, 1] }), bins.eucFlares);
   add("euc-limbs", new THREE.CylinderGeometry(0.07, 0.13, 1, 5),
     mats.get("barkEucalyptus", { color: C.eucTrunk, repeat: [1, 3] }), bins.eucLimbs);
   add("canopy-eucalyptus", lobeGeo, foliage(C.eucLeaf), bins.eucLobes);
   add("ficus-stems", new THREE.CylinderGeometry(0.12, 0.17, 1, 6),
     mats.get("smoothConcrete", { color: C.ficusTrunk, roughness: 0.8 }), bins.ficusStems);
+  add("ficus-flares", new THREE.CylinderGeometry(0.17, 0.34, 1, 6),
+    mats.get("smoothConcrete", { color: C.ficusTrunk, roughness: 0.8 }), bins.ficusFlares);
   add("canopy-ficus", lobeGeo, foliage(C.ficusLeaf), bins.ficusLobes);
   add("coral-stems", new THREE.CylinderGeometry(0.13, 0.19, 1, 6),
     mats.get("smoothConcrete", { color: C.coralBark, roughness: 0.75 }), bins.coralStems);
+  add("coral-flares", new THREE.CylinderGeometry(0.19, 0.36, 1, 6),
+    mats.get("smoothConcrete", { color: C.coralBark, roughness: 0.75 }), bins.coralFlares);
   add("canopy-coral", lobeGeo, foliage(C.coralLeaf), bins.coralLobes);
 
   /* The coral tree's circular bare-earth ring, set in the lawn. */
@@ -418,6 +450,9 @@ function buildTrees(section, group, ground, mats, counts) {
   counts.ficus = T.ficus.items.length;
   counts.eucalyptus = T.eucalyptus.items.length;
   counts.coral = 1;
+  counts.rootFlares =
+    bins.pineFlares.length + bins.eucFlares.length +
+    bins.ficusFlares.length + bins.coralFlares.length;
   counts.foliageCards = 0; // no canopy anywhere is a card any more
   counts.foliageLobes =
     bins.pineSun.length + bins.pineShade.length + bins.eucLobes.length +

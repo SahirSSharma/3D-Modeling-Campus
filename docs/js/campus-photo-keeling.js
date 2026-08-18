@@ -10,9 +10,15 @@
 //
 // Three things decided the shape of this file:
 //
-//   1. The building solves on one grid. 37.2 / 30.0 / 22.8 m are 10, 8 and 6
-//      storeys of 3.60 m plus a 1.20 m parapet, with zero residual — so the
-//      floor lines are not a guess, they are the measured heights read back.
+//   1. The building solves on one grid — but the DRAWN box is the datum.
+//      37.2 / 30.0 / 22.8 m are 10, 8 and 6 storeys of 3.60 m plus a 1.20 m
+//      parapet with zero residual, yet those are campus-3d's OSM-side
+//      heights: the 2014 LiDAR heights campus-massing actually extrudes are
+//      34.4 / 29.2 / 18.2 m (`buildings.*.measured.lidarHeight`), and a skin
+//      hung on the taller claim floats a phantom top storey above the real
+//      lid. So the storey height drawn here is lidarHeight / storeys per
+//      building, the photographed plate COUNT filling the drawn box exactly,
+//      and the parapet band stands ON the lid like the rails and penthouses.
 //      The 1.20 m HORIZONTAL bay is photogrammetric and contested; see
 //      `grid.moduleNote` in the data.
 //
@@ -196,11 +202,12 @@ function bayCentres(length, module) {
 /* ------------------------------------------------------ System A, gallery */
 
 /* Everything System A contributes, accumulated across every face so each
-   layer ends up as ONE instanced draw for the whole complex. */
-function collectSystemA(section, f, frame, base, bins) {
+   layer ends up as ONE instanced draw for the whole complex. `F` is the
+   building's DRAWN storey height — lidarHeight / storeys — so the counted
+   plates fill the drawn massing box exactly instead of overshooting it. */
+function collectSystemA(section, f, frame, base, bins, F) {
   const A = section.systemA;
   const M = section.grid.module;
-  const F = section.grid.floorToFloor;
   const bays = bayCentres(frame.length, M);
   const { rot, length } = frame;
 
@@ -290,14 +297,34 @@ function collectSystemA(section, f, frame, base, bins) {
       });
     }
   }
+
+  /* The bar's road-facing base is an OPEN UNDERCROFT on square columns
+     (ls_021_s.jpg, ls_014.jpg; systemB.ground.note), not a glazed storefront:
+     a dark shadow plane tight to the measured wall with the pale columns
+     standing proud of it, same technique as every recessed ground floor. */
+  if (f.id.startsWith("bar-west")) {
+    const G = section.systemB.ground;
+    bins.galleryBack.push({
+      ...frame.at(length / 2, 0.02, base + F / 2),
+      rot,
+      scale: [length - 0.2, F, 1],
+    });
+    for (const bay of bays) {
+      if (bay.i % G.columnSpacingBays !== 0) continue;
+      bins.columns.push({
+        ...frame.at(bay.u, G.recess + G.columnSize / 2, base + F / 2),
+        rot,
+        scale: [G.columnSize, F, G.columnSize],
+      });
+    }
+  }
 }
 
 /* ------------------------------------------ System B, precast + punched */
 
-function collectSystemB(section, f, frame, base, bins) {
+function collectSystemB(section, f, frame, base, bins, F) {
   const B = section.systemB;
   const M = section.grid.module;
-  const F = section.grid.floorToFloor;
   const { rot, length } = frame;
   /* Rain-screen: the full panels stand PROUD of the wall (cote15_westtower),
      with the windows and their spandrels recessed behind and between them.
@@ -419,32 +446,37 @@ function collectSystemB(section, f, frame, base, bins) {
     });
     for (let lv = 1; lv < f.storeys; lv++) {
       const y = base + lv * F;
+      /* The slot is RECESSED (a7_northface): the landing reads as a thin
+         nosing IN the wall plane, not a tray hanging off the facade — the
+         tray's depth is buried in the measured wall, only its front edge
+         and the rail at the wall plane show. */
       bins.landings.push({
-        ...frame.at(uOpen, B.standoff + S.landing.depth / 2, y - S.landing.thickness / 2),
+        ...frame.at(uOpen, B.standoff + 0.05 - S.landing.depth / 2, y - S.landing.thickness / 2),
         rot,
         scale: [S.openWidth, S.landing.thickness, S.landing.depth],
       });
       bins.screens.push({
-        ...frame.at(uOpen, B.standoff + S.landing.depth, y + S.railHeight / 2),
+        ...frame.at(uOpen, B.standoff + 0.12, y + S.railHeight / 2),
         rot,
         scale: [S.openWidth, S.railHeight, 1],
       });
       bins.railCaps.push({
-        ...frame.at(uOpen, B.standoff + S.landing.depth, y + S.railHeight),
+        ...frame.at(uOpen, B.standoff + 0.12, y + S.railHeight),
         rot,
         scale: [S.openWidth, 0.07, 0.1],
       });
     }
   }
 
-  collectGroundFloor(section, f, frame, base, bins);
+  collectGroundFloor(section, f, frame, base, bins, F);
 }
 
-/* End walls: blank pale precast with the narrow slot windows of c6_towerB. */
-function collectEnd(section, f, frame, base, bins) {
+/* End walls: blank pale precast with the narrow slot windows of c6_towerB.
+   `plain` builds the same wall without the slot windows — the notch step
+   faces are unphotographed, and a blank wall claims less than glass. */
+function collectEnd(section, f, frame, base, bins, F, plain = false) {
   const B = section.systemB;
   const M = section.grid.module;
-  const F = section.grid.floorToFloor;
   const { rot, length } = frame;
   for (let lv = 1; lv < f.storeys; lv++) {
     const y0 = base + lv * F + B.frameBand.height / 2;
@@ -455,14 +487,16 @@ function collectEnd(section, f, frame, base, bins) {
       rot,
       scale: [length - 0.2, bandH, B.panel.thickness],
     });
-    for (const bay of bayCentres(length, M)) {
-      if (bay.i % 3 !== 1) continue;
-      bins.glass.push({
-        tint: "glassBlue",
-        ...frame.at(bay.u, B.standoff + B.panel.thickness + 0.01, y0 + bandH / 2),
-        rot,
-        scale: [0.5, bandH - 1.1, 1],
-      });
+    if (!plain) {
+      for (const bay of bayCentres(length, M)) {
+        if (bay.i % 3 !== 1) continue;
+        bins.glass.push({
+          tint: "glassBlue",
+          ...frame.at(bay.u, B.standoff + B.panel.thickness + 0.01, y0 + bandH / 2),
+          rot,
+          scale: [0.5, bandH - 1.1, 1],
+        });
+      }
     }
   }
   for (let lv = 1; lv <= f.storeys; lv++) {
@@ -472,35 +506,49 @@ function collectEnd(section, f, frame, base, bins) {
       scale: [length, B.frameBand.height, B.frameBand.depth],
     });
   }
-  collectGroundFloor(section, f, frame, base, bins);
+  /* A plain (notch) wall is a wall to the ground too — no storefront glass. */
+  if (!plain) collectGroundFloor(section, f, frame, base, bins, F);
+  else {
+    bins.panels.push({
+      tone: "precastPanelPale",
+      ...frame.at(length / 2, B.standoff + B.panel.thickness / 2, base + (F + B.frameBand.height) / 2),
+      rot,
+      scale: [length - 0.2, F - B.frameBand.height, B.panel.thickness],
+    });
+  }
 }
 
 /* The ground floor everywhere: dark glazing tight to the wall, square columns
    standing proud of it. The columns are what make it read as recessed without
    cutting a hole in measured massing. */
-function collectGroundFloor(section, f, frame, base, bins) {
+function collectGroundFloor(section, f, frame, base, bins, F) {
   const G = section.systemB.ground;
   const M = section.grid.module;
   const { rot, length } = frame;
   bins.groundGlass.push({
     ...frame.at(length / 2, 0.03, base + G.glazingHeight / 2),
     rot,
-    scale: [length - 0.4, G.glazingHeight, 1],
+    scale: [length - 0.4, Math.min(G.glazingHeight, F - 0.2), 1],
   });
   for (const bay of bayCentres(length, M)) {
     if (bay.i % G.columnSpacingBays !== 0) continue;
     bins.columns.push({
-      ...frame.at(bay.u, G.recess + G.columnSize / 2, base + section.grid.floorToFloor / 2),
+      ...frame.at(bay.u, G.recess + G.columnSize / 2, base + F / 2),
       rot,
-      scale: [G.columnSize, section.grid.floorToFloor, G.columnSize],
+      scale: [G.columnSize, F, G.columnSize],
     });
   }
 }
 
 /* ------------------------------------------------------------- the roofs */
 
-/** The measured ring, reassembled from the ring vertices the facades name. */
+/** The measured ring: verbatim from the section's `measured` block when it
+ *  carries one (the survey ring campus-massing extrudes, INCLUDING the east
+ *  notch step — a convex hull bridges that notch with a chamfer that has no
+ *  massing under it), else reassembled from the vertices the facades name. */
 function ringOf(section, key) {
+  const measured = section.buildings?.[key]?.measured?.ring;
+  if (Array.isArray(measured) && measured.length >= 3) return measured;
   const order = {
     north: ["north-south", "north-west", "north-north", "north-east"],
     south: ["south-north", "south-west", "south-south", "south-east"],
@@ -536,11 +584,14 @@ function buildRoofs(section, group, ground, roofY, bins) {
   const { colors, roofs } = section;
   const C = roofs.coping;
 
-  /* The 1.20 m white concrete parapet band on EVERY face (a7_topband): the
-     top of the measured height read back as fair-faced white, brighter and
-     smoother than the precast field below it, with a crisp square coping, a
-     thin shadow reveal at its base, and a slender fall-protection rail
-     standing inboard the full length of every roof edge. */
+  /* The 1.20 m white concrete parapet band on EVERY face (a7_topband):
+     fair-faced white, brighter and smoother than the precast field below it,
+     with a crisp square coping, a thin shadow reveal at its base, and a
+     slender fall-protection rail standing inboard the full length of every
+     roof edge. The band STANDS ON the drawn massing lid — `roofY` here is the
+     LiDAR box top campus-massing extrudes — the same way the rails and
+     penthouses do, so the lid is the roof membrane and everything on it
+     (racks, trays, walkways) hides behind this band from the street. */
   const PB = roofs.parapet;
   const copes = [];
   const bands = [];
@@ -568,21 +619,23 @@ function buildRoofs(section, group, ground, roofY, bins) {
       if (nx * (mx - cx) + nz * (mz - cz) < 0) { nx = -nx; nz = -nz; }
       const rot = Math.atan2(-uz, ux);
       copes.push({
-        x: mx, y: y + C.height / 2, z: mz, rot,
+        x: mx, y: y + PB.height + C.height / 2, z: mz, rot,
         scale: [len, C.height, C.width],
       });
-      /* Band: mostly buried in the measured wall, outer face proud PB.proud. */
+      /* Band: a real wall standing on the lid, outer face proud PB.proud. */
       const bandDepth = 0.4;
       bands.push({
         x: mx + nx * (PB.proud - bandDepth / 2),
-        y: y - PB.height / 2,
+        y: y + PB.height / 2,
         z: mz + nz * (PB.proud - bandDepth / 2),
         rot,
         scale: [len, PB.height, bandDepth],
       });
+      /* The thin shadow reveal where the band meets the precast field — that
+         seam is now the lid line, so the reveal sits just under it. */
       reveals.push({
         x: mx + nx * (PB.proud + 0.012),
-        y: y - PB.height + PB.revealHeight / 2,
+        y: y - PB.revealHeight / 2,
         z: mz + nz * (PB.proud + 0.012),
         rot,
         scale: [len, PB.revealHeight, 0.025],
@@ -1002,14 +1055,22 @@ function buildGround(section, group, ground) {
     painted(colors.rackYellow), hoops,
     (it) => ({ x: it.x, y: on(it.x, it.z), z: it.z, rot: it.rot })));
 
-  /* West: half-buried white granite boulders and bunch grass on the dry slope. */
-  group.add(instanced(new THREE.IcosahedronGeometry(1, 0), rock(colors.boulder), W.boulders,
+  /* West: rounded white-granite boulders, HALF-BURIED and irregular — a
+     smoother icosahedron squashed flat and sunk, every one its own shape
+     (ls_021_s, ls_024), never a row of cones. */
+  group.add(instanced(new THREE.IcosahedronGeometry(1, 1), rock(colors.boulder), W.boulders,
     (b, i) => ({
-      x: b.x, y: ground(b.x, b.z) + b.r * 0.35, z: b.z,
-      rot: hash(i, 1) * Math.PI, rotX: hash(i, 2) * 0.4,
-      scale: [b.r, b.r * 0.8, b.r * 0.9],
+      x: b.x, y: ground(b.x, b.z) + b.r * 0.22, z: b.z,
+      rot: hash(i, 1) * Math.PI, rotX: (hash(i, 2) - 0.5) * 0.5,
+      scale: [
+        b.r * (0.85 + hash(i, 3) * 0.4),
+        b.r * (0.45 + hash(i, 4) * 0.2),
+        b.r * (0.75 + hash(i, 5) * 0.35),
+      ],
     })));
 
+  /* Bunch grass as soft rounded hummocks in varied sizes, not a comb of
+     identical pointed cones — the audit read the old cones as fake rockery. */
   const tufts = [];
   const spans = W.slope;
   for (let k = 0; k < W.grasses.count; k++) {
@@ -1020,12 +1081,20 @@ function buildGround(section, group, ground) {
       k,
     });
   }
-  group.add(instanced(new THREE.ConeGeometry(W.grasses.radius, W.grasses.height, 5),
-    foliage(colors.bunchGrass), tufts,
-    (t) => ({ x: t.x, y: ground(t.x, t.z) + W.grasses.height / 2, z: t.z, rot: hash(t.k, 3) * Math.PI })));
-  group.add(instanced(new THREE.ConeGeometry(W.grasses.radius * 0.8, W.grasses.height * 0.8, 5),
+  const tuftShape = (t, dx, dz, mul) => {
+    const s = (0.65 + hash(t.k, 6) * 0.7) * mul;
+    const h = W.grasses.height * (0.55 + hash(t.k, 7) * 0.35) * mul;
+    return {
+      x: t.x + dx, y: ground(t.x + dx, t.z + dz) + h * 0.32, z: t.z + dz,
+      rot: hash(t.k, 3) * Math.PI,
+      scale: [W.grasses.radius * 2 * s, h, W.grasses.radius * 2 * s * (0.8 + hash(t.k, 8) * 0.4)],
+    };
+  };
+  group.add(instanced(new THREE.SphereGeometry(0.5, 7, 5),
+    foliage(colors.bunchGrass), tufts, (t) => tuftShape(t, 0, 0, 1)));
+  group.add(instanced(new THREE.SphereGeometry(0.5, 7, 5),
     foliage(colors.fescueBlue), tufts.filter((t) => hash(t.k, 4) < 0.4),
-    (t) => ({ x: t.x + 0.5, y: ground(t.x, t.z) + W.grasses.height * 0.4, z: t.z + 0.4, rot: hash(t.k, 5) * Math.PI })));
+    (t) => tuftShape(t, 0.5, 0.4, 0.75)));
 
   buildLavaWalls(section, group, ground);
 }
@@ -1110,18 +1179,29 @@ export function createPhotoKeeling(scene, { photo, heightAt, surfaceAt } = {}) {
     throw new Error("campus-photo-keeling: needs surfaceAt (or heightAt) to place on the ground");
   }
 
-  /* Match campus-massing.js exactly: the mass sits on the MEDIAN ground under
-     its ring, lifted if that would bury a high corner. Any other base and the
-     facade layers slide off the wall they are supposed to be hanging on. */
+  /* Match campus-massing.js roofElevation EXACTLY — rim-median ground under
+     the MEASURED ring plus the LiDAR height it draws, lifted if that would
+     bury a high corner. `roofY` is therefore the DRAWN LID of each mass, and
+     it is the one datum everything on a roof seats on. The section's
+     photogrammetric `height` (campus-3d's OSM-side 37.2/30.0/22.8) runs
+     2.8-4.6 m taller than the drawn LiDAR box (34.4/29.2/18.2): anchoring
+     the skin to it hung the parapet, the PV racks and the whole green roof
+     in the air above the real lid, and opened a phantom top storey the
+     audit could see straight through. The drawn storey height is
+     lidarHeight / storeys, so the photographed plate COUNT fills the drawn
+     box with zero residual. */
   const baseY = {};
   const roofY = {};
+  const storeyH = {};
   for (const [key, b] of Object.entries(section.buildings)) {
     const ring = ringOf(section, key);
+    const h = b.measured?.lidarHeight ?? b.height;
     const gs = ring.map(([x, z]) => base(x, z)).filter((v) => Number.isFinite(v)).sort((p, q) => p - q);
     const median = gs.length ? gs[Math.floor(gs.length / 2)] : 0;
     const highest = gs.length ? gs[gs.length - 1] : 0;
-    roofY[key] = Math.max(median + b.height, highest);
-    baseY[key] = roofY[key] - b.height;
+    roofY[key] = Math.max(median + h, highest);
+    baseY[key] = roofY[key] - h;
+    storeyH[key] = h / b.storeys;
   }
 
   const bins = {
@@ -1133,11 +1213,58 @@ export function createPhotoKeeling(scene, { photo, heightAt, surfaceAt } = {}) {
   const keyOf = (id) => (id.startsWith("north") ? "north" : id.startsWith("south") ? "south" : "bar");
   for (const f of section.facades) {
     const frame = frameOf(f);
-    const b = baseY[keyOf(f.id)];
-    if (f.system === "A") collectSystemA(section, f, frame, b, bins);
-    else if (f.system === "B") collectSystemB(section, f, frame, b, bins);
-    else collectEnd(section, f, frame, b, bins);
+    const key = keyOf(f.id);
+    const b = baseY[key];
+    const F = storeyH[key];
+    if (f.system === "A") collectSystemA(section, f, frame, b, bins, F);
+    else if (f.system === "B") collectSystemB(section, f, frame, b, bins, F);
+    else collectEnd(section, f, frame, b, bins, F);
   }
+
+  /* Skin every measured ring segment no facade covers — the notch steps at
+     each tower's east end and the bar's ends and kink. Left bare, the parapet
+     band bridged the notch over open air with the rack grid visible floating
+     in the void behind it. Blank pale precast (c6_towerB's end-wall read),
+     no windows: these faces are unphotographed and a wall claims least. */
+  let notchFaces = 0;
+  for (const key of Object.keys(section.buildings)) {
+    /* Only a verbatim measured ring names real wall segments — the facade
+       fallback ring is a hull whose chamfer has no massing under it. */
+    if (!section.buildings[key].measured?.ring) continue;
+    const ring = ringOf(section, key);
+    const covered = new Set();
+    for (const f of section.facades) {
+      if (keyOf(f.id) !== key) continue;
+      covered.add(`${f.a[0]},${f.a[1]}|${f.b[0]},${f.b[1]}`);
+      covered.add(`${f.b[0]},${f.b[1]}|${f.a[0]},${f.a[1]}`);
+    }
+    const cx = ring.reduce((s, p) => s + p[0], 0) / ring.length;
+    const cz = ring.reduce((s, p) => s + p[1], 0) / ring.length;
+    for (let i = 0; i < ring.length; i++) {
+      const a = ring[i];
+      const p = ring[(i + 1) % ring.length];
+      if (covered.has(`${a[0]},${a[1]}|${p[0]},${p[1]}`)) continue;
+      const len = Math.hypot(p[0] - a[0], p[1] - a[1]);
+      if (len < 1.2) continue;
+      const mx = (a[0] + p[0]) / 2 - cx;
+      const mz = (a[1] + p[1]) / 2 - cz;
+      const ux = (p[0] - a[0]) / len;
+      const uz = (p[1] - a[1]) / len;
+      let nx = uz;
+      let nz = -ux;
+      if (nx * mx + nz * mz < 0) { nx = -nx; nz = -nz; }
+      const f = {
+        id: `${key}-notch-${i}`,
+        ring: section.buildings[key].ring,
+        system: "End",
+        storeys: section.buildings[key].storeys,
+        a, b: p, out: [nx, nz],
+      };
+      collectEnd(section, f, frameOf(f), baseY[key], bins, storeyH[key], true);
+      notchFaces++;
+    }
+  }
+  bins.counts.notchFaces = notchFaces;
 
   const { colors } = section;
   const unit = new THREE.BoxGeometry(1, 1, 1);
@@ -1186,6 +1313,7 @@ export function createPhotoKeeling(scene, { photo, heightAt, surfaceAt } = {}) {
       greenRoofBands: bins.counts.greenRoofBands || 0,
       parapetRail: bins.counts.parapetRail || 0,
       pergolas: bins.counts.pergolas || 0,
+      notchFaces: bins.counts.notchFaces || 0,
       courts: section.southSide.courts?.length || 0,
       lamps: section.courtyard.lamps.length,
       boulders: section.west.boulders.length,

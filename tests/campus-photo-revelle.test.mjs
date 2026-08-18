@@ -67,14 +67,12 @@ const solids = () => ITEM_GROUPS.flatMap((k) => section[k].items);
 /* The built extent of each anchored system, sampled the way the renderer
    draws it, so these gates see the whole thing and not just its endpoints. */
 function systemPoints() {
+  /* York is no longer built by this module — campus-photo-york.js supersedes
+     it and carries its own gates. The section's legacy yorkArcade/yorkFins
+     keys may still be present until the merge deletes them; they are not
+     sampled here because nothing renders them. */
   const s = section.systems;
   const out = [];
-  const a = s.yorkArcade;
-  for (let i = 0; i < a.columns; i++) {
-    out.push([a.faceX - a.standoff, a.z0 + ((a.z1 - a.z0) * i) / (a.columns - 1)]);
-  }
-  const f = s.yorkFins;
-  for (let z = f.z0; z <= f.z1; z += f.spacing) out.push([f.faceX - f.depth / 2 + 0.05, z]);
   const u = s.ureyCorner;
   for (let x = u.slabA[0]; x <= u.slabB[1]; x += 1) out.push([x, u.faceZ + u.standoff]);
   const b = s.breezeway;
@@ -196,24 +194,18 @@ test("the paving decals stay inside the measured plaza polygon", () => {
 
 test("every architectural system is anchored to a measured ring", () => {
   const ringOf = (name) => campus.buildings.find((b) => b.n === name).p;
-  const minX = (p) => Math.min(...p.map(([x]) => x));
   const minZ = (p) => Math.min(...p.map(([, z]) => z));
   const maxZ = (p) => Math.max(...p.map(([, z]) => z));
   const s = section.systems;
 
-  assert.equal(s.yorkArcade.faceX, minX(ringOf("York Hall")), "the arcade must sit on York's measured west face");
-  assert.equal(s.yorkFins.faceX, s.yorkArcade.faceX, "the fins ride the same face as the arcade");
+  /* York's arcade/fin assertions moved with the build to
+     tests/campus-photo-york.test.mjs; this module no longer draws York. */
   assert.equal(s.ureyCorner.faceZ, maxZ(ringOf("Urey Hall")), "the stair towers must sit on Urey's measured plaza face");
   assert.equal(s.breezeway.z0, maxZ(ringOf("Bonner Hall")), "the breezeway must start at Bonner's measured face");
 
   /* The breezeway spans the gap; it may not land on either building. */
   assert.ok(s.breezeway.z1 > s.breezeway.z0, "the breezeway has to span forwards");
   assert.ok(s.breezeway.z1 <= minZ(ringOf("Mayer Hall")) + 35, "the breezeway overshoots Mayer");
-
-  /* 35 sourced columns over the sourced 300-foot (92.6 m measured) arcade. */
-  assert.equal(s.yorkArcade.columns, 35);
-  const span = s.yorkArcade.z1 - s.yorkArcade.z0;
-  assert.ok(Math.abs(span - 91.44) < 2, `arcade reads ${span.toFixed(1)} m, not the sourced 300 ft`);
 
   /* Photos read five breezeway levels; the lower measured roof only carries
      three at 3.6 m, and LiDAR decides height. Do not raise this to match a

@@ -183,6 +183,90 @@ test("a long path segment follows the ground through a swale, not across it", as
   assert.ok(minY < 2, `path bottoms out at y=${minY.toFixed(1)} — it bridges the swale instead of following it`);
 });
 
+test("a draped surface follows the ground INSIDE its triangles, not just at its corners", async () => {
+  /* The surface version of the swale bug above, and a nastier one, because
+     the vertices look perfect while it happens. `ShapeUtils.triangulateShape`
+     only ever emits the polygon's own boundary points, so a plaza was drawn
+     as a handful of triangles spanning its whole width — every vertex sat
+     exactly at the 0.05 m lift, and the DRAWN surface still stood 1.34 m
+     above the terrain in the middle (measured at Revelle Plaza, 2026-08-18).
+     A metre of ground standing proud of the ground occludes whatever is
+     standing ON it: that was the cream band across the Torrey pine trunks.
+
+     So the invariant is about triangle INTERIORS, not vertices — sample each
+     drawn triangle at its centroid and require the drawn surface to stay near
+     the terrain there. */
+  const { createSurfaces } = await import("../docs/js/campus-world.js");
+  const heightAt = (x) => Math.abs(x) * 0.2; // the same V-shaped swale
+  /* A 120 m square plaza whose corners all sit high on the rim: every
+     boundary vertex reads 12 m, so an unsubdivided drape is a flat lid over
+     a 12 m deep valley. */
+  const campus = {
+    surfaces: [{ kind: "plaza", p: [[-60, -60], [60, -60], [60, 60], [-60, 60]] }],
+  };
+  /* createSurfaces bakes its scoring texture on a canvas. Stub just enough
+     DOM for that, and take it back out — campus-materials.test.mjs asserts a
+     DOM never leaks into this environment. */
+  globalThis.document = {
+    createElement: () => ({
+      width: 0, height: 0,
+      getContext: () => ({ fillStyle: "", fillRect() {} }),
+    }),
+  };
+  let group;
+  try {
+    group = createSurfaces({ add() {} }, campus, heightAt, null, null);
+  } finally {
+    delete globalThis.document;
+  }
+
+  let minY = Infinity;
+  let worstFloat = 0;
+  let tris = 0;
+  for (const child of group.children) {
+    const pos = child.geometry.getAttribute("position");
+    for (let i = 0; i < pos.count; i++) minY = Math.min(minY, pos.getY(i));
+    for (let i = 0; i + 2 < pos.count; i += 3) {
+      tris++;
+      let cx = 0, cy = 0, cz = 0;
+      for (let k = 0; k < 3; k++) { cx += pos.getX(i + k); cy += pos.getY(i + k); cz += pos.getZ(i + k); }
+      /* The drawn surface at the centroid, against the terrain there. */
+      worstFloat = Math.max(worstFloat, cy / 3 - heightAt(cx / 3, cz / 3));
+    }
+  }
+  assert.ok(tris > 4, `a 120 m plaza drew only ${tris} triangles — not subdivided at all`);
+  assert.ok(minY < 1,
+    `the sheet bottoms out at y=${minY.toFixed(2)} — it lids the swale instead of following it`);
+  /* 0.05 m of this is the ground rung's own lift, which is meant to be there. */
+  assert.ok(worstFloat < 0.35,
+    `a drawn triangle floats ${worstFloat.toFixed(2)} m above the terrain — the drape is bridging again`);
+});
+
+test("the ground drape is handed surfaceAt, never heightAt", () => {
+  /* `heightAt` is the 3 m bilinear LiDAR field; the terrain you can SEE is
+     built from every second sample. On the Revelle mesa they disagree by up
+     to 1.2 m, so a sheet draped on heightAt stands proud of — or sinks under
+     — the ground it is supposed to be lying on. Measured at Galbraith before
+     this was fixed: 0.47 m over the drawn terrain at the east DG band, 1.20 m
+     on the north apron, hard-edged planes cutting through column feet, wall
+     ground lines and tree trunks (round-4 audit, findings G4-1 and G4-2).
+
+     It is a one-word mistake to make and invisible in review, which is why it
+     is pinned here rather than left to the eye. Both modes must pass the
+     drawn-surface sampler to every draped consumer. */
+  for (const rel of ["docs/js/campus-walk.js", "docs/js/campus-scooter.js"]) {
+    const text = src(rel);
+    const calls = [...text.matchAll(/createSurfaces\(([^;]*?)\)/gs)];
+    assert.ok(calls.length, `${rel}: no createSurfaces call found`);
+    for (const [, args] of calls) {
+      assert.doesNotMatch(args, /\bheightAt\b/,
+        `${rel}: createSurfaces is draping on heightAt — it must be surfaceAt`);
+      assert.match(args, /surfaceAt/,
+        `${rel}: createSurfaces must be handed the drawn-surface sampler`);
+    }
+  }
+});
+
 /* sceneTone: the one tone-mapping fix for the unlit-fill-sinks-next-to-
    lifted-ground class (the Muir turf carpet, before this; the trident,
    before that). Every module that needs it imports THIS function — no

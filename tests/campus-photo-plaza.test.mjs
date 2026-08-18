@@ -539,6 +539,82 @@ test("no structural limb ends in open air", () => {
   }
 });
 
+test("every trunk has a root flare that reaches grade", () => {
+  /* A bare cylinder cut off flat at the ground reads as a pole pushed into
+     sand. Each species' flare must be WIDER than the trunk it sits under, and
+     must start at or below the drawn surface — a flare that floats leaves the
+     same daylight gap it was added to close. Built on a flat ground of 0, so
+     "below grade" is simply a negative base. */
+  const { group } = createPhotoPlaza(null, { photo: photoFor(), surfaceAt: () => 0 });
+  const m = new THREE.Matrix4();
+  const p = new THREE.Vector3();
+  const q = new THREE.Quaternion();
+  const s = new THREE.Vector3();
+  const pairs = [
+    ["pine-flares", "pine-trunks"],
+    ["euc-flares", "euc-trunks"],
+    ["ficus-flares", "ficus-stems"],
+    ["coral-flares", "coral-stems"],
+  ];
+  for (const [flareName, trunkName] of pairs) {
+    const fl = group.getObjectByName(flareName);
+    const tr = group.getObjectByName(trunkName);
+    assert.ok(fl?.isInstancedMesh, `${flareName} is missing — a species lost its root flare`);
+    assert.ok(tr?.isInstancedMesh, `${trunkName} is missing`);
+    assert.ok(fl.geometry.parameters.radiusBottom > tr.geometry.parameters.radiusBottom * 1.4,
+      `${flareName} is no wider than ${trunkName} — that is not a flare`);
+    for (let i = 0; i < fl.count; i++) {
+      fl.getMatrixAt(i, m);
+      m.decompose(p, q, s);
+      const base = p.y - (fl.geometry.parameters.height * s.y) / 2;
+      assert.ok(base < 0, `${flareName} instance ${i} starts ${base.toFixed(2)} m ABOVE grade`);
+      assert.ok(base > -1, `${flareName} instance ${i} is buried ${(-base).toFixed(2)} m — that is not a flare`);
+    }
+  }
+  /* One flare per trunk foot, including every stem of the multi-stem species. */
+  const counts = createPhotoPlaza(null, { photo: photoFor(), surfaceAt: () => 0 }).counts;
+  assert.equal(
+    counts.rootFlares,
+    group.getObjectByName("pine-flares").count + group.getObjectByName("euc-flares").count +
+      group.getObjectByName("ficus-flares").count + group.getObjectByName("coral-flares").count
+  );
+  assert.equal(group.getObjectByName("pine-flares").count, group.getObjectByName("pine-trunks").count);
+  /* Ficus and coral stems FUSE at the measured trunk, so those species get one
+     flare per tree, not one per stem — and the flare must actually sit on the
+     trunk the stems rise from. */
+  assert.equal(group.getObjectByName("ficus-flares").count, section.treeOverrides.ficus.items.length);
+  assert.equal(group.getObjectByName("coral-flares").count, 1);
+});
+
+test("multi-stem trunks fuse at the measured trunk they stand on", () => {
+  /* Each ficus stem is offset from its own centre by half its length along the
+     direction it leans, so its FOOT must land back on the measured (x, z).
+     Offsetting by the negated pair (leaning one way, moving the other) put the
+     feet up to 2.5 m out, splayed round a trunk that was not there. */
+  const { group } = createPhotoPlaza(null, { photo: photoFor(), surfaceAt: () => 0 });
+  const m = new THREE.Matrix4();
+  const p = new THREE.Vector3();
+  const q = new THREE.Quaternion();
+  const s = new THREE.Vector3();
+  const foot = new THREE.Vector3();
+  const trunks = section.treeOverrides.ficus.items.map((t) => [t.x, t.z]);
+  trunks.push([section.treeOverrides.coral.x, section.treeOverrides.coral.z]);
+  for (const name of ["ficus-stems", "coral-stems"]) {
+    const mesh = group.getObjectByName(name);
+    assert.ok(mesh?.isInstancedMesh, `${name} is missing`);
+    for (let i = 0; i < mesh.count; i++) {
+      mesh.getMatrixAt(i, m);
+      m.decompose(p, q, s);
+      /* Limbs share the coral bin; a limb does not stand on the ground. */
+      foot.set(0, -s.y / 2, 0).applyQuaternion(q).add(p);
+      if (foot.y > 0.5) continue;
+      const near = Math.min(...trunks.map(([tx, tz]) => Math.hypot(foot.x - tx, foot.z - tz)));
+      assert.ok(near < 0.35,
+        `${name} instance ${i} has its foot ${near.toFixed(2)} m from any measured trunk`);
+    }
+  }
+});
+
 test("the canopies stay inside a sane triangle budget", () => {
   const { group } = createPhotoPlaza(null, { photo: photoFor(), surfaceAt: () => 0 });
   let tris = 0;

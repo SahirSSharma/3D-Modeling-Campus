@@ -1324,7 +1324,10 @@ export async function boot({ report, mode = "scooter" } = {}) {
 
   rep.phase("ground");
   await rep.paint();
-  const surfaces = world.createSurfaces(scene, doc.campus, heightAt, doc.arcgis, doc.colors);
+  /* surfaceAt, not heightAt — this drape lies ON the drawn ground, and the two
+     samplers disagree by up to 1.2 m. Same rule createMarkings below already
+     followed; the ground sheet was the one consumer here that did not. */
+  const surfaces = world.createSurfaces(scene, doc.campus, surfaceAt, doc.arcgis, doc.colors);
   surfaces.traverse?.((o) => { if (o.isMesh) o.receiveShadow = true; });
 
   rep.phase("trees");

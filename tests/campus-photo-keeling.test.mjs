@@ -31,6 +31,7 @@ const read = (p) => JSON.parse(readFileSync(p, "utf8"));
 
 const section = read(join(root, "docs/data/campus-photo-detail.json")).keeling;
 const campus = read(join(root, "docs/data/campus-3d.json"));
+const lidar = read(join(root, "docs/data/campus-lidar.json"));
 const staging = read(join(root, "docs/data/corridor-staging.json"));
 
 const RINGS = {
@@ -454,6 +455,80 @@ test("the module builds the section: structure, seating, determinism", async () 
       assert.ok(y > 12.4 - 2, `an instance sits at y=${y}, under the ground`);
       assert.ok(y < 12.2 + maxRoof + 4, `an instance floats at y=${y}, above the roofscape`);
     }
+  }
+});
+
+test("the skin seats on the DRAWN box: racks behind the parapet, roofscape on the lid", async () => {
+  /* The visual-audit failure of 2026-08-17: the section's photogrammetric
+     heights (campus-3d's OSM side, 37.2/30.0/22.8) are 2.8-4.6 m taller than
+     the 2014 LiDAR heights campus-massing actually extrudes (34.4/29.2/18.2).
+     Anchored to the taller claim, the parapet, the PV racks and the whole
+     green roof floated above the drawn lid, with a phantom top storey you
+     could see straight through. The module now anchors to
+     `buildings.*.measured` — this test attaches those blocks from the same
+     repo files the merge copies them from, so it pins the rule whether or
+     not the data merge has landed yet. */
+  const { createPhotoKeeling } = await import("../docs/js/campus-photo-keeling.js");
+  const sectionM = structuredClone(section);
+  for (const [key, name] of Object.entries(RINGS)) {
+    sectionM.buildings[key].measured = {
+      ring: ringOf(name),
+      lidarHeight: lidar.heights[name],
+      source: "test-attached, verbatim from campus-3d.json / campus-lidar.json",
+    };
+  }
+  const G = 12.2;
+  const r = createPhotoKeeling(null, { photo: { keeling: sectionM }, heightAt: () => G, surfaceAt: () => G + 0.2 });
+
+  /* On flat ground the drawn lid is G + lidarHeight. */
+  const deck = {};
+  for (const [key, name] of Object.entries(RINGS)) deck[key] = G + lidar.heights[name];
+  const PB = sectionM.roofs.parapet.height;
+
+  /* The PV panels: every module sits ON a tower lid and UNDER that lid's
+     parapet top — never in the storey below, never proud of the band. */
+  const pvMesh = r.group.children.find(
+    (c) => c.isInstancedMesh && c.geometry?.parameters?.width === sectionM.roofs.pv.panel[0]
+  );
+  assert.ok(pvMesh, "no PV panel mesh");
+  for (let i = 0; i < pvMesh.count; i++) {
+    const y = pvMesh.instanceMatrix.array[i * 16 + 13];
+    const seated = ["north", "south"].some((k) => y > deck[k] && y < deck[k] + PB);
+    assert.ok(seated, `a PV module floats at y=${y} (lids ${deck.north}, ${deck.south})`);
+  }
+
+  /* The green-roof clumps (agave cones) stand on the BAR lid, not in the air. */
+  const agave = r.group.children.find(
+    (c) => c.isInstancedMesh && c.geometry?.type === "ConeGeometry" && c.geometry.parameters.radius === 0.42
+  );
+  assert.ok(agave, "no agave clump mesh");
+  for (let i = 0; i < agave.count; i++) {
+    const y = agave.instanceMatrix.array[i * 16 + 13];
+    assert.ok(y > deck.bar && y < deck.bar + 1.5, `a green-roof clump floats at y=${y} (bar lid ${deck.bar})`);
+  }
+
+  /* Nothing anywhere stands above lid + parapet except the penthouses (3 m). */
+  for (const c of r.group.children.filter((x) => x.isInstancedMesh)) {
+    for (let i = 0; i < c.count; i++) {
+      const y = c.instanceMatrix.array[i * 16 + 13];
+      assert.ok(y < deck.north + 3.2, `an instance floats at y=${y}, above lid+penthouse`);
+    }
+  }
+
+  /* Every measured ring segment no facade names gets a wall — the two notch
+     steps on each tower, the bar's two ends and its kink: 8 faces. */
+  assert.equal(r.counts.notchFaces, 8, "the uncovered ring segments must be skinned");
+});
+
+test("once merged, the measured blocks are verbatim copies of the survey", () => {
+  /* Live only after the main session merges keeling-section-v3.json; until
+     then the module falls back to the facade-named ring and the OSM height,
+     which is exactly the audited fault — so the merge must not drift. */
+  for (const [key, name] of Object.entries(RINGS)) {
+    const m = section.buildings[key].measured;
+    if (!m) continue;
+    assert.deepEqual(m.ring, ringOf(name), `${key}.measured.ring is not the verbatim campus-3d ring`);
+    assert.equal(m.lidarHeight, lidar.heights[name], `${key}.measured.lidarHeight drifted from campus-lidar`);
   }
 });
 

@@ -44,6 +44,9 @@ import { createPhotoErc } from "./campus-photo-erc.js";
 import { createPhotoKeeling } from "./campus-photo-keeling.js";
 import { createPhotoGalbraith } from "./campus-photo-galbraith.js";
 import { createPhotoPlaza } from "./campus-photo-plaza.js";
+import { createPhotoYork } from "./campus-photo-york.js";
+import { createPhotoArgo } from "./campus-photo-argo.js";
+import { createPhotoBlake } from "./campus-photo-blake.js";
 import {
   createExplore, scaleAtmosphere, stepSpeed, EYE, sliderToSpeed, speedToSlider,
   MAX_SPEED_MPS,
@@ -557,14 +560,26 @@ export async function boot({ report, mode = "campus" } = {}) {
   /* -------------------------------------------------------------- ground */
   rep.phase("ground");
   await rep.paint();
-  const surfaces = world.createSurfaces(scene, campus, heightAt, arcgis, colors);
+  /* EVERY DRAPE BELOW SAMPLES surfaceAt, NOT heightAt — the same rule the
+     photo modules and campus-scooter.js already follow. `heightAt` is the 3 m
+     bilinear LiDAR field; the terrain you can SEE is built from every second
+     sample, so the two disagree by up to 1.2 m on the Revelle mesa. A sheet
+     draped on heightAt therefore stands proud of, or sinks under, the ground
+     it is supposed to be lying on. Measured at the Galbraith east DG band
+     before this: the ground sheet sat 0.47 m above the drawn terrain, and on
+     the north apron 1.20 m above it — hard-edged planes cutting across column
+     feet, wall ground lines and tree trunks. The terrain-following
+     subdivision in createSurfaces made this WORSE, not better: it made the
+     sheet track heightAt faithfully, so a soft averaged error became a crisp
+     one against the wrong surface. */
+  const surfaces = world.createSurfaces(scene, campus, terrain.surfaceAt, arcgis, colors);
   /* The painted lines of every sports surface — measured from imagery, drawn as
      geometry. Quiet no-op when the data file is absent. */
-  createMarkings(scene, heightAt, markings);
+  createMarkings(scene, terrain.surfaceAt, markings);
   /* With the surveyed ground plane, the sidewalk POLYGONS are the paths;
      ribbons guessed from OSM centrelines would just z-fight them. They still
      draw when the GIS file is absent. */
-  if (!arcgis?.ground?.length) world.createPaths(scene, campus, heightAt);
+  if (!arcgis?.ground?.length) world.createPaths(scene, campus, terrain.surfaceAt);
   await rep.paint();
 
   /* --------------------------------------------------------------- trees */
@@ -574,10 +589,13 @@ export async function boot({ report, mode = "campus" } = {}) {
      optional, and createTrees degrades to no crown-intrusion cap without it. */
   /* The plaza photo module re-skins named trunks with full tree models —
      skipKeys keeps the blob renderer off those stems so no tree draws twice. */
-  const skipKeys = data.photo?.plaza?.treeOverrides?.skipMeasuredKeys;
+  const skipKeys = new Set([
+    ...(data.photo?.plaza?.treeOverrides?.skipMeasuredKeys || []),
+    ...(data.photo?.galbraith?.treeOverrides?.skipMeasuredKeys || []),
+  ]);
   const trees = world.createTrees(scene, lidar, heightAt, {
     campus3d: campus, arcgis, markings,
-    ...(skipKeys ? { skipKeys: new Set(skipKeys) } : {}),
+    ...(skipKeys.size ? { skipKeys } : {}),
   });
   rep.facts(geometryFacts({ trees: trees.group }));
   await rep.paint();
@@ -672,6 +690,12 @@ export async function boot({ report, mode = "campus" } = {}) {
        skips those keys above), the square-plinth fountain that replaces the
        landmark ring, lawns, paving arcs, furniture. Ground module — surfaceAt. */
     photoZone.add(createPhotoPlaza(null, { photo: data.photo, heightAt, surfaceAt }).group);
+    /* The Zone 1 rebuilds: York owns itself now (the revelle module no longer
+       draws it), Argo and Blake are the 2015 white repaint, sibling modules
+       with different bays. Two-sampler contract throughout. */
+    photoZone.add(createPhotoYork(null, { photo: data.photo, heightAt, surfaceAt }).group);
+    photoZone.add(createPhotoArgo(null, { photo: data.photo, heightAt, surfaceAt }).group);
+    photoZone.add(createPhotoBlake(null, { photo: data.photo, heightAt, surfaceAt }).group);
   }
   scene.add(photoZone);
 

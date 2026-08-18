@@ -67,6 +67,7 @@ import * as THREE from "../vendor/three/three.module.min.js";
 import { applyOverlayDepth, OVERLAY, overlayLift } from "./campus-overlay.js";
 import { ribbon } from "./campus-drape.js";
 import { createMaterialLibrary } from "./campus-materials.js";
+import { SPECIES, treeSpecies, treeTint, crownFor } from "./campus-species.js";
 
 /* Ground decals ride the overlay ladder so they paint over the measured
    terrain in a fixed order instead of z-fighting it. */
@@ -98,13 +99,37 @@ function makeMats() {
       lib.get("smoothConcrete", { color, repeat, emissive: color, emissiveIntensity: 0.3 }),
     /* Dark bronze curtain wall standing under an eleven-metre oversail is in
        permanent shade; the library's glass carries the PMREM environment
-       reflection, and a little self-light keeps it a surface, not a hole. */
-    glass: (color) => lib.get("glass", { color, emissive: color, emissiveIntensity: 0.15 }),
+       reflection, and a little self-light keeps it a surface, not a hole.
+       `opts` is the per-surface lever: the library's default 0.35 opacity is
+       right for a skylight pane but on the facade it let the measured massing
+       box's punched-window texture read straight through the declared dark
+       bronze — the curtain wall passes a near-opaque override instead. */
+    glass: (color, opts = {}) =>
+      lib.get("glass", { color, emissive: color, emissiveIntensity: 0.15, ...opts }),
     /* The 1965 fluted aggregate wall is board-formed; ~0.45 m per board at
        this repeat against the ~7.4 m panel height. */
     board: (color, repeat = [8, 2]) => lib.get("boardFormedConcrete", { color, repeat }),
     lava: (color) => lib.get("lavaRock", { color, repeat: [2, 2] }),
-    seam: (color, repeat = [8, 8]) => lib.get("metalPanel", { color, standingSeam: true, repeat }),
+    /* The curtain wall's solid end panels: flat bronze sheet, so no standing
+       seam and a duller specular than the library's mill-finish default. */
+    panel: (color, repeat = [2, 6]) =>
+      lib.get("metalPanel", { color, repeat, roughness: 0.55, metalness: 0.4 }),
+    /* Tree bark. The library carries two classes and the species table five
+       forms; pine takes the plated one, everything else the eucalyptus
+       ribbons, which is the same mapping campus-photo-plaza uses. */
+    bark: (species, color, repeat = [2, 8]) =>
+      lib.get(species === "pine" ? "barkPine" : "barkEucalyptus", { color, repeat }),
+    /* Leaf mass on a CLOSED lobe: the procedural foliage class without its
+       alpha cut. That alpha is a leaf-clump silhouette meant for a flat card
+       and on a solid body it only punches holes; the albedo mottle and normal
+       relief are exactly what a leaf mass wants, so they stay. */
+    leaf: (color) =>
+      lib.get("foliage", { color, alphaTest: 0, side: THREE.FrontSide, repeat: [3, 2] }),
+    /* Weathered painted standing-seam, not mill-finish: the library default
+       (metalness 0.9, roughness 0.5) read as a mirror from the north and a
+       specular hole from the east — a 1965 penthouse roof is matte. */
+    seam: (color, repeat = [8, 8]) =>
+      lib.get("metalPanel", { color, standingSeam: true, repeat, roughness: 0.72, metalness: 0.35 }),
   };
 }
 const painted = (color) =>
@@ -145,6 +170,7 @@ function instanced(geo, mat, items, place, shadow = true) {
   const e = new THREE.Euler();
   const s = new THREE.Vector3();
   const pos = new THREE.Vector3();
+  const tint = new THREE.Color();
   items.forEach((it, i) => {
     const p = place(it, i);
     e.set(p.rotX || 0, p.rot || 0, p.rotZ || 0, "YXZ");
@@ -153,8 +179,17 @@ function instanced(geo, mat, items, place, shadow = true) {
     pos.set(p.x, p.y, p.z);
     m.compose(pos, q, s);
     mesh.setMatrixAt(i, m);
+    /* Per-instance tone is a VALUE multiplier only, so a foliage lobe can be
+       a lighter or darker version of its species tint but never another hue.
+       The type check is not defensive padding: buildLavaWall has carried a
+       STRING `tone` since it was written, as the key it splits its two rock
+       materials on, and setScalar of a string writes NaN into the colour
+       buffer — which NaNs the bounding sphere, kills the cull and paints a
+       black wedge across half the frame from ninety metres away. */
+    if (typeof p.tone === "number") mesh.setColorAt(i, tint.setScalar(p.tone));
   });
   mesh.instanceMatrix.needsUpdate = true;
+  if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
   /* Sub-decimetre repeats — bird-spike wire, balustrade pickets, coffer
      fillets, paving joints, planting — are opted OUT of the shadow pass.
      Their shadows are smaller than a shadow-map texel at every distance you
@@ -240,6 +275,7 @@ function frameOf(f) {
     id: f.id,
     length,
     rot: Math.atan2(nx, nz),
+    normal: [nx, nz],
     at: (u, w, y) => ({ x: sx + tx * u + nx * w, y, z: sz + tz * u + nz * w }),
   };
 }
@@ -433,6 +469,62 @@ function collectSoffit(section, f, frame, ctx, bins) {
 
 /* ------------------------------------- the glazed wall, level 1 and level 2 */
 
+/**
+ * How far this ONE face may reach inboard before it is inside the drawn mass.
+ *
+ * `facade.wallStandoff` is a single number for the whole building, pinned to
+ * the WORST disagreement between the OSM ring and the university's massing —
+ * and that worst case is the east elevation alone. Face by face the drawn
+ * ring stands 0.13 m outside the OSM trace on the south, 0.14 on the west and
+ * 0.36 on the north, against 0.80 on the east. Anything that wants to sit
+ * BEHIND the glazing has to know which of those it is standing on, or it is
+ * buried on the east and floating on the west.
+ */
+function drawnClearanceOf(section, f, frame) {
+  const a = frame.at(0, 0, 0);
+  const b = frame.at(frame.length, 0, 0);
+  const tx = (b.x - a.x) / frame.length;
+  const tz = (b.z - a.z) / frame.length;
+  const o = frame.at(0, 1, 0);
+  const nx = o.x - a.x;
+  const nz = o.z - a.z;
+  let worst = 0;
+  for (const [px, pz] of section.drawnRing || []) {
+    const du = (px - a.x) * tx + (pz - a.z) * tz;
+    if (du < -1 || du > frame.length + 1) continue;
+    worst = Math.max(worst, (px - a.x) * nx + (pz - a.z) * nz);
+  }
+  return worst;
+}
+
+/**
+ * The opaque interior backing behind a glazing band.
+ *
+ * The curtain wall keeps the library's reflective glass, which is right — but
+ * a reflective pane is transparent by construction, and at 0.94 the measured
+ * massing box's punched-window texture still read through it as a grid of
+ * pale grey squares on every elevation. Rather than take the reflection away
+ * to win the argument, the glass gets something opaque to be transparent
+ * AGAINST: a matte near-black plane a short way inboard, in the section's own
+ * `glassLower` — the sample of this building's glazing in deep shade, which is
+ * what an unlit interior behind bronze glass actually is. The pane keeps its
+ * reflections, the massing stops showing, and the gap between the two reads as
+ * shallow depth instead of as a sticker.
+ *
+ * The depth is `preferred`, PINCHED per face by what the two surveys leave:
+ * the east elevation has 0.19 m between the drawn box and its glass and gets
+ * exactly that less a hair, while the south and west have most of a metre and
+ * get the full 0.45. A single depth would bury the east backing inside the
+ * mass, which is the one face the read-through was worst on.
+ */
+function backingStandoff(section, f, frame, preferred = 0.45) {
+  const glassW = section.facade.wallStandoff + 0.04;
+  const clear = drawnClearanceOf(section, f, frame);
+  /* 0.04 outboard of the drawn skin, the same hair the standoff itself keeps,
+     and never closer than 0.06 to the glass or there is no depth at all. */
+  return Math.min(glassW - 0.06, Math.max(clear + 0.04, glassW - preferred));
+}
+
 function collectGlazing(section, f, frame, ctx, bins) {
   const F = section.facade;
   const { l1Y, l2Y, soffitY } = ctx;
@@ -448,8 +540,17 @@ function collectGlazing(section, f, frame, ctx, bins) {
   }
   bands.push([l2Y + F.glassSillGap, soffitY - F.glassTopGap, "glass"]);
 
+  const wBack = backingStandoff(section, f, frame);
+
   for (const [y0, y1, kind] of bands) {
     if (y1 <= y0) continue;
+    /* The backing runs a little WIDER and TALLER than its pane, so the
+       massing cannot show in the sliver the glass leaves at either end. */
+    bins.backing.push({
+      ...frame.at(mid, wBack, (y0 + y1) / 2),
+      rot: frame.rot,
+      scale: [L, y1 - y0 + 0.2, 1],
+    });
     bins.glass.push({
       ...frame.at(mid, wWall + 0.04, (y0 + y1) / 2),
       rot: frame.rot,
@@ -480,6 +581,57 @@ function collectGlazing(section, f, frame, ctx, bins) {
     rot: frame.rot,
     scale: [L, F.spandrel, 0.16],
   });
+}
+
+/* ------------------------------------------------------- the corner piers */
+
+/**
+ * The four solid end panels, one per corner of the ring.
+ *
+ * A glazing plane hangs `wallStandoff` proud of its own face and stops at that
+ * face's ends, so between two adjacent planes the measured massing box's
+ * corner is left bare — and campus-massing.js wears a generic punched-window
+ * texture, which at eye level read as a dozen mini-storeys of small office
+ * windows stacked up the corner of a two-storey building. The inventory says
+ * no fenestrated pier is there to see: the curtain wall runs into SOLID END
+ * PANELS. So each corner carries one panel-clad pier, square in plan, both of
+ * its outward faces standing just proud of the glazing and the mullions they
+ * meet, from below grade up to the back of the coffer recess.
+ *
+ * Its inward reach is not taste. It is `drawnClearance` — how far the
+ * university's massing stands outside the OSM ring this section hangs on —
+ * plus the same 0.15 m the standoff itself carries, which is the least that
+ * covers the drawn corner from both of the faces that see it.
+ */
+function collectCornerPiers(section, frames, ctx, bins) {
+  /* +0.14 clears the mullions, whose outer faces sit at wallStandoff + 0.11;
+     anything shallower leaves a mullion standing out of the solid panel. */
+  const out = section.facade.wallStandoff + 0.14;
+  const inset = section.drawnClearance + 0.15;
+  const side = out + inset;
+  const y1 = ctx.soffitY + section.soffit.recess;
+  const faces = section.faces;
+
+  for (let i = 0; i < faces.length; i++) {
+    const f1 = faces[i];
+    const f2 = faces[(i + 1) % faces.length];
+    /* The faces are given in ring order, so f1 ends where f2 begins. */
+    const [px, pz] = f1.b;
+    const [n1x, n1z] = frames.get(f1.id).normal;
+    const [n2x, n2z] = frames.get(f2.id).normal;
+    /* Centre the square between -inset and +out on BOTH outward normals. The
+       two are a quarter turn apart to within the ring's half-degree of skew,
+       so one face's rotation squares the box to both. */
+    const d = (out - inset) / 2;
+    const x = px + (n1x + n2x) * d;
+    const z = pz + (n1z + n2z) * d;
+    const y0 = ctx.ground(x, z) - 0.6;
+    bins.cornerPier.push({
+      x, y: (y0 + y1) / 2, z,
+      rot: frames.get(f1.id).rot,
+      scale: [side, y1 - y0, side],
+    });
+  }
 }
 
 /* ---------------------------------- the balcony, the terrace and the rails */
@@ -554,10 +706,15 @@ function collectLowerColonnade(section, f, frame, ctx, bins) {
     });
   }
 
-  /* The set-back dark glazing behind them. */
+  /* The set-back dark glazing behind them, on its own opaque backing. */
   if (f.flutedWall) return;
   const p = frame.at(L / 2, wWall, 0);
   const g = ctx.ground(p.x, p.z);
+  bins.backing.push({
+    ...frame.at(L / 2, backingStandoff(section, f, frame), (g + 0.1 + topY - 0.3) / 2),
+    rot: frame.rot,
+    scale: [L, Math.max(0.5, topY - 0.4 - g) + 0.2, 1],
+  });
   bins.lowerGlass.push({
     ...frame.at(L / 2, wWall + 0.04, (g + 0.1 + topY - 0.3) / 2),
     rot: frame.rot,
@@ -915,8 +1072,15 @@ function buildGround(section, group, ctx) {
     (b) => ({ x: b.x, y: ground(b.x, b.z) + B.height - B.bandHeight, z: b.z })));
 }
 
-/** Angular scoria rubble in courses under no coping, with lichen on some of
- *  it — the wall in ucsdmap.jpg is dark, dry-laid and capless. */
+/** The ~0.9 m mortared scoria retaining wall along the west court's grade
+ *  break — CONTINUOUS coursed masonry under no coping, with lichen on some of
+ *  it. The first pass scattered discrete tumbled blocks with random yaw and
+ *  gaps between them, which read as rubble from ten metres; the wall in
+ *  ucsdmap.jpg is one unbroken run. So now it is contiguous full-height
+ *  segments, all on the wall's own axis, with the rock/mortar read carried by
+ *  the library's lavaRock texture and the tone shifting segment to segment the
+ *  way real scoria courses do — no gaps, no stray clumps. The top follows the
+ *  drawn terrain per segment, exactly as a wall built on that bank would. */
 function buildLavaWall(section, group, ctx) {
   const L = section.west.lavaWall;
   const { colors } = section;
@@ -925,32 +1089,286 @@ function buildLavaWall(section, group, ctx) {
   const ux = (L.b[0] - L.a[0]) / len;
   const uz = (L.b[1] - L.a[1]) / len;
   const rot = Math.atan2(-uz, ux);
-  const rocks = [];
-  for (let r = 0; r < L.rows; r++) {
-    const rowY = ((r + 0.5) * L.height) / L.rows;
-    for (let t = L.rockStep / 2; t < len; t += L.rockStep) {
-      const j = hash(L.seed, r, Math.round(t * 10));
-      const x = L.a[0] + ux * t - uz * (j - 0.5) * 0.1;
-      const z = L.a[1] + uz * t + ux * (j - 0.5) * 0.1;
-      rocks.push({
-        x, y: ground(x, z) + rowY, z,
-        rot: rot + (j - 0.5) * 0.7,
-        rotX: (hash(L.seed + 1, r, Math.round(t * 10)) - 0.5) * 0.3,
-        scale: [L.rockStep * 1.12, (L.height / L.rows) * 1.15, L.thickness],
-        tone: j < 0.4 ? "lavaRockRed" : "lavaRock",
-        lichen: hash(L.seed + 2, r, Math.round(t * 10)) < L.lichenFraction,
+  const SEG = 2; // one terrain-following segment every 2 m, like the drapes
+  const n = Math.max(1, Math.ceil(len / SEG));
+  const seg = len / n;
+  const segs = [];
+  const lichens = [];
+  for (let i = 0; i < n; i++) {
+    const t = (i + 0.5) * seg;
+    const x = L.a[0] + ux * t;
+    const z = L.a[1] + uz * t;
+    const j = hash(L.seed, i, 3);
+    segs.push({
+      x, y: ground(x, z) + L.height / 2, z, rot,
+      /* 0.06 m of overlap keeps the run visibly seamless where the terrain
+         steps the neighbouring segments apart. */
+      scale: [seg + 0.06, L.height, L.thickness],
+      tone: j < 0.35 ? "lavaRockRed" : "lavaRock",
+    });
+    /* Lichen patches sit ON the face of the wall, west (outer) side. */
+    if (hash(L.seed + 2, i, 5) < L.lichenFraction * 2) {
+      const u = t + (hash(L.seed + 4, i, 1) - 0.5) * seg * 0.6;
+      const px = L.a[0] + ux * u;
+      const pz = L.a[1] + uz * u;
+      lichens.push({
+        x: px - uz * (L.thickness / 2 + 0.01), z: pz + ux * (L.thickness / 2 + 0.01),
+        y: ground(px, pz) + L.height * (0.35 + hash(L.seed + 5, i, 2) * 0.5),
+        rot,
       });
     }
   }
   const box = new THREE.BoxGeometry(1, 1, 1);
   for (const tone of ["lavaRock", "lavaRockRed"]) {
-    group.add(instanced(box, ctx.mats.lava(colors[tone]), rocks.filter((r) => r.tone === tone), (it) => it));
+    group.add(instanced(box, ctx.mats.lava(colors[tone]), segs.filter((s) => s.tone === tone), (it) => it));
   }
   /* Yellow lichen as its own scatter of small patches, because a lichen-toned
-     rock reads as a different rock and a patched one reads as lichen. */
-  group.add(instanced(new THREE.BoxGeometry(0.22, 0.14, 0.04), rock(colors.lichen),
-    rocks.filter((r) => r.lichen),
-    (it) => ({ x: it.x, y: it.y, z: it.z, rot: it.rot, rotX: it.rotX }), false));
+     course reads as a different rock and a patched one reads as lichen. */
+  group.add(instanced(new THREE.BoxGeometry(0.22, 0.14, 0.02), rock(colors.lichen),
+    lichens, (it) => it, false));
+}
+
+/* ------------------------------------------------ measured-tree re-skins */
+
+/**
+ * Photo-layer re-skin of the measured LiDAR trunks whose blob crowns would
+ * pierce the oversail roof slab (section.treeOverrides). The tree at the NE
+ * oversail corner is REAL — its trunk row is copied verbatim from
+ * campus-lidar.json and the blob renderer is told to skip it via
+ * `treeOverrides.skipMeasuredKeys` (the same contract plaza uses; campus-walk
+ * unions the keys into createTrees' skip set) — but its measured 18.3 m top
+ * stands above the soffit, and the blob renderer knows nothing about a roof
+ * that oversails 12.5 m past the footprint it checks clearance against. So
+ * this draws the same species, same tint, same silhouette family as the
+ * measured renderer would, with ONE invented change, declared in the section:
+ * the canopy is pruned below the soffit plane, the way the real understorey
+ * tree under that corner is. Nothing else may read from this.
+ */
+/**
+ * The foliage body: a low sphere pushed around by a closed-form ripple, so a
+ * clump is a lumpy mass rather than a billiard ball. One geometry for every
+ * lobe — the variety is per-instance yaw, non-uniform scale and tone — and the
+ * displacement is a pure function of the vertex, so duplicated seam and pole
+ * vertices move together and the surface stays closed.
+ *
+ * This is campus-photo-plaza's lobe idiom. That module does not export it and
+ * is not this agent's to edit, so the recipe is repeated here rather than
+ * reached into; if the two ever need to differ, they are separate on purpose.
+ */
+function lobeGeometry() {
+  const geo = new THREE.SphereGeometry(1, 10, 7);
+  const pos = geo.attributes.position;
+  const v = new THREE.Vector3();
+  for (let i = 0; i < pos.count; i++) {
+    v.fromBufferAttribute(pos, i);
+    const n =
+      Math.sin(v.x * 3.1 + 1.7) * Math.sin(v.y * 2.6 + 0.4) * Math.sin(v.z * 3.7 + 2.2) +
+      0.5 * Math.sin(v.x * 6.3 + 0.9) * Math.sin(v.z * 5.5 + 1.3);
+    v.multiplyScalar(1 + n * 0.15);
+    pos.setXYZ(i, v.x, v.y, v.z);
+  }
+  geo.computeVertexNormals();
+  return geo;
+}
+
+/**
+ * campus-species' `treeTint` returns hexToRgb of a hex string — plain sRGB
+ * byte fractions, NOT linear. Handing those straight to `new THREE.Color(r,g,b)`
+ * stores them as the working (linear) colour, which renders #b0a48e at 0.690
+ * instead of 0.434: about 60% too bright on the bark and nearly three times
+ * too bright on the leaf. That is what made this canopy read as pale sage
+ * against the plaza's trees, which reach the SAME hexes — species trunk
+ * #b0a48e is plaza's eucTrunk, byte for byte — through THREE's hex parser and
+ * therefore through the sRGB conversion. Naming the colour space puts this
+ * file on the plaza's path. Same source hex, no new colour.
+ */
+function speciesColor(rgb) {
+  return new THREE.Color().setRGB(rgb[0], rgb[1], rgb[2], THREE.SRGBColorSpace);
+}
+
+/**
+ * Signed distance from a point to the measured ring, negative inside, with the
+ * unit direction that points OUT of the building. Used to keep foliage off the
+ * facade: a crown radius is metres, the trunk stands 0.7 m off the glass, and
+ * "lean the clumps outward" is not the same as "no clump crosses the wall".
+ */
+function ringClearance(ring, x, z) {
+  let best = Infinity;
+  let bx = 1;
+  let bz = 0;
+  for (let i = 0; i < ring.length; i++) {
+    const [ax, az] = ring[i];
+    const [cx, cz] = ring[(i + 1) % ring.length];
+    const dx = cx - ax;
+    const dz = cz - az;
+    const len2 = dx * dx + dz * dz;
+    let t = len2 ? ((x - ax) * dx + (z - az) * dz) / len2 : 0;
+    t = Math.max(0, Math.min(1, t));
+    const px = ax + dx * t;
+    const pz = az + dz * t;
+    const d = Math.hypot(x - px, z - pz);
+    if (d < best) { best = d; bx = x - px; bz = z - pz; }
+  }
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, zi] = ring[i];
+    const [xj, zj] = ring[j];
+    if (zi > z !== zj > z && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) inside = !inside;
+  }
+  const n = Math.hypot(bx, bz) || 1;
+  const s = inside ? -1 : 1;
+  return { d: inside ? -best : best, nx: (s * bx) / n, nz: (s * bz) / n };
+}
+
+/** A limb as a unit cylinder stretched from `from` to `to`. The Euler is YXZ,
+ *  so rotX tilts the +Y axis into ZY and rot then swings its bearing. */
+function limbTo(from, to) {
+  const dx = to[0] - from[0];
+  const dy = to[1] - from[1];
+  const dz = to[2] - from[2];
+  const len = Math.hypot(dx, dy, dz) || 1;
+  return {
+    x: (from[0] + to[0]) / 2, y: (from[1] + to[1]) / 2, z: (from[2] + to[2]) / 2,
+    rot: Math.atan2(dx, dz),
+    rotX: Math.acos(Math.max(-1, Math.min(1, dy / len))),
+    scale: [1, len, 1],
+  };
+}
+
+function buildTreeReskins(section, group, ctx) {
+  const T = section.treeOverrides;
+  if (!T || !T.items?.length) return { reskinnedTrees: 0, canopyLobes: 0 };
+  const clear = T.clearBelowSoffit ?? 0.5;
+  const sub = new THREE.Group();
+  sub.name = "galbraith-tree-reskins";
+
+  /* One bin per material, so the whole re-skin set is three draws however
+     many stems it grows to. */
+  const boles = [];
+  const limbs = [];
+  const lobes = [];
+  let species = "eucalyptus";
+  let tint = { leaf: [0.4, 0.43, 0.3], trunk: [0.69, 0.64, 0.56] };
+
+  T.items.forEach((it, idx) => {
+    const g = ctx.ground(it.x, it.z);
+    species = treeSpecies(it.x, it.z, it.h, it.r);
+    const form = SPECIES[species].form;
+    /* What the measured renderer would draw, before the slab exists... */
+    let { crownR, crownV, centre } = crownFor([it.x, it.z, it.h, it.r], form);
+    /* ...clamped so the canopy TOP stays `clear` below the soffit plane. The
+       underside keeps the species walk-under clearance; the crown compresses
+       between the two, and its spread follows the compression so the pruned
+       tree keeps tree proportions instead of becoming a disc. */
+    const capTop = ctx.soffitY - clear - g;
+    let under = 2.4;
+    if (centre + crownV > capTop) {
+      under = Math.max(2.4, capTop - 2 * crownV);
+      crownV = Math.max(0.6, (capTop - under) / 2);
+      centre = (capTop + under) / 2;
+      crownR = Math.min(crownR, crownV * 1.25);
+    }
+    tint = treeTint(species, it.x, it.z);
+
+    /* The pruning is ASYMMETRIC, and the direction is not a taste call: this
+       stem stands under eleven metres of soffit with the building's own glass
+       less than a metre off one side, so the crown it can actually carry is
+       the one that grew AWAY from the wall, out toward the open corner. The
+       bearing is the ring corner to the trunk, normalised — the same two
+       measured points the pier at that corner is built from. */
+    let bx = 1;
+    let bz = 0;
+    let best = Infinity;
+    for (const [cx, cz] of section.ring) {
+      const d = Math.hypot(it.x - cx, it.z - cz);
+      if (d < best && d > 1e-6) { best = d; bx = (it.x - cx) / d; bz = (it.z - cz) / d; }
+    }
+
+    /* A pale pole carrying small high clumps — the eucalyptus silhouette the
+       measured renderer gives this stem, kept, but with its top third cut off
+       by the slab instead of the sky. The bole runs the FULL height from the
+       ground to just under the canopy, one textured piece with nothing to
+       leave a bare untextured stub at the bottom. */
+    const boleH = Math.min(capTop * 0.86, centre + crownV * 0.35);
+    boles.push({
+      x: it.x, y: g + boleH / 2, z: it.z, rot: hash(idx, 11) * Math.PI,
+      scale: [1, boleH, 1],
+    });
+
+    const from = [it.x, g + boleH * 0.94, it.z];
+    const clumps = 8;
+    const phase = hash(idx, 12) * Math.PI * 2;
+    for (let c = 0; c < clumps; c++) {
+      const k = idx * 97 + c;
+      /* Spaced round the pole rather than scattered: purely random bearings
+         leave three clumps on one side and a hole you can see through. */
+      const a = phase + (c / clumps) * Math.PI * 2 + (hash(k, 1) - 0.5) * 0.5;
+      const dirX = Math.sin(a);
+      const dirZ = Math.cos(a);
+      /* 1 out toward the open side, -1 back into the building. The inboard
+         clumps keep barely a third of the reach, which is the prune. */
+      const lean = dirX * bx + dirZ * bz;
+      const reach = crownR * (0.3 + hash(k, 2) * 0.4) * (0.45 + 0.55 * ((lean + 1) / 2));
+      let rad = Math.min(crownR * 0.46, 1.4 + hash(k, 3) * 1.6);
+      const squash = 0.8;
+      /* Clumps ride the top of what is left, and the ones reaching back under
+         the deeper slab ride lower still. */
+      let y = g + under + (capTop - under) * (0.42 + hash(k, 4) * 0.5 - 0.12 * (1 - lean));
+      /* The hard gate, applied per lobe and not per tree: nothing may reach
+         the soffit. Drop the clump first, and only shrink it if dropping it
+         would push it below the crown's own underside. */
+      const top = ctx.soffitY - clear;
+      if (y + rad * squash > top) {
+        y = Math.min(y, top - rad * squash);
+        if (y < g + under * 0.8) {
+          y = g + under * 0.8;
+          rad = Math.max(0.5, (top - y) / squash);
+        }
+      }
+      let px = it.x + dirX * reach + bx * crownR * 0.18;
+      let pz = it.z + dirZ * reach + bz * crownR * 0.18;
+      /* THE PRUNE, as a clearance and not as a lean. Reducing the inboard
+         reach still let clumps stand 1.5 m inside the measured ring and clean
+         through the curtain wall, because a lobe is a BODY: what has to clear
+         the facade is its surface, not its centre. So every lobe is pushed
+         out along the ring's own outward normal until its horizontal radius
+         clears the outermost thing on that wall — the corner pier's face at
+         wallStandoff + 0.14 — with 0.15 m to spare. Two passes, because
+         sliding along one edge can bring a lobe up against the next. */
+      const faceOut = section.facade.wallStandoff + 0.14 + 0.15;
+      const radH = Math.max(rad, rad * (0.85 + hash(k, 6) * 0.3));
+      for (let pass = 0; pass < 2; pass++) {
+        const c = ringClearance(section.ring, px, pz);
+        const over = faceOut + radH - c.d;
+        if (over > 0) { px += c.nx * over; pz += c.nz * over; }
+      }
+      const p = [px, y, pz];
+      lobes.push({
+        x: p[0], y: p[1], z: p[2],
+        rot: hash(k, 5) * Math.PI * 2,
+        scale: [rad, rad * squash, rad * (0.85 + hash(k, 6) * 0.3)],
+        tone: 0.82 + hash(k, 7) * 0.36,
+      });
+      /* Two clumps are carried on a visible limb run into the mass, so the
+         canopy hangs off the tree instead of floating beside it. */
+      if (c < 2) limbs.push(limbTo(from, p));
+    }
+  });
+
+  const leafRgb = speciesColor(tint.leaf);
+  const trunkRgb = speciesColor(tint.trunk);
+  const named = (name, mesh) => { mesh.name = name; sub.add(mesh); return mesh; };
+  named("galbraith-tree-boles", instanced(
+    new THREE.CylinderGeometry(0.18, 0.32, 1, 7),
+    ctx.mats.bark(species, trunkRgb, [2, 8]), boles, (i) => i));
+  named("galbraith-tree-limbs", instanced(
+    new THREE.CylinderGeometry(0.07, 0.13, 1, 5),
+    ctx.mats.bark(species, trunkRgb, [1, 3]), limbs, (i) => i));
+  named("galbraith-canopy-lobes", instanced(
+    lobeGeometry(), ctx.mats.leaf(leafRgb), lobes, (i) => i));
+
+  group.add(sub);
+  return { reskinnedTrees: T.items.length, canopyLobes: lobes.length };
 }
 
 /* ---------------------------------------------------------- the roofscape */
@@ -1191,7 +1609,7 @@ export function createPhotoGalbraith(scene, { photo, heightAt, surfaceAt } = {})
     struts: [], brackets: [],
     dripCap: [], fascia: [], birdSpike: [], needles: [],
     cofferPan: [], ribAcross: [], ribAlong: [], ribBoss: [], solidStrip: [], downlight: [],
-    glass: [], mullion: [], spandrel: [],
+    glass: [], backing: [], mullion: [], spandrel: [], cornerPier: [],
     deck: [], redBand: [], picket: [], railCap: [],
     lowerColumn: [], lowerGlass: [], flutedWall: [], flute: [], doorBronze: [],
   };
@@ -1212,6 +1630,7 @@ export function createPhotoGalbraith(scene, { photo, heightAt, surfaceAt } = {})
     if (f.lowerColonnade) collectLowerColonnade(section, f, frame, ctx, bins);
     if (f.flutedWall) collectFlutedWall(section, f, frame, ctx, bins);
   }
+  collectCornerPiers(section, frames, ctx, bins);
 
   const { colors } = section;
   const unit = new THREE.BoxGeometry(1, 1, 1);
@@ -1248,14 +1667,33 @@ export function createPhotoGalbraith(scene, { photo, heightAt, surfaceAt } = {})
   add(unit, mats.conc(colors.columnHead, [1, 1]), bins.brackets);
 
   add(unit, mats.conc(colors.spandrel, [24, 1]), bins.spandrel);
-  add(plane, mats.glass(colors.glass), bins.glass);
+  /* The curtain wall is near-opaque: every dated photograph reads it as a
+     dark bronze SURFACE, and at the library's default 0.35 the measured
+     massing texture behind it dominated on all four faces. depthWrite stays
+     on so the pane also occludes rather than merely tints. */
+  const curtain = { opacity: 0.94, depthWrite: true, roughness: 0.12 };
+  /* Behind the panes first, so the glass has something of its own to be
+     transparent against instead of the measured massing's window grid. */
+  if (bins.backing.length) {
+    const back = instanced(plane, decalFree(colors.glassLower), bins.backing, (it) => it, false);
+    back.name = "galbraith-glass-backing";
+    group.add(back);
+  }
+  add(plane, mats.glass(colors.glass, curtain), bins.glass);
+  /* The end panels wear the curtain wall's own sampled bronze, opaque — a
+     solid panel is the same bronze as the glass beside it, not a new colour. */
+  if (bins.cornerPier.length) {
+    const piers = instanced(unit, mats.panel(colors.glass, [3, 8]), bins.cornerPier, (it) => it);
+    piers.name = "galbraith-corner-piers";
+    group.add(piers);
+  }
   add(unit, painted(colors.mullion), bins.mullion);
   add(unit, mats.conc(colors.deck, [24, 1]), bins.deck);
   add(unit, painted(colors.terraceRed), bins.redBand);
   add(unit, painted(colors.picket), bins.picket, false);
   add(unit, painted(colors.picket), bins.railCap, false);
   add(unit, mats.conc(colors.lowerColumn, [1, 2]), bins.lowerColumn);
-  add(plane, mats.glass(colors.glassLower), bins.lowerGlass);
+  add(plane, mats.glass(colors.glassLower, curtain), bins.lowerGlass);
   /* The 1965 aggregate wall is the one board-formed surface on the building. */
   add(unit, mats.board(colors.flutedPanel), bins.flutedWall);
   add(unit, mats.conc(colors.flutedPanel, [1, 2]), bins.flute, false);
@@ -1267,6 +1705,7 @@ export function createPhotoGalbraith(scene, { photo, heightAt, surfaceAt } = {})
   buildGround(section, group, ctx);
   const roofCounts = buildRoof(section, group, ctx);
   const eastCounts = buildEastGround(section, group, ctx, frames);
+  const reskinCounts = buildTreeReskins(section, group, ctx);
 
   scene?.add(group);
   return {
@@ -1274,12 +1713,15 @@ export function createPhotoGalbraith(scene, { photo, heightAt, surfaceAt } = {})
     counts: {
       faces: section.faces.length,
       struts: bins.struts.length,
+      cornerPiers: bins.cornerPier.length,
+      glassBackings: bins.backing.length,
       coffers: bins.ribBoss.length,
       downlights: bins.downlight.length,
       pickets: bins.picket.length,
       lowerColumns: bins.lowerColumn.length,
       ...roofCounts,
       ...eastCounts,
+      ...reskinCounts,
       absent: section.absent.length,
       draws: group.children.length,
     },
