@@ -282,13 +282,41 @@ test("the roof read stays on the roof, plan measured and height estimated", () =
   assert.match(W.note, /\[estimated\]/, "the courtyard read is an estimate from Argo's pattern");
   assert.match(W.note, /Argo/, "and must name the pattern it extends");
   for (const t of W.trees) assert.ok(inset(t.x, t.z), "a courtyard tree runs off the ring");
-  const P = R.pv;
-  for (const [x, z] of [[P.x0, P.z0], [P.x1, P.z1]]) {
-    assert.ok(inset(x, z), `PV corner (${x}, ${z}) runs off the measured ring`);
+  /* The north plate's cream checkerboard is the ADJUDICATED read: a screened
+     mechanical enclosure, NOT PV — genuine PV in the same imagery (Keeling)
+     is unmistakably dark blue. The losing PV read stays recorded, unbuilt. */
+  const S = R.screen;
+  assert.ok(S, "the adjudicated mechanical screen is missing — the roof went back to the PV misread");
+  assert.equal(R.pv, undefined, "the misread PV array must stay unbuilt — its record lives in screen.note");
+  assert.match(S.note, /ADJUDICATION/, "the adjudication must be on the record");
+  assert.match(S.note, /cream/i, "the screen's sourced tone is the adjudication's evidence");
+  assert.match(S.note, /Keeling/, "and the known-PV comparison that decided it");
+  assert.match(S.note, /-53\.5/, "the losing PV read stays recorded");
+  assert.match(S.note, /\[estimated\]/, "screen heights are estimates — no oblique exists");
+  for (const [x, z] of [[S.x0, S.z0], [S.x1, S.z1]]) {
+    assert.ok(inset(x, z), `screen corner (${x}, ${z}) runs off the measured ring`);
   }
   const zs = ring.map((p) => p[1]);
   const zMid = (Math.min(...zs) + Math.max(...zs)) / 2;
-  assert.ok(P.z1 < zMid, "the PV array is on the NORTH roof plate [measured, ortho]");
+  assert.ok(S.z1 < zMid, "the screen is on the NORTH roof plate [measured, ortho]");
+  /* The two-level plates, the vents, and the well furniture are plan-measured
+     and stay inside the drawn geometry. */
+  assert.match(R.plates.note, /\[estimated\]/, "the plate raise is an estimate");
+  assert.ok(R.plates.innerZ0 > Math.min(...zs) && R.plates.innerZ1 < Math.max(...zs),
+    "the raised plate's shadow lines sit inside the ring");
+  assert.ok(Array.isArray(R.vents.items) && R.vents.items.length >= 10,
+    `only ${R.vents?.items?.length} vents — the ortho reads ~12`);
+  for (const v of R.vents.items) assert.ok(inset(v.x, v.z), `vent (${v.x}, ${v.z}) runs off the ring`);
+  assert.equal(W.trees.length, 5, "the ortho reads FIVE mature crowns in the well");
+  assert.equal(W.trellises.length, 2, "trellis strips along BOTH the north and south well edges");
+  if (V3) {
+    /* The pale west core block is the drawn inner ring's own notch. */
+    const xs2 = well.map((p) => p[0]);
+    assert.ok(xs2.includes(W.core.x0) && xs2.includes(W.core.x1),
+      "the core block's plan must be the drawn well notch, verbatim");
+  }
+  assert.ok(W.water.x > W.x0 && W.water.x < W.x1 && W.water.z > W.z0 && W.water.z < W.z1,
+    "the water feature sits in the well");
 });
 
 test("the lava-rock terrace wall is Blake's base, at its measured height, off the route", () => {
@@ -327,7 +355,9 @@ test("the module builds the section: structure and counts", () => {
   assert.equal(counts.awnings, 3 * 2 * 30, "a full-width sash under every panel");
   assert.equal(counts.fins, 3 * 2 * 31, "fins on every bay boundary of the panel faces");
   assert.ok(counts.mullions > 0, "the east grid has mullions");
-  assert.ok(counts.pv >= 20, "the north-plate PV array is built");
+  assert.ok(counts.screenBlocks >= 25, "the north-plate checkerboard screen is built");
+  assert.equal(counts.pv, undefined, "the misread PV array must not come back");
+  assert.equal(counts.vents, section.roof.vents.items.length, "every measured vent is built");
   assert.equal(counts.courtyardTrees, section.roof.courtyard.trees.length);
   assert.ok(counts.lavaRocks > 100, "the rubble wall is built from rocks, not a slab");
   assert.ok(group.children.find((c) => c.name === "blake-facades"), "no facades group");

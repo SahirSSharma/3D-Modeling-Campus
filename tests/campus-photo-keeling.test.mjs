@@ -32,7 +32,10 @@ const read = (p) => JSON.parse(readFileSync(p, "utf8"));
 const section = read(join(root, "docs/data/campus-photo-detail.json")).keeling;
 const campus = read(join(root, "docs/data/campus-3d.json"));
 const lidar = read(join(root, "docs/data/campus-lidar.json"));
+const arcgis = read(join(root, "docs/data/campus-arcgis.json"));
+const colors = read(join(root, "docs/data/campus-colors.json"));
 const staging = read(join(root, "docs/data/corridor-staging.json"));
+const { assembleMasses } = await import(join(root, "docs/js/campus-massing.js"));
 
 const RINGS = {
   north: "Keeling Apartments North Tower",
@@ -40,6 +43,23 @@ const RINGS = {
   bar: "Keeling Apartments West Bar",
 };
 const ringOf = (name) => campus.buildings.find((b) => b.n === name).p;
+
+/* The DRAWN masses — exactly what campus-massing extrudes on screen. The
+   measured blocks and the facade endpoints must match THESE, not the
+   suppressed OSM copies in campus-3d.json (which are simplified to 6-9
+   points and sit up to 4.5 m off the drawn wall — the audited full-height
+   corner slots of raw massing) and not the raw campus-lidar lookup (2.2 m
+   over the South Tower's reconciled extrusion). */
+const drawn = {};
+for (const m of assembleMasses({ campus, lidar, arcgis, colors })) {
+  if (/^Keeling Apartments/.test(m.name || "")) {
+    const ring = m.rings[0].slice();
+    const [f, l] = [ring[0], ring[ring.length - 1]];
+    if (f[0] === l[0] && f[1] === l[1]) ring.pop();
+    drawn[m.name] = { ring, h: m.h };
+  }
+}
+const drawnRingOf = (name) => drawn[name].ring;
 
 const inRing = (x, z, r) => {
   let ins = false;
@@ -197,7 +217,7 @@ test("the storey grid is the measured heights read back", () => {
 test("every facade hangs off two vertices of the ring it names", () => {
   const M = section.grid.module;
   for (const f of section.facades) {
-    const ring = ringOf(f.ring);
+    const ring = drawnRingOf(f.ring);
     for (const p of [f.a, f.b]) {
       assert.ok(ring.some(([x, z]) => x === p[0] && z === p[1]),
         `${f.id}: ${JSON.stringify(p)} is not a vertex of ${f.ring}`);
@@ -472,17 +492,17 @@ test("the skin seats on the DRAWN box: racks behind the parapet, roofscape on th
   const sectionM = structuredClone(section);
   for (const [key, name] of Object.entries(RINGS)) {
     sectionM.buildings[key].measured = {
-      ring: ringOf(name),
-      lidarHeight: lidar.heights[name],
-      source: "test-attached, verbatim from campus-3d.json / campus-lidar.json",
+      ring: drawn[name].ring,
+      drawnHeight: drawn[name].h,
+      source: "test-attached, verbatim from assembleMasses over the shipped files",
     };
   }
   const G = 12.2;
   const r = createPhotoKeeling(null, { photo: { keeling: sectionM }, heightAt: () => G, surfaceAt: () => G + 0.2 });
 
-  /* On flat ground the drawn lid is G + lidarHeight. */
+  /* On flat ground the drawn lid is G + the reconciled extruded height. */
   const deck = {};
-  for (const [key, name] of Object.entries(RINGS)) deck[key] = G + lidar.heights[name];
+  for (const [key, name] of Object.entries(RINGS)) deck[key] = G + drawn[name].h;
   const PB = sectionM.roofs.parapet.height;
 
   /* The PV panels: every module sits ON a tower lid and UNDER that lid's
@@ -515,21 +535,60 @@ test("the skin seats on the DRAWN box: racks behind the parapet, roofscape on th
     }
   }
 
-  /* Every measured ring segment no facade names gets a wall — the two notch
-     steps on each tower, the bar's two ends and its kink: 8 faces. */
-  assert.equal(r.counts.notchFaces, 8, "the uncovered ring segments must be skinned");
+  /* The notch-coverage count has its own test above, against the exact rings. */
+  assert.ok(r.counts.notchFaces > 0, "the uncovered ring segments must be skinned");
 });
 
-test("once merged, the measured blocks are verbatim copies of the survey", () => {
-  /* Live only after the main session merges keeling-section-v3.json; until
-     then the module falls back to the facade-named ring and the OSM height,
-     which is exactly the audited fault — so the merge must not drift. */
+test("the measured blocks are verbatim copies of the DRAWN massing", () => {
+  /* The 2026-08-18 corner-slot repair (Sahir's shot 5): the measured rings
+     used to be copied from campus-3d.json — the SUPPRESSED simplified OSM
+     rings, off the wall campus-massing actually extrudes by up to 4.5 m, so
+     the skins stopped short of every true corner and left full-height slots
+     of raw massing. The blocks must equal what assembleMasses draws, exactly
+     — every vertex (24 for the bar), and the reconciled extruded height. */
   for (const [key, name] of Object.entries(RINGS)) {
     const m = section.buildings[key].measured;
-    if (!m) continue;
-    assert.deepEqual(m.ring, ringOf(name), `${key}.measured.ring is not the verbatim campus-3d ring`);
-    assert.equal(m.lidarHeight, lidar.heights[name], `${key}.measured.lidarHeight drifted from campus-lidar`);
+    assert.ok(m, `${key} has no measured block`);
+    assert.deepEqual(m.ring, drawn[name].ring,
+      `${key}.measured.ring is not the verbatim massing ring campus-massing extrudes`);
+    assert.equal(m.drawnHeight, drawn[name].h,
+      `${key}.measured.drawnHeight is not the reconciled height campus-massing extrudes`);
   }
+});
+
+test("every drawn ring segment is skinned: declared facade or notch wall", async () => {
+  /* The notch loop's coverage test walked exact endpoint keys and skipped
+     segments under 1.2 m; with the exact rings every segment either lies on
+     a declared facade's chord or gets the blank notch skin — nothing may
+     show raw massing. Recompute the expected count here, independently. */
+  const eps = 0.25;
+  const onChord = (q, f) => {
+    const dx = f.b[0] - f.a[0];
+    const dz = f.b[1] - f.a[1];
+    const len2 = dx * dx + dz * dz;
+    let t = len2 ? ((q[0] - f.a[0]) * dx + (q[1] - f.a[1]) * dz) / len2 : 0;
+    t = Math.max(0, Math.min(1, t));
+    return Math.hypot(q[0] - (f.a[0] + dx * t), q[1] - (f.a[1] + dz * t)) < eps;
+  };
+  let expected = 0;
+  for (const [key, name] of Object.entries(RINGS)) {
+    const ring = section.buildings[key].measured.ring;
+    const fs = section.facades.filter((f) => f.id.startsWith(key === "bar" ? "bar" : key));
+    for (let i = 0; i < ring.length; i++) {
+      const a = ring[i];
+      const p = ring[(i + 1) % ring.length];
+      const len = Math.hypot(p[0] - a[0], p[1] - a[1]);
+      if (len < eps) continue;
+      if (!fs.some((f) => onChord(a, f) && onChord(p, f))) expected++;
+    }
+  }
+  assert.ok(expected > 0, "the notched rings must leave undeclared segments");
+  const { createPhotoKeeling } = await import("../docs/js/campus-photo-keeling.js");
+  const r = createPhotoKeeling(null, {
+    photo: { keeling: section }, heightAt: () => 12.2, surfaceAt: () => 12.4,
+  });
+  assert.equal(r.counts.notchFaces, expected,
+    `notchFaces ${r.counts.notchFaces} != ${expected} uncovered ring segments — a wall is missing or doubled`);
 });
 
 test("the module uses the material library, and only deterministic sources", () => {

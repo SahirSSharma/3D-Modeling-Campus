@@ -350,31 +350,136 @@ function collectGround(section, f, frame, base, ground, bins) {
 
 /* ------------------------------------------------------------------- roof */
 
-/* The roofscape: coping, the courtyard well, and the PV array on the north
-   plate. Plans are measured off the ortho; equipment heights [estimated] — no
-   oblique of this roof exists, and the data says so.
+/* Deterministic COLOUR textures for the roof, self-contained on purpose.
+   campus-materials.js bakes grey relief multiplied into one caller colour;
+   the membrane's rust stains and the well's planting need two colours in one
+   map, so these bake their own RGBA the same DataTexture way — closed-form
+   fields over (u, v), byte-identical in Node and the browser, colours fed
+   from the section's `colors` block, never from photo or satellite pixels. */
+function bakeNoise(u, v, seed, cells, oct) {
+  let sum = 0;
+  let amp = 1;
+  let norm = 0;
+  for (let o = 0; o < oct; o++) {
+    const n = cells << o;
+    const x = u * n;
+    const z = v * n;
+    const xi = Math.floor(x);
+    const zi = Math.floor(z);
+    const fx = x - xi;
+    const fz = z - zi;
+    const s = (i, j) => hash(seed, o, ((xi + i) % n + n) % n, ((zi + j) % n + n) % n);
+    const sx = fx * fx * (3 - 2 * fx);
+    const sz = fz * fz * (3 - 2 * fz);
+    sum += amp * ((s(0, 0) * (1 - sx) + s(1, 0) * sx) * (1 - sz)
+      + (s(0, 1) * (1 - sx) + s(1, 1) * sx) * sz);
+    norm += amp;
+    amp *= 0.5;
+  }
+  return sum / norm;
+}
 
-   The courtyard is the ROOF-PLANE read the declaration promises: a dark
-   planted-bed decal seated ON the roof plane, the kerb ringing it on the
-   solid plate, and the crowns emergent exactly where the ortho reads them.
-   The drawn massing (the ArcGIS 'Blake Hall' ring carries a second, inner
-   ring) opens a well below, and earlier shapes all failed the audit — a tray
-   hovering over the open well, a floor at the bottom of it 15 m under the
-   massing's own roof plane, and finally a cap that was still 3.2 m in the
-   air because the module's roof plane was solved on the losing 15.6 m read
-   instead of the mass's own 12.4 (see the header). The decal caps the drawn
-   opening AT the drawn roof plane, its plan rect the bounding box of the
-   drawn inner ring (section roof.courtyard, registered to
-   measured.courtyardRing), oversized by the kerb width so no sliver of the
-   void ever shows past its edge; the interior stays declared absent. */
+const hex2rgb = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+
+function bakeTexturePair(field) {
+  const S = 256;
+  const albedo = new Uint8Array(S * S * 4);
+  const rough = new Uint8Array(S * S * 4);
+  const out = [0, 0, 0, 0.9];
+  for (let y = 0; y < S; y++) {
+    for (let x = 0; x < S; x++) {
+      field((x + 0.5) / S, (y + 0.5) / S, out);
+      const i = (y * S + x) * 4;
+      albedo[i] = Math.max(0, Math.min(255, Math.round(out[0])));
+      albedo[i + 1] = Math.max(0, Math.min(255, Math.round(out[1])));
+      albedo[i + 2] = Math.max(0, Math.min(255, Math.round(out[2])));
+      albedo[i + 3] = 255;
+      const r = Math.max(0, Math.min(255, Math.round(out[3] * 255)));
+      rough[i] = rough[i + 1] = rough[i + 2] = r;
+      rough[i + 3] = 255;
+    }
+  }
+  const tex = (data, srgb) => {
+    const t = new THREE.DataTexture(data, S, S, THREE.RGBAFormat);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+    t.minFilter = THREE.LinearMipmapLinearFilter;
+    t.magFilter = THREE.LinearFilter;
+    t.generateMipmaps = true;
+    t.anisotropy = 8;
+    t.needsUpdate = true;
+    return t;
+  };
+  return { map: tex(albedo, true), roughnessMap: tex(rough, false) };
+}
+
+/** The weathered patch-stained membrane (section roof.membrane): off-white
+    field, rust/tan stain blotches, faint seam grid — Argo's treatment family. */
+function blakeMembraneTexture(colors) {
+  const base = hex2rgb(colors.membraneBase);
+  const stain = hex2rgb(colors.membraneStain);
+  return bakeTexturePair((u, v, out) => {
+    const mottle = bakeNoise(u, v, 11, 6, 3);
+    const blotch = bakeNoise(u, v, 12, 5, 4);
+    /* Sparse flecking, not cowhide: a high threshold and a soft cap keep the
+       field reading white with rust patches, matching the ortho's weathering. */
+    const k = Math.max(0, Math.min(1, (blotch - 0.66) / 0.1)) * (0.2 + 0.45 * mottle);
+    const seamU = (u * 6) % 1;
+    const seamV = (v * 6) % 1;
+    const seam = (seamU < 0.02 || seamV < 0.02) ? 0.94 : 1;
+    const tone = (0.94 + 0.08 * mottle) * seam;
+    for (let c = 0; c < 3; c++) out[c] = base[c] * tone * (1 - 0.8 * k) + stain[c] * (0.9 + 0.2 * mottle) * 0.8 * k;
+    out[3] = 0.8 + 0.12 * mottle + 0.08 * k;
+  });
+}
+
+/** The well floor's planting: dark beds with leafy variation, not a flat
+    brown rectangle. */
+function blakePlantingTexture(colors) {
+  const base = hex2rgb(colors.plantingDark);
+  const leaf = hex2rgb(colors.treeGreen);
+  return bakeTexturePair((u, v, out) => {
+    const clump = bakeNoise(u, v, 13, 8, 3);
+    const fine = bakeNoise(u, v, 14, 32, 2);
+    const k = Math.max(0, Math.min(1, (clump - 0.5) / 0.3)) * 0.45;
+    const tone = 0.8 + 0.35 * fine;
+    for (let c = 0; c < 3; c++) out[c] = base[c] * tone * (1 - k) + leaf[c] * (0.55 + 0.4 * fine) * k;
+    out[3] = 0.95;
+  });
+}
+
+/* The roofscape, all plan positions measured off chunk_4_6.jpg (registered
+   to the drawn ring / drawn well) and every height [estimated] — no oblique
+   of this roof exists, and the data says so.
+
+   ADJUDICATION 2026-08-18 (section roof.screen.note): the cream checkerboard
+   on the north plate is a screened MECHANICAL enclosure, not PV — genuine PV
+   in the same imagery (Keeling) is unmistakably dark blue. The losing PV
+   read stays recorded in the data and is not built.
+
+   The courtyard is the ROOF-PLANE read the declaration promises: the
+   planting decal caps the drawn well opening AT the drawn roof plane
+   (oversized by the kerb so no sliver of the void shows), and everything in
+   the well — trunks, trellis posts, the core block, the water feature —
+   seats on that cap, the well floor datum. The interior below stays
+   declared absent. The inner plate is a raised slab ringing the well
+   (section roof.plates, raise [estimated]) over the outer north and south
+   bands, which carry the membrane as decals on the drawn roof plane. */
 function buildRoof(section, group, roofY, ground, bins) {
   const R = section.roof;
   const { colors } = section;
   const unit = new THREE.BoxGeometry(1, 1, 1);
+  const cyl = new THREE.CylinderGeometry(1, 1, 1, 16);
+
+  const ring = section.measured.ring;
+  const rx0 = Math.min(...ring.map((p) => p[0]));
+  const rx1 = Math.max(...ring.map((p) => p[0]));
+  const rz0 = Math.min(...ring.map((p) => p[1]));
+  const rz1 = Math.max(...ring.map((p) => p[1]));
 
   const copes = [];
   for (const f of section.facades) {
-    const frame = frameOf(f, section.measured.ring);
+    const frame = frameOf(f, ring);
     copes.push({
       ...frame.at(frame.length / 2, -R.coping.width / 2 + 0.05, roofY + R.coping.height / 2),
       rot: frame.rot,
@@ -383,21 +488,84 @@ function buildRoof(section, group, roofY, ground, bins) {
   }
   group.add(instanced(unit, concrete(colors.copingWhite), copes));
 
-  /* The courtyard decal, seated ON the roof plane and oversized by the kerb
-     width so it caps the drawn well opening with no visible void. */
+  const membrane = blakeMembraneTexture(colors);
+  const membraneMat = (repeat) => {
+    const maps = Object.fromEntries(Object.entries(membrane).map(([k, t]) => {
+      const c = t.clone();
+      c.repeat.set(repeat[0], repeat[1]);
+      c.needsUpdate = true;
+      return [k, c];
+    }));
+    return new THREE.MeshStandardMaterial({ ...maps, roughness: 1, metalness: 0 });
+  };
+
+  /* The outer north and south bands: membrane decals on the drawn roof. */
+  const P = R.plates;
+  const bandW = rx1 - rx0 - 2 * P.inset;
+  const bandCx = (rx0 + rx1) / 2;
+  for (const [bz0, bz1] of [[rz0 + P.inset, P.innerZ0], [P.innerZ1, rz1 - P.inset]]) {
+    const band = new THREE.Mesh(quad(bandW, bz1 - bz0),
+      applyOverlayDepth(membraneMat([4, 1]), PAD));
+    band.position.set(bandCx, roofY + overlayLift(PAD), (bz0 + bz1) / 2);
+    band.renderOrder = OVERLAY[PAD].renderOrder;
+    band.name = "membrane-band";
+    band.receiveShadow = true;
+    group.add(band);
+  }
+
+  /* The raised inner plate: four membrane-topped strips ringing the well,
+     one step over the bands with the ortho's shadow line at each edge. */
   const W = R.courtyard;
   const K = R.kerb;
+  const plateTop = roofY + P.raise;
+  const strips = [
+    { x0: rx0 + P.inset, x1: rx1 - P.inset, z0: P.innerZ0, z1: W.z0 },
+    { x0: rx0 + P.inset, x1: rx1 - P.inset, z0: W.z1, z1: P.innerZ1 },
+    { x0: rx0 + P.inset, x1: W.x0, z0: W.z0, z1: W.z1 },
+    { x0: W.x1, x1: rx1 - P.inset, z0: W.z0, z1: W.z1 },
+  ];
+  group.add(instanced(unit, membraneMat([2, 2]), strips, (s) => ({
+    x: (s.x0 + s.x1) / 2, y: roofY + P.raise / 2, z: (s.z0 + s.z1) / 2,
+    scale: [s.x1 - s.x0, P.raise, s.z1 - s.z0],
+  })));
+
+  /* The courtyard cap: the drawn well opening, floored at the drawn roof
+     plane with the planting texture — the well floor datum everything in
+     the well seats on. */
   const wellW = W.x1 - W.x0;
   const wellD = W.z1 - W.z0;
   const wcx = (W.x0 + W.x1) / 2;
   const wcz = (W.z0 + W.z1) / 2;
-  const well = new THREE.Mesh(
-    quad(wellW + 2 * K.width, wellD + 2 * K.width), decal(colors.wellShade, PAD));
+  const well = new THREE.Mesh(quad(wellW + 2 * K.width, wellD + 2 * K.width),
+    applyOverlayDepth(new THREE.MeshStandardMaterial({
+      ...blakePlantingTexture(colors), roughness: 1, metalness: 0,
+    }), PAD));
   well.position.set(wcx, roofY + overlayLift(PAD), wcz);
   well.renderOrder = OVERLAY[PAD].renderOrder;
   well.name = "courtyard-decal";
+  well.receiveShadow = true;
   group.add(well);
 
+  /* Real paving on the well floor: a buff unit-paver band around the
+     perimeter and an apron at the water feature, on the rung above the
+     planting. */
+  const V = R.courtyard.water;
+  const pb = R.courtyard.paving.band;
+  const pave = (w, d, x, z, repeat) => {
+    const m = new THREE.Mesh(quad(w, d), decal(colors.pavingBuff, CARPET, "pavingConcreteUnit", repeat));
+    m.position.set(x, roofY + overlayLift(CARPET), z);
+    m.renderOrder = OVERLAY[CARPET].renderOrder;
+    m.name = "courtyard-paving";
+    m.receiveShadow = true;
+    group.add(m);
+  };
+  pave(wellW, pb, wcx, W.z0 + pb / 2, [8, 1]);
+  pave(wellW, pb, wcx, W.z1 - pb / 2, [8, 1]);
+  pave(pb, wellD - 2 * pb, W.x0 + pb / 2, wcz, [1, 8]);
+  pave(pb, wellD - 2 * pb, W.x1 - pb / 2, wcz, [1, 8]);
+  pave(V.w + 2.4, V.d + 2.4, V.x, V.z, [3, 3]);
+
+  /* The kerb rings the well ON the raised plate. */
   const kerbs = [
     { x: wcx, z: W.z0 - K.width / 2, scale: [wellW + 2 * K.width, K.height, K.width] },
     { x: wcx, z: W.z1 + K.width / 2, scale: [wellW + 2 * K.width, K.height, K.width] },
@@ -405,31 +573,131 @@ function buildRoof(section, group, roofY, ground, bins) {
     { x: W.x1 + K.width / 2, z: wcz, scale: [K.width, K.height, wellD] },
   ];
   group.add(instanced(unit, concrete(colors.kerbWhite), kerbs,
-    (k) => ({ ...k, y: roofY + K.height / 2 })));
+    (k) => ({ ...k, y: plateTop + K.height / 2 })));
 
-  /* Mature courtyard trees: crowns emergent at the roof plane per the ortho,
-     seated on the capping decal — carried by the roof plane, nothing hovers
-     and nothing reaches into the declared-absent interior. */
-  const crowns = instanced(new THREE.ConeGeometry(1, 1, 7), foliage(colors.treeGreen),
-    W.trees, (t) => ({ x: t.x, y: roofY + t.height / 2, z: t.z, scale: [t.radius, t.height, t.radius] }));
-  crowns.name = "courtyard-crowns";
-  group.add(crowns);
-  bins.counts.courtyardTrees = W.trees.length;
-
-  /* The PV array on the north roof plate. */
-  const P = R.pv;
-  const panels = [];
-  for (let r = 0; r < P.rows; r++) {
-    const z = P.z0 + (r + 0.5) * ((P.z1 - P.z0) / P.rows);
-    for (let x = P.x0 + P.panel[0] / 2; x <= P.x1 - P.panel[0] / 2; x += P.panel[0] + P.gap) {
-      panels.push({ x, y: roofY + P.lift, z, rotX: P.tilt });
+  /* Trellis strips along the well's north and south edges [measured plan].
+     Posts seat on whatever carries them — the well floor datum inside the
+     well, the raised plate outside it; the beam plane is one height. */
+  const TRELLIS_H = 2.6; /* [estimated] — see courtyard.trellisNote */
+  const slats = [];
+  const beams = [];
+  const posts = [];
+  const inWell = (x, z) => x > W.x0 && x < W.x1 && z > W.z0 && z < W.z1;
+  for (const T of R.courtyard.trellises) {
+    const beamTop = plateTop + TRELLIS_H;
+    const tw = T.x1 - T.x0;
+    const td = T.z1 - T.z0;
+    for (let x = T.x0 + 0.3; x <= T.x1 - 0.3; x += 0.55) {
+      slats.push({ x, y: beamTop + 0.1, z: (T.z0 + T.z1) / 2, scale: [0.1, 0.09, td] });
+    }
+    for (const z of [T.z0 + 0.08, T.z1 - 0.08]) {
+      beams.push({ x: (T.x0 + T.x1) / 2, y: beamTop, z, scale: [tw, 0.14, 0.16] });
+      for (let i = 0; i <= 4; i++) {
+        const x = T.x0 + 0.15 + (i * (tw - 0.3)) / 4;
+        const base = inWell(x, z) ? roofY : plateTop;
+        posts.push({ x, y: (base + beamTop) / 2, z, scale: [0.14, beamTop - base, 0.14] });
+      }
     }
   }
-  group.add(instanced(new THREE.BoxGeometry(P.panel[0], 0.05, P.panel[1]),
-    painted(colors.pvPanel), panels));
-  group.add(instanced(unit, painted(colors.pvFrame), panels,
-    (p) => ({ x: p.x, y: roofY + P.lift / 2, z: p.z, scale: [0.05, P.lift, 0.05] })));
-  bins.counts.pv = panels.length;
+  group.add(instanced(unit, louvre(colors.trellisSlat), slats));
+  group.add(instanced(unit, painted(colors.trellisSlat), beams));
+  group.add(instanced(unit, painted(colors.screenFrame), posts));
+
+  /* The pale core block on the well's WEST side — the drawn inner ring's own
+     notch, verbatim in plan. */
+  const C = R.courtyard.core;
+  const core = new THREE.Mesh(
+    new THREE.BoxGeometry(C.x1 - C.x0, C.height, C.z1 - C.z0), concrete(colors.coreWhite));
+  core.position.set((C.x0 + C.x1) / 2, roofY + C.height / 2, (C.z0 + C.z1) / 2);
+  core.castShadow = core.receiveShadow = true;
+  core.name = "courtyard-core";
+  group.add(core);
+
+  /* The dark water feature at the centre and the round basin south of it,
+     both seated on the well floor datum. */
+  const rim = new THREE.Mesh(new THREE.BoxGeometry(V.w, V.rim, V.d), concrete(colors.waterDark));
+  rim.position.set(V.x, roofY + V.rim / 2, V.z);
+  rim.castShadow = rim.receiveShadow = true;
+  rim.name = "courtyard-water";
+  group.add(rim);
+  const sheet = new THREE.Mesh(quad(V.w - 0.3, V.d - 0.3), painted(colors.waterDark));
+  sheet.position.set(V.x, roofY + V.rim + 0.01, V.z);
+  sheet.name = "courtyard-water-sheet";
+  group.add(sheet);
+  const basin = new THREE.Mesh(cyl, concrete(colors.waterDark));
+  basin.scale.set(V.basin.r, 0.35, V.basin.r);
+  basin.position.set(V.basin.x, roofY + 0.175, V.basin.z);
+  basin.castShadow = basin.receiveShadow = true;
+  basin.name = "courtyard-basin";
+  group.add(basin);
+
+  /* Five mature crowns [measured plan], trunks to the well floor datum. */
+  const palms = W.trees.filter((t) => t.kind !== "broadleaf");
+  const broads = W.trees.filter((t) => t.kind === "broadleaf");
+  group.add(instanced(new THREE.CylinderGeometry(0.13, 0.19, 1, 8),
+    lib().get("barkEucalyptus", { color: colors.palmTrunk }), W.trees,
+    (t) => ({ x: t.x, y: roofY + t.height / 2, z: t.z, scale: [1, t.height, 1] })));
+  const crownTops = instanced(new THREE.ConeGeometry(1, 1, 9), foliage(colors.treeGreen),
+    palms, (t) => ({ x: t.x, y: roofY + t.height + 0.3, z: t.z, scale: [t.radius, 1.1, t.radius] }));
+  crownTops.name = "courtyard-crowns";
+  group.add(crownTops);
+  group.add(instanced(new THREE.ConeGeometry(1, 1, 9), foliage(colors.treeGreen),
+    palms, (t) => ({
+      x: t.x, y: roofY + t.height - 0.15, z: t.z, rotX: Math.PI, scale: [t.radius * 1.05, 0.7, t.radius * 1.05],
+    })));
+  if (broads.length) {
+    group.add(instanced(new THREE.IcosahedronGeometry(1, 1), foliage(colors.treePale),
+      broads, (t) => ({ x: t.x, y: roofY + t.height, z: t.z, scale: [t.radius, t.radius * 0.75, t.radius] })));
+  }
+  bins.counts.courtyardTrees = W.trees.length;
+
+  /* The cream checkerboard mechanical screen on the north band — the
+     adjudicated read (roof.screen.note); the losing PV read is recorded in
+     the data and not built. */
+  const S = R.screen;
+  const scx = (S.x0 + S.x1) / 2;
+  const scz = (S.z0 + S.z1) / 2;
+  const sH = S.enclosureHeight;
+  const walls = [
+    { x: scx, z: S.z0 + 0.075, scale: [S.x1 - S.x0, sH, 0.15] },
+    { x: scx, z: S.z1 - 0.075, scale: [S.x1 - S.x0, sH, 0.15] },
+    { x: S.x0 + 0.075, z: scz, scale: [0.15, sH, S.z1 - S.z0] },
+    { x: S.x1 - 0.075, z: scz, scale: [0.15, sH, S.z1 - S.z0] },
+  ];
+  group.add(instanced(unit, louvre(colors.screenFrame), walls,
+    (w) => ({ ...w, y: roofY + sH / 2 })));
+  const deck = new THREE.Mesh(
+    new THREE.BoxGeometry(S.x1 - S.x0, 0.06, S.z1 - S.z0), painted(colors.screenFrame));
+  deck.position.set(scx, roofY + sH + 0.03, scz);
+  deck.castShadow = deck.receiveShadow = true;
+  deck.name = "screen-deck";
+  group.add(deck);
+  const cellW = (S.x1 - S.x0) / S.cols;
+  const cellD = (S.z1 - S.z0) / S.rows;
+  const blocks = [];
+  for (let i = 0; i < S.cols; i++) {
+    for (let j = 0; j < S.rows; j++) {
+      if (hash(S.seed, i, j) >= S.fill) continue;
+      blocks.push({
+        x: S.x0 + (i + 0.5) * cellW,
+        y: roofY + sH + 0.06 + S.blockHeight / 2,
+        z: S.z0 + (j + 0.5) * cellD,
+        scale: [cellW - 0.12, S.blockHeight, cellD - 0.12],
+      });
+    }
+  }
+  group.add(instanced(unit, concrete(colors.screenCream), blocks));
+  bins.counts.screenBlocks = blocks.length;
+
+  /* Round white-curbed vents across the plates [measured plan]: curbed on
+     the raised plate inside the shadow lines, on the band outside them. */
+  const vents = R.vents.items;
+  const ventBase = (v) => (v.z > P.innerZ0 && v.z < P.innerZ1 ? plateTop : roofY);
+  group.add(instanced(cyl, concrete(colors.copingWhite), vents,
+    (v) => ({ x: v.x, y: ventBase(v) + R.vents.height / 2, z: v.z, scale: [v.r, R.vents.height, v.r] })));
+  group.add(instanced(cyl, painted(colors.louvreGrey), vents,
+    (v) => ({ x: v.x, y: ventBase(v) + R.vents.height + 0.05, z: v.z, scale: [v.r * 0.72, 0.1, v.r * 0.72] })));
+  bins.counts.vents = vents.length;
 }
 
 /* ----------------------------------------------------------------- ground */
@@ -590,7 +858,8 @@ export function createPhotoBlake(scene, { photo, heightAt, surfaceAt } = {}) {
       awnings: bins.awnings.length,
       mullions: bins.mullions.length,
       columns: bins.columns.length,
-      pv: bins.counts.pv || 0,
+      screenBlocks: bins.counts.screenBlocks || 0,
+      vents: bins.counts.vents || 0,
       courtyardTrees: bins.counts.courtyardTrees || 0,
       lavaRocks: bins.counts.lavaRocks || 0,
       draws: group.children.reduce((s, g) => s + g.children.length, 0),

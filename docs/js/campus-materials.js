@@ -187,6 +187,26 @@ const FIELDS = {
     out[2] = 0.8 + 0.1 * agg + 0.08 * (1 - face);
   },
 
+  /* Weathered single-ply roof membrane: a fine expansion-joint grid, broad
+     weathering blotches and fine granule speck. Greyscale like every class —
+     the pink-brown patch STAINS a roof carries are separate decal quads whose
+     colours are sampled data, because this map may never move a hue. */
+  roofMembrane(u, v, N, out) {
+    const PANELS = 4;
+    const x = u * PANELS, y = v * PANELS;
+    const fx = x - Math.floor(x), fy = y - Math.floor(y);
+    const JOINT = 0.018;
+    const face =
+      step(0, JOINT, fx) * step(1, 1 - JOINT, fx) *
+      step(0, JOINT, fy) * step(1, 1 - JOINT, fy);
+    const blotch = N.fbm(u, v, 3, 3, 4);
+    const stain = step(0.52, 0.72, N.fbm(u + 0.41, v + 0.13, 7, 7, 3));
+    const speck = N.fbm(u, v, 96, 96, 2);
+    out[0] = 0.2 * face + 0.06 * speck;
+    out[1] = 0.9 + 0.1 * blotch - 0.16 * stain * blotch + 0.05 * (speck - 0.5) - 0.1 * (1 - face);
+    out[2] = 0.84 + 0.08 * blotch + 0.08 * stain;
+  },
+
   /* Running bond, one course offset half a brick, mortar recessed. */
   brick(u, v, N, out) {
     const COURSES = 8, PER = 4;
@@ -294,6 +314,7 @@ const CLASS_DEFAULTS = {
   metalPanelSeam:      { size: 256, roughness: 0.5,  metalness: 0.9, normal: 0.9 },
   woodSlat:            { size: 512, roughness: 0.7,  metalness: 0, normal: 0.9 },
   pavingConcreteUnit:  { size: 512, roughness: 0.88, metalness: 0, normal: 0.6 },
+  roofMembrane:        { size: 512, roughness: 0.9,  metalness: 0, normal: 0.3 },
   brick:               { size: 512, roughness: 0.8,  metalness: 0, normal: 0.9 },
   asphalt:             { size: 256, roughness: 0.95, metalness: 0, normal: 0.8 },
   decomposedGranite:   { size: 256, roughness: 0.97, metalness: 0, normal: 0.75 },

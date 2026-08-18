@@ -13,12 +13,13 @@
 //   1. The building solves on one grid — but the DRAWN box is the datum.
 //      37.2 / 30.0 / 22.8 m are 10, 8 and 6 storeys of 3.60 m plus a 1.20 m
 //      parapet with zero residual, yet those are campus-3d's OSM-side
-//      heights: the 2014 LiDAR heights campus-massing actually extrudes are
-//      34.4 / 29.2 / 18.2 m (`buildings.*.measured.lidarHeight`), and a skin
-//      hung on the taller claim floats a phantom top storey above the real
-//      lid. So the storey height drawn here is lidarHeight / storeys per
-//      building, the photographed plate COUNT filling the drawn box exactly,
-//      and the parapet band stands ON the lid like the rails and penthouses.
+//      heights: what campus-massing actually extrudes is the reconciled
+//      34.2 / 27 / 18.3 m (`buildings.*.measured.drawnHeight`, recomputed by
+//      test from assembleMasses over the shipped files), and a skin hung on
+//      a taller claim floats a phantom top storey above the real lid. So the
+//      storey height drawn here is drawnHeight / storeys per building, the
+//      photographed plate COUNT filling the drawn box exactly, and the
+//      parapet band stands ON the lid like the rails and penthouses.
 //      The 1.20 m HORIZONTAL bay is photogrammetric and contested; see
 //      `grid.moduleNote` in the data.
 //
@@ -471,32 +472,101 @@ function collectSystemB(section, f, frame, base, bins, F) {
   collectGroundFloor(section, f, frame, base, bins, F);
 }
 
-/* End walls: blank pale precast with the narrow slot windows of c6_towerB.
-   `plain` builds the same wall without the slot windows — the notch step
-   faces are unphotographed, and a blank wall claims less than glass. */
+/* End walls: pale precast RAIN-SCREEN with the narrow slot windows of
+   c6_towerB. The panels stand the declared rainScreen.proud (0.2 m) off the
+   wall in the same staggered layout as System B — the earlier flat storey
+   panels with 0.14 m slots vanished at distance and the four tower ends read
+   as blank band stacks. Per systemB.rainScreen.endFaces the panelisation is
+   an [estimated] extension of the photographed System B pattern; `plain`
+   (the unphotographed notch steps) carries the panels with NO windows,
+   because a blank wall claims less than glass. */
 function collectEnd(section, f, frame, base, bins, F, plain = false) {
   const B = section.systemB;
   const M = section.grid.module;
   const { rot, length } = frame;
+  const proud = B.rainScreen?.proud ?? 0;
+  const gap = B.panel.gap;
+  const bayCount = Math.max(1, Math.floor(length / M));
+  const pad = (length - bayCount * M) / 2;
+  const uOf = (bay) => pad + bay * M;
+  const tones = ["precastPanelPale", "precastPanel", "precastPanelPale"];
   for (let lv = 1; lv < f.storeys; lv++) {
     const y0 = base + lv * F + B.frameBand.height / 2;
     const bandH = F - B.frameBand.height;
+    /* The recessed backing the reveals read down to — a darker warm precast
+       plane tight to the measured wall, corner to corner. */
     bins.panels.push({
-      tone: "precastPanelPale",
-      ...frame.at(length / 2, B.standoff + B.panel.thickness / 2, y0 + bandH / 2),
+      tone: "precastPanelWarm",
+      ...frame.at(length / 2, B.standoff + 0.03, y0 + bandH / 2),
       rot,
-      scale: [length - 0.2, bandH, B.panel.thickness],
+      scale: [length - 0.1, bandH, 0.06],
     });
-    if (!plain) {
-      for (const bay of bayCentres(length, M)) {
-        if (bay.i % 3 !== 1) continue;
-        bins.glass.push({
-          tint: "glassBlue",
-          ...frame.at(bay.u, B.standoff + B.panel.thickness + 0.01, y0 + bandH / 2),
+    /* Staggered rain-screen panels: each storey starts its run at a different
+       offset so the vertical reveals never stack into one joint — the strong
+       vertical shadow lines of cote15_westtower are these panel EDGES. */
+    const start = Math.floor(hash(B.panel.seed + 7, lv, frame.length) * 2);
+    let bay = -start;
+    while (bay < bayCount) {
+      const widthBays = pick(B.panel.widthsBays, B.panel.seed + 8, lv, bay, frame.length);
+      const b0 = Math.max(0, bay);
+      const b1 = Math.min(bayCount, bay + widthBays);
+      bay += widthBays;
+      if (b1 <= b0) continue;
+      const w = (b1 - b0) * M - gap;
+      const uc = (uOf(b0) + uOf(b1)) / 2;
+      const isSlot = !plain && b1 - b0 >= 1 &&
+        hash(B.panel.seed + 9, lv, b0, frame.length) < 0.34;
+      if (!isSlot) {
+        /* Full-depth box, backing to front face: the exposed side edges are
+           what cast the reveal shadows that survive distance. */
+        bins.panels.push({
+          tone: pick(tones, B.panel.seed + 2, lv, b0, frame.length),
+          ...frame.at(uc, B.standoff + proud / 2, y0 + bandH / 2),
           rot,
-          scale: [0.5, bandH - 1.1, 1],
+          scale: [w, bandH, proud],
+        });
+        continue;
+      }
+      /* A slot cell: the narrow window sits deep in the wall plane with the
+         flanking panels' full 0.2 m returns as its jambs, and the glass dark
+         enough (windowFrame's near-black) to hold the slot at 300 m. */
+      const slotW = 0.55;
+      const slotH = bandH - 0.9;
+      const side = (w - slotW) / 2 - gap;
+      for (const t of [-1, 1]) {
+        bins.panels.push({
+          tone: pick(tones, B.panel.seed + 2, lv, b0 + (t + 1) / 2, frame.length),
+          ...frame.at(uc + t * (slotW / 2 + gap + side / 2), B.standoff + proud / 2, y0 + bandH / 2),
+          rot,
+          scale: [side, bandH, proud],
         });
       }
+      /* Spandrel above and below the slot, at panel depth, so the recess is
+         the slot itself and not a full-height stripe of backing. */
+      const sill = 0.45;
+      for (const [sy, sh] of [[y0 + sill / 2, sill], [y0 + sill + slotH + (bandH - sill - slotH) / 2, bandH - sill - slotH]]) {
+        bins.panels.push({
+          tone: pick(tones, B.panel.seed + 4, lv, b0, frame.length),
+          ...frame.at(uc, B.standoff + proud / 2, sy),
+          rot,
+          scale: [slotW, sh, proud],
+        });
+      }
+      /* The pane is 35%-opaque; without a dark ground it reads as the warm
+         backing and the slot dies at distance. The soffit-dark reveal sits
+         just behind the glass, so the slot stays the darkest thing on the
+         elevation (c6_towerB), with the pane's sheen over it. */
+      bins.galleryBack.push({
+        ...frame.at(uc, B.standoff + 0.08, y0 + sill + slotH / 2),
+        rot,
+        scale: [slotW, slotH, 1],
+      });
+      bins.glass.push({
+        tint: "windowFrame",
+        ...frame.at(uc, B.standoff + 0.11, y0 + sill + slotH / 2),
+        rot,
+        scale: [slotW, slotH, 1],
+      });
     }
   }
   for (let lv = 1; lv <= f.storeys; lv++) {
@@ -775,24 +845,56 @@ function buildRoofs(section, group, ground, roofY, bins) {
     }
     return best ? best[side] : null;
   };
+  /* All interior x-spans of the bar at a given z, parity-paired. The EXACT
+     massing ring has a re-entrant carve at z 463.5-470.1 that cuts nearly
+     through the bar and a link stub toward the South Tower at z 484.9-488.8;
+     a single min/max edge pair would carpet straight across those voids, so
+     every band is laid in 1 m strips clipped to the spans that exist. */
+  const spansAt = (z) => {
+    const xs = [];
+    for (let i = 0; i < ring.length; i++) {
+      const [ax, az] = ring[i];
+      const [bx, bz] = ring[(i + 1) % ring.length];
+      if (z < Math.min(az, bz) || z >= Math.max(az, bz) || az === bz) continue;
+      xs.push(ax + ((bx - ax) * (z - az)) / (bz - az));
+    }
+    xs.sort((a, b) => a - b);
+    const out = [];
+    for (let i = 0; i + 1 < xs.length; i += 2) out.push([xs[i], xs[i + 1]]);
+    return out;
+  };
   const clumps = { agave: [], grass: [], shrub: [] };
   for (const band of G.bands) {
-    const zc = (band.z0 + band.z1) / 2;
-    const xa = edgeX(zc, 0);
-    const xb = edgeX(zc, 1);
-    if (xa == null || xb == null) continue;
-    const x0 = xa + 0.8;
-    const x1 = xb - 0.8 - G.walkWidth;
-    if (x1 <= x0) continue;
-    const mesh = new THREE.Mesh(quad(x1 - x0, band.z1 - band.z0), decal(colors[band.color], CARPET));
-    mesh.position.set((x0 + x1) / 2, y + 0.14, zc);
-    mesh.renderOrder = OVERLAY[CARPET].renderOrder;
-    group.add(mesh);
+    const strips = [];
+    for (let z0 = band.z0; z0 < band.z1 - 0.01; z0 += 1) {
+      const z1 = Math.min(band.z1, z0 + 1);
+      const zc = (z0 + z1) / 2;
+      for (const [xa, xb] of spansAt(zc)) {
+        const x0 = xa + 0.8;
+        const x1 = xb - 0.8 - G.walkWidth;
+        if (x1 <= x0) continue;
+        strips.push({ x: (x0 + x1) / 2, y: y + 0.14, z: zc, scale: [x1 - x0, 1, z1 - z0] });
+      }
+    }
+    if (strips.length) {
+      const mesh = instanced(quad(1, 1), decal(colors[band.color], CARPET), strips, (it) => it);
+      mesh.renderOrder = OVERLAY[CARPET].renderOrder;
+      group.add(mesh);
+    }
     if (!band.clump) continue;
-    const n = Math.round((x1 - x0) * (band.z1 - band.z0) * band.density * 1.1);
+    const zm = (band.z0 + band.z1) / 2;
+    const wide = spansAt(zm).sort((a, b) => (b[1] - b[0]) - (a[1] - a[0]))[0];
+    if (!wide) continue;
+    const n = Math.round((wide[1] - wide[0] - 0.8 - G.walkWidth) * (band.z1 - band.z0) * band.density * 1.1);
     for (let k = 0; k < n; k++) {
-      const px = x0 + hash(k, band.z0, 1) * (x1 - x0);
       const pz = band.z0 + hash(k, band.z0, 2) * (band.z1 - band.z0);
+      /* Plant only on roof that exists at THIS z — never over the carve. */
+      const span = spansAt(pz).sort((a, b) => (b[1] - b[0]) - (a[1] - a[0]))[0];
+      if (!span) continue;
+      const x0 = span[0] + 0.8;
+      const x1 = span[1] - 0.8 - G.walkWidth;
+      if (x1 <= x0) continue;
+      const px = x0 + hash(k, band.z0, 1) * (x1 - x0);
       /* Nothing planted grows up through a terrace deck. */
       if ((roofs.terrace?.decks || []).some((d) => pz >= d.z0 - 0.4 && pz <= d.z1 + 0.4)) continue;
       clumps[band.clump].push({
@@ -804,10 +906,19 @@ function buildRoofs(section, group, ground, roofY, bins) {
       });
     }
   }
-  /* The maintenance walk down the middle of the green roof. */
+  /* The maintenance walk hugs the courtyard-side edge — strip by strip along
+     the spans that exist, never cantilevered over the carve or the courtyard
+     (the old bbox-anchored quad hovered 5 m east of the wall mid-bar). */
   const bb = bboxOf(ring);
-  const walkMesh = new THREE.Mesh(quad(G.walkWidth, bb.z1 - bb.z0 - 4), decal(colors.parapetCoping, PAINT));
-  walkMesh.position.set(bb.x1 - 2.2, y + 0.17, (bb.z0 + bb.z1) / 2);
+  const walkStrips = [];
+  for (let z0 = bb.z0 + 2; z0 < bb.z1 - 2.01; z0 += 1) {
+    const z1 = Math.min(bb.z1 - 2, z0 + 1);
+    const zc = (z0 + z1) / 2;
+    const span = spansAt(zc).sort((a, b) => (b[1] - b[0]) - (a[1] - a[0]))[0];
+    if (!span || span[1] - span[0] < 0.8 + G.walkWidth) continue;
+    walkStrips.push({ x: span[1] - 0.8 - G.walkWidth / 2, y: y + 0.17, z: zc, scale: [G.walkWidth, 1, z1 - z0] });
+  }
+  const walkMesh = instanced(quad(1, 1), decal(colors.parapetCoping, PAINT), walkStrips, (it) => it);
   walkMesh.renderOrder = OVERLAY[PAINT].renderOrder;
   group.add(walkMesh);
 
@@ -1180,22 +1291,24 @@ export function createPhotoKeeling(scene, { photo, heightAt, surfaceAt } = {}) {
   }
 
   /* Match campus-massing.js roofElevation EXACTLY — rim-median ground under
-     the MEASURED ring plus the LiDAR height it draws, lifted if that would
-     bury a high corner. `roofY` is therefore the DRAWN LID of each mass, and
-     it is the one datum everything on a roof seats on. The section's
-     photogrammetric `height` (campus-3d's OSM-side 37.2/30.0/22.8) runs
-     2.8-4.6 m taller than the drawn LiDAR box (34.4/29.2/18.2): anchoring
-     the skin to it hung the parapet, the PV racks and the whole green roof
-     in the air above the real lid, and opened a phantom top storey the
-     audit could see straight through. The drawn storey height is
-     lidarHeight / storeys, so the photographed plate COUNT fills the drawn
-     box with zero residual. */
+     the MEASURED ring plus the reconciled height it draws, lifted if that
+     would bury a high corner. `roofY` is therefore the DRAWN LID of each
+     mass, and it is the one datum everything on a roof seats on. The
+     section's photogrammetric `height` (campus-3d's OSM-side 37.2/30.0/22.8)
+     runs taller than the drawn box (34.2/27/18.3): anchoring the skin to it
+     hung the parapet, the PV racks and the whole green roof in the air above
+     the real lid, and opened a phantom top storey the audit could see
+     straight through. `measured.drawnHeight` is the EXACT height
+     assembleMasses extrudes (LiDAR-reconciled — the raw campus-lidar lookup
+     ran 2.2 m over the South Tower's drawn box), pinned by test against a
+     recompute. The drawn storey height is drawnHeight / storeys, so the
+     photographed plate COUNT fills the drawn box with zero residual. */
   const baseY = {};
   const roofY = {};
   const storeyH = {};
   for (const [key, b] of Object.entries(section.buildings)) {
     const ring = ringOf(section, key);
-    const h = b.measured?.lidarHeight ?? b.height;
+    const h = b.measured?.drawnHeight ?? b.height;
     const gs = ring.map(([x, z]) => base(x, z)).filter((v) => Number.isFinite(v)).sort((p, q) => p - q);
     const median = gs.length ? gs[Math.floor(gs.length / 2)] : 0;
     const highest = gs.length ? gs[gs.length - 1] : 0;
@@ -1232,20 +1345,31 @@ export function createPhotoKeeling(scene, { photo, heightAt, surfaceAt } = {}) {
        fallback ring is a hull whose chamfer has no massing under it. */
     if (!section.buildings[key].measured?.ring) continue;
     const ring = ringOf(section, key);
-    const covered = new Set();
-    for (const f of section.facades) {
-      if (keyOf(f.id) !== key) continue;
-      covered.add(`${f.a[0]},${f.a[1]}|${f.b[0]},${f.b[1]}`);
-      covered.add(`${f.b[0]},${f.b[1]}|${f.a[0]},${f.a[1]}`);
-    }
+    /* A ring segment is covered when BOTH its endpoints lie on a declared
+       facade's chord (within 0.25 m — the survey ring wobbles up to ~0.1 m
+       about the straight elevations the facades span). Exact endpoint
+       matching was not enough: the exact massing rings break each straight
+       elevation into several near-collinear survey segments, and every one
+       of them belongs to the facade that spans the whole wall. */
+    const facades = section.facades.filter((f) => keyOf(f.id) === key);
+    const onChord = (q, f) => {
+      const dx = f.b[0] - f.a[0];
+      const dz = f.b[1] - f.a[1];
+      const len2 = dx * dx + dz * dz;
+      let t = len2 ? ((q[0] - f.a[0]) * dx + (q[1] - f.a[1]) * dz) / len2 : 0;
+      t = Math.max(0, Math.min(1, t));
+      return Math.hypot(q[0] - (f.a[0] + dx * t), q[1] - (f.a[1] + dz * t)) < 0.25;
+    };
     const cx = ring.reduce((s, p) => s + p[0], 0) / ring.length;
     const cz = ring.reduce((s, p) => s + p[1], 0) / ring.length;
     for (let i = 0; i < ring.length; i++) {
       const a = ring[i];
       const p = ring[(i + 1) % ring.length];
-      if (covered.has(`${a[0]},${a[1]}|${p[0]},${p[1]}`)) continue;
+      if (facades.some((f) => onChord(a, f) && onChord(p, f))) continue;
       const len = Math.hypot(p[0] - a[0], p[1] - a[1]);
-      if (len < 1.2) continue;
+      /* Below 0.25 m is a survey-rounding sliver a neighbouring skin already
+         hides; everything else gets a wall — NO segment may show raw massing. */
+      if (len < 0.25) continue;
       const mx = (a[0] + p[0]) / 2 - cx;
       const mz = (a[1] + p[1]) / 2 - cz;
       const ux = (p[0] - a[0]) / len;

@@ -281,63 +281,157 @@ function collectFace(section, f, frame, base, ground, bins) {
 /* ------------------------------------------------------------------- roof */
 
 /* The measured extrusion is SOLID, so the light-well is a roof-plane read:
-   dark well decal, raised kerb, the core block's top, the grid/trellis and
-   the emergent tree crown the ortho shows. All heights [estimated] — no
-   oblique of this roof exists, and the data says so. */
+   dark L-shaped void decal, thick raised kerb ring, the white core block hard
+   against the WEST side, the north-edge trellis strip and the emergent tree
+   crown the ortho shows. Plan is measured off the ortho (registered to the
+   drawn mass — see roof.source); every height is [estimated], and the data
+   says so. */
 function buildRoof(section, group, roofY, bins) {
   const R = section.roof;
   const { colors } = section;
   const unit = new THREE.BoxGeometry(1, 1, 1);
 
-  /* Parapet coping along every face at the measured top. */
+  /* The weathered membrane over the whole drawn plate: procedural class,
+     ortho-sampled colour, plus hash-scattered grey and pink-brown stain
+     decals — the map stays grey, so the stain HUES ride as sourced colours. */
+  const verts = section.measured.mass?.ring ?? section.measured.ring;
+  const xs = verts.map((p) => p[0]);
+  const zs = verts.map((p) => p[1]);
+  const px0 = Math.min(...xs) + 0.15, px1 = Math.max(...xs) - 0.15;
+  const pz0 = Math.min(...zs) + 0.15, pz1 = Math.max(...zs) - 0.15;
+  const M = R.membrane;
+  const memb = new THREE.Mesh(
+    quad(px1 - px0, pz1 - pz0),
+    decal(colors.membraneWhite, PAD, "roofMembrane",
+      [(px1 - px0) / (4 * M.jointSpacing), (pz1 - pz0) / (4 * M.jointSpacing)])
+  );
+  memb.position.set((px0 + px1) / 2, roofY + 0.02, (pz0 + pz1) / 2);
+  memb.renderOrder = OVERLAY[PAD].renderOrder;
+  memb.name = "roof-membrane";
+  group.add(memb);
+  const ST = M.stains;
+  const stains = [];
+  for (let i = 0; i < ST.count; i++) {
+    const r = ST.minR + (ST.maxR - ST.minR) * hash(11, i);
+    stains.push({
+      x: px0 + r + (px1 - px0 - 2 * r) * hash(12, i),
+      z: pz0 + r + (pz1 - pz0 - 2 * r) * hash(13, i),
+      r,
+      pink: hash(14, i) < 0.45,
+    });
+  }
+  const stainGeo = new THREE.CircleGeometry(1, 10);
+  stainGeo.rotateX(-Math.PI / 2);
+  for (const pink of [false, true]) {
+    const set = stains.filter((s) => s.pink === pink);
+    if (!set.length) continue;
+    const mat = applyOverlayDepth(
+      new THREE.MeshStandardMaterial({
+        color: pink ? colors.stainPink : colors.stainGrey,
+        roughness: 0.95, metalness: 0, transparent: true, opacity: 0.75,
+      }), "paint");
+    const mesh = instanced(stainGeo, mat, set,
+      (s) => ({ x: s.x, y: roofY + 0.03, z: s.z, scale: [s.r, 1, s.r * (0.6 + 0.6 * hash(15, s.r))] }));
+    mesh.renderOrder = OVERLAY.paint.renderOrder;
+    mesh.castShadow = false;
+    mesh.name = pink ? "roof-stains-pink" : "roof-stains-grey";
+    group.add(mesh);
+  }
+
+  /* Raised parapet coping along every face — a white band standing proud of
+     the membrane with a slight outward overhang, so it carries its own
+     shadow line the way the ortho's does. */
   const copes = [];
   for (const f of section.facades) {
     const frame = frameOf(f);
     copes.push({
-      ...frame.at(frame.length / 2, -R.coping.width / 2 + 0.05, roofY + R.coping.height / 2),
+      ...frame.at(frame.length / 2, -R.coping.width / 2 + R.coping.overhang, roofY + R.coping.height / 2),
       rot: frame.rot,
       scale: [frame.length, R.coping.height, R.coping.width],
     });
   }
-  group.add(instanced(unit, concrete(colors.copingWhite), copes));
+  group.add(instanced(unit, concrete(colors.kerbWhite), copes));
 
-  /* The light-well. */
+  /* The light-well: the dark void is L-SHAPED — the white core block owns the
+     west side, so the void decal is drawn as two rectangles (the east limb
+     and the south limb) instead of one square over everything. */
   const W = R.lightWell;
+  const C = R.core;
+  const voidMat = decal(colors.wellShade, "carpet");
+  const limbs = [
+    /* east limb: everything right of the core, full depth of the well */
+    { x0: C.x1, z0: W.z0, x1: W.x1, z1: W.z1 },
+    /* west strip under the north trellis */
+    { x0: W.x0, z0: W.z0, x1: C.x1, z1: R.trellis.z1 },
+    /* west strip above the core (between trellis strip and core top) */
+    { x0: W.x0, z0: R.trellis.z1, x1: C.x1, z1: C.z0 },
+    /* west slot below the core, down to the wing / south edge */
+    { x0: W.x0, z0: C.z1, x1: C.x1, z1: W.z1 },
+    /* sliver west of the core, if the core clears the well edge */
+    { x0: W.x0, z0: C.z0, x1: C.x0, z1: C.z1 },
+  ];
+  for (const L of limbs) {
+    if (L.x1 - L.x0 < 0.05 || L.z1 - L.z0 < 0.05) continue;
+    const m = new THREE.Mesh(quad(L.x1 - L.x0, L.z1 - L.z0), voidMat);
+    m.position.set((L.x0 + L.x1) / 2, roofY + 0.04, (L.z0 + L.z1) / 2);
+    m.renderOrder = OVERLAY.carpet.renderOrder;
+    m.name = "roof-well";
+    group.add(m);
+  }
+
+  /* The thick raised kerb ring around the well. */
+  const K = R.kerb;
   const wellW = W.x1 - W.x0;
   const wellD = W.z1 - W.z0;
-  const well = new THREE.Mesh(quad(wellW, wellD), decal(colors.wellShade, PAD));
-  well.position.set((W.x0 + W.x1) / 2, roofY + 0.04, (W.z0 + W.z1) / 2);
-  well.renderOrder = OVERLAY[PAD].renderOrder;
-  well.name = "roof-well";
-  group.add(well);
-
-  const K = R.kerb;
   const kerbs = [
     { x: (W.x0 + W.x1) / 2, z: W.z0 - K.width / 2, scale: [wellW + 2 * K.width, K.height, K.width] },
     { x: (W.x0 + W.x1) / 2, z: W.z1 + K.width / 2, scale: [wellW + 2 * K.width, K.height, K.width] },
     { x: W.x0 - K.width / 2, z: (W.z0 + W.z1) / 2, scale: [K.width, K.height, wellD] },
     { x: W.x1 + K.width / 2, z: (W.z0 + W.z1) / 2, scale: [K.width, K.height, wellD] },
   ];
-  group.add(instanced(unit, concrete(colors.copingWhite), kerbs,
+  group.add(instanced(unit, concrete(colors.kerbWhite), kerbs,
     (k) => ({ ...k, y: roofY + K.height / 2 })));
 
-  /* The pale central core block's top, and the grid/trellis over the well. */
-  const C = R.core;
-  const core = new THREE.Mesh(quad(C.x1 - C.x0, C.z1 - C.z0), decal(colors.coreTop, "carpet"));
-  core.position.set((C.x0 + C.x1) / 2, roofY + 0.08, (C.z0 + C.z1) / 2);
-  core.renderOrder = OVERLAY.carpet.renderOrder;
-  core.name = "roof-core";
-  group.add(core);
+  /* The white core block hard against the WEST side of the well, and its
+     lower south wing — raised blocks, rises [estimated]. */
+  const coreBlocks = [
+    { x0: C.x0, z0: C.z0, x1: C.x1, z1: C.z1, rise: C.rise },
+    C.wing && { x0: C.wing.x0, z0: C.wing.z0, x1: C.wing.x1, z1: C.wing.z1, rise: C.wing.rise },
+  ].filter(Boolean);
+  const coreMesh = instanced(unit, concrete(colors.coreTop), coreBlocks, (b) => ({
+    x: (b.x0 + b.x1) / 2, y: roofY + b.rise / 2, z: (b.z0 + b.z1) / 2,
+    scale: [b.x1 - b.x0, b.rise, b.z1 - b.z0],
+  }));
+  coreMesh.name = "roof-core";
+  group.add(coreMesh);
+
+  /* The slatted trellis: a strip along the NORTH edge of the well ONLY,
+     slats running north-south. */
   const T = R.trellis;
   const slats = [];
   for (let i = 0; i < T.slats; i++) {
-    const z = W.z0 + ((i + 0.5) * wellD) / T.slats;
+    const x = T.x0 + ((i + 0.5) * (T.x1 - T.x0)) / T.slats;
     slats.push({
-      x: (W.x0 + W.x1) / 2, y: roofY + T.rise, z,
-      scale: [wellW - 0.4, T.slat[1], T.slat[0]],
+      x, y: roofY + T.rise, z: (T.z0 + T.z1) / 2,
+      scale: [T.slat[0], T.slat[1], T.z1 - T.z0 - 0.1],
     });
   }
   group.add(instanced(unit, painted(colors.trellisWhite), slats));
+
+  /* The dark recess west of the well ring, with its pale kerb on the west
+     and south edges. */
+  const V = R.westRecess;
+  if (V) {
+    const rm = new THREE.Mesh(quad(V.x1 - V.x0, V.z1 - V.z0), decal(colors.recessShade, "carpet"));
+    rm.position.set((V.x0 + V.x1) / 2, roofY + 0.04, (V.z0 + V.z1) / 2);
+    rm.renderOrder = OVERLAY.carpet.renderOrder;
+    rm.name = "roof-west-recess";
+    group.add(rm);
+    group.add(instanced(unit, concrete(colors.kerbWhite), [
+      { x: V.x0 - V.kerbWidth / 2, z: (V.z0 + V.z1) / 2, scale: [V.kerbWidth, V.kerbHeight, V.z1 - V.z0 + 2 * V.kerbWidth] },
+      { x: (V.x0 + V.x1) / 2, z: V.z1 + V.kerbWidth / 2, scale: [V.x1 - V.x0, V.kerbHeight, V.kerbWidth] },
+    ], (k) => ({ ...k, y: roofY + V.kerbHeight / 2 })));
+  }
 
   /* The tree in the well — emergent crown only, [estimated]. */
   const tree = instanced(
@@ -347,10 +441,25 @@ function buildRoof(section, group, roofY, bins) {
   );
   group.add(tree);
 
-  /* Round mechanical curbs — plan measured, heights [estimated]. */
+  /* SQUARE mechanical curbs with dark centres — plan measured off the ortho,
+     heights [estimated]. A white curb box carries a smaller dark core; where
+     the core covers the unit (or `core` is 0 on a grey unit) one box does. */
   const Q = R.curbs;
-  group.add(instanced(new THREE.CylinderGeometry(1, 1, 1, 12), painted(colors.curbDark),
-    Q.items, (c) => ({ x: c.x, y: roofY + Q.height / 2, z: c.z, scale: [Q.radius, Q.height, Q.radius] })));
+  const curbW = [];
+  const curbD = [];
+  for (const c of Q.items) {
+    const [sw, sd] = Array.isArray(c.s) ? c.s : [c.s, c.s];
+    if (!c.core || c.core >= Math.min(sw, sd)) {
+      curbD.push({ x: c.x, z: c.z, scale: [sw, Q.coreHeight, sd] });
+      continue;
+    }
+    curbW.push({ x: c.x, z: c.z, scale: [sw, Q.height, sd] });
+    if (c.core > 0) curbD.push({ x: c.x, z: c.z, scale: [c.core, Q.coreHeight, c.core] });
+  }
+  group.add(instanced(unit, concrete(colors.curbWhite), curbW,
+    (c) => ({ ...c, y: roofY + Q.height / 2 })));
+  group.add(instanced(unit, painted(colors.curbDark), curbD,
+    (c) => ({ ...c, y: roofY + Q.coreHeight / 2 })));
   bins.counts.curbs = Q.items.length;
 }
 

@@ -278,10 +278,14 @@ test("nothing invented sits inside a measured building footprint", () => {
 test("the roof is a plan-measured, height-estimated read that stays on the roof", () => {
   const R = section.roof;
   assert.match(R.source, /\[estimated\]/i, "roof heights must be declared estimated");
-  assert.equal(R.curbs.items.length, 8, "8 mechanical curbs [measured plan]");
+  assert.equal(R.curbs.items.length, 10, "10 square mechanical curbs [measured plan, ortho]");
   const W = R.lightWell;
-  assert.ok(Math.abs((W.x1 - W.x0) - 17.5) < 1 && Math.abs((W.z1 - W.z0) - 17) < 1,
-    "the light-well is the measured ~17.5 x 17 m square");
+  assert.ok(Math.abs((W.x1 - W.x0) - 15.9) < 1 && Math.abs((W.z1 - W.z0) - 16.1) < 1,
+    "the light-well inner opening is the measured ~15.9 x 16.1 m square");
+  assert.ok(section.roof.core.x0 <= W.x0 + 0.1,
+    "the core block sits HARD against the WEST side of the well [measured, ortho]");
+  assert.ok(R.trellis.z1 - R.trellis.z0 < (W.z1 - W.z0) / 2,
+    "the trellis is a strip along the north edge, not a span of the whole well");
   const inset = (x, z) => inRing(x, z, ring);
   for (const [x, z] of [[W.x0, W.z0], [W.x1, W.z1], [R.core.x0, R.core.z0], [R.core.x1, R.core.z1], [R.tree.x, R.tree.z]]) {
     assert.ok(inset(x, z), `roof feature at (${x}, ${z}) runs off the measured ring`);
@@ -311,7 +315,7 @@ test("the module builds the section: structure and counts", () => {
   assert.equal(counts.windows, 4 * 5 * 30, "a window in every bay of every fin storey of every face");
   assert.equal(counts.reveals, 2 * counts.windows, "two canted reveals per window — the sawtooth");
   assert.equal(counts.awnings, counts.windows, "a bottom-hinged sash under every window");
-  assert.equal(counts.curbs, 8);
+  assert.equal(counts.curbs, 10);
   assert.ok(counts.columns >= 4 * 8, "the ground colonnade rings the building");
   assert.ok(group.children.find((c) => c.name === "argo-facades"), "no facades group");
   assert.ok(group.children.find((c) => c.name === "argo-roof"), "no roof group");
