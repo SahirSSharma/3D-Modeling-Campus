@@ -22,3 +22,6 @@ gauntlet-loop/.no-push
 # Claude Code session trail (local, feeds /recap)
 .claude/session-log.jsonl
 .claude/.keep-going-*
+
+# visual-audit working screenshots — harness output, not source
+audit/
