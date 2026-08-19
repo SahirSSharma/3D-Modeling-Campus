@@ -1,0 +1,410 @@
+{
+  "query": "Keeling Apartments",
+  "stamp": "unstamped",
+  "mode": "campus",
+  "matched": [
+    "Keeling Apartments North Tower",
+    "Keeling Apartments West Bar",
+    "Keeling Apartments South Tower"
+  ],
+  "building": {
+    "ok": true,
+    "names": [
+      "Keeling Apartments North Tower",
+      "Keeling Apartments West Bar",
+      "Keeling Apartments South Tower"
+    ],
+    "cx": -164.35,
+    "cz": 452,
+    "radius": 56.390003546728046,
+    "topY": 57.07,
+    "groundY": 21.40888888888888,
+    "bbox": {
+      "minX": -198.2,
+      "maxX": -130.5,
+      "minZ": 406.4,
+      "maxZ": 497.6
+    }
+  },
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "fovDeg": 68,
+  "shots": [
+    {
+      "file": "az000-high.png",
+      "kind": "high",
+      "azimuthDeg": 0,
+      "camera": {
+        "x": -164.35,
+        "y": 107.18213661112694,
+        "z": 354.9677796094593,
+        "yaw": 0,
+        "pitch": -0.6108652381980152,
+        "hover": 84.94987729081163,
+        "groundUnderCamera": 22.232259320315315,
+        "backedOff": 0,
+        "lifted": 0,
+        "obstructed": false
+      },
+      "target": {
+        "x": -164.35,
+        "y": 39.239444444444445,
+        "z": 452
+      }
+    },
+    {
+      "file": "az045-high.png",
+      "kind": "high",
+      "azimuthDeg": 45,
+      "camera": {
+        "x": -95.73785896826107,
+        "y": 107.18213661112695,
+        "z": 383.38785896826107,
+        "yaw": -0.7853981633974483,
+        "pitch": -0.6108652381980152,
+        "hover": 83.38213661112695,
+        "groundUnderCamera": 23.8,
+        "backedOff": 0,
+        "lifted": 0,
+        "obstructed": false
+      },
+      "target": {
+        "x": -164.35,
+        "y": 39.239444444444445,
+        "z": 452
+      }
+    },
+    {
+      "file": "az090-high.png",
+      "kind": "high",
+      "azimuthDeg": 90,
+      "camera": {
+        "x": -67.31777960945928,
+        "y": 107.18213661112695,
+        "z": 452,
+        "yaw": -1.5707963267948966,
+        "pitch": -0.6108652381980153,
+        "hover": 83.98213661112695,
+        "groundUnderCamera": 23.2,
+        "backedOff": 0,
+        "lifted": 0,
+        "obstructed": false
+      },
+      "target": {
+        "x": -164.35,
+        "y": 39.239444444444445,
+        "z": 452
+      }
+    },
+    {
+      "file": "az135-high.png",
+      "kind": "high",
+      "azimuthDeg": 135,
+      "camera": {
+        "x": -95.73785896826107,
+        "y": 107.18213661112694,
+        "z": 520.6121410317389,
+        "yaw": -2.356194490192345,
+        "pitch": -0.6108652381980151,
+        "hover": 83.47744096320062,
+        "groundUnderCamera": 23.70469564792632,
+        "backedOff": 0,
+        "lifted": 0,
+        "obstructed": false
+      },
+      "target": {
+        "x": -164.35,
+        "y": 39.239444444444445,
+        "z": 452
+      }
+    },
+    {
+      "file": "az180-high.png",
+      "kind": "high",
+      "azimuthDeg": 180,
+      "camera": {
+        "x": -164.35,
+        "y": 107.18213661112695,
+        "z": 549.0322203905407,
+        "yaw": 3.141592653589793,
+        "pitch": -0.6108652381980153,
+        "hover": 85.56070264728085,
+        "groundUnderCamera": 21.6214339638461,
+        "backedOff": 0,
+        "lifted": 0,
+        "obstructed": false
+      },
+      "target": {
+        "x": -164.35,
+        "y": 39.239444444444445,
+        "z": 452
+      }
+    },
+    {
+      "file": "az225-high.png",
+      "kind": "high",
+      "azimuthDeg": 225,
+      "camera": {
+        "x": -232.96214103173892,
+        "y": 107.18213661112695,
+        "z": 520.6121410317389,
+        "yaw": 2.356194490192345,
+        "pitch": -0.6108652381980152,
+        "hover": 85.38213661112695,
+        "groundUnderCamera": 21.8,
+        "backedOff": 0,
+        "lifted": 0,
+        "obstructed": false
+      },
+      "target": {
+        "x": -164.35,
+        "y": 39.239444444444445,
+        "z": 452
+      }
+    },
+    {
+      "file": "az270-high.png",
+      "kind": "high",
+      "azimuthDeg": 270,
+      "camera": {
+        "x": -261.38222039054074,
+        "y": 107.18213661112694,
+        "z": 452,
+        "yaw": 1.5707963267948966,
+        "pitch": -0.6108652381980151,
+        "hover": 85.19127221007591,
+        "groundUnderCamera": 21.990864401051034,
+        "backedOff": 0,
+        "lifted": 0,
+        "obstructed": false
+      },
+      "target": {
+        "x": -164.35,
+        "y": 39.239444444444445,
+        "z": 452
+      }
+    },
+    {
+      "file": "az315-high.png",
+      "kind": "high",
+      "azimuthDeg": 315,
+      "camera": {
+        "x": -232.96214103173895,
+        "y": 107.18213661112695,
+        "z": 383.38785896826107,
+        "yaw": 0.7853981633974485,
+        "pitch": -0.6108652381980152,
+        "hover": 85.3200050805721,
+        "groundUnderCamera": 21.862131530554844,
+        "backedOff": 0,
+        "lifted": 0,
+        "obstructed": false
+      },
+      "target": {
+        "x": -164.35,
+        "y": 39.239444444444445,
+        "z": 452
+      }
+    },
+    {
+      "file": "az000-low.png",
+      "kind": "low",
+      "azimuthDeg": 0,
+      "camera": {
+        "x": -164.35,
+        "y": 47.40888888888888,
+        "z": 361.7319408977164,
+        "yaw": 0,
+        "pitch": -0.10981141802149816,
+        "hover": 25.15411179010703,
+        "groundUnderCamera": 22.25477709878185,
+        "backedOff": 0,
+        "lifted": 24,
+        "obstructed": false
+      },
+      "target": {
+        "x": -164.35,
+        "y": 37.45638888888888,
+        "z": 452
+      }
+    },
+    {
+      "file": "az045-low.png",
+      "kind": "low",
+      "azimuthDeg": 45,
+      "camera": {
+        "x": -92.03556190998863,
+        "y": 35.40888888888888,
+        "z": 379.6855619099886,
+        "yaw": -0.7853981633974482,
+        "pitch": 0.020018239443477952,
+        "hover": 11.608888888888881,
+        "groundUnderCamera": 23.8,
+        "backedOff": 12,
+        "lifted": 12,
+        "obstructed": false
+      },
+      "target": {
+        "x": -164.35,
+        "y": 37.45638888888888,
+        "z": 452
+      }
+    },
+    {
+      "file": "az090-low.png",
+      "kind": "low",
+      "azimuthDeg": 90,
+      "camera": {
+        "x": -74.08194089771638,
+        "y": 39.40888888888888,
+        "z": 452,
+        "yaw": -1.5707963267948966,
+        "pitch": -0.021626648533382815,
+        "hover": 15.551698082577463,
+        "groundUnderCamera": 23.85719080631142,
+        "backedOff": 0,
+        "lifted": 16,
+        "obstructed": false
+      },
+      "target": {
+        "x": -164.35,
+        "y": 37.45638888888888,
+        "z": 452
+      }
+    },
+    {
+      "file": "az135-low.png",
+      "kind": "low",
+      "azimuthDeg": 135,
+      "camera": {
+        "x": -100.5208432842272,
+        "y": 25.147113045983637,
+        "z": 515.8291567157728,
+        "yaw": -2.356194490192345,
+        "pitch": 0.13552766021766188,
+        "hover": 1.65,
+        "groundUnderCamera": 23.49711304598364,
+        "backedOff": 0,
+        "lifted": 0,
+        "obstructed": false
+      },
+      "target": {
+        "x": -164.35,
+        "y": 37.45638888888888,
+        "z": 452
+      }
+    },
+    {
+      "file": "az180-low.png",
+      "kind": "low",
+      "azimuthDeg": 180,
+      "camera": {
+        "x": -164.35,
+        "y": 23.55240788030446,
+        "z": 542.2680591022836,
+        "yaw": 3.141592653589793,
+        "pitch": 0.15282883077571496,
+        "hover": 1.65,
+        "groundUnderCamera": 21.902407880304462,
+        "backedOff": 0,
+        "lifted": 0,
+        "obstructed": false
+      },
+      "target": {
+        "x": -164.35,
+        "y": 37.45638888888888,
+        "z": 452
+      }
+    },
+    {
+      "file": "az225-low.png",
+      "kind": "low",
+      "azimuthDeg": 225,
+      "camera": {
+        "x": -228.1791567157728,
+        "y": 23.40888888888888,
+        "z": 515.8291567157728,
+        "yaw": 2.356194490192345,
+        "pitch": 0.15438153109087047,
+        "hover": 1.7025769125662968,
+        "groundUnderCamera": 21.706311976322585,
+        "backedOff": 0,
+        "lifted": 0,
+        "obstructed": false
+      },
+      "target": {
+        "x": -164.35,
+        "y": 37.45638888888888,
+        "z": 452
+      }
+    },
+    {
+      "file": "az270-low.png",
+      "kind": "low",
+      "azimuthDeg": 270,
+      "camera": {
+        "x": -254.6180591022836,
+        "y": 23.62878106123798,
+        "z": 452,
+        "yaw": 1.5707963267948966,
+        "pitch": 0.15200226281839954,
+        "hover": 1.65,
+        "groundUnderCamera": 21.97878106123798,
+        "backedOff": 0,
+        "lifted": 0,
+        "obstructed": false
+      },
+      "target": {
+        "x": -164.35,
+        "y": 37.45638888888888,
+        "z": 452
+      }
+    },
+    {
+      "file": "az315-low.png",
+      "kind": "low",
+      "azimuthDeg": 315,
+      "camera": {
+        "x": -228.17915671577282,
+        "y": 23.45597189052576,
+        "z": 388.1708432842272,
+        "yaw": 0.7853981633974485,
+        "pitch": 0.15387223280532483,
+        "hover": 1.65,
+        "groundUnderCamera": 21.80597189052576,
+        "backedOff": 0,
+        "lifted": 0,
+        "obstructed": false
+      },
+      "target": {
+        "x": -164.35,
+        "y": 37.45638888888888,
+        "z": 452
+      }
+    },
+    {
+      "file": "roof.png",
+      "kind": "roof",
+      "azimuthDeg": null,
+      "camera": {
+        "x": -164.35,
+        "y": 188.16430422981284,
+        "z": 452,
+        "yaw": 0,
+        "pitch": -1.5707963267948966,
+        "hover": 165.4470820075906,
+        "groundUnderCamera": 22.717222222222226,
+        "backedOff": 0,
+        "lifted": 0,
+        "obstructed": false
+      },
+      "target": {
+        "x": -164.35,
+        "y": 57.07,
+        "z": 452
+      }
+    }
+  ]
+}

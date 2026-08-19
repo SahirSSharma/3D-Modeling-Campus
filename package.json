@@ -25,10 +25,11 @@
     "verify:perf": "node scripts/verify-perf.mjs",
     "verify:ride": "node scripts/verify-ride.mjs",
     "verify:reproducible": "node scripts/build-campus-lidar.mjs --verify",
-    "check": "node scripts/build-campus-3d.mjs --check && node scripts/build-campus-lidar.mjs --check && node scripts/build-campus-satellite.mjs --check && node scripts/build-campus-colors.mjs --check && node scripts/build-campus-colleges.mjs --check && node scripts/build-corridor.mjs --check && node scripts/build-campus-lidar.mjs --verify",
+    "check": "node scripts/build-campus-3d.mjs --check && node scripts/build-campus-lidar.mjs --check && node scripts/build-campus-satellite.mjs --check && node scripts/build-campus-colors.mjs --check && node scripts/build-campus-colleges.mjs --check && node scripts/build-corridor.mjs --check && node scripts/build-campus-lidar.mjs --verify && node scripts/build-manifest.mjs --check",
     "progress": "node scripts/gauntlet-progress.mjs --print",
     "serve": "node scripts/serve.mjs",
-    "readiness": "node scripts/readiness.mjs"
+    "readiness": "node scripts/readiness.mjs",
+    "build:manifest": "node scripts/build-manifest.mjs"
   },
   "devDependencies": {
     "laz-perf": "^0.0.7",

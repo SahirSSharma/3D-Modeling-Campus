@@ -166,8 +166,10 @@ npm run serve             # local server to look at it
 ```
 
 `npm run check` is the real gate — it runs `--check` on the OSM, LiDAR, satellite,
-colors, and colleges builders plus the reproducibility verify. Run it before
-claiming a build change is safe.
+colors, colleges and corridor builders, the download-size manifest
+(`scripts/build-manifest.mjs` — the loading bar's denominator; rebuild it when
+any docs/data file changes size), plus the reproducibility verify. Run it
+before claiming a build change is safe.
 
 An untested fix is not a fix. Paste the real output, including failures — never
 report a result you did not actually run.

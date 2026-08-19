@@ -184,265 +184,79 @@ html, body {
 .boot {
   position: relative;
   flex: none;
-  width: min(1440px, 100%);
-  display: flex; flex-direction: column; gap: 28px;
+  width: min(560px, 100%);
+  display: flex; flex-direction: column; gap: 26px;
   transition: transform 0.42s var(--ease-out), filter 0.42s var(--ease-out);
 }
-.boot-head h2 {
+.boot h2 {
   margin: 0;
   font: 600 12px/1.4 var(--font);
   text-transform: uppercase; letter-spacing: 2.6px;
   color: rgba(255, 255, 255, 0.6);
 }
-.boot-head p {
-  margin: 10px 0 0; max-width: 66ch;
-  font-size: 13px; line-height: 1.55;
-  color: rgba(255, 255, 255, 0.45);
-}
 
-/* ------------------------------------------------------------ the progress */
+/* ------------------------------------------------------------- the two bars */
 
-.boot-meter-head {
-  display: flex; align-items: flex-end; justify-content: space-between;
-  gap: 20px; margin-bottom: 14px;
-}
-.boot-now {
+.boot-bar-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 20px; margin-bottom: 10px;
   font-family: var(--mono); font-size: 12px; letter-spacing: 0.3px;
-  color: rgba(255, 255, 255, 0.92);
 }
-.boot-now::before {
-  content: ""; display: inline-block;
-  width: 5px; height: 5px; margin-right: 9px;
-  border-radius: 50%; background: var(--accent);
-  animation: boot-pulse 1.7s ease-in-out infinite;
-}
-.boot-pct { display: flex; align-items: baseline; gap: 3px; }
-.boot-pct b {
-  font: 300 clamp(38px, 4.2vw, 58px) / 0.82 var(--mono);
+.boot-bar-label { color: rgba(255, 255, 255, 0.92); }
+.boot-bar-nums {
+  color: var(--accent);
   font-variant-numeric: tabular-nums;
-  letter-spacing: -1.5px;
+  white-space: nowrap;
 }
-.boot-pct i { font-style: normal; font-size: 15px; color: rgba(255, 255, 255, 0.45); }
+.boot-bar-nums b { font-weight: 500; }
 
-.boot-track {
+.boot-bar-track {
   position: relative;
-  height: 14px;
+  height: 12px;
   border-radius: 2px;
   background: rgba(255, 255, 255, 0.05);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.09);
 }
 /* Graduations every 2%, so the fill is read against a scale rather than
    floating in an empty trough. */
-.boot-track::before {
+.boot-bar-track::before {
   content: ""; position: absolute; inset: 3px 0; pointer-events: none;
   background-image: repeating-linear-gradient(
     90deg, rgba(255, 255, 255, 0.085) 0 1px, transparent 1px 2%);
 }
 
-/* clip-path rather than width: the bar is repainted every frame from a rAF
-   loop, and clipping keeps the gradient and the sweep inside it at their true
-   scale instead of squashing them as the fill grows. */
-.boot-fill {
-  position: absolute; inset: 0; overflow: hidden;
+/* clip-path rather than width: the bars repaint every frame (the download bar
+   on every chunk), and clipping keeps the gradient at its true scale instead
+   of squashing it as the fill grows. Each bar reads its own custom property,
+   both set on .walk-loading by campus-boot.js. */
+.boot-bar-fill {
+  position: absolute; inset: 0;
   background: linear-gradient(90deg, rgba(255, 198, 61, 0.3), rgba(255, 198, 61, 0.85) 45%, var(--accent));
-  clip-path: inset(0 calc(100% - var(--boot-p, 0) * 1%) 0 0 round 2px);
 }
-.boot-fill::after {
-  content: ""; position: absolute; inset: 0;
-  background: linear-gradient(100deg, transparent 42%, rgba(255, 255, 255, 0.42) 50%, transparent 58%);
-  animation: boot-sweep 2.4s linear infinite;
-}
+.boot-bar-dl .boot-bar-fill { clip-path: inset(0 calc(100% - var(--dl-p, 0) * 1%) 0 0 round 2px); }
+.boot-bar-bd .boot-bar-fill { clip-path: inset(0 calc(100% - var(--bd-p, 0) * 1%) 0 0 round 2px); }
 
-/* One segment per phase, flex-grown by its weight, so the bar's own geometry
-   says which stage you are in before you have read a word of the label. */
-.boot-segments { position: absolute; inset: 0; display: flex; pointer-events: none; }
-.boot-seg { position: relative; }
-.boot-seg + .boot-seg::before {
-  content: ""; position: absolute; left: 0; top: -3px; bottom: -3px;
-  width: 1px; background: rgba(255, 255, 255, 0.22);
-}
-.boot-seg.is-now::after {
-  content: ""; position: absolute; left: 1px; right: 0; bottom: -7px;
-  height: 2px; border-radius: 1px; background: rgba(255, 198, 61, 0.55);
-}
-
-/* The leading edge. Positioned by translating a full-width element so its own
-   right edge lands on the progress point — percentage translates are relative
-   to the element, so this tracks the bar with a transform instead of nudging
-   `left` sixty times a second. */
-.boot-edge {
-  position: absolute; top: -4px; bottom: -4px; left: 0;
-  width: 100%; pointer-events: none;
-  transform: translateX(calc(var(--boot-p, 0) * 1% - 100%));
-}
-.boot-edge::after {
-  content: ""; position: absolute; top: 0; bottom: 0; right: 0; width: 1px;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 0 14px 3px rgba(255, 198, 61, 0.45);
-}
-
-/* ------------------------------------------------------- the three columns */
-
-.boot-grid {
-  display: grid;
-  grid-template-columns: 208px minmax(0, 1fr) 216px;
-  gap: 34px;
-  align-items: start;
-}
-.boot-col h3,
-.boot-plan figcaption {
-  margin: 0 0 10px; padding-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  font: 600 9.5px/1.4 var(--font);
-  text-transform: uppercase; letter-spacing: 1.7px;
-  color: rgba(255, 255, 255, 0.38);
-  transition: opacity 0.3s ease;
-}
-
-/* A heading over nothing is a promise the screen has not kept yet. Locally the
-   download is over in a second and you never see it, but the whole point of
-   this screen is the ten seconds a real visitor spends pulling 10 MB — and for
-   most of that, "Survey" and "Surveyed boundary" sat above empty space while
-   only the phase list had anything in it. Each heading now waits for its own
-   content. "Sequence" is filled at mount, so it never blinks.
-
-   Keyed off :empty and the class the canvas already uses, so nothing has to
-   remember to announce that a column has become non-empty. */
-.boot-col:has(.boot-facts:empty) h3,
-.boot-plan:not(.has-outline) figcaption { opacity: 0; }
-
-.boot-phases { margin: 0; padding: 0; list-style: none; font-family: var(--mono); font-size: 11px; }
-.boot-phase {
-  display: grid; grid-template-columns: 10px minmax(0, 1fr) auto;
-  align-items: center; gap: 9px; height: 21px;
-  color: rgba(255, 255, 255, 0.32);
-  transition: color 0.2s ease;
-}
-.boot-phase-dot {
-  position: relative; width: 6px; height: 6px; border-radius: 1px;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
-}
-.boot-phase-weight { font-size: 9.5px; font-weight: 400; color: rgba(255, 255, 255, 0.2); }
-.boot-phase.is-done { color: rgba(255, 255, 255, 0.6); }
-.boot-phase.is-done .boot-phase-dot { box-shadow: none; }
-.boot-phase.is-done .boot-phase-dot::after {
-  content: ""; position: absolute; left: 0; top: 0; width: 6px; height: 3px;
-  border-left: 1.5px solid rgba(255, 255, 255, 0.5);
-  border-bottom: 1.5px solid rgba(255, 255, 255, 0.5);
-  transform: rotate(-45deg);
-}
-.boot-phase.is-now { color: #fff; }
-.boot-phase.is-now .boot-phase-dot {
-  background: var(--accent);
-  box-shadow: 0 0 0 3px rgba(255, 198, 61, 0.15);
-  animation: boot-pulse 1.7s ease-in-out infinite;
-}
-.boot-phase.is-failed { color: #ff9d90; }
-.boot-phase.is-failed .boot-phase-dot { background: #ff7a6b; box-shadow: none; animation: none; }
-.boot-phase.is-failed .boot-phase-dot::after { content: none; }
-
-/* The statistics. auto-fill with a fixed minimum means the column count
-   depends on the panel width and nothing else, and appending to a grid never
-   moves what is already in it — so forty facts can stream in one at a time
-   without a single line of this shifting. The reserved height is the deepest
-   the grid gets at any width, so the panel cannot grow under the bar either.
-
-   178px is a measured floor, not a round number: at 158 the real labels lost
-   their ends to ellipses ("Footprint vertic…", "Elevation gr…") because five
-   columns fitted where four should have. */
-.boot-facts {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(178px, 1fr));
-  gap: 0 24px;
-  align-content: start;
-  min-height: 312px;
-}
-.boot-fact {
-  display: flex; align-items: baseline; justify-content: space-between;
-  gap: 10px; height: 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.055);
-  font-family: var(--mono); font-size: 11px;
-  animation: boot-fact-in 0.24s var(--ease-out) both;
-}
-.boot-fact-label {
-  color: rgba(255, 255, 255, 0.42);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.boot-fact-value {
-  flex: none; color: var(--accent); white-space: nowrap;
-  font-variant-numeric: tabular-nums; letter-spacing: 0.2px;
-}
-.boot-fact-value b { font-weight: 500; }
-.boot-fact-value i {
-  font-style: normal; margin-left: 3px; font-size: 10px;
-  color: rgba(255, 255, 255, 0.35);
-}
-.boot-fact-value i[hidden] { display: none; }
-
-.boot-plan { display: flex; flex-direction: column; margin: 0; }
-.boot-plan figcaption { order: -1; }
-.boot-plan canvas { display: block; width: 100%; aspect-ratio: 1; opacity: 0; transition: opacity 0.3s ease; }
-.boot-plan.has-outline canvas { opacity: 1; }
-
-.boot-foot { display: flex; flex-direction: column; gap: 10px; }
-.boot-log {
-  height: 47px; overflow: hidden; padding-top: 9px;
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
-  font-family: var(--mono); font-size: 10px; line-height: 1.6;
-  color: rgba(255, 255, 255, 0.28);
-}
-.boot-log > div:last-child { color: rgba(255, 255, 255, 0.6); }
 .boot-error { margin: 0; font-size: 12.5px; line-height: 1.5; color: #ff9d90; }
 .boot-error[hidden] { display: none; }
 
-/* The failed state keeps the bar exactly where it stopped — a bar that empties
-   or animates on is a bar still claiming to be working. */
-.walk-loading.is-failed .boot-fill {
+/* The failed state keeps both bars exactly where they stopped — a bar that
+   empties or animates on is a bar still claiming to be working. */
+.walk-loading.is-failed .boot-bar-fill {
   background: linear-gradient(90deg, rgba(255, 122, 107, 0.3), rgba(255, 122, 107, 0.7));
 }
-.walk-loading.is-failed .boot-fill::after { animation: none; opacity: 0; }
-.walk-loading.is-failed .boot-edge::after { box-shadow: none; background: rgba(255, 122, 107, 0.8); }
-.walk-loading.is-failed .boot-now { color: #ff9d90; }
-.walk-loading.is-failed .boot-now::before { background: #ff7a6b; animation: none; }
-.walk-loading.is-failed .boot-seg.is-now::after { background: rgba(255, 122, 107, 0.5); }
+.walk-loading.is-failed .boot-bar-label { color: #ff9d90; }
 
-@keyframes boot-sweep { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
-@keyframes boot-pulse { 50% { opacity: 0.35; } }
-@keyframes boot-fact-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; } }
-
-/* Below three columns the boundary plan is the first thing to go: it is a
-   flourish, and the numbers are what people actually read. */
-@media (max-width: 1180px) {
-  .boot-grid { grid-template-columns: 196px minmax(0, 1fr); gap: 28px; }
-  .boot-plan { display: none; }
-}
 @media (max-width: 720px) {
-  .walk-loading { place-content: safe center; padding: 20px 16px; }
+  .walk-loading { padding: 20px 16px; }
   .boot { gap: 20px; }
-  .boot-head p { font-size: 11.5px; }
-  .boot-grid { grid-template-columns: minmax(0, 1fr); gap: 20px; }
-  /* Two-up, and the weights go: at this width they were the difference between
-     "Downloading survey data" on one line and on two, and a wrapped label
-     broke the fixed row height the whole checklist is aligned on. */
-  .boot-phases { display: grid; grid-template-columns: 1fr 1fr; column-gap: 14px; font-size: 10px; }
-  .boot-phase { grid-template-columns: 10px minmax(0, 1fr); gap: 8px; }
-  .boot-phase-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .boot-phase-weight { display: none; }
-  .boot-facts { grid-template-columns: 1fr 1fr; gap: 0 16px; min-height: 0; }
-  .boot-fact { height: 22px; font-size: 10px; }
-  .boot-log { height: 31px; }
+  .boot-bar-head { font-size: 10.5px; }
 }
 
-/* Reduced motion: the readings still update, nothing travels. The sweep and
-   the pulse are decoration, and campus-boot.js drops the eased bar, the
-   counting odometers and the traced outline to match. */
+/* Reduced motion: the download bar already moves only when bytes arrive, and
+   campus-boot.js drops the build bar's ease to match. */
 @media (prefers-reduced-motion: reduce) {
   .walk-loading { transition-duration: 0.14s; }
   .walk-loading.is-gone .boot { transform: none; filter: none; }
-  .boot-fill::after,
-  .boot-now::before,
-  .boot-phase.is-now .boot-phase-dot,
-  .boot-fact { animation: none; }
 }
 
 @media (max-width: 780px) {

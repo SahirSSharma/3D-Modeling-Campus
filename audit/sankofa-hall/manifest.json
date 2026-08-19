@@ -1,0 +1,406 @@
+{
+  "query": "Sankofa Hall",
+  "stamp": "unstamped",
+  "mode": "campus",
+  "matched": [
+    "Sankofa"
+  ],
+  "building": {
+    "ok": true,
+    "names": [
+      "Sankofa"
+    ],
+    "cx": -70.9,
+    "cz": 596.35,
+    "radius": 30.000541661776687,
+    "topY": 88.8,
+    "groundY": 23.063333333333333,
+    "bbox": {
+      "minX": -97.7,
+      "maxX": -44.1,
+      "minZ": 571.7,
+      "maxZ": 621
+    }
+  },
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "fovDeg": 68,
+  "shots": [
+    {
+      "file": "az000-high.png",
+      "kind": "high",
+      "azimuthDeg": 0,
+      "camera": {
+        "x": -70.9,
+        "y": 107.0550664823837,
+        "z": 523.3382184553036,
+        "yaw": 0,
+        "pitch": -0.6108652381980156,
+        "hover": 82.61839981571703,
+        "groundUnderCamera": 24.43666666666666,
+        "backedOff": 0,
+        "lifted": 0,
+        "obstructed": false
+      },
+      "target": {
+        "x": -70.9,
+        "y": 55.931666666666665,
+        "z": 596.35
+      }
+    },
+    {
+      "file": "az045-high.png",
+      "kind": "high",
+      "azimuthDeg": 45,
+      "camera": {
+        "x": -19.272874163234313,
+        "y": 107.0550664823837,
+        "z": 544.7228741632343,
+        "yaw": -0.7853981633974484,
+        "pitch": -0.6108652381980153,
+        "hover": 80.79735389870712,
+        "groundUnderCamera": 26.25771258367657,
+        "backedOff": 0,
+        "lifted": 0,
+        "obstructed": false
+      },
+      "target": {
+        "x": -70.9,
+        "y": 55.931666666666665,
+        "z": 596.35
+      }
+    },
+    {
+      "file": "az090-high.png",
+      "kind": "high",
+      "azimuthDeg": 90,
+      "camera": {
+        "x": 2.11178154469647,
+        "y": 107.0550664823837,
+        "z": 596.35,
+        "yaw": -1.5707963267948966,
+        "pitch": -0.6108652381980152,
+        "hover": 80.21814806011643,
+        "groundUnderCamera": 26.83691842226726,
+        "backedOff": 0,
+        "lifted": 0,
+        "obstructed": false
+      },
+      "target": {
+        "x": -70.9,
+        "y": 55.931666666666665,
+        "z": 596.35
+      }
+    },
+    {
+      "file": "az135-high.png",
+      "kind": "high",
+      "azimuthDeg": 135,
+      "camera": {
+        "x": -19.2728741632343,
+        "y": 107.0550664823837,
+        "z": 647.9771258367657,
+        "yaw": -2.356194490192345,
+        "pitch": -0.6108652381980153,
+        "hover": 81.1558289544915,
+        "groundUnderCamera": 25.899237527892193,
+        "backedOff": 0,
+        "lifted": 0,
+        "obstructed": false
+      },
+      "target": {
+        "x": -70.9,
+        "y": 55.931666666666665,
+        "z": 596.35
+      }
+    },
+    {
+      "file": "az180-high.png",
+      "kind": "high",
+      "azimuthDeg": 180,
+      "camera": {
+        "x": -70.89999999999999,
+        "y": 107.0550664823837,
+        "z": 669.3617815446964,
+        "yaw": -3.141592653589793,
+        "pitch": -0.6108652381980156,
+        "hover": 83.21397804128185,
+        "groundUnderCamera": 23.841088441101842,
+        "backedOff": 0,
+        "lifted": 0,
+        "obstructed": false
+      },
+      "target": {
+        "x": -70.9,
+        "y": 55.931666666666665,
+        "z": 596.35
+      }
+    },
+    {
+      "file": "az225-high.png",
+      "kind": "high",
+      "azimuthDeg": 225,
+      "camera": {
+        "x": -122.52712583676569,
+        "y": 107.0550664823837,
+        "z": 647.9771258367657,
+        "yaw": 2.356194490192345,
+        "pitch": -0.6108652381980153,
+        "hover": 85.1228992505136,
+        "groundUnderCamera": 21.9321672318701,
+        "backedOff": 0,
+        "lifted": 0,
+        "obstructed": false
+      },
+      "target": {
+        "x": -70.9,
+        "y": 55.931666666666665,
+        "z": 596.35
+      }
+    },
+    {
+      "file": "az270-high.png",
+      "kind": "high",
+      "azimuthDeg": 270,
+      "camera": {
+        "x": -143.91178154469648,
+        "y": 107.0550664823837,
+        "z": 596.35,
+        "yaw": 1.5707963267948966,
+        "pitch": -0.6108652381980152,
+        "hover": 85.73109633382853,
+        "groundUnderCamera": 21.323970148555155,
+        "backedOff": 0,
+        "lifted": 0,
+        "obstructed": false
+      },
+      "target": {
+        "x": -70.9,
+        "y": 55.931666666666665,
+        "z": 596.35
+      }
+    },
+    {
+      "file": "az315-high.png",
+      "kind": "high",
+      "azimuthDeg": 315,
+      "camera": {
+        "x": -122.52712583676572,
+        "y": 107.0550664823837,
+        "z": 544.7228741632343,
+        "yaw": 0.7853981633974486,
+        "pitch": -0.6108652381980152,
+        "hover": 84.08097067694256,
+        "groundUnderCamera": 22.97409580544114,
+        "backedOff": 0,
+        "lifted": 0,
+        "obstructed": false
+      },
+      "target": {
+        "x": -70.9,
+        "y": 55.931666666666665,
+        "z": 596.35
+      }
+    },
+    {
+      "file": "az000-low.png",
+      "kind": "low",
+      "azimuthDeg": 0,
+      "camera": {
+        "x": -70.9,
+        "y": 65.06333333333333,
+        "z": 503.89962500489,
+        "yaw": 0,
+        "pitch": -0.1335268487930397,
+        "hover": 40.72878569434122,
+        "groundUnderCamera": 24.334547638992113,
+        "backedOff": 0,
+        "lifted": 40,
+        "obstructed": true
+      },
+      "target": {
+        "x": -70.9,
+        "y": 52.64483333333333,
+        "z": 596.35
+      }
+    },
+    {
+      "file": "az045-low.png",
+      "kind": "low",
+      "azimuthDeg": 45,
+      "camera": {
+        "x": -5.527712917718489,
+        "y": 28.58199479931564,
+        "z": 530.9777129177185,
+        "yaw": -0.785398163397448,
+        "pitch": 0.25462884157317983,
+        "hover": 1.65,
+        "groundUnderCamera": 26.931994799315643,
+        "backedOff": 0,
+        "lifted": 0,
+        "obstructed": false
+      },
+      "target": {
+        "x": -70.9,
+        "y": 52.64483333333333,
+        "z": 596.35
+      }
+    },
+    {
+      "file": "az090-low.png",
+      "kind": "low",
+      "azimuthDeg": 90,
+      "camera": {
+        "x": 21.55037499511002,
+        "y": 28.536666666666683,
+        "z": 596.35,
+        "yaw": -1.5707963267948966,
+        "pitch": 0.25508797586221504,
+        "hover": 1.65,
+        "groundUnderCamera": 26.886666666666684,
+        "backedOff": 0,
+        "lifted": 0,
+        "obstructed": false
+      },
+      "target": {
+        "x": -70.9,
+        "y": 52.64483333333333,
+        "z": 596.35
+      }
+    },
+    {
+      "file": "az135-low.png",
+      "kind": "low",
+      "azimuthDeg": 135,
+      "camera": {
+        "x": 28.413412579235803,
+        "y": 37.06333333333333,
+        "z": 695.6634125792359,
+        "yaw": -2.3561944901923453,
+        "pitch": 0.11048773924019871,
+        "hover": 10.963333333333331,
+        "groundUnderCamera": 26.1,
+        "backedOff": 48,
+        "lifted": 12,
+        "obstructed": false
+      },
+      "target": {
+        "x": -70.9,
+        "y": 52.64483333333333,
+        "z": 596.35
+      }
+    },
+    {
+      "file": "az180-low.png",
+      "kind": "low",
+      "azimuthDeg": 180,
+      "camera": {
+        "x": -70.89999999999999,
+        "y": 25.3753254167699,
+        "z": 688.80037499511,
+        "yaw": -3.141592653589793,
+        "pitch": 0.28682998755440264,
+        "hover": 1.65,
+        "groundUnderCamera": 23.725325416769902,
+        "backedOff": 0,
+        "lifted": 0,
+        "obstructed": false
+      },
+      "target": {
+        "x": -70.9,
+        "y": 52.64483333333333,
+        "z": 596.35
+      }
+    },
+    {
+      "file": "az225-low.png",
+      "kind": "low",
+      "azimuthDeg": 225,
+      "camera": {
+        "x": -157.48549051787796,
+        "y": 57.06333333333333,
+        "z": 682.9354905178781,
+        "yaw": 2.3561944901923453,
+        "pitch": -0.03606835655909625,
+        "hover": 36.06333333333333,
+        "groundUnderCamera": 21,
+        "backedOff": 30,
+        "lifted": 32,
+        "obstructed": false
+      },
+      "target": {
+        "x": -70.9,
+        "y": 52.64483333333333,
+        "z": 596.35
+      }
+    },
+    {
+      "file": "az270-low.png",
+      "kind": "low",
+      "azimuthDeg": 270,
+      "camera": {
+        "x": -163.35037499511003,
+        "y": 25.063333333333333,
+        "z": 596.35,
+        "yaw": 1.5707963267948966,
+        "pitch": 0.28993172476989915,
+        "hover": 3.963333333333331,
+        "groundUnderCamera": 21.1,
+        "backedOff": 0,
+        "lifted": 0,
+        "obstructed": false
+      },
+      "target": {
+        "x": -70.9,
+        "y": 52.64483333333333,
+        "z": 596.35
+      }
+    },
+    {
+      "file": "az315-low.png",
+      "kind": "low",
+      "azimuthDeg": 315,
+      "camera": {
+        "x": -136.27228708228154,
+        "y": 53.06333333333333,
+        "z": 530.9777129177185,
+        "yaw": 0.7853981633974481,
+        "pitch": -0.0045267219467115885,
+        "hover": 30.505742902742718,
+        "groundUnderCamera": 22.557590430590615,
+        "backedOff": 0,
+        "lifted": 28,
+        "obstructed": false
+      },
+      "target": {
+        "x": -70.9,
+        "y": 52.64483333333333,
+        "z": 596.35
+      }
+    },
+    {
+      "file": "roof.png",
+      "kind": "roof",
+      "azimuthDeg": null,
+      "camera": {
+        "x": -70.9,
+        "y": 158.54463359288667,
+        "z": 596.35,
+        "yaw": 0,
+        "pitch": -1.5707963267948966,
+        "hover": 134.52168914844222,
+        "groundUnderCamera": 24.022944444444438,
+        "backedOff": 0,
+        "lifted": 0,
+        "obstructed": false
+      },
+      "target": {
+        "x": -70.9,
+        "y": 88.8,
+        "z": 596.35
+      }
+    }
+  ]
+}

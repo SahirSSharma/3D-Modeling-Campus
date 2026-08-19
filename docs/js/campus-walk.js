@@ -71,6 +71,13 @@ import {
    count is wrong about. `required` files take the walk down when they fail;
    the rest are upgrades — the campus still stands on OSM + LiDAR alone. */
 const DATA = [
+  /* Fetched FIRST and alone: filename → true byte size, stamped at build time
+     (scripts/build-manifest.mjs, gated by `npm run check`). The loading bar's
+     denominator cannot come from the wire — GitHub Pages gzips, so
+     Content-Length is the compressed size while the stream the bar counts is
+     not, and a denominator that trails the numerator pins the bar at 100%
+     while megabytes are still arriving. */
+  { key: "manifest", file: "manifest.json", required: false, meta: true, what: "download sizes" },
   { key: "campus", file: "campus-3d.json", required: true, what: "footprints and footpaths" },
   { key: "lidar", file: "campus-lidar.json", required: true, what: "terrain and heights" },
   { key: "arcgis", file: "campus-arcgis.json", required: false, what: "surveyed ground" },
@@ -345,19 +352,41 @@ async function download(rep) {
      (verify-boot waits for `streamed` before counting, so the duplicate-
      fetch gate covers them too). The loading bar's denominator only ever
      contains what boot actually waits for, so it keeps telling the truth. */
-  const responses = await Promise.all(DATA.map((d) => (d.defer ? null : fetch(urlOf(d.file)).catch(() => null))));
+  /* The manifest lands before anything else is even requested, so the bar
+     knows its true denominator from byte zero and never has to jump. One tiny
+     round trip against a multi-second download; without it the header
+     fallback below still works, just gzip-blind. */
+  let sizes = null;
+  const metaEntry = DATA.find((d) => d.meta);
+  if (metaEntry) {
+    try {
+      const r = await fetch(urlOf(metaEntry.file)).catch(() => null);
+      /* JSON.parse(text), not the response's own parser: the data-path test
+         sweeps this module for filename-shaped tokens, and calling that
+         method on a one-letter variable reads as one. */
+      sizes = r?.ok ? JSON.parse(await r.text()) : null;
+    } catch { sizes = null; }
+  }
+
+  const responses = await Promise.all(DATA.map((d) => (d.defer || d.meta ? null : fetch(urlOf(d.file)).catch(() => null))));
   const bytes = DATA.map(() => 0);
-  const advertised = responses.map((r) => {
-    const len = Number(r?.headers?.get?.("content-length"));
+  const advertised = responses.map((r, i) => {
+    /* The build-time size is the truth; the header is the fallback for a file
+       the manifest has never heard of. Deferred and meta entries stay 0 —
+       they are not part of what boot waits for. */
+    if (!r) return 0;
+    const known = Number(sizes?.[DATA[i].file]);
+    if (Number.isFinite(known) && known > 0) return known;
+    const len = Number(r.headers?.get?.("content-length"));
     return Number.isFinite(len) && len > 0 ? len : 0;
   });
 
-  /* The denominator is the sum of the advertised lengths, revised UPWARD if a
-     body turns out longer than its header claimed — which it does the moment a
-     host serves the JSON gzipped, because Content-Length is then the compressed
-     size while the stream we read is not. Growing the total can only slow the
-     bar, never send it backwards, and it still lands on exactly 100%: by the
-     last chunk the total is the bytes read. */
+  /* The denominator is the sum of the known/advertised lengths, revised UPWARD
+     if a body turns out longer than claimed — which the header route does the
+     moment a host serves the JSON gzipped, because Content-Length is then the
+     compressed size while the stream we read is not. Growing the total can
+     only slow the bar, never send it backwards, and it still lands on exactly
+     100%: by the last chunk the total is the bytes read. */
   const announce = () => {
     let loaded = 0;
     let total = 0;
@@ -366,21 +395,10 @@ async function download(rep) {
       total += Math.max(advertised[i], bytes[i]);
     }
     rep.tick("data", total ? loaded / total : 0);
-    /* Show the denominator, not just the running total. "4.1 MB" answers
-       nothing on its own — the question anyone watching a loading bar is
-       actually asking is how much is left, and the campus is 10.5 MB of survey
-       data. The total lives in the unit slot so the number itself keeps its
-       odometer animation.
-
-       The label is "Survey data" rather than "Survey data read": the longer
-       unit needs the width, and with both the label ellipsised to
-       "Survey data re…" in the fact grid. */
-    rep.fact({
-      key: "bytes",
-      label: "Survey data",
-      value: Math.round(loaded / 1e5) / 10,
-      unit: total ? `of ${(Math.round(total / 1e5) / 10).toFixed(1)} MB` : "MB",
-    });
+    /* The exact numbers, straight to the download bar: bytes read so far and
+       the honest denominator. The bar is bound to these with no easing, so it
+       moves at precisely the pace the network delivers. */
+    rep.bytes(loaded, total);
   };
 
   const read = async (r, i) => {
@@ -421,6 +439,7 @@ async function download(rep) {
   const out = {};
   for (let i = 0; i < DATA.length; i++) {
     const d = DATA[i];
+    if (d.meta) { out[d.key] = sizes; continue; } // consumed above, by the bar itself
     if (!parsed[i] && d.required) throw new Error(`the campus ${d.what} could not be downloaded`);
     out[d.key] = parsed[i];
     /* Each file's own size, so the log reads as a manifest of what the campus

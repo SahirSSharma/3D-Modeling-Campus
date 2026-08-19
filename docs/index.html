@@ -130,47 +130,35 @@
      cover the start of it. campus-boot.js fills the [data-boot] slots. -->
 <div class="walk-loading" id="walk-loading">
   <div class="boot">
-    <header class="boot-head">
-      <h2>3D Modeling Campus</h2>
-      <p>Assembling the measured campus in your browser &mdash; massing from the university's own GIS,
-         heights from aerial LiDAR, colours from aerial photography.</p>
-    </header>
+    <h2>3D Modeling Campus</h2>
 
-    <div class="boot-meter">
-      <div class="boot-meter-head">
-        <!-- The one thing worth announcing: ten phase changes, not the
-             thirty-odd statistics streaming in beside them, and not a
-             percentage that would speak a hundred times. -->
-        <span class="boot-now" data-boot="now" role="status">Loading the engine</span>
-        <span class="boot-pct" aria-hidden="true"><b data-boot="pct">0</b><i>%</i></span>
+    <!-- The download bar is bound straight to bytes off the network streams —
+         it moves at exactly the pace the survey data arrives, with the running
+         total and the denominator as live numbers. -->
+    <div class="boot-bar boot-bar-dl">
+      <div class="boot-bar-head">
+        <span class="boot-bar-label">Survey data</span>
+        <span class="boot-bar-nums" data-boot="dl-nums">waiting for the first bytes</span>
       </div>
-      <div class="boot-track" data-boot="track"
-           role="progressbar" aria-label="Loading progress" aria-valuemin="0" aria-valuemax="100">
-        <div class="boot-fill"></div>
-        <div class="boot-segments" data-boot="segments"></div>
-        <div class="boot-edge"></div>
+      <div class="boot-bar-track" data-boot="dl-track"
+           role="progressbar" aria-label="Download progress" aria-valuemin="0" aria-valuemax="100">
+        <div class="boot-bar-fill"></div>
       </div>
     </div>
 
-    <div class="boot-grid">
-      <section class="boot-col">
-        <h3>Sequence</h3>
-        <ol class="boot-phases" data-boot="phases"></ol>
-      </section>
-      <section class="boot-col">
-        <h3>Survey</h3>
-        <div class="boot-facts" data-boot="facts"></div>
-      </section>
-      <figure class="boot-plan">
-        <canvas data-boot="outline" aria-hidden="true"></canvas>
-        <figcaption>Surveyed boundary</figcaption>
-      </figure>
+    <!-- The build bar: everything that is not the network, named as it runs. -->
+    <div class="boot-bar boot-bar-bd">
+      <div class="boot-bar-head">
+        <span class="boot-bar-label" data-boot="now" role="status">Loading the engine</span>
+        <span class="boot-bar-nums"><b data-boot="bd-pct">0</b>%</span>
+      </div>
+      <div class="boot-bar-track" data-boot="bd-track"
+           role="progressbar" aria-label="Build progress" aria-valuemin="0" aria-valuemax="100">
+        <div class="boot-bar-fill"></div>
+      </div>
     </div>
 
-    <footer class="boot-foot">
-      <div class="boot-log" data-boot="log" aria-hidden="true"></div>
-      <p class="boot-error" data-boot="error" hidden></p>
-    </footer>
+    <p class="boot-error" data-boot="error" hidden></p>
   </div>
 </div>
 

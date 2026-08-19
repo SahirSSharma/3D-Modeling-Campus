@@ -1,0 +1,22 @@
+{
+  "campus-3d.json": 915640,
+  "campus-arcgis.json": 5113191,
+  "campus-boundary.json": 7746,
+  "campus-colleges.json": 15822,
+  "campus-colors.json": 375298,
+  "campus-eighth.json": 142627,
+  "campus-facades.json": 13621,
+  "campus-landmarks.json": 19936,
+  "campus-lidar.json": 4054371,
+  "campus-markings.json": 32729,
+  "campus-photo-detail.json": 1315218,
+  "campus-truecolor.json": 149970,
+  "corridor-eighth-peterson.json": 2890483,
+  "corridor-staging.json": 2890483,
+  "region-colors.json": 2060525,
+  "region-heights.json": 71187,
+  "region-osm.json": 1822444,
+  "region-terrain.bin": 2935440,
+  "region-terrain.json": 910,
+  "region.json": 3364
+}
