@@ -451,7 +451,7 @@ function bikeRack(it, b, heightAt) {
 export function createPhotoEighth(_scene, { photo, heightAt } = {}) {
   const group = new THREE.Group();
   group.name = "photo-eighth";
-  const counts = { items: 0, solids: 0, decals: 0, skipped: 0 };
+  const counts = { items: 0, solids: 0, decals: 0, skipped: 0, superseded: 0 };
   const doc = photo?.eighth;
   if (!doc || typeof heightAt !== "function" || !Array.isArray(doc.items)) {
     return { group, counts };
@@ -461,12 +461,22 @@ export function createPhotoEighth(_scene, { photo, heightAt } = {}) {
   const b = batcher();
   const rand = rng(doc.seed || 1);
   const known = new Set(PHOTO_ITEM_TYPES);
+  /* The 2026-08 Eighth ultra pass rebuilt 67 of this section's 76 items at the
+     ultra standard, in the sankofa/podemos/azad/pulse/survivance and the four
+     eighth* landscape sections. Those entries STAY in the document — every
+     replacement cites the entry it improves on, so deleting them would destroy
+     the provenance trail — but they must not be DRAWN, or the college renders
+     twice. `superseded` names them and campus-photo-detail.json says which
+     section took each one. What is left here is the nine lighting fixtures no
+     new section claimed. */
+  const superseded = new Set(Object.keys(doc.superseded || {}));
   /* The pavilion's roof and screens stand on its plinth, so the plinth's
      height has to be known before either is placed. */
   const plinth = doc.items.find((i) => i.type === "pavilion-plinth");
   const plinthH = plinth ? plinth.h : 0;
 
   for (const it of doc.items) {
+    if (superseded.has(it.key)) { counts.superseded++; continue; }
     if (!known.has(it.type)) { counts.skipped++; continue; }
     counts.items++;
     const g = it.x !== undefined && it.z !== undefined ? heightAt(it.x, it.z) : 0;

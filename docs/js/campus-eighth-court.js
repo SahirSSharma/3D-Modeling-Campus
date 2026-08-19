@@ -61,7 +61,7 @@
 // standing instruction from that commit also holds: these markings must NOT be
 // written back into the generated markings file.
 import * as THREE from "../vendor/three/three.module.min.js";
-import { OVERLAY, overlayLift, applyOverlayDepth, sceneTone } from "./campus-overlay.js";
+import { OVERLAY, overlayLift, applyOverlayDepth } from "./campus-overlay.js";
 import { fillPoly, ribbon } from "./campus-drape.js";
 
 /* Painted-line half-width. 0.06 m stroke is a DECLARED ASSUMPTION: the
@@ -440,51 +440,19 @@ function paintMesh(lines, colour, heightAt) {
 const lambert = (color) =>
   new THREE.MeshStandardMaterial({ color, roughness: 0.45, metalness: 0.65 });
 
-/* Rec.601 luma of a hex — a DECISION helper (how far a raw fill moved), not a
-   second colour transform; the one real transform is still sceneTone. */
-const luma601 = (hex) => {
-  const n = parseInt(String(hex).replace("#", ""), 16);
-  return 0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255);
-};
-
-/* The lift a fill that needs to track the lit ground should get. This is
-   sceneTone's OWN calibration point: the Muir trident, the fill the dial was
-   first tuned on, moves 1.70x in luma at strength 1.
-   Why the strength is solved rather than set to 1: at strength 1 the measured
-   court navy #141727 lifts 4.70x, to #606dad — a periwinkle, three times the
-   ~1.4x campus-world.js gives the lit ground beside it, and the court renders
-   as Muir's mid-blue instead of the near-black navy every reference shows.
-   sceneTone's own docstring says strength is a per-fill judgement call and not
-   a universal constant; solving for the calibrated ratio keeps one transform
-   and one target, and a later colour correction carries through by itself.
-   NAMING. This is a TONE ratio, not a drape height. It must not be called
-   anything *LIFT*: campus-overlay.js's regression grep reads such a constant
-   as a module reintroducing its own drape lift, and a name that trips the
-   guard is a name that stops the guard from covering this file. */
-const TONE_RATIO = 1.7;
-
-/** sceneTone at the strength that lands this colour on the calibrated ratio. */
-function tonedToLift(hex, ratio = TONE_RATIO) {
-  const target = luma601(hex) * ratio;
-  if (luma601(`#${sceneTone(hex, 1).getHexString()}`) <= target) return sceneTone(hex, 1);
-  let lo = 0, hi = 1;
-  for (let i = 0; i < 24; i++) {
-    const mid = (lo + hi) / 2;
-    if (luma601(`#${sceneTone(hex, mid).getHexString()}`) < target) lo = mid; else hi = mid;
-  }
-  return sceneTone(hex, (lo + hi) / 2);
-}
-
 /**
  * The court: surface, lanes, every marking, the trident, both hoops.
  *
- * TONE. The navy (#141727) and the olive lanes (#2f372f) are drawn UNLIT, and
- * campus-world.js lifts every LIT ground surface around them roughly 1.4x
- * toward daylight — the exact case that made the Muir trident read as a black
- * splat — so both route through sceneTone, at the strength that lands them on
- * its calibrated lift (see tonedToLift, and why strength 1 is wrong here). The
- * white linework (#e8eef2) and the bone trident (#d6dee2) are already near
- * daylight and get no tone, per campus-overlay.js's own rule.
+ * TONE: NONE, and that is the point. Until 2026-08-19 the navy, the lanes and
+ * the trident were shadowed Apple photogrammetry reads drawn UNLIT, so they
+ * were routed through sceneTone at a solved strength to land on a calibrated
+ * 1.7x lift — otherwise the court read as a black splat beside the lit ground
+ * campus-world.js brightens. Arbitration replaced all three with SUNLIT
+ * ALBEDOS measured off SWA image 16 by ratio to the court's own white
+ * linework. A sunlit albedo must not be lifted a second time: at the old 1.7x
+ * ratio the new navy renders at luma 124 and the new gold clips to white. All
+ * four court colours are therefore drawn as they are stored, and tonedToLift,
+ * TONE_RATIO and luma601 have gone with the tone.
  */
 export function createEighthCourt(parent, { points, colors, heightAt } = {}) {
   const counts = { courtSurface: 0, keys: 0, lines: 0, laneMarks: 0, trident: 0, hoops: 0 };
@@ -492,9 +460,9 @@ export function createEighthCourt(parent, { points, colors, heightAt } = {}) {
   if (!c || typeof heightAt !== "function") return { placement: null, counts };
 
   const add = (m) => { if (m) parent.add(m); };
-  add(fillMesh([c.surface], tonedToLift(colors.courtSurface), heightAt, "pad"));
+  add(fillMesh([c.surface], colors.courtSurface, heightAt, "pad"));
   counts.courtSurface = 1;
-  add(fillMesh(c.keys, tonedToLift(colors.courtKey), heightAt, "carpet"));
+  add(fillMesh(c.keys, colors.courtKey, heightAt, "carpet"));
   counts.keys = c.keys.length;
   /* Lane-space marks are solid paint, not strokes, so they fill on `paint`
      alongside the linework rather than being stroked as outlines. */
@@ -503,7 +471,7 @@ export function createEighthCourt(parent, { points, colors, heightAt } = {}) {
   add(paintMesh(c.lines, colors.courtLine, heightAt));
   counts.lines = c.lines.length;
   if (c.logo) {
-    add(fillMesh(c.logo.polys, tonedToLift(colors.courtLogo), heightAt, "logo"));
+    add(fillMesh(c.logo.polys, colors.courtLogo, heightAt, "logo"));
     counts.trident = 1;
   }
 

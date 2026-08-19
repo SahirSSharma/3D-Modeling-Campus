@@ -301,10 +301,19 @@ process.on("exit", stopServer);
 
 const browser = await chromium.launch({
   headless: !headed,
-  /* Same flags as verify-ride.mjs: without them headless chromium refuses
-     WebGL2 and the page boots into its error card, which photographs as a
-     perfectly sharp picture of a failure message. */
-  args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"],
+  /* Headless: the same flags as verify-ride.mjs. Without them headless chromium
+     refuses WebGL2 and the page boots into its error card, which photographs as
+     a perfectly sharp picture of a failure message.
+
+     Headed: use the REAL GPU. swiftshader is a software rasteriser, and once
+     Zone 2 landed it could no longer finish a 1920x1080 frame inside
+     page.screenshot's 30 s limit — every capture died on a timeout that looked
+     like a scene fault and was not one. Measured on the same frame: 4019 ms
+     under swiftshader against 28 ms on Metal. Passing --headed now means what
+     it says, which is "show me what the machine actually draws". */
+  args: headed
+    ? ["--use-angle=metal", "--enable-gpu", "--ignore-gpu-blocklist"]
+    : ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"],
 });
 const page = await browser.newPage({ viewport: VIEW });
 const pageErrors = [];

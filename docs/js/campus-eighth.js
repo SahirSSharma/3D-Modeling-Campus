@@ -97,21 +97,34 @@ export const EIGHTH_COLORS = {
   boulder: "#c9c4b8",       // ref3 — the highlight stones proud of the bed
   dryLawn: "#ab9d83",       // ref3, the only clean unshaded read — tan in FULL SUN, never green
   hedge: "#4c6236",         // ref9, shadow-cast — lit Lambert, never pre-brightened by hand
-  courtSurface: "#141727",  // ref9 + ref2, agreeing to 2 RGB counts — the navy inside the lines
-  courtKey: "#2f372f",      // ref9 + ref2 — the lanes are OLIVE/khaki, not UCSD gold
+  /* THE THREE COURT COLOURS ARE SUNLIT ALBEDOS (arbitrated 2026-08-19) and
+     they are drawn UNTONED in campus-eighth-court.js. All three were shadowed
+     Apple photogrammetry reads; SWA image 16 is a clean sunlit eye-level
+     photograph of the whole court, and each value is the median RATIO of the
+     surface to the court's own white linework measured in the SAME 40x40 px
+     tile, which cancels the illuminant exactly for a diffuse surface. The
+     ratios are the durable numbers: navy (0.269, 0.310, 0.384) over 174 tiles
+     at five region/threshold configurations, lanes (0.8745, 0.6245, 0.2825)
+     over eight configurations at n = 15-277 each. They are converted to sRGB
+     against courtLine below, neutralised at its own luma601 236.66. */
+  courtSurface: "#404a5b",  // SWA -16 sunlit, ratio-to-linework over 174 tiles; supersedes the ref9/ref2 deep-shadow read
+  courtKey: "#cf9443",      // SWA -16 sunlit, ratio-to-linework over 8 configurations; the lanes are UCSD gold, and the ref9/ref2 olive was a shadowed sample
   courtLine: "#e8eef2",     // ref9 — all white linework
-  /* courtLogo is a MEASUREMENT, not a guess: the median of the 24,470
-     rectified pixels inside an eroded mask of the centre trident in ref9
-     (.cache/eighth-ground/trident/rect-centre.png) is #576564 — a pale sage
-     bone, warmer and markedly less blue than the white linework beside it.
-     The frame is trusted at face value here because the same frame's court
-     navy medians #15192b against this table's #141727, two RGB counts apart,
-     so raw ref9 IS this table's colour space for a broad fill. Being a broad
-     unlit fill it goes through the module's tonedToLift like the navy and the
-     keys, which preserves the 3.7x contrast measured between mark and navy;
-     the thin white linework is NOT the calibration reference for it, being
-     sub-pixel wide in ref9 and half navy by area. */
-  courtLogo: "#576564",     // ref9, rectified, median of the mark's own pixels
+  /* courtLogo is the CENTRE TRIDENT, and it is not the same gold as the lanes:
+     normalised chromaticity (0.490, 0.398, 0.112) against the lanes' (0.502,
+     0.356, 0.142) — more G and less B, which no exposure change under one
+     illuminant can produce, and at 7x the lane is a perforated diamond-mesh
+     tile while the mark is a smooth inlay. It is derived by TRANSFER rather
+     than by ratio, because a 3x3 erosion of the white mask returns zero wide
+     sunlit white pixels inside the centre circle (744 in the far-key band, 89
+     in the near-key band), so the local white reference is antialiasing-
+     corrupted there. Trident raw p50+ (242, 206, 78) over 3,560 px; the
+     trident band's navy (64, 77, 92) against the key band's (47, 56, 73) gives
+     a uniform illuminant factor 1.366; normalised (177.2, 150.8, 57.1); the
+     ratio to the key's raw p50+ (163, 114, 51) is (1.087, 1.323, 1.119);
+     applied to the key albedo (207, 148, 67) that is (225, 196, 75). This
+     supersedes the ref9 pale sage #576564, a shadowed read. */
+  courtLogo: "#e1c44b",     // SWA -16, transferred from the measured lane gold in the same frame
   /* Hoop hardware: no frame resolves a backboard, rim or pole, so these are
      campus-recreation.js's Muir values, carried so the two courts are the same
      object. Labelled spec, not measurement. */
@@ -124,9 +137,10 @@ export const EIGHTH_COLORS = {
 /* The stored ground["basketball-court"].surface is #2c4460. Its own note says
    it is the median of the "court apron band" — which the close frames show is
    the surrounding plaza deck, not the playing surface. The surface inside the
-   lines medians #141727 / #151729 in two independent frames, which is what
-   courtSurface carries. The data file is left as it stands; this is the
-   correction of record. */
+   lines is what courtSurface carries. The data file is left as it stands; this
+   is the correction of record. (The Apple frames read that surface at #141727
+   / #151729; both are deep-shadow samples, and the sunlit albedo arbitrated
+   off SWA -16 is the #404a5b above.) */
 
 /* Core envelope inside which the bed material is evidenced. Outside it the
    cobble colour is INHERITED and flagged low confidence — UNLESS the polygon

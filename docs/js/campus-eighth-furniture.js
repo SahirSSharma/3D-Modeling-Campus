@@ -136,6 +136,20 @@ const COURT_CLEARANCE = 1.0;
  * ground edge. Shadowed lawn is still lawn. The ~114 m² it left out was real
  * campus rendering as cobble.
  *
+ * SUPERSEDED, PENDING THE WIRING PASS (arbitrated 2026-08-19). This panel and
+ * eighthcourtyards.lawns.panels[0] "sun-lawn" are the SAME lawn, and only one
+ * of them may ship or the Sun Lawn is drawn twice, on two rungs, at two
+ * colours (#9d947c here against lawnTurf there). The photo section wins: it
+ * fills the FULL surveyed arcgis.ground#2369 ring at 351.6 m2, where this
+ * trace covers 148.0 m2 — a 58% under-trace — and in ESRI orthoimagery
+ * registered sub-metre against the surveyed basketball court this polygon sits
+ * 8-10 m WEST of where the turf actually is while the surveyed ring lands on
+ * it. This module is left intact ONLY because eighthcourtyards is not merged
+ * into campus-photo-detail.json yet; the session that merges and wires it must
+ * drop this entry from TURF_PANELS in the same change, together with the gates
+ * in tests/campus-eighth.test.mjs that pin its 142.44 m2 area and its traced
+ * contour. Until then the model has one Sun Lawn, not two.
+ *
  * ref8's CORROBORATION, stated as the number it is: sampled through this
  * polygon, ref8 medians #9c947f against ref3's #9d947c, so the MATERIAL is
  * confirmed from a second viewpoint. Its vegetation mask, though, is 57.1 %

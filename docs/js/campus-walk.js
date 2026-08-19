@@ -47,6 +47,17 @@ import { createPhotoPlaza } from "./campus-photo-plaza.js";
 import { createPhotoYork } from "./campus-photo-york.js";
 import { createPhotoArgo } from "./campus-photo-argo.js";
 import { createPhotoBlake } from "./campus-photo-blake.js";
+import { createPhotoSankofa } from "./campus-photo-sankofa.js";
+import { createPhotoPodemos } from "./campus-photo-podemos.js";
+import { createPhotoAzad } from "./campus-photo-azad.js";
+import { createPhotoPulse } from "./campus-photo-pulse.js";
+import { createPhotoSurvivance } from "./campus-photo-survivance.js";
+import { createPhotoEighthCourtyards } from "./campus-photo-eighthcourtyards.js";
+import { createPhotoEighthGathering } from "./campus-photo-eighthgathering.js";
+import { createPhotoEighthRamble } from "./campus-photo-eighthramble.js";
+import { createPhotoEighthSiteworks } from "./campus-photo-eighthsiteworks.js";
+import { createPhotoEighthSouthService } from "./campus-photo-eighthsouthservice.js";
+import { createPhotoPulseFitness } from "./campus-photo-pulsefitness.js";
 import {
   createExplore, scaleAtmosphere, stepSpeed, EYE, sliderToSpeed, speedToSlider,
   MAX_SPEED_MPS,
@@ -696,6 +707,27 @@ export async function boot({ report, mode = "campus" } = {}) {
     photoZone.add(createPhotoYork(null, { photo: data.photo, heightAt, surfaceAt }).group);
     photoZone.add(createPhotoArgo(null, { photo: data.photo, heightAt, surfaceAt }).group);
     photoZone.add(createPhotoBlake(null, { photo: data.photo, heightAt, surfaceAt }).group);
+    /* Zone 2 — Eighth College / the Theatre District neighbourhood, 2023. The
+       2014 LiDAR is blind to all of it, so every one of these anchors to the
+       ArcGIS massing ring and its GIS h instead: heightAt would be measuring
+       the parking lot this college replaced. The five halls first, then the
+       landscape that ties them together. campus-photo-eighth.js above still
+       runs — it keeps the nine lighting fixtures none of these claimed. */
+    photoZone.add(createPhotoSankofa(null, { photo: data.photo, heightAt, surfaceAt }).group);
+    photoZone.add(createPhotoPodemos(null, { photo: data.photo, heightAt, surfaceAt }).group);
+    photoZone.add(createPhotoAzad(null, { photo: data.photo, heightAt, surfaceAt }).group);
+    photoZone.add(createPhotoPulse(null, { photo: data.photo, heightAt, surfaceAt }).group);
+    photoZone.add(createPhotoSurvivance(null, { photo: data.photo, heightAt, surfaceAt }).group);
+    photoZone.add(createPhotoEighthCourtyards(null, { photo: data.photo, heightAt, surfaceAt }).group);
+    photoZone.add(createPhotoEighthGathering(null, { photo: data.photo, heightAt, surfaceAt }).group);
+    photoZone.add(createPhotoEighthRamble(null, { photo: data.photo, heightAt, surfaceAt }).group);
+    photoZone.add(createPhotoEighthSiteworks(null, { photo: data.photo, heightAt, surfaceAt }).group);
+    photoZone.add(createPhotoEighthSouthService(null, { photo: data.photo, heightAt, surfaceAt }).group);
+    /* The open-air training rig and its two heavy bags at the Pulse base. Its
+       own module because two sections had each built the rig at a different
+       size 4.9 m apart, and neither had measured it — this one owns it, and
+       both of theirs are superseded in its data. */
+    photoZone.add(createPhotoPulseFitness(null, { photo: data.photo, heightAt, surfaceAt }).group);
   }
   scene.add(photoZone);
 
@@ -844,9 +876,13 @@ export async function boot({ report, mode = "campus" } = {}) {
      ?mode=staging boot THIS module as world-building views of the full
      campus, parked over the stretch each tab is about — the run's start on
      the Eighth courts, and the workbench over the zone being built. */
+  /* Staging spawns over the ACTIVE zone and moves when the zone moves. Zone 1
+     was Revelle plaza at (38, 380); the active zone is now Zone 2, Eighth
+     College, so staging opens between Pulse and Sankofa with the Ramble and
+     the courtyards ahead and the 64 m Sankofa tower on the skyline. */
   const SPAWNS = {
     scooter: { x: -174.5, z: 525.2 },
-    staging: { x: 38, z: 380 },
+    staging: { x: -140, z: 580 },
   };
   const argo = campus.places["Argo Hall"];
   const at = SPAWNS[mode] || argo;
