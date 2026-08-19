@@ -205,11 +205,35 @@
     /* The automated verification harness reads layer/status through this;
        it is the same object the dev panel gets. */
     window.campusWalk = walk;
+    sessionStorage.removeItem('walk-reload-once'); // a clean boot re-arms the self-heal below
   } catch (err) {
     /* A blank rectangle is the worst possible failure here: it looks like a
-       slow load, forever. Say what actually broke. */
+       slow load, forever. Say what actually broke — and only blame WebGL
+       when WebGL is actually the problem. The other real-world case is a
+       deploy's cache window: GitHub Pages serves these modules with
+       max-age=600, so for up to ten minutes after a push a browser can mix
+       a fresh module with a stale cached one, and the seam between them
+       throws something like "x is not a function". That heals with a hard
+       refresh, and saying so beats a wrong diagnosis. */
     console.error('3D Modeling Campus failed to start', err);
-    report.fail(`${err.message}. It needs a browser with WebGL.`);
+    const gl = (() => { try { return !!document.createElement('canvas').getContext('webgl2'); } catch { return false; } })();
+    if (gl && !sessionStorage.getItem('walk-reload-once')) {
+      /* Heal it instead of describing it: re-fetch every script this page
+         loaded with cache:'reload' (which REPLACES the stale HTTP-cache
+         entries) and try once more. The sessionStorage latch means a real
+         bug still surfaces on the second pass instead of reload-looping. */
+      sessionStorage.setItem('walk-reload-once', '1');
+      const scripts = performance.getEntriesByType('resource')
+        .map((r) => r.name)
+        .filter((u) => u.startsWith(location.origin) && u.includes('.js'));
+      await Promise.allSettled(scripts.map((u) => fetch(u, { cache: 'reload' })));
+      location.reload();
+    } else {
+      sessionStorage.removeItem('walk-reload-once');
+      report.fail(gl
+        ? `${err.message}. If the site just updated, this is a half-cached load — hard refresh (Cmd+Shift+R) to pick up the new version.`
+        : `${err.message}. It needs a browser with WebGL.`);
+    }
   }
 
   function chooseMode() {
