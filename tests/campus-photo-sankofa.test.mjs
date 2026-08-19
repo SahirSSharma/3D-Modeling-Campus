@@ -912,7 +912,7 @@ test("no solid crowds the scooter corridor", () => {
 
 test("the module uses the material library, and only deterministic sources", () => {
   const src = readFileSync(join(root, "docs/js/campus-photo-sankofa.js"), "utf8");
-  assert.match(src, /createMaterialLibrary/, "surfaces come from campus-materials.js");
+  assert.match(src, /(?:shared|create)MaterialLibrary/, "surfaces come from campus-materials.js");
   /* CALLED, not merely imported. The round-one module imported overlayLift and
      never called it, and the old alternation was satisfied by the dead import
      alone while the only ground decal sat at a raw y. */

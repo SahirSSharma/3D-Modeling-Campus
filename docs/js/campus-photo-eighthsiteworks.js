@@ -128,10 +128,9 @@
 // chain reads a clock or a random source, and the test greps for both.
 import * as THREE from "../vendor/three/three.module.min.js";
 import { applyOverlayDepth, OVERLAY, overlayLift } from "./campus-overlay.js";
-import { createMaterialLibrary } from "./campus-materials.js";
+import { sharedMaterialLibrary } from "./campus-materials.js";
 
-let LIB = null;
-const lib = () => (LIB ??= createMaterialLibrary(THREE));
+const lib = () => sharedMaterialLibrary(THREE);
 
 const concrete = (color) => lib().get("smoothConcrete", { color });
 const boardformed = (color) => lib().get("boardFormedConcrete", { color, normalScale: 0.6 });

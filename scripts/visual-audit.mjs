@@ -323,6 +323,10 @@ const failures = [];
 try {
   await page.goto(`http://127.0.0.1:${PORT}/?mode=${mode}`, { waitUntil: "load" });
   await page.waitForFunction(() => !!(window.__campusWalk?.massInfo && window.campusWalk), null, { timeout: 300_000 });
+  /* The streaming layer builds the photo zone and region AFTER the first
+     frame (one module per frame-gap — slow under SwiftShader). Photographing
+     before it finishes would judge a world with the photo detail missing. */
+  await page.waitForFunction(() => window.__campusWalk.streamed === true, null, { timeout: 300_000 });
   await page.evaluate(installFrameCounter);
 
   /* The HUD is not the subject. Hidden at capture time from the harness rather
@@ -336,6 +340,15 @@ try {
        is. Through the layers seam the dev panel already owns, so nothing
        shipped changes. */
     if (!keepLabels && window.campusWalk?.layers?.labels) window.campusWalk.layers.labels.visible = false;
+    /* Pin full quality: the adaptive controller (campus-quality.js) reads
+       SwiftShader's 1-2 fps as a machine in trouble and would walk the
+       ladder to the floor — and then these screenshots would judge the
+       degraded tier instead of the product. */
+    window.__campusWalk?.quality?.lock(0);
+    /* Sweep tiers every frame here: the audit settles by counting FRAMES
+       (SwiftShader runs ~1 fps), and the default 6-frame stride would let a
+       screenshot capture the previous station's visibility state. */
+    if (window.__campusWalk?.chunks) window.__campusWalk.chunks.config.stride = 1;
   }, argv.includes("--labels"));
   await waitFrames(8);
 

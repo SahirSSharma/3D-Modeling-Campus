@@ -95,7 +95,7 @@
 // says which it is.
 import * as THREE from "../vendor/three/three.module.min.js";
 import { applyOverlayDepth, OVERLAY, overlayLift } from "./campus-overlay.js";
-import { createMaterialLibrary } from "./campus-materials.js";
+import { sharedMaterialLibrary } from "./campus-materials.js";
 
 const CARPET = "carpet";
 const PAINT = "paint";
@@ -113,8 +113,7 @@ const HEDGE_SEG = 0.8;
 /* Planting clearance around a fitting standing in the bed. */
 const HEDGE_CLEAR = 0.15;
 
-let LIB = null;
-const lib = () => (LIB ??= createMaterialLibrary(THREE));
+const lib = () => sharedMaterialLibrary(THREE);
 
 const concrete = (color) => lib().get("smoothConcrete", { color });
 const painted = (color) => lib().get("metalPanel", { color, metalness: 0.35, roughness: 0.55 });

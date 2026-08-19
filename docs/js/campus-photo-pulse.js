@@ -87,7 +87,7 @@
 // loggias, and the rooftop terrace's long element.
 import * as THREE from "../vendor/three/three.module.min.js";
 import { applyOverlayDepth, overlayLift } from "./campus-overlay.js";
-import { createMaterialLibrary } from "./campus-materials.js";
+import { sharedMaterialLibrary } from "./campus-materials.js";
 
 /* Ground decals ride the overlay ladder so they paint over the measured
    terrain in a fixed order instead of z-fighting it. The Front Porch is the
@@ -96,7 +96,7 @@ import { createMaterialLibrary } from "./campus-materials.js";
 const CARPET = "carpet";
 
 let LIB = null;
-const lib = () => (LIB ??= createMaterialLibrary(THREE));
+const lib = () => (LIB ??= sharedMaterialLibrary(THREE));
 
 /* Large-format flat rainscreen: barely metallic, matte, panel-scale joints.
    The repeat is driven off the section's own derived panel size. */

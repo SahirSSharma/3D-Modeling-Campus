@@ -1338,7 +1338,7 @@ test("everything the module builds stays inside the declared envelope", async ()
 
 test("the module is a one-way reader, deterministic, and on the shared ladders", () => {
   const src = readFileSync(join(root, "docs/js/campus-photo-eighthsiteworks.js"), "utf8");
-  assert.match(src, /createMaterialLibrary/, "surfaces come from campus-materials.js");
+  assert.match(src, /(?:shared|create)MaterialLibrary/, "surfaces come from campus-materials.js");
   assert.ok(!/Math\.random|Date\.now|new Date/.test(src), "no nondeterminism in the builder");
   assert.match(src, /overlayLift|applyOverlayDepth/, "ground decals ride the overlay ladder");
   assert.ok(!/polygonOffsetFactor\s*[:=]/.test(src),

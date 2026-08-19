@@ -441,7 +441,7 @@ test("the module builds it, and two builds are byte-identical", async () => {
   /* Scan the CODE, not the prose — the header rightly names what it does not use. */
   const src = raw.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
   assert.ok(!/Math\.random|Date\.now|new Date/.test(src), "no nondeterminism in the builder");
-  assert.match(src, /createMaterialLibrary/, "surfaces come from campus-materials.js");
+  assert.match(src, /(?:shared|create)MaterialLibrary/, "surfaces come from campus-materials.js");
   assert.match(src, /overlayLift|applyOverlayDepth/, "ground decals ride the shared overlay ladder");
   assert.ok(!/#[0-9a-fA-F]{6}/.test(src), "colours are DATA — no hex literal may appear in the module");
   assert.ok(!/\b(lift|polygonOffset)\s*[:=]\s*0?\.\d/.test(src), "no local lift or polygon-offset constant");

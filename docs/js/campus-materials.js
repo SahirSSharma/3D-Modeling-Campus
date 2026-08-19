@@ -424,6 +424,24 @@ export function generateTextureSet(THREE, className, { seed = LIBRARY_SEED, anis
  * clones the sampler. In three the clone shares its `source`, so the pixels
  * are still uploaded once — a different repeat costs a sampler, not memory.
  */
+/* The one library the live site should use. Every photo module used to make
+   its own — ~15 identical copies of every DataTexture, generated and uploaded
+   once per module. The library is seed-pinned and byte-deterministic (the test
+   proves two independent copies identical), so sharing one instance changes
+   nothing about what renders; it only stops the duplicate generation, and it
+   makes cross-module texture identity real — which is what lets the perf
+   layer's material dedupe fold the photo zone's materials together.
+   `createMaterialLibrary` stays exported for the tests that compare
+   independent copies. */
+let SHARED = null;
+export function sharedMaterialLibrary(THREE) {
+  /* No options on purpose: a second caller's options would be silently
+     ignored once the singleton exists, which is a trap, so the shared
+     library is always the default library. A caller that needs different
+     options wants its own createMaterialLibrary. */
+  return (SHARED ??= createMaterialLibrary(THREE));
+}
+
 export function createMaterialLibrary(THREE, { anisotropy = 8, seed = LIBRARY_SEED } = {}) {
   const cache = new Map();
 

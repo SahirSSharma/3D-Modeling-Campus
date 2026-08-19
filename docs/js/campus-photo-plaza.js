@@ -35,7 +35,7 @@
 // section's pinned seed, so a reload rebuilds the same plaza.
 import * as THREE from "../vendor/three/three.module.min.js";
 import { applyOverlayDepth, OVERLAY, overlayLift } from "./campus-overlay.js";
-import { createMaterialLibrary, mulberry32 } from "./campus-materials.js";
+import { sharedMaterialLibrary, mulberry32 } from "./campus-materials.js";
 
 const PAD = "pad";
 const CARPET = "carpet";
@@ -842,7 +842,7 @@ export function createPhotoPlaza(scene, { photo, heightAt, surfaceAt } = {}) {
     throw new Error("campus-photo-plaza: needs surfaceAt (or heightAt) to place on the ground");
   }
 
-  const mats = createMaterialLibrary(THREE);
+  const mats = sharedMaterialLibrary(THREE);
   const counts = {};
   buildTrees(section, group, ground, mats, counts);
   buildLawns(section, group, ground, mats, counts);

@@ -593,6 +593,6 @@ test("every drawn ring segment is skinned: declared facade or notch wall", async
 
 test("the module uses the material library, and only deterministic sources", () => {
   const src = readFileSync(join(root, "docs/js/campus-photo-keeling.js"), "utf8");
-  assert.match(src, /createMaterialLibrary/, "surfaces come from campus-materials.js");
+  assert.match(src, /(?:shared|create)MaterialLibrary/, "surfaces come from campus-materials.js");
   assert.ok(!/Math\.random|Date\.now/.test(src), "no nondeterminism in the builder");
 });

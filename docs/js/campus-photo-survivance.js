@@ -74,11 +74,10 @@
 // every placement is a closed-form function of the surveyed rings and the
 // section's own figures.
 import * as THREE from "../vendor/three/three.module.min.js";
-import { createMaterialLibrary } from "./campus-materials.js";
+import { sharedMaterialLibrary } from "./campus-materials.js";
 
 /* One material library for the whole module, created on first build. */
-let LIB = null;
-const lib = () => (LIB ??= createMaterialLibrary(THREE));
+const lib = () => sharedMaterialLibrary(THREE);
 
 /* Flat metal / composite rainscreen: the tower's whole field. */
 const panelMat = (color) =>

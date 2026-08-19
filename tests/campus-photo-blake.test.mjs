@@ -452,7 +452,7 @@ test("two builds are byte-identical — no hidden randomness", () => {
 
 test("the material library is on the surfaces, and only deterministic sources", () => {
   const src = readFileSync(join(root, "docs/js/campus-photo-blake.js"), "utf8");
-  assert.match(src, /createMaterialLibrary/, "surfaces come from campus-materials.js");
+  assert.match(src, /(?:shared|create)MaterialLibrary/, "surfaces come from campus-materials.js");
   assert.ok(!/Math\.random|Date\.now/.test(src), "no nondeterminism in the builder");
   const { group } = build();
   let textured = 0;

@@ -41,12 +41,11 @@
 // this file's own irregularity comes from `hash`.
 import * as THREE from "../vendor/three/three.module.min.js";
 import { applyOverlayDepth, OVERLAY, overlayLift } from "./campus-overlay.js";
-import { createMaterialLibrary } from "./campus-materials.js";
+import { sharedMaterialLibrary } from "./campus-materials.js";
 
 const PAD = "pad";
 
-let LIB = null;
-const lib = () => (LIB ??= createMaterialLibrary(THREE));
+const lib = () => sharedMaterialLibrary(THREE);
 
 const concrete = (color) => lib().get("smoothConcrete", { color });
 const painted = (color) => lib().get("metalPanel", { color, metalness: 0.35, roughness: 0.55 });

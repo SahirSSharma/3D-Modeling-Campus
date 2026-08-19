@@ -101,12 +101,12 @@
 // seed, so two loads produce byte-identical matrices.
 import * as THREE from "../vendor/three/three.module.min.js";
 import { applyOverlayDepth, OVERLAY, overlayLift } from "./campus-overlay.js";
-import { createMaterialLibrary } from "./campus-materials.js";
+import { sharedMaterialLibrary } from "./campus-materials.js";
 import { fillPoly } from "./campus-drape.js";
 
-/* One material library for the module, created on first build. */
+/* The process-wide shared material library, resolved on first build. */
 let LIB = null;
-const lib = () => (LIB ??= createMaterialLibrary(THREE));
+const lib = () => (LIB ??= sharedMaterialLibrary(THREE));
 
 const concrete = (color) => lib().get("smoothConcrete", { color });
 const metal = (color) => lib().get("metalPanel", { color, metalness: 0.55, roughness: 0.45 });

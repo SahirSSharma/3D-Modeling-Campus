@@ -1067,7 +1067,7 @@ test("the material library is on the surfaces, and the textures are code-generat
   assert.ok(textured >= 25, `only ${textured} textured meshes — the library is not applied`);
   assert.ok(glass >= 1, "the windows do not carry the library's reflective glass");
   const src = readFileSync(join(root, "docs/js/campus-photo-azad.js"), "utf8");
-  assert.match(src, /createMaterialLibrary/, "surfaces come from campus-materials.js");
+  assert.match(src, /(?:shared|create)MaterialLibrary/, "surfaces come from campus-materials.js");
   assert.match(src, /get\("pavingConcreteUnit"/, "the rainscreen rides a joint-grid class, not flat colour");
   assert.match(src, /get\("brick"/, "the burnished block rides a coursed class");
   assert.match(src, /get\("roofMembrane"/, "the membrane rides the membrane class");

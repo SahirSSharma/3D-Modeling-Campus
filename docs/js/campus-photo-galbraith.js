@@ -66,7 +66,7 @@
 import * as THREE from "../vendor/three/three.module.min.js";
 import { applyOverlayDepth, OVERLAY, overlayLift } from "./campus-overlay.js";
 import { ribbon } from "./campus-drape.js";
-import { createMaterialLibrary } from "./campus-materials.js";
+import { sharedMaterialLibrary } from "./campus-materials.js";
 import { SPECIES, treeSpecies, treeTint, crownFor } from "./campus-species.js";
 
 /* Ground decals ride the overlay ladder so they paint over the measured
@@ -83,7 +83,7 @@ const PAINT = "paint";
    `makeMats` builds the per-call helpers; small painted metalwork keeps the
    plain materials — a 28 mm picket has no room for grain. */
 function makeMats() {
-  const lib = createMaterialLibrary(THREE);
+  const lib = sharedMaterialLibrary(THREE);
   return {
     lib,
     /* Poured-and-floated concrete; `repeat` is the per-surface lever, tuned

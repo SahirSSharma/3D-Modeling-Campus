@@ -37,6 +37,9 @@ import { makeSolidSampler } from "./campus-clearance.js";
 import { nullReporter } from "./campus-boot.js";
 import { surveyFacts, geometryFacts, sourceLines } from "./campus-facts.js";
 import { createPostfx } from "./campus-postfx.js";
+import { freezeStatic, filterShadowCasters, dedupeMaterials } from "./campus-perf.js";
+import { createChunkWorld } from "./campus-chunks.js";
+import { createQuality } from "./campus-quality.js";
 import { createPhotoEighth } from "./campus-photo-eighth.js";
 import { createPhotoRevelle } from "./campus-photo-revelle.js";
 import { createPhotoRady } from "./campus-photo-rady.js";
@@ -92,17 +95,21 @@ const DATA = [
      there: absent, the regional terrain still renders and the campus is
      untouched — it just stands in an unbuilt landscape, which is exactly what
      it did before this file existed. */
-  { key: "regionOsm", file: "region-osm.json", required: false, what: "regional buildings and roads" },
+  { key: "regionOsm", file: "region-osm.json", required: false, defer: true, what: "regional buildings and roads" },
   /* Measured regional roofs, as a SIDECAR keyed by index into region-osm.json.
      Separate for the same reason campus-lidar.json is separate from
      campus-3d.json: a fresh Overpass pull regenerates the footprints, and
      folding measurements into that file would erase them — or, worse, keep
      them attached to the wrong buildings. The join is checked before use. */
-  { key: "regionRoofs", file: "region-heights.json", required: false, what: "measured regional roofs" },
+  { key: "regionRoofs", file: "region-heights.json", required: false, defer: true, what: "measured regional roofs" },
   /* Measured colour for the region: one palette index per terrain cell, plus a
      roof colour per footprint. Sampled from satellite imagery at BUILD time —
      the photograph itself never reaches the browser, which is the same rule
      the campus has always followed. */
+  /* NOT deferred, unlike its region siblings: the terrain builder reads it
+     at boot (regionData.colors) for the measured per-cell ground colour, and
+     a deferred file would silently downgrade the whole regional ground to
+     inherited tan — a measured-data regression, found in review. */
   { key: "regionColors", file: "region-colors.json", required: false, what: "regional colour" },
 ];
 const urlOf = (file) => new URL(`../data/${file}`, import.meta.url);
@@ -130,6 +137,7 @@ let postfx = null; // the pass chain; frame() falls back to a bare render until 
 let sunRig = null; // the shadow-casting sun and its camera-following target
 let massInfo = new Map(); // building name -> { x, z, topY, h, ring } from the massing
 let labels = null;
+let chunks = null; // the chunked-world layer; frame() sweeps its tiers
 let minimap = { update() {} };
 /* Set by boot: pushes state.speed back out to the slider and its readout, so
    the arrow keys and the slider are two handles on one number rather than two
@@ -258,38 +266,36 @@ function updateHud() {
 
 /* ------------------------------------------------------------------- boot */
 
-/* Adaptive resolution: if a machine cannot hold a walkable frame rate at the
-   current render scale, trade pixels for motion until it can. A campus you
-   cannot move through is worthless at any sharpness. */
-let perfAcc = 0;
-let perfN = 0;
+/* Adaptive quality: the measured ladder in campus-quality.js — GTAO internal
+   resolution first (the largest slice of the frame), shadow map second,
+   pixels and LOD radii last. Replaces the old pixel-ratio-only adapt(): on
+   the machines measured, dropping pixels barely bought frames while GTAO
+   cost the entire gap between 40 and 60 fps. A campus you cannot move
+   through is worthless at any sharpness. */
+let quality = null;
 function adapt(dt) {
-  perfAcc += dt;
-  perfN++;
-  if (perfAcc < 2.5) return;
-  const fps = perfN / perfAcc;
-  perfAcc = 0;
-  perfN = 0;
-  const ratio = renderer.getPixelRatio();
-  if (fps < 24 && ratio > 0.7) {
-    renderer.setPixelRatio(Math.max(0.7, ratio - 0.25));
-    resize();
-  } else if (fps > 50 && ratio < Math.min(1.5, devicePixelRatio)) {
-    renderer.setPixelRatio(Math.min(Math.min(1.5, devicePixelRatio), ratio + 0.25));
-    resize();
-  }
+  quality?.update(dt);
 }
 
+/* The frame's REAL cost, summed across every pass. renderer.info resets on
+   each internal render by default, so reading it later in the frame shows
+   only the last full-screen blit ("draws 1") — autoReset goes off at boot,
+   the reset happens here, and status() reads this snapshot. */
+const perfSnap = { draws: 0, triangles: 0 };
 function frame(now) {
   requestAnimationFrame(frame);
   const dt = Math.min(0.05, (now - state.lastTime) / 1000 || 0);
   state.lastTime = now;
   update(dt);
   labels?.update(camera);
+  chunks?.update(camera, scene.fog ? scene.fog.far * 1.05 : Infinity);
   minimap.update(explore.x, explore.z, explore.yaw);
   adapt(dt);
   trackShadow();
+  renderer.info.reset();
   if (postfx) postfx.render(); else renderer.render(scene, camera);
+  perfSnap.draws = renderer.info.render.calls;
+  perfSnap.triangles = renderer.info.render.triangles;
 }
 
 /* Keep the sun's shadow box centred on the explorer, sized by altitude —
@@ -334,7 +340,12 @@ function resize() {
  * few lines and buys a percentage that is the actual download.
  */
 async function download(rep) {
-  const responses = await Promise.all(DATA.map((d) => fetch(urlOf(d.file)).catch(() => null)));
+  /* `defer: true` files stay out of the first frame's critical path — the
+     streaming layer fetches them right after boot, each exactly once
+     (verify-boot waits for `streamed` before counting, so the duplicate-
+     fetch gate covers them too). The loading bar's denominator only ever
+     contains what boot actually waits for, so it keeps telling the truth. */
+  const responses = await Promise.all(DATA.map((d) => (d.defer ? null : fetch(urlOf(d.file)).catch(() => null))));
   const bytes = DATA.map(() => 0);
   const advertised = responses.map((r) => {
     const len = Number(r?.headers?.get?.("content-length"));
@@ -422,7 +433,9 @@ async function download(rep) {
     const mb = bytes[i] ? `${(bytes[i] / 1e6).toFixed(bytes[i] < 1e6 ? 2 : 1)} MB` : null;
     rep.log(parsed[i]
       ? `${d.file} — ${d.what}${mb ? ` · ${mb}` : ""}`
-      : `${d.file} — absent, going without`);
+      : d.defer
+        ? `${d.file} — ${d.what} · streams in after first frame`
+        : `${d.file} — absent, going without`);
   }
   rep.tick("data", 1);
   return out;
@@ -459,6 +472,7 @@ export async function boot({ report, mode = "campus" } = {}) {
   await rep.paint();
   const canvas = document.getElementById("walk-canvas");
   renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.info.autoReset = false; // frame() resets once per FRAME, not per pass — see perfSnap
   renderer.setPixelRatio(Math.min(1.5, devicePixelRatio)); // full-viewport 2x on a 5K display is pure fill-rate pain
   /* Free roam used to skip tone mapping so nothing sat between you and the
      measured colour. Sahir's 2026-08-16 call — "upgrade everything" — trades
@@ -535,9 +549,18 @@ export async function boot({ report, mode = "campus" } = {}) {
      terrain is up — massing a town onto a world with no land under it would
      hang 10,000 buildings on the campus sampler's edge clamp. */
   const regionZone = new THREE.Group();
-  if (regionData) {
+  /* The group joins the scene NOW so the layer toggle and zone wiring are
+     boot-stable; what fills it moved to the streaming layer below — its
+     three data files are `defer: true` and its 373 k triangles of build work
+     were a full second of the old boot's critical path. Only built when the
+     regional terrain is up — massing a town onto a world with no land under
+     it would hang 10,000 buildings on the campus sampler's edge clamp. */
+  const buildRegionMassing = (deferred) => {
+    if (!regionData || !deferred.regionOsm) return;
     const regionBuilt = createRegionMassing(scene, {
-      regionOsm: data.regionOsm, regionHeights: data.regionRoofs,
+      regionOsm: deferred.regionOsm, regionHeights: deferred.regionRoofs,
+      /* regionColors downloads at boot (the terrain needs it); only the two
+         massing-only files are deferred. */
       regionColors: data.regionColors,
       heightAt, campusTerrain: lidar.terrain,
     });
@@ -552,7 +575,7 @@ export async function boot({ report, mode = "campus" } = {}) {
           `${c.triangles.toLocaleString()} triangles in ${c.drawCalls} draw calls`
       );
     }
-  }
+  };
   scene.add(regionZone);
   massInfo = built.info;
   /* Which roof, if any, is under the camera. Free roam's climb rate is scaled
@@ -586,7 +609,7 @@ export async function boot({ report, mode = "campus" } = {}) {
   const surfaces = world.createSurfaces(scene, campus, terrain.surfaceAt, arcgis, colors);
   /* The painted lines of every sports surface — measured from imagery, drawn as
      geometry. Quiet no-op when the data file is absent. */
-  createMarkings(scene, terrain.surfaceAt, markings);
+  const markingsGroup = createMarkings(scene, terrain.surfaceAt, markings);
   /* With the surveyed ground plane, the sidewalk POLYGONS are the paths;
      ribbons guessed from OSM centrelines would just z-fight them. They still
      draw when the GIS file is absent. */
@@ -684,51 +707,59 @@ export async function boot({ report, mode = "campus" } = {}) {
      ground. Absent file, absent detail: the measured campus is complete
      without it. */
   const photoZone = new THREE.Group();
-  if (data.photo) {
+  /* Built by the streaming layer, one module per frame-gap, because these 21
+     builders were most of the old boot's build time and none of them are
+     needed for the first frame. The DATA (campus-photo-detail.json) still
+     downloads at boot — the tree skip-lists and the fountain replacement
+     above read it — only the geometry work moves. Each thunk is verbatim the
+     call that used to run inline here. */
+  const photoBuilders = !data.photo ? [] : (() => {
     const surfaceAt = terrain.surfaceAt;
-    photoZone.add(createPhotoEighth(null, { photo: data.photo, heightAt: surfaceAt }).group);
-    createPhotoRevelle(photoZone, { photo: data.photo, heightAt: surfaceAt, surfaceAt });
-    /* Rady and ERC are free-roam-only: both sit far outside the scooter
-       corridor's crop, so the run never has the terrain under them. */
-    photoZone.add(createPhotoRady(null, { photo: data.photo, heightAt: surfaceAt, surfaceAt }).group);
-    photoZone.add(createPhotoErc(null, { photo: data.photo, heightAt: surfaceAt, surfaceAt }).group);
-    /* Keeling wants BOTH samplers distinctly: facade layers seat on heightAt —
-       the datum campus-massing.js used for the walls they float off — and
-       ground items on surfaceAt, or they sink under the drawn terrain. */
-    photoZone.add(createPhotoKeeling(null, { photo: data.photo, heightAt, surfaceAt }).group);
-    photoZone.add(createPhotoGalbraith(null, { photo: data.photo, heightAt, surfaceAt }).group);
-    /* The plaza landscape: ultra trees on measured trunks (the blob renderer
-       skips those keys above), the square-plinth fountain that replaces the
-       landmark ring, lawns, paving arcs, furniture. Ground module — surfaceAt. */
-    photoZone.add(createPhotoPlaza(null, { photo: data.photo, heightAt, surfaceAt }).group);
-    /* The Zone 1 rebuilds: York owns itself now (the revelle module no longer
-       draws it), Argo and Blake are the 2015 white repaint, sibling modules
-       with different bays. Two-sampler contract throughout. */
-    photoZone.add(createPhotoYork(null, { photo: data.photo, heightAt, surfaceAt }).group);
-    photoZone.add(createPhotoArgo(null, { photo: data.photo, heightAt, surfaceAt }).group);
-    photoZone.add(createPhotoBlake(null, { photo: data.photo, heightAt, surfaceAt }).group);
-    /* Zone 2 — Eighth College / the Theatre District neighbourhood, 2023. The
-       2014 LiDAR is blind to all of it, so every one of these anchors to the
-       ArcGIS massing ring and its GIS h instead: heightAt would be measuring
-       the parking lot this college replaced. The five halls first, then the
-       landscape that ties them together. campus-photo-eighth.js above still
-       runs — it keeps the nine lighting fixtures none of these claimed. */
-    photoZone.add(createPhotoSankofa(null, { photo: data.photo, heightAt, surfaceAt }).group);
-    photoZone.add(createPhotoPodemos(null, { photo: data.photo, heightAt, surfaceAt }).group);
-    photoZone.add(createPhotoAzad(null, { photo: data.photo, heightAt, surfaceAt }).group);
-    photoZone.add(createPhotoPulse(null, { photo: data.photo, heightAt, surfaceAt }).group);
-    photoZone.add(createPhotoSurvivance(null, { photo: data.photo, heightAt, surfaceAt }).group);
-    photoZone.add(createPhotoEighthCourtyards(null, { photo: data.photo, heightAt, surfaceAt }).group);
-    photoZone.add(createPhotoEighthGathering(null, { photo: data.photo, heightAt, surfaceAt }).group);
-    photoZone.add(createPhotoEighthRamble(null, { photo: data.photo, heightAt, surfaceAt }).group);
-    photoZone.add(createPhotoEighthSiteworks(null, { photo: data.photo, heightAt, surfaceAt }).group);
-    photoZone.add(createPhotoEighthSouthService(null, { photo: data.photo, heightAt, surfaceAt }).group);
-    /* The open-air training rig and its two heavy bags at the Pulse base. Its
-       own module because two sections had each built the rig at a different
-       size 4.9 m apart, and neither had measured it — this one owns it, and
-       both of theirs are superseded in its data. */
-    photoZone.add(createPhotoPulseFitness(null, { photo: data.photo, heightAt, surfaceAt }).group);
-  }
+    return [
+      () => photoZone.add(createPhotoEighth(null, { photo: data.photo, heightAt: surfaceAt }).group),
+      () => createPhotoRevelle(photoZone, { photo: data.photo, heightAt: surfaceAt, surfaceAt }),
+      /* Rady and ERC are free-roam-only: both sit far outside the scooter
+         corridor's crop, so the run never has the terrain under them. */
+      () => photoZone.add(createPhotoRady(null, { photo: data.photo, heightAt: surfaceAt, surfaceAt }).group),
+      () => photoZone.add(createPhotoErc(null, { photo: data.photo, heightAt: surfaceAt, surfaceAt }).group),
+      /* Keeling wants BOTH samplers distinctly: facade layers seat on heightAt —
+         the datum campus-massing.js used for the walls they float off — and
+         ground items on surfaceAt, or they sink under the drawn terrain. */
+      () => photoZone.add(createPhotoKeeling(null, { photo: data.photo, heightAt, surfaceAt }).group),
+      () => photoZone.add(createPhotoGalbraith(null, { photo: data.photo, heightAt, surfaceAt }).group),
+      /* The plaza landscape: ultra trees on measured trunks (the blob renderer
+         skips those keys above), the square-plinth fountain that replaces the
+         landmark ring, lawns, paving arcs, furniture. Ground module — surfaceAt. */
+      () => photoZone.add(createPhotoPlaza(null, { photo: data.photo, heightAt, surfaceAt }).group),
+      /* The Zone 1 rebuilds: York owns itself now (the revelle module no longer
+         draws it), Argo and Blake are the 2015 white repaint, sibling modules
+         with different bays. Two-sampler contract throughout. */
+      () => photoZone.add(createPhotoYork(null, { photo: data.photo, heightAt, surfaceAt }).group),
+      () => photoZone.add(createPhotoArgo(null, { photo: data.photo, heightAt, surfaceAt }).group),
+      () => photoZone.add(createPhotoBlake(null, { photo: data.photo, heightAt, surfaceAt }).group),
+      /* Zone 2 — Eighth College / the Theatre District neighbourhood, 2023. The
+         2014 LiDAR is blind to all of it, so every one of these anchors to the
+         ArcGIS massing ring and its GIS h instead: heightAt would be measuring
+         the parking lot this college replaced. The five halls first, then the
+         landscape that ties them together. campus-photo-eighth.js above still
+         runs — it keeps the nine lighting fixtures none of these claimed. */
+      () => photoZone.add(createPhotoSankofa(null, { photo: data.photo, heightAt, surfaceAt }).group),
+      () => photoZone.add(createPhotoPodemos(null, { photo: data.photo, heightAt, surfaceAt }).group),
+      () => photoZone.add(createPhotoAzad(null, { photo: data.photo, heightAt, surfaceAt }).group),
+      () => photoZone.add(createPhotoPulse(null, { photo: data.photo, heightAt, surfaceAt }).group),
+      () => photoZone.add(createPhotoSurvivance(null, { photo: data.photo, heightAt, surfaceAt }).group),
+      () => photoZone.add(createPhotoEighthCourtyards(null, { photo: data.photo, heightAt, surfaceAt }).group),
+      () => photoZone.add(createPhotoEighthGathering(null, { photo: data.photo, heightAt, surfaceAt }).group),
+      () => photoZone.add(createPhotoEighthRamble(null, { photo: data.photo, heightAt, surfaceAt }).group),
+      () => photoZone.add(createPhotoEighthSiteworks(null, { photo: data.photo, heightAt, surfaceAt }).group),
+      () => photoZone.add(createPhotoEighthSouthService(null, { photo: data.photo, heightAt, surfaceAt }).group),
+      /* The open-air training rig and its two heavy bags at the Pulse base. Its
+         own module because two sections had each built the rig at a different
+         size 4.9 m apart, and neither had measured it — this one owns it, and
+         both of theirs are superseded in its data. */
+      () => photoZone.add(createPhotoPulseFitness(null, { photo: data.photo, heightAt, surfaceAt }).group),
+    ];
+  })();
   scene.add(photoZone);
 
   /* Everything that stands on the ground casts and catches the sun. The
@@ -738,6 +769,64 @@ export async function boot({ report, mode = "campus" } = {}) {
   for (const made of [built.group, trees.group, details, athleticsZone, eighthZone, landmarksGroup, photoZone]) {
     const g = made?.group ?? (made?.isObject3D ? made : null);
     g?.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  }
+
+  /* The render-performance layer (campus-perf.js). Only static roots are
+     handed over — never the sky dome (it re-centres itself per frame and
+     needs matrixAutoUpdate), never the label sprites (they move). Dedupe
+     first so the folded materials are what freeze/filter walk over. */
+  const staticRoots = [
+    terrain.mesh, built.group, surfaces, markingsGroup, trees.group, details,
+    athleticsZone, eighthZone, landmarksGroup, photoZone, regionZone,
+  ];
+  const folded = dedupeMaterials(staticRoots);
+  const unshadowed = filterShadowCasters(staticRoots);
+  const frozen = freezeStatic(staticRoots);
+  rep.log(
+    `perf — ${folded.replaced.toLocaleString()} duplicate materials folded into ` +
+      `${folded.unique.toLocaleString()} · ${unshadowed.toLocaleString()} sub-texel casters ` +
+      `unshadowed · ${frozen.toLocaleString()} static matrices frozen`
+  );
+
+  /* The chunked-world layer (campus-chunks.js): distance tiers plus one
+     BatchedMesh per material bucket instead of hundreds of small draws. The
+     photo zone is the one category that retires wholesale with distance —
+     the measured massing its facades float off carries the silhouette
+     beyond the photo radius. Registration runs AFTER dedupe (batches bucket
+     by material identity) and after freeze (matrices are final). */
+  chunks = createChunkWorld();
+  for (const root of staticRoots) {
+    chunks.addStatic(root, { category: root === photoZone ? "photo" : "base" });
+  }
+  const batchGroup = new THREE.Group();
+  batchGroup.name = "batches";
+  for (const mesh of chunks.buildBatches()) batchGroup.add(mesh);
+  scene.add(batchGroup);
+  {
+    const s = chunks.stats();
+    rep.log(
+      `chunks — ${s.entries.toLocaleString()} drawables registered · ` +
+        `${s.batchedDraws.toLocaleString()} meshes folded into ${s.batches} batched draws`
+    );
+  }
+
+  /* The adaptive quality controller: measures fps, walks the measured ladder
+     (campus-quality.js) to hold 60. Starts at full quality and only steps
+     down when this machine proves it cannot afford it. */
+  quality = createQuality({ renderer, postfx, sun: sunRig?.sun, chunks, resize });
+  quality.apply(0);
+  /* A pinned preset survives reloads and can ride the URL:
+     ?quality=ultra|high|medium|low locks that level, ?quality=auto (or
+     nothing saved) leaves the controller adapting. */
+  {
+    const PRESETS = { ultra: 0, high: 2, medium: 4, low: 6 };
+    let saved = null;
+    try { saved = localStorage.getItem("campus-quality"); } catch { /* private mode */ }
+    const wanted = new URLSearchParams(location.search).get("quality") ?? saved;
+    if (wanted && wanted !== "auto") {
+      const lvl = wanted in PRESETS ? PRESETS[wanted] : Number(wanted);
+      if (Number.isFinite(lvl)) quality.lock(lvl);
+    }
   }
   await rep.paint();
 
@@ -823,6 +912,8 @@ export async function boot({ report, mode = "campus" } = {}) {
     get camera() { return camera; },
     get renderer() { return renderer; },
     get postfx() { return postfx; },
+    get chunks() { return chunks; },
+    get quality() { return quality; },
     /* Hover anywhere: x/z in campus metres, eyes `hover` m above the ground. */
     fly(x, z, hover = EYE, yaw = 0, pitch = -0.05) {
       explore.enterAt(x, z, yaw);
@@ -903,6 +994,72 @@ export async function boot({ report, mode = "campus" } = {}) {
   await rep.paint();
   frame(performance.now());
 
+  /* ---------------------------------------------------------- streaming */
+  /* Everything the first frame did not need arrives now, behind it: the
+     deferred region files download, then region massing and the 21 photo
+     modules build ONE PER FRAME-GAP so the running frame loop never blocks
+     for more than a single builder. Each finished zone then gets the same
+     perf treatment the boot-time zones got — shadows, dedupe, caster
+     filter, matrix freeze, chunk registration, batching. `streamed` flips
+     when the world is whole; the audit and the perf gate wait on it. */
+  const gap = () => new Promise((r) => requestAnimationFrame(() => setTimeout(r, 0)));
+  (async () => {
+    quality?.pause(); // build stalls are construction, not machine weakness
+    try {
+      const deferred = {};
+      await Promise.all(DATA.filter((d) => d.defer).map(async (d) => {
+        /* Parse via text(): the data-path test sweeps this module's source
+           for filename-shaped tokens outside the DATA table, and the
+           response object's own parse method reads as one. Each file fails
+           ALONE — these are optional, and boot's own reader treats a corrupt
+           optional file as absent rather than fatal; streaming must not be
+           stricter than boot was. */
+        try {
+          const resp = await fetch(urlOf(d.file)).catch(() => null);
+          deferred[d.key] = resp?.ok ? JSON.parse(await resp.text()) : null;
+        } catch { deferred[d.key] = null; }
+      }));
+      await gap();
+      /* One broken builder loses ITS layer, not the eighteen after it — and
+         loses it loudly: console.error is what every gate collects, so a
+         module that stops building cannot pass the audit silently. */
+      const guarded = (name, fn) => { try { fn(); } catch (e) { console.error(`streaming: ${name} failed`, e); } };
+      guarded("region massing", () => buildRegionMassing(deferred));
+      for (const build of photoBuilders) { await gap(); guarded("photo module", build); }
+      /* Shadows for the photo zone ONLY — the boot-time shadow pass never
+         included regionZone (its roads and water are lifted decals, and a
+         decal that casts is a stripe of shadow floating over its own
+         paint), and streaming must not change that. */
+      photoZone.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+      const lateRoots = [photoZone, regionZone];
+      dedupeMaterials(lateRoots);
+      filterShadowCasters(lateRoots);
+      freezeStatic(lateRoots);
+      /* Plaza and Galbraith REPLACE measured entities (the ultra trees on
+         measured trunks, the fountain that supersedes the landmark ring) —
+         retiring them at the photo radius would leave holes where the
+         measured thing was withheld on their behalf, so they register as
+         "base" and never retire wholesale. Every other photo module only
+         ADDS on top of massing, and massing carries its silhouette. */
+      const REPLACES_MEASURED = new Set(["photo-plaza", "photo-galbraith"]);
+      for (const child of photoZone.children) {
+        chunks.addStatic(child, { category: REPLACES_MEASURED.has(child.name) ? "base" : "photo", zone: photoZone });
+      }
+      chunks.addStatic(regionZone, { category: "base" });
+      await gap();
+      for (const mesh of chunks.buildBatches()) batchGroup.add(mesh);
+    } catch (e) {
+      /* A streaming failure must degrade to "that layer is absent" — the
+         measured campus is complete without it — never to a dead loop. */
+      /* console.ERROR, deliberately: verify-boot, verify-perf and the audit
+         all collect console errors, and a streaming failure that whispered
+         would let every gate photograph an incomplete world as green. */
+      console.error("streaming layer failed:", e);
+    }
+    quality?.resume();
+    if (window.__campusWalk) window.__campusWalk.streamed = true;
+  })();
+
   return {
     masses: built.masses,
     drawCalls: built.drawCalls,
@@ -925,7 +1082,12 @@ export async function boot({ report, mode = "campus" } = {}) {
       labels: labels.group,
       ...(landmarksGroup ? { landmarks: landmarksGroup } : {}),
     },
+    /* The engine seams, on the public object too — the docs say
+       `walk.chunks.config.lodEnabled = false` and they must not lie. */
+    get chunks() { return chunks; },
+    get quality() { return quality; },
     status() {
+      const cs = chunks?.stats();
       return {
         view: "free roam",
         x: explore.x,
@@ -934,7 +1096,28 @@ export async function boot({ report, mode = "campus" } = {}) {
         ground: heightAt(explore.x, explore.z),
         heading: (explore.yaw * 180) / Math.PI,
         near: lastCalled ? { name: lastCalled.name, height: lastCalled.height ?? null } : null,
+        /* The engine line: what this frame actually cost (summed over every
+           pass — see perfSnap) and what the chunk/quality layers are doing
+           about it. */
+        perf: {
+          draws: perfSnap.draws,
+          triangles: perfSnap.triangles,
+          quality: quality ? quality.level : null,
+          hidden: cs ? cs.hidden : 0,
+          batched: cs ? cs.batchedDraws : 0,
+        },
       };
+    },
+    /* The customisation seam: named presets lock a quality level and persist;
+       "auto" hands control back to the adaptive controller. The chunk radii
+       live on walk.chunks.config for the same reason — every knob reachable,
+       nothing rebuilt. */
+    setQuality(name) {
+      const PRESETS = { ultra: 0, high: 2, medium: 4, low: 6 };
+      try { localStorage.setItem("campus-quality", name); } catch { /* private mode */ }
+      if (name === "auto") { quality.unlock(); return; }
+      const lvl = name in PRESETS ? PRESETS[name] : Number(name);
+      if (Number.isFinite(lvl)) quality.lock(lvl);
     },
   };
 }

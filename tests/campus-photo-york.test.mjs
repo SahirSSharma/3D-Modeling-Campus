@@ -564,7 +564,7 @@ test("the material library is on the surfaces, and only deterministic sources", 
   assert.match(winSrc, /painted\(colors\.windowGlass\), bins\.windows/,
     "window slots must be opaque dark metal, not transparent glass");
   const src = readFileSync(join(root, "docs/js/campus-photo-york.js"), "utf8");
-  assert.match(src, /createMaterialLibrary/, "surfaces come from campus-materials.js");
+  assert.match(src, /(?:shared|create)MaterialLibrary/, "surfaces come from campus-materials.js");
   assert.match(src, /get\("brick"/, "the CMU rides a coursed block class, not flat colour");
   assert.ok(!/Math\.random|Date\.now/.test(src), "no nondeterminism in the builder");
 });

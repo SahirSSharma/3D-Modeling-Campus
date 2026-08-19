@@ -249,6 +249,26 @@
       layerBar.appendChild(b);
     }
 
+    /* The quality preset cycler: auto (adaptive) or a pinned rung of the
+       ladder in campus-quality.js. Persists via walk.setQuality. */
+    const QUALITIES = ['auto', 'ultra', 'high', 'medium', 'low'];
+    let savedQ = null;
+    try { savedQ = localStorage.getItem('campus-quality'); } catch {}
+    const activeQ = new URLSearchParams(location.search).get('quality') ?? savedQ ?? 'auto';
+    let qi = Math.max(0, QUALITIES.indexOf(activeQ));
+    const qb = document.createElement('button');
+    qb.type = 'button';
+    qb.className = 'walk-btn on';
+    /* A raw level ("3") or unknown value shows verbatim rather than lying
+       "auto"; the first click starts the cycle from auto regardless. */
+    qb.textContent = `quality: ${activeQ}`;
+    qb.addEventListener('click', () => {
+      qi = (qi + 1) % QUALITIES.length;
+      walk.setQuality(QUALITIES[qi]);
+      qb.textContent = `quality: ${QUALITIES[qi]}`;
+    });
+    layerBar.appendChild(qb);
+
     addEventListener('keydown', (e) => {
       if (e.key === 'h' || e.key === 'H') panel.hidden = !panel.hidden;
     });
@@ -274,6 +294,8 @@
           `view     <b>${s.view}</b>`,
           `near     <b>${s.near ? s.near.name : '—'}</b>`,
           s.near && s.near.height ? `measured <b>${s.near.height}</b> m` : '',
+          s.perf ? `draws    <b>${s.perf.draws.toLocaleString()}</b> · tris <b>${(s.perf.triangles / 1e6).toFixed(1)}M</b>` : '',
+          s.perf ? `quality  <b>L${s.perf.quality}</b> · lod-hidden <b>${s.perf.hidden}</b> · batched <b>${s.perf.batched.toLocaleString()}</b>` : '',
         ].filter(Boolean).join('<br>');
       }
       requestAnimationFrame(tick);

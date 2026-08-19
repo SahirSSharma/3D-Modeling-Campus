@@ -80,14 +80,13 @@
 // section's pinned `seed`.
 import * as THREE from "../vendor/three/three.module.min.js";
 import { applyOverlayDepth, OVERLAY, overlayLift } from "./campus-overlay.js";
-import { createMaterialLibrary } from "./campus-materials.js";
+import { sharedMaterialLibrary } from "./campus-materials.js";
 
 const PAD = "pad";
 const CARPET = "carpet";
 const PAINT = "paint";
 
-let LIB = null;
-const lib = () => (LIB ??= createMaterialLibrary(THREE));
+const lib = () => sharedMaterialLibrary(THREE);
 
 /* Large-format flat rainscreen panel: barely metallic, matte. */
 const panelMat = (c) => lib().get("metalPanel", { color: c, metalness: 0.16, roughness: 0.62 });

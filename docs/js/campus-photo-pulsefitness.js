@@ -66,10 +66,10 @@
 // section's pinned seed. Nothing in the chain reads a clock or a random source.
 import * as THREE from "../vendor/three/three.module.min.js";
 import { overlayLift } from "./campus-overlay.js";
-import { createMaterialLibrary } from "./campus-materials.js";
+import { sharedMaterialLibrary } from "./campus-materials.js";
 
 let LIB = null;
-const lib = () => (LIB ??= createMaterialLibrary(THREE));
+const lib = () => (LIB ??= sharedMaterialLibrary(THREE));
 
 /* Powder-coated steel — the orange horizontals and the charcoal posts. */
 const painted = (color) => lib().get("metalPanel", { color, metalness: 0.35, roughness: 0.55 });

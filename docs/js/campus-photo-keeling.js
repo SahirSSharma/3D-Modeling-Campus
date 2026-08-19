@@ -55,7 +55,7 @@
 // the library is seeded, and this file's own irregularity comes from `hash`.
 import * as THREE from "../vendor/three/three.module.min.js";
 import { applyOverlayDepth, OVERLAY, overlayLift } from "./campus-overlay.js";
-import { createMaterialLibrary } from "./campus-materials.js";
+import { sharedMaterialLibrary } from "./campus-materials.js";
 
 /* Ground decals ride the overlay ladder so they paint over the measured
    terrain in a fixed order instead of z-fighting it. */
@@ -64,11 +64,10 @@ const CARPET = "carpet";
 const PAINT = "paint";
 const LOGO = "logo";
 
-/* One material library for the whole module, created on first build. Every
+/* The process-wide shared material library. Every
    opaque surface routes through it; the colours stay the section's hexes and
    the library multiplies its computed variation into them. */
-let LIB = null;
-const lib = () => (LIB ??= createMaterialLibrary(THREE));
+const lib = () => sharedMaterialLibrary(THREE);
 
 /* Sand-blasted precast, cast-in-place frames, copings. */
 const concrete = (color) => lib().get("smoothConcrete", { color });

@@ -59,12 +59,39 @@ export function createPostfx({ renderer, scene, camera }) {
 
   composer.addPass(new OutputPass());
 
+  /* GTAO's internal resolution, as a fraction of the frame. Its blend step
+     samples its own targets and upsamples, so computing AO at 0.5x is nearly
+     invisible and roughly halves the pass's cost — which measurement says is
+     the single largest slice of the frame. 0 disables the pass outright.
+     composer.setSize re-sizes every pass to full frame, so the scaled gtao
+     size is re-applied AFTER it, both here and on resize. */
+  let gtaoScale = 1;
+  let cur = { w: size.x, h: size.y };
+  const applyGtaoSize = () => {
+    gtao.enabled = gtaoScale > 0;
+    if (gtaoScale > 0) {
+      gtao.setSize(Math.max(2, Math.round(cur.w * gtaoScale)), Math.max(2, Math.round(cur.h * gtaoScale)));
+    }
+  };
+
   return {
     render() { composer.render(); },
     setSize(w, h) {
+      cur = { w, h };
+      /* EffectComposer caches the renderer's pixel ratio at CONSTRUCTION and
+         only re-reads it via setPixelRatio — without this line the adaptive
+         controller's pixel-ratio rungs resize the canvas but every pass keeps
+         rendering at the boot-time ratio (found in review: the rungs were
+         inert). */
+      composer.setPixelRatio(renderer.getPixelRatio());
       composer.setSize(w, h);
-      gtao.setSize(w, h);
+      applyGtaoSize();
       bloom.setSize(w, h);
+    },
+    setGtaoScale(s) {
+      if (s === gtaoScale) return;
+      gtaoScale = s;
+      applyGtaoSize();
     },
     /* The manipulation seam, campus-walk.js style: each pass reachable from
        the console so a rendering fault can be bisected live — turning passes

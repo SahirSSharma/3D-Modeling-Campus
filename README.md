@@ -262,6 +262,23 @@ ambient occlusion, bloom and a neutral image-based light now run in every mode
 entity; the measured colours still feed the materials — what changed is how they
 resolve to pixels.
 
+**The rendering infrastructure is the same licence, applied to cost (2026-08-19).**
+Three modules — `campus-chunks.js`, `campus-perf.js`, `campus-quality.js` — decide
+per frame *whether* and *how cheaply* an already-measured entity is drawn, never
+what it is. A chunked-world layer registers every static drawable, retires
+sub-texel props and (beyond 1.5 km) the photo-detail class with distance —
+the measured massing those facades float off carries the silhouette — and culls
+anything wholly behind the fog wall; identical materials are folded into one;
+everything opaque that shares a material draws as one `BatchedMesh`; and an
+adaptive controller holds 60 fps by walking a measured quality ladder (GTAO
+internal resolution first, because that is where the frame actually goes). The
+non-critical data files stream in after the first frame, each still fetched
+exactly once. Every knob lives in `CHUNK_CONFIG` / `QUALITY_LEVELS`, the dev
+panel (`H`) shows draws/triangles/level live, and `?quality=ultra|high|medium|low|auto`
+pins or frees the ladder. `npm run verify:perf` is the gate: on the review
+machine, every station must hold 60 fps steady-state. Set
+`walk.chunks.config.lodEnabled = false` and the builders' scene renders verbatim.
+
 ### The machine sits on the surface you can see
 
 The scooter used to render below the ground, and it took two independent mistakes to do

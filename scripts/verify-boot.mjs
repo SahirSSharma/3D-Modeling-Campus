@@ -54,6 +54,10 @@ page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
 await page.goto(`${base}?mode=campus`, { waitUntil: "load" });
 await page.waitForFunction(() => document.body.classList.contains("walk-live"), null, { timeout: 120_000 });
 await page.waitForFunction(() => !!window.__campusWalk?.probe, null, { timeout: 30_000 });
+/* The streaming layer fetches the deferred region files AFTER first frame;
+   waiting for it keeps the duplicate-fetch count covering every data file,
+   not just the boot-critical ones. */
+await page.waitForFunction(() => window.__campusWalk?.streamed === true, null, { timeout: 120_000 });
 
 /* ---- every dataset exactly once ---- */
 const dupes = [...hits].filter(([p, n]) => p.startsWith("/data/") && n > 1);

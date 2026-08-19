@@ -845,7 +845,7 @@ test("two builds are byte-identical", async () => {
 
 test("the module uses the material library and reads its section one-way", () => {
   const src = readFileSync(join(root, "docs/js/campus-photo-survivance.js"), "utf8");
-  assert.match(src, /createMaterialLibrary/, "surfaces come from campus-materials.js");
+  assert.match(src, /(?:shared|create)MaterialLibrary/, "surfaces come from campus-materials.js");
   /* Colours are DATA: no hex literal may appear in the module. */
   const literals = src.match(/["'`]#[0-9a-fA-F]{3,8}["'`]/g) || [];
   assert.deepEqual(literals, [], `hex literals in the module: ${literals.join(", ")}`);

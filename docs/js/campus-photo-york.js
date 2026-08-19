@@ -52,7 +52,7 @@
 // deterministic throughout — the only irregularity source is `hash`.
 import * as THREE from "../vendor/three/three.module.min.js";
 import { applyOverlayDepth, OVERLAY, overlayLift } from "./campus-overlay.js";
-import { createMaterialLibrary } from "./campus-materials.js";
+import { sharedMaterialLibrary } from "./campus-materials.js";
 
 const PAD = "pad";
 const CARPET = "carpet";
@@ -61,8 +61,7 @@ const CARPET = "carpet";
    block that is one 1.624 m square of real wall per repeat. */
 const CMU_TILE = 8 * 0.203;
 
-let LIB = null;
-const lib = () => (LIB ??= createMaterialLibrary(THREE));
+const lib = () => sharedMaterialLibrary(THREE);
 
 const concrete = (color) => lib().get("smoothConcrete", { color });
 const boardformed = (color) =>

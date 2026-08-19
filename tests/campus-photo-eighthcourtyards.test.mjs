@@ -1134,7 +1134,7 @@ test("two builds are byte-identical — no hidden randomness", () => {
 
 test("colours are DATA and the surfaces are the code-generated library", () => {
   const src = readFileSync(join(root, "docs/js/campus-photo-eighthcourtyards.js"), "utf8");
-  assert.match(src, /createMaterialLibrary/, "surfaces come from campus-materials.js");
+  assert.match(src, /(?:shared|create)MaterialLibrary/, "surfaces come from campus-materials.js");
   /* NO WRECKAGE. Twenty-one objects left this file in the 2026-08-19
      arbitration and two helpers were left behind with nothing calling them —
      a PAINT rung constant and a decal-quad factory. Dead code in a module

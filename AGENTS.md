@@ -110,6 +110,19 @@ inherits this project's gates instead of only the global operating model in
   shadows, GTAO, bloom, image-based light — `campus-postfx.js`) is art
   direction and since 2026-08-16 runs in EVERY mode; look may change,
   *geometry* may not.
+- **The rendering infrastructure is look-licence applied to cost
+  (2026-08-19).** `campus-chunks.js` (distance tiers + BatchedMesh folding +
+  fog cull), `campus-perf.js` (material dedupe, shadow-caster filter, matrix
+  freeze) and `campus-quality.js` (the adaptive 60 fps ladder) decide per
+  frame whether and how cheaply an already-measured entity draws — never what
+  it is. They run AFTER the builders and change no builder output;
+  `walk.chunks.config.lodEnabled = false` must always render the builders'
+  scene verbatim. The quality ladder's order is MEASURED (GTAO is the
+  frame's biggest cost, pixel ratio nearly free) — re-measure before
+  re-ordering it. `npm run verify:perf` is the gate; the photo zone streams
+  in after the first frame, so anything that screenshots or measures the
+  world must wait for `window.__campusWalk.streamed === true` first (the
+  visual audit and the perf gate both do).
 - **Photo-sourced detail is the second declared invented class.** Detail in
   Eighth and Revelle (furniture, gardens, staircases, facade character) is
   modeled off dated web photographs — the newest epoch. Photos decide what
@@ -140,6 +153,9 @@ npm run verify:boot       # the site actually boots
                           # NOTE: this already fails on main — "roof coverage only 97.9%"
                           # against a 0.98 threshold. Pre-existing. Do not fix it by
                           # lowering the threshold and do not report it as passing.
+npm run verify:perf       # the 60 fps gate: real Chrome on the review machine, three
+                          # stations, steady-state after the adaptive controller settles;
+                          # refuses to grade software rendering
 npm run verify:ride       # drives the scooter run in a real browser: fly-mode keys,
                           # the contact patch against the drawn surface, camera
                           # continuity, and the track-marking reveal

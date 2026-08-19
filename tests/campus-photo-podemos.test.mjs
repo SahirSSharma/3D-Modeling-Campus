@@ -783,7 +783,7 @@ test("no solid crowds the scooter corridor", () => {
 
 test("the module uses the material library, and only deterministic sources", () => {
   const src = readFileSync(join(root, "docs/js/campus-photo-podemos.js"), "utf8");
-  assert.match(src, /createMaterialLibrary/, "surfaces come from campus-materials.js");
+  assert.match(src, /(?:shared|create)MaterialLibrary/, "surfaces come from campus-materials.js");
   assert.match(src, /overlayLift|applyOverlayDepth/, "flat things ride the overlay ladder");
   assert.ok(!/Math\.random|Date\.now|new Date/.test(src), "no nondeterminism in the builder");
   /* Colours are DATA: no hex literal may appear in the module. */

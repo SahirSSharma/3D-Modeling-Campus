@@ -68,7 +68,7 @@
 // constant here. Deterministic: irregularity is `hash`, never Math.random.
 import * as THREE from "../vendor/three/three.module.min.js";
 import { applyOverlayDepth, OVERLAY, overlayLift } from "./campus-overlay.js";
-import { createMaterialLibrary } from "./campus-materials.js";
+import { sharedMaterialLibrary } from "./campus-materials.js";
 import { fillPoly } from "./campus-drape.js";
 
 const PAD = "pad";
@@ -98,8 +98,7 @@ function inPoly(x, z, r) {
   return ins;
 }
 
-let LIB = null;
-const lib = () => (LIB ??= createMaterialLibrary(THREE));
+const lib = () => sharedMaterialLibrary(THREE);
 
 /* Which procedural class carries each colour role. Roughness/metalness are how
    a surface answers this scene's light, not a property of the campus, so they

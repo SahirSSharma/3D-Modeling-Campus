@@ -73,7 +73,7 @@
 // section's pinned `seed`.
 import * as THREE from "../vendor/three/three.module.min.js";
 import { applyOverlayDepth, OVERLAY, overlayLift } from "./campus-overlay.js";
-import { createMaterialLibrary } from "./campus-materials.js";
+import { sharedMaterialLibrary } from "./campus-materials.js";
 
 const PAD = "pad";
 const CARPET = "carpet";
@@ -85,7 +85,7 @@ const RAKE_SLICES = 6;
 const TUBE_SIDES = 12;
 
 let LIB = null;
-const lib = () => (LIB ??= createMaterialLibrary(THREE));
+const lib = () => (LIB ??= sharedMaterialLibrary(THREE));
 
 /* The tower's wide vertically-ribbed rainscreen — the seamed class carries the
    corrugation phf03 counts 10-11 ribs of. */
