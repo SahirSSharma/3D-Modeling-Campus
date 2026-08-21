@@ -482,7 +482,11 @@ describe("7. per-mass roof planes (the 2026-08-04 host-bleed fix)", () => {
     "m:467,331": [6.4, "W. M. Keck Building — host bled 24.1"],
     "m:-153,-41": [9.3, "Tuolumne T House East — host bled 17.3"],
     "m:18,299": [12.1, "Urey Hall Office Addition — tower bled 30.5"],
-    "m:-10,266": [30.5, "Urey Hall main slab — stepped roof, host crown stands"],
+    /* Urey Hall (m:-10,266) left this table at R4 (2026-08-21): the 30.5 crown
+       prism entombed the photo module's measured four-plane build (podium 4.0 /
+       slab 25.43 / towers 29.18 / crown 30.45), so campus-massing.js skipGis
+       retires the prism and photo-urey carries mass AND far silhouette via
+       REPLACES_MEASURED. The declared-skip test below pins that state. */
     "m:161,103": [4.6, "Student Center Pub — hand-audited under the grove"],
     "m:95,16": [20.9, "Mandeville Center — hand-audited fly volume"],
     "m:-1065,1189": [11.3, "Eckart Building — host-median grade sat 7.6 m high"],
@@ -495,6 +499,24 @@ describe("7. per-mass roof planes (the 2026-08-04 host-bleed fix)", () => {
       assert.equal(m.h, h, `${key} ships ${m.h} m`);
     });
   }
+  test("Urey's GIS prism is a declared skip, not a render", () => {
+    /* R4 2026-08-21: the single 30.5 prism was WRONG about a four-plateau
+       building; the photo module ships the measured planes. The skip must
+       hold (no prism returns), and it must stay DECLARED in campus-massing.js
+       — a silent disappearance would be indistinguishable from a data loss. */
+    assert.equal(gisByKey.get("m:-10,266"), undefined, "the Urey prism is back — it entombs photo-urey");
+    assert.equal(gisByKey.get("m:80,205"), undefined, "the Bonner prism is back — it overdraws the wing");
+    const massingSrc = readFileSync(path.join(ROOT, "docs/js/campus-massing.js"), "utf8");
+    assert.match(massingSrc, /skipGis = new Set\(\[[^\]]*"m:-10,266"/,
+      "the Urey skip must be the declared skipGis mechanism");
+    assert.match(massingSrc, /skipGis = new Set\(\[[^\]]*"m:80,205"/,
+      "the Bonner skip must be the declared skipGis mechanism");
+    const walkSrc = readFileSync(path.join(ROOT, "docs/js/campus-walk.js"), "utf8");
+    assert.match(walkSrc, /REPLACES_MEASURED = new Set\(\[[^\]]*"photo-urey"/,
+      "with the prism gone, photo-urey must carry the far silhouette (base chunk category)");
+    assert.match(walkSrc, /REPLACES_MEASURED = new Set\(\[[^\]]*"photo-bonner"/,
+      "with the prism gone, photo-bonner must carry the far silhouette (base chunk category)");
+  });
   test("a stepped slab emits no per-mass plane (p75 is not a roof)", () => {
     /* Urey Hall's main mass: half its 2014 returns sit on ~16 m steps, the
        crown at 30.4 — the p75 fallback (25.4) matches no physical roof, so
@@ -653,14 +675,18 @@ describe("9. the north-west shard sweep (r0c0, 2026-08-04)", () => {
        A name counts as carried when a mass wears it exactly OR as a word
        suffix — "Matthews Apartments E" carries "E", "Mesa Nueva - Cala"
        would carry "Cala" — the same identity rule the builder now uses.
-       The two non-suppression entries render nothing BY RULE: Geisel draws
-       from its own per-floor GIS layer, and the RIMAC Annex site is a
-       demolished building whose rebuild no source resolves. */
+       The non-suppression entries render nothing BY RULE: Geisel draws
+       from its own per-floor GIS layer, the RIMAC Annex site is a
+       demolished building whose rebuild no source resolves, and Urey Hall
+       (R4, 2026-08-21) is a skipGis retirement — its 30.5 prism was wrong
+       about a four-plateau building, and photo-urey draws the measured
+       mass in the base chunk category (the declared-skip test in §7 pins
+       the whole mechanism). */
     const KNOWN = new Set([
       "Black Hall", "Geisel Library",
       "64 Degrees", "64 North",
       "Print Labs", "Nigella Hillgarth Education Center",
-      "RIMAC Annex",
+      "RIMAC Annex", "Urey Hall", "Bonner Hall",
     ]);
     const carried = new Set(MASSES.filter((m) => m.name).map((m) => m.name));
     const carriedAsSuffix = (n) =>
@@ -3554,11 +3580,16 @@ describe("campus epoch — r1c1 pass-3 co-named micro-slivers (2026-08-05)", () 
   });
 
   test("main Bonner Hall and International Center West keep their measured planes", () => {
-    const bonner = MASSES.find((m) => m.name === "Bonner Hall" && m.src === "gis");
-    assert.ok(bonner, "main Bonner Hall vanished with its sliver");
-    assert.equal(bonner.h, 19.2, `Bonner Hall ships ${bonner.h}`);
-    assert.ok(areaOf(bonner.rings[0]) > 2000, `Bonner main area ${areaOf(bonner.rings[0]).toFixed(0)}`);
-    assert.equal(LIDAR.massHeights["m:80,205"], 19.2);
+    /* R4 2026-08-21, second step: Bonner's prism joined skipGis the same day
+       the 15.4 override landed — one ring carries two measured roofs (bar
+       plate repo 35.71, west wing 28.0), and a single-lid prism is wrong
+       about one of them at any height. campus-photo-bonner.js ships both
+       plates, the 7.71 m step wall and the full envelope, and carries the
+       far silhouette via REPLACES_MEASURED. The massHeights 15.4 entry stays
+       in the FILE as the measured-plate statement the bonner suite pins. */
+    assert.equal(MASSES.find((m) => m.name === "Bonner Hall" && m.src === "gis"), undefined,
+      "the Bonner prism is back — it overdraws the wing by 7.7 m");
+    assert.equal(LIDAR.massHeights["m:80,205"], 15.4);
 
     const icw = MASSES.find((m) => m.name === "International Center West" && m.src === "gis");
     assert.ok(icw, "International Center West vanished");
@@ -4109,10 +4140,18 @@ describe("campus epoch — r1c1 re-sweep 165434 (2026-08-05)", () => {
        the 85% thin-shelf cut; Apple plant strip is the shelf). Powell-
        Focht 15,276 pts rule=p98 → 23.1 (dense 0.683; Apple solar +
        courtyard volumes). Same HDH/McGill near-miss family — do not paste
-       the dense body. */
-    assert.equal(LIDAR.massHeights["m:80,205"], 19.2);
+       the dense body.
+       R4 refinement (2026-08-21): Bonner's 19.2 "plant strip" is the 1964
+       louvre-spine crest, original fabric MODELLED by campus-photo-bonner.js;
+       the MEASURED_OVERRIDES entry lands the prism lid on the one-plane EPT
+       roof plate (repo 35.71 → 15.4) so the sourced spine is not entombed.
+       Powell-Focht keeps the p98 rule unchanged. */
+    assert.equal(LIDAR.massHeights["m:80,205"], 15.4);
     assert.equal(LIDAR.massHeights["m:628,-418"], 23.1);
-    assert.equal(rendersNear(79.5, 205.1).find((m) => m.name === "Bonner Hall")?.h, 19.2);
+    /* The Bonner prism itself is a skipGis retirement (see §7's declared-skip
+       test and the sliver suite) — the 15.4 file entry above is the measured
+       plate statement, no longer an extrusion height. */
+    assert.equal(rendersNear(79.5, 205.1).find((m) => m.name === "Bonner Hall"), undefined);
     assert.equal(
       rendersNear(627.6, -418.2).find((m) => /Powell-Focht/i.test(m.name || ""))?.h,
       23.1,

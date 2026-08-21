@@ -686,6 +686,22 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
       if (dup) { m._host = null; settled = false; }
     }
   }
+  /* GIS masses whose single-prism extrusion is WRONG about the building and
+     whose photo module carries the true mass (and, via REPLACES_MEASURED in
+     campus-walk.js, the far silhouette). R4: Urey Hall is four measured
+     plateaus (podium 4.0 / slab 25.43 / towers 29.18 / crown 30.45) — the
+     30.5 m reconcile prism entombs the whole stepped build. Bonner Hall
+     (added same day): one ring, two measured roofs — the bar's plate at
+     repo 35.71 and the two-storey west wing's at 28.0 — and a single-lid
+     prism is wrong about one of them at any height; campus-photo-bonner.js
+     ships both plates, the 7.71 m step wall, and the full envelope. Keyed
+     like massHeights, by rounded GIS centroid. */
+  const skipGis = new Set(["m:-10,266", "m:80,205"]);
+  for (const m of masses) {
+    if (m.src === "gis" && m._c && skipGis.has(`m:${Math.round(m._c[0])},${Math.round(m._c[1])}`)) {
+      m._skipGis = true;
+    }
+  }
   for (const m of masses) {
     if (m.lidarDone) continue;
     const host = m._host;
@@ -717,8 +733,9 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
      footprint the OSM centroid already marked — a no-op to the metre.
      Seeded / surface / path anchors are untouched: they have no OSM
      building ring to suppress. */
-  reanchorPlacesToMasses(campus, masses);
-  return masses;
+  const rendered = masses.filter((m) => !m._skipGis);
+  reanchorPlacesToMasses(campus, rendered);
+  return rendered;
 }
 
 /**

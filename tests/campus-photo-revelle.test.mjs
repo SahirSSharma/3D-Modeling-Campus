@@ -155,9 +155,18 @@ test("it says what it is, where it came from, and what it left out", () => {
 
 test("colours are data, and they are hex", () => {
   const keys = Object.keys(section.colors);
-  assert.ok(keys.length >= 20, `only ${keys.length} colours`);
+  const retired = Object.keys(section.colorsRetired || {});
+  /* R4: six roles retired with their consumers (panel with paving->plaza; the
+     urey, breezeway and rail roles with the systems transfers) — recorded, not deleted. */
+  assert.ok(keys.length >= 19, `only ${keys.length} live colours`);
+  assert.ok(keys.length + retired.length >= 25, "retired colours must stay on the record");
   for (const [k, v] of Object.entries(section.colors)) {
     assert.match(v, /^#[0-9a-f]{6}$/, `${k} is not a lowercase 6-digit hex`);
+  }
+  for (const [k, v] of Object.entries(section.colorsRetired || {})) {
+    assert.ok(!(k in section.colors), `${k} is both live and retired`);
+    assert.match(v.hex, /^#[0-9a-f]{6}$/, `retired ${k} lost its hex`);
+    assert.match(v.retired, /2026-08-21/, `retired ${k} has no dated reason`);
   }
 });
 
@@ -329,12 +338,20 @@ test("supersession is declared per item and every flag names a real section", ()
  *  section's `superseded` block is in — the six sections do not share one. */
 function reciprocalIn(sec, wantKey) {
   const sup = sec.superseded;
-  if (!sup) return null;
-  const entries = Array.isArray(sup) ? sup.map((v, i) => [String(i), v]) : Object.entries(sup);
-  for (const [k, v] of entries) {
-    if (!v || typeof v !== "object") continue;
-    if (!k.startsWith(wantKey)) continue;
-    return { key: k, rec: v };
+  if (sup) {
+    const entries = Array.isArray(sup) ? sup.map((v, i) => [String(i), v]) : Object.entries(sup);
+    for (const [k, v] of entries) {
+      if (!v || typeof v !== "object") continue;
+      if (!k.startsWith(wantKey)) continue;
+      return { key: k, rec: v };
+    }
+  }
+  /* R4 successors declare claims as a `supersedes` array of records keyed by
+     the full dotted path of what they absorb — same claim, newer shape. */
+  for (const rec of sec.supersedes || []) {
+    if (rec && typeof rec === "object" && typeof rec.key === "string" && rec.key.startsWith(wantKey)) {
+      return { key: rec.key, rec };
+    }
   }
   return null;
 }
@@ -346,7 +363,14 @@ function reciprocalIn(sec, wantKey) {
 function claimedPaths(rec) {
   if (rec.by) return [].concat(rec.by);
   const m = typeof rec.supersededBy === "string" && rec.supersededBy.match(/^[a-z][A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+)+/);
-  return m ? [m[0]] : [];
+  if (m) return [m[0]];
+  /* R4 shapes: bonner names its replacement as a dotted path in `replacedBy`;
+     urey's record describes what it ships in prose (`ships`) — its replacement
+     is the section's own measured mass, so the claim resolves at `measured`. */
+  const r = typeof rec.replacedBy === "string" && rec.replacedBy.match(/^[a-z][A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+)+/);
+  if (r) return [r[0]];
+  if (typeof rec.ships === "string" && rec.ships.length > 100) return ["measured"];
+  return [];
 }
 
 /** Does the path the reciprocal names resolve to something the successor
@@ -378,7 +402,7 @@ test("every retirement declares whether it is a transfer or a deletion", () => {
   const seen = { transferred: 0, "deleted-on-evidence": 0 };
   let items = 0;
   for (const [key, r] of RETIREMENTS()) {
-    assert.match(key, /^[A-Za-z]+(\.items\[sup\])?@(plaza|york|argo|blake)$/,
+    assert.match(key, /^[A-Za-z]+(\.[A-Za-z]+)?(\.items\[sup\])?@(plaza|york|argo|blake|urey|bonner)$/,
       `retirements key ${key} is not <system>[.items[sup]]@<successor>`);
     assert.equal(key.split("@")[1], r.sup, `${key} disagrees with its own \`sup\``);
     assert.ok(seen[r.disposition] !== undefined, `${key} has no legal disposition`);
@@ -404,11 +428,13 @@ test("every retirement declares whether it is a transfer or a deletion", () => {
         `superseded[${k}] names "${sup}" and \`retirements\` has no ${k}@${sup}`);
     }
   }
-  /* 56 sup-carrying items, and the 76-cell paving field is the one whole-system
-     retirement, so it is not one of the 56. */
-  assert.equal(items - section.retirements["paving@plaza"].count, 56,
+  /* 56 sup-carrying items; the whole-system retirements (the 76-cell paving
+     field, and at R4 the ureyCorner and breezeway systems) are not among the 56. */
+  const wholeSystems = ["paving@plaza", "systems.ureyCorner@urey", "systems.breezeway@bonner"];
+  const wholeCount = wholeSystems.reduce((n, k) => n + section.retirements[k].count, 0);
+  assert.equal(items - wholeCount, 56,
     "the retirements table does not account for exactly the 56 flagged items");
-  assert.equal(seen.transferred, 5, "5 transfers: paving, benchesA and lamps to plaza, racks to york, lavaWalls to blake");
+  assert.equal(seen.transferred, 7, "7 transfers: paving, benchesA and lamps to plaza, racks to york, lavaWalls to blake, ureyCorner to urey, breezeway to bonner");
   assert.equal(seen["deleted-on-evidence"], 2, "2 deletions on evidence: the bins to york and the seven hoops to argo");
 });
 
@@ -450,7 +476,7 @@ test("a transfer's successor carries the reciprocal AND ships the object", () =>
       assert.ok(built < r.count, `${key} declares a count change that is not a reduction`);
     }
   }
-  assert.equal(assertDispositions({ items, reciprocals, label: "revelle" }), 7);
+  assert.equal(assertDispositions({ items, reciprocals, label: "revelle" }), 9);
 });
 
 test("the four acceptance cases of the x 79..82 runs are labelled correctly", () => {
@@ -562,17 +588,25 @@ test("the rejected rack relocation is on the record with its reason", () => {
 });
 
 test("what is held for a later batch says so, and says why it was not fixed", () => {
+  /* benchesB/globes/lavaWalls#0-29 were relabelled R4 -> R6 at R4 arbitration
+     C1 (2026-08-21): R4 shipped without absorbing them (bonner declined,
+     urey/mayer silent), and a batch is not an owner. The two systems stay
+     held for R4 until main applies the supersession flips. */
   for (const [path, owner] of [
-    [section.benchesB, "R4"], [section.globes, "R4"], [section.lavaWalls, "R4/R6"],
-    [section.systems.ureyCorner, "R4"], [section.systems.breezeway, "R4"],
+    [section.benchesB, "R6"], [section.globes, "R6"], [section.lavaWalls, "R6"],
+    [section.systems.ureyCorner, "urey"], [section.systems.breezeway, "bonner"],
   ]) {
     assert.equal(path.owner, owner);
     assert.ok(path.ownerNote.length > 80, "a hand-over with no reason is a shrug");
   }
-  /* The two systems that are WRONG and held anyway must not be quietly nudged
-     toward the truth: their anchors are equalities against the drawn rings. */
-  assert.match(section.systems.ureyCorner.ownerNote, /HELD, NOT FIXED/);
-  assert.match(section.systems.breezeway.ownerNote, /HELD, NOT FIXED/);
+  /* The two systems held through R1-R4 transferred at R4 (2026-08-21): the
+     records stay, dated, naming the successor and why the hold ended; and the
+     transfer must be the real mechanism, not a nudge — both keys retired via
+     `superseded` with reciprocals in urey/bonner. */
+  assert.match(section.systems.ureyCorner.ownerNote, /TRANSFERRED 2026-08-21/);
+  assert.match(section.systems.breezeway.ownerNote, /TRANSFERRED 2026-08-21/);
+  assert.ok(section.superseded["systems.ureyCorner"]?.includes("urey"));
+  assert.ok(section.superseded["systems.breezeway"]?.includes("bonner"));
   const brz = section.conflicts.find((q) => /BREEZEWAY IS 16\.15 m/.test(q));
   assert.ok(brz, "the 16.15 m plan error must be declared, not silently carried");
   assert.match(brz, /osm:917/);
@@ -724,7 +758,7 @@ test("the module builds headless and draws each system exactly once", () => {
   assert.equal(counts.racks, 4);
   assert.equal(counts.lavaWalls, 30);
   assert.equal(counts.pavingCells, 0, "the paving moved to plaza and must not be drawn twice");
-  assert.equal(counts.superseded, 57, "1 system + 56 items");
+  assert.equal(counts.superseded, 59, "3 systems (paving, ureyCorner, breezeway) + 56 items");
 });
 
 test("a missing section is a HARD FAILURE, and a missing sampler throws", () => {

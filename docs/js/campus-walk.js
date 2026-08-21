@@ -52,6 +52,9 @@ import { createPhotoArgo } from "./campus-photo-argo.js";
 import { createPhotoBlake } from "./campus-photo-blake.js";
 import { createPhotoRevellecommons } from "./campus-photo-revellecommons.js";
 import { createPhotoFleets } from "./campus-photo-fleets.js";
+import { createPhotoUrey } from "./campus-photo-urey.js";
+import { createPhotoBonner } from "./campus-photo-bonner.js";
+import { createPhotoMayer } from "./campus-photo-mayer.js";
 import { createPhotoSankofa } from "./campus-photo-sankofa.js";
 import { createPhotoPodemos } from "./campus-photo-podemos.js";
 import { createPhotoAzad } from "./campus-photo-azad.js";
@@ -768,6 +771,15 @@ export async function boot({ report, mode = "campus" } = {}) {
          and their 2011 Garbini courtyards. Openings clip to the drawn ground
          per hall; identity is position-keyed against the OSM name swap. */
       () => photoZone.add(createPhotoFleets(null, { photo: data.photo, heightAt, surfaceAt }).group),
+      /* Zone 3 batch R4 — the science spine north. Urey is the measured
+         four-plane stepped mass (its GIS prism is skipped in campus-massing.js,
+         so "photo-urey" carries the far silhouette via REPLACES_MEASURED);
+         bonner ships Bonner Hall AND the hexagonal breezeway entire; mayer is
+         the 1963 gallery slab + the 2004 Addition with its fitted circular
+         east facade. All two-sampler. */
+      () => photoZone.add(createPhotoUrey(null, { photo: data.photo, heightAt, surfaceAt }).group),
+      () => photoZone.add(createPhotoBonner(null, { photo: data.photo, heightAt, surfaceAt }).group),
+      () => photoZone.add(createPhotoMayer(null, { photo: data.photo, heightAt, surfaceAt }).group),
       /* Zone 2 — Eighth College / the Theatre District neighbourhood, 2023. The
          2014 LiDAR is blind to all of it, so every one of these anchors to the
          ArcGIS massing ring and its GIS h instead: heightAt would be measuring
@@ -1072,7 +1084,7 @@ export async function boot({ report, mode = "campus" } = {}) {
          measured thing was withheld on their behalf, so they register as
          "base" and never retire wholesale. Every other photo module only
          ADDS on top of massing, and massing carries its silhouette. */
-      const REPLACES_MEASURED = new Set(["photo-plaza", "photo-galbraith"]);
+      const REPLACES_MEASURED = new Set(["photo-plaza", "photo-galbraith", "photo-urey", "photo-bonner"]);
       for (const child of photoZone.children) {
         chunks.addStatic(child, { category: REPLACES_MEASURED.has(child.name) ? "base" : "photo", zone: photoZone });
       }

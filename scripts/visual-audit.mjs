@@ -154,6 +154,26 @@ function resolveBuilding(query) {
   const mi = window.__campusWalk.massInfo();
   const norm = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
   const q = norm(query);
+  /* Buildings whose GIS prism is a declared skipGis retirement render only
+     through their photo module, so massInfo cannot frame them. Their surveyed
+     footprint and measured top are pinned here instead — Urey Hall: GIS mass
+     22 bbox, crown 30.45 over rim base y 23.88 (R4, 2026-08-21). */
+  const PHOTO_CARRIED = {
+    "urey hall": { minX: -51.3, maxX: 28.3, minZ: 229.1, maxZ: 309.5, topY: 54.4 },
+    /* Bonner: GIS mass 206 bbox; bar plate repo 35.71 + spine crest ≈ 38.5. */
+    "bonner hall": { minX: 51.8, maxX: 95.3, minZ: 164.7, maxZ: 248.2, topY: 38.6 },
+  };
+  if (PHOTO_CARRIED[q]) {
+    const b = PHOTO_CARRIED[q];
+    const cx = (b.minX + b.maxX) / 2, cz = (b.minZ + b.maxZ) / 2;
+    let groundY = Infinity;
+    const verts = [[b.minX, b.minZ], [b.maxX, b.minZ], [b.maxX, b.maxZ], [b.minX, b.maxZ]];
+    for (const [x, z] of verts) groundY = Math.min(groundY, window.__campusWalk.probe(x, z).ground);
+    let radius = 0;
+    for (const [x, z] of verts) radius = Math.max(radius, Math.hypot(x - cx, z - cz));
+    return { ok: true, names: [query], cx, cz, radius, topY: b.topY, groundY,
+      bbox: { minX: b.minX, maxX: b.maxX, minZ: b.minZ, maxZ: b.maxZ } };
+  }
   const all = [...mi.keys()];
   let hits = all.filter((n) => norm(n) === q);
   if (!hits.length) hits = all.filter((n) => norm(n).includes(q));

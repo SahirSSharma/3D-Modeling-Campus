@@ -165,8 +165,12 @@ describe("campus-facades.json", () => {
        facades a walker is closest to, and every one of them was measured off
        a frame — if a rebuild drops one back to the anonymous palette, the
        walk's own claim goes with it. */
+    /* Urey Hall and Bonner Hall left this list at R4 (2026-08-21): their
+       prisms are skipGis retirements and campus-photo-urey.js /
+       campus-photo-bonner.js draw the facades — see the dated R4 RETIREMENT
+       notes in the file's own ledger. */
     const onRoute = [
-      "Argo Hall", "Blake Hall", "Urey Hall", "Galbraith Hall", "Mayer Hall", "Bonner Hall",
+      "Argo Hall", "Blake Hall", "Galbraith Hall", "Mayer Hall",
       "Applied Physics and Mathematics", "McGill Hall", "Mandler Hall", "Biology",
       "Tioga Hall", "Tenaya Hall", "Peterson Hall", "Geisel Library", "Mandeville Center",
     ];

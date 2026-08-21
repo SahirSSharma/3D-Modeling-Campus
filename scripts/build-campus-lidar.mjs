@@ -1943,6 +1943,17 @@ async function build() {
          bodyTight) and returns p75 ≈ 4.5. Apple confirming plant is
          evidence FOR the thin-shelf body, not against it — same class
          as siblings C/H. The overrides were reversing the shared rule. */
+      /* R4 arbitration 2026-08-21 (Bonner Hall, m:80,205): the 19.2 read
+         includes the rooftop inclined-louvre spine — original 1964 fabric
+         (construction frame bb2799709r; still in the 2026 ortho), crest
+         +2.5–2.8 m over the roof plate. Independent full-depth EPT: the
+         plate itself is ONE plane, elev 138.11 = repo 35.71, spread
+         ±0.02 m. The extruded lid currently lands at repo ~39.5 (base
+         ~20.3), entombing the plate and occluding the photo module's
+         sourced 60-blade spine. Land the lid on the measured plate:
+         35.71 − 20.3 = 15.4. The spine ships in campus-photo-bonner.js,
+         where it is a modelled object, not a prism allowance. */
+      "m:80,205": [15.4, "Bonner Hall: 19.2 includes the 1964 louvre-spine crest (+2.5-2.8 m); EPT plate is one plane at repo 35.71 +/-0.02. Lid = plate: 35.71 - base 20.3 = 15.4; the spine is modelled by campus-photo-bonner.js. Judged R4 arbitration 2026-08-21."],
     },
     osmHeights: {
       /* WITHDRAWN 2026-08-05: nine osm overrides (453, 518, 522, 526, 532, 534,

@@ -401,6 +401,7 @@ function buildFurniture(section, group, ground) {
 function buildUrey(section, group, ground) {
   const { colors } = section;
   const u = section.systems.ureyCorner;
+  if (!u) return;
   const base = ground((u.slabA[0] + u.slabB[1]) / 2, u.faceZ);
   /* The plaza is on the +z side of this face, so the standoff is outward. */
   const z = u.faceZ + u.standoff;
@@ -431,6 +432,7 @@ function buildUrey(section, group, ground) {
 function buildBreezeway(section, group, ground) {
   const { colors } = section;
   const b = section.systems.breezeway;
+  if (!b) return;
   const span = b.z1 - b.z0;
   const midZ = (b.z0 + b.z1) / 2;
   const base = ground(b.centreX, midZ);
@@ -546,6 +548,16 @@ function applySuperseded(section) {
     superseded += sys.items.length - live.length;
     view[name] = { ...sys, items: live };
   }
+  /* R4: whole wall-anchored systems transfer by `systems.<name>` key — the
+     record stays in the section, the draw moves to the successor. */
+  const systems = { ...section.systems };
+  for (const key of keys) {
+    const m = key.match(/^systems\.(\w+)$/);
+    if (!m || !systems[m[1]]) continue;
+    delete systems[m[1]];
+    superseded += 1;
+  }
+  view.systems = systems;
   return { view, superseded };
 }
 
@@ -600,7 +612,7 @@ export function createPhotoRevelle(scene, { photo, heightAt, surfaceAt } = {}) {
       bins: section.bins.items.length,
       racks: section.racks.items.length,
       lavaWalls: section.lavaWalls.items.length,
-      breezewayLevels: section.systems.breezeway.levels,
+      breezewayLevels: section.systems.breezeway?.levels ?? 0,
       superseded,
       draws: group.children.length,
     },
