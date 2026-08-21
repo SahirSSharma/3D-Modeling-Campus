@@ -28,11 +28,16 @@
 //      can move a colour off its hue. Per-surface `repeat` is tuned to the
 //      real-world unit (brick tile ~0.8 m, paving unit ~0.5 m).
 //
-// The fanned-brick corner arcs — the plaza's signature — are derived from the
-// revelle section's OWN paving cells (invented reading invented, which is
-// allowed; the crossing positions were never measured twice). Every random-
-// looking choice comes from the repo's seeded PRNG (mulberry32) keyed off the
-// section's pinned seed, so a reload rebuilds the same plaza.
+// THE PAVING FIELD IS THIS SECTION'S NOW. It used to live in the legacy
+// `revelle` section, which drew it at a pitch of 6.4 m on a phase that was
+// about 1 m out and drifting, and this module reached across into that
+// section to place its corner arcs. R1 moved it: `plaza.paving` carries the
+// field, re-derived off the repo's own orthophoto by locating the dark joint
+// lines themselves, and the fanned-brick corner arcs — the plaza's signature —
+// derive from this section's own cells. The old field is retired in
+// `revelle.superseded`, not deleted. Every random-looking choice here comes
+// from the repo's seeded PRNG (mulberry32) keyed off the section's pinned
+// seed, so a reload rebuilds the same plaza.
 import * as THREE from "../vendor/three/three.module.min.js";
 import { applyOverlayDepth, OVERLAY, overlayLift } from "./campus-overlay.js";
 import { sharedMaterialLibrary, mulberry32 } from "./campus-materials.js";
@@ -309,41 +314,54 @@ function collectFicus(item, seed, ground, bins) {
   /* Girth scales with the crown. A fixed 0.3 m stem under a 15 m dome reads
      as a canopy balanced on wires. */
   const girth = Math.max(1, r / 4.5);
-  for (let s = 0; s < stems; s++) {
-    const yaw = (s / stems) * Math.PI * 2 + rng() * 0.8;
-    const lean = 0.12 + rng() * 0.16;
-    const si = Math.sin(lean);
-    /* Same convention as limbTo: a YXZ euler of (lean, yaw) points the stem
-       along (sin·sin, cos, sin·cos). Offsetting by the NEGATED pair — as this
-       did — leans the stem one way and moves it the other, so its foot lands
-       up to 2.5 m off the measured trunk instead of fusing at it. Nothing
-       showed until the root flares went in at the true trunk and stood apart
-       from the stems they belong to. */
-    const dir = [si * Math.sin(yaw), Math.cos(lean), si * Math.cos(yaw)];
-    bins.ficusStems.push({
-      x: x + dir[0] * (stemH / 2), y: g + dir[1] * (stemH / 2), z: z + dir[2] * (stemH / 2),
-      rot: yaw, rotX: lean, scale: [girth, stemH, girth],
-    });
-  }
-  /* The stems fuse at the measured trunk, so the flare is one per TREE. */
-  const ff = flare(x, g, z, 0.8 * girth, 0.25);
-  ff.scale = [girth * 1.15, ff.scale[1], girth * 1.15];
-  bins.ficusFlares.push(ff);
-  /* The carrying core, then a shoulder ring and a crown ring over it. */
+
+  /* THE DOME IS BUILT FIRST, BECAUSE THE STEMS ARE AIMED INTO IT. The stems
+     used to be raised blind to a fixed h * 0.5 and the dome hung at h * 0.7,
+     and on a SLENDER tree those two do not meet: the dome's depth is capped by
+     the crown radius (domeH below) while its height is set by h, so at (4,
+     418.9) — h 13.6 against r 4.9 — the lowest lobe's underside sat 0.63 m
+     above the highest stem tip and the canopy floated free of the trunk. Four
+     of the six ficus happened to be squat enough to hide it. Aiming each stem
+     at a lobe CENTRE makes the join structural rather than lucky, at any
+     proportion, which is the contract this file states at the top of the tree
+     section and which the pines already honour through limbTo. */
   const cy = g + h * 0.7;
   const domeH = Math.min(h - stemH, r * 1.1);
+  const core = [x, cy, z];
+  const shoulder = [];
   bins.ficusLobes.push(lobe(x, cy, z, r * 0.62, 0.72, rng));
   for (const [n, dFrac, yFrac, sFrac] of [[7, 0.62, -0.1, 0.42], [5, 0.34, 0.28, 0.4]]) {
     const phase = rng() * Math.PI * 2;
     for (let i = 0; i < n; i++) {
       const a = phase + (i / n) * Math.PI * 2 + (rng() - 0.5) * 0.4;
       const d = r * dFrac * (0.85 + rng() * 0.3);
-      bins.ficusLobes.push(lobe(
+      const p = [
         x + Math.sin(a) * d, cy + domeH * (yFrac + (rng() - 0.5) * 0.12), z + Math.cos(a) * d,
-        r * sFrac * (0.85 + rng() * 0.3), 0.7, rng
-      ));
+      ];
+      bins.ficusLobes.push(lobe(p[0], p[1], p[2], r * sFrac * (0.85 + rng() * 0.3), 0.7, rng));
+      /* The shoulder ring is the low, outward shell — the natural landing for
+         a stem that splays as it rises. The crown ring above it is not. */
+      if (yFrac < 0) shoulder.push(p);
     }
   }
+
+  /* Every stem rises from the ONE measured trunk and ends inside a lobe. The
+     foot stays exactly on (x, z) so the stems still fuse under the single root
+     flare below; limbTo carries the same yaw/tilt convention the limbs use, so
+     a stem leans the way it moves. */
+  const foot = [x, g, z];
+  for (let s = 0; s < stems; s++) {
+    const target = shoulder.length
+      ? shoulder[Math.floor((s / stems) * shoulder.length)]
+      : core;
+    const stem = limbTo(foot, target);
+    stem.scale = [girth, stem.scale[1], girth];
+    bins.ficusStems.push(stem);
+  }
+  /* The stems fuse at the measured trunk, so the flare is one per TREE. */
+  const ff = flare(x, g, z, 0.8 * girth, 0.25);
+  ff.scale = [girth * 1.15, ff.scale[1], girth * 1.15];
+  bins.ficusFlares.push(ff);
 }
 
 /** Coral tree: SPARSE OPEN lobes, widely spaced on a low multi-stem frame. */
@@ -353,6 +371,12 @@ function collectCoral(coral, seed, ground, bins) {
   const g = ground(x, z);
   const stems = coral.stems || 3;
   const stemH = h * 0.55;
+  /* The stem TIPS, kept so the limbs spring from them. Running every limb
+     from the trunk axis instead — as this did — leaves each leaning stem
+     ending 0.8-1.4 m out to the side with nothing at its tip, which is the
+     same defect the ficus dome had: a frame that reads continuous in plan and
+     is broken in elevation. */
+  const tips = [];
   for (let s = 0; s < stems; s++) {
     const yaw = (s / stems) * Math.PI * 2 + rng() * 0.6;
     const lean = 0.18 + rng() * 0.14;
@@ -362,10 +386,10 @@ function collectCoral(coral, seed, ground, bins) {
       x: x + dir[0] * (stemH / 2), y: g + dir[1] * (stemH / 2), z: z + dir[2] * (stemH / 2),
       rot: yaw, rotX: lean, scale: [1, stemH, 1],
     });
+    tips.push([x + dir[0] * stemH, g + dir[1] * stemH, z + dir[2] * stemH]);
   }
   bins.coralFlares.push(flare(x, g, z, 0.5, 0.2));
   const R = spread / 2;
-  const from = [x, g + stemH * 0.95, z];
   const n = 6;
   const phase = rng() * Math.PI * 2;
   for (let l = 0; l < n; l++) {
@@ -374,7 +398,9 @@ function collectCoral(coral, seed, ground, bins) {
     const rad = R * (0.3 + rng() * 0.14);
     const p = [x + Math.sin(a) * d, g + h * (0.66 + rng() * 0.28), z + Math.cos(a) * d];
     bins.coralLobes.push(lobe(p[0], p[1], p[2], rad, 0.62, rng));
-    bins.coralStems.push(limbTo(from, p));
+    /* Each stem carries two of the six limbs, so trunk -> stem -> limb -> lobe
+       is one unbroken run. */
+    bins.coralStems.push(limbTo(tips[l % stems], p));
   }
 }
 
@@ -461,6 +487,81 @@ function buildTrees(section, group, ground, mats, counts) {
 
 /* ----------------------------------------------------------------- ground */
 
+/**
+ * A rounded-rectangle decal panel — the plaza's signature struck corner.
+ * Carried over verbatim from the module that used to own the paving.
+ */
+function roundedPanel(size, radius) {
+  const h = size / 2;
+  const r = Math.min(radius, h);
+  const shape = new THREE.Shape();
+  shape.moveTo(-h + r, -h);
+  shape.lineTo(h - r, -h);
+  shape.quadraticCurveTo(h, -h, h, -h + r);
+  shape.lineTo(h, h - r);
+  shape.quadraticCurveTo(h, h, h - r, h);
+  shape.lineTo(-h + r, h);
+  shape.quadraticCurveTo(-h, h, -h, h - r);
+  shape.lineTo(-h, -h + r);
+  shape.quadraticCurveTo(-h, -h, -h + r, -h);
+  const g = new THREE.ShapeGeometry(shape, 6);
+  g.rotateX(-Math.PI / 2);
+  return g;
+}
+
+/**
+ * The plaza deck: 51 panels on the measured joint grid.
+ *
+ * Brick first at cell pitch, then the buff panel inset by the band width, so
+ * what shows around each panel IS the band — real geometry rather than a
+ * texture, and it fans correctly around the struck corners because the panel
+ * above it is round. Three rungs of the overlay ladder in painting order, so
+ * this paints over campus-world's own measured plaza fill in a fixed order.
+ */
+function buildPaving(section, group, ground, mats, counts) {
+  const { colors, paving } = section;
+  const { pitch, band, radius, runnerX, runnerWidth, runnerLength } = paving;
+
+  const brickField = instanced(
+    quad(pitch, pitch),
+    decal(mats.get("brick", { color: colors.brick, repeat: [pitch / 0.8, pitch / 0.8] }), PAD),
+    paving.cells,
+    ([x, z]) => ({ x, y: ground(x, z) + overlayLift(PAD), z })
+  );
+  brickField.name = "paving-brick";
+  brickField.renderOrder = OVERLAY[PAD].renderOrder;
+  brickField.castShadow = false;
+  group.add(brickField);
+
+  const panels = instanced(
+    roundedPanel(pitch - band, radius),
+    decal(mats.get("pavingConcreteUnit", {
+      color: colors.paving, repeat: [(pitch - band) / 0.5, (pitch - band) / 0.5],
+    }), CARPET),
+    paving.cells,
+    ([x, z]) => ({ x, y: ground(x, z) + overlayLift(CARPET), z })
+  );
+  panels.name = "paving-panels";
+  panels.renderOrder = OVERLAY[CARPET].renderOrder;
+  panels.castShadow = false;
+  group.add(panels);
+
+  const runner = instanced(
+    quad(runnerWidth, runnerLength),
+    decal(mats.get("brick", {
+      color: colors.brickRunner, repeat: [runnerWidth / 0.8, runnerLength / 0.8],
+    }), PAINT),
+    paving.runner,
+    (z) => ({ x: runnerX, y: ground(runnerX, z) + overlayLift(PAINT), z })
+  );
+  runner.name = "paving-runner";
+  runner.renderOrder = OVERLAY[PAINT].renderOrder;
+  runner.castShadow = false;
+  group.add(runner);
+
+  counts.pavingCells = paving.cells.length;
+}
+
 function buildLawns(section, group, ground, mats, counts) {
   const { lawns, colors } = section;
   lawns.panels.forEach((p, i) => {
@@ -468,16 +569,57 @@ function buildLawns(section, group, ground, mats, counts) {
     mesh.name = `lawn-panel-${i}`;
     group.add(mesh);
   });
-  const w = lawns.crossWalk;
-  const walk = conformingSheet(w, ground, PAD, mats.get("pavingConcreteUnit", {
-    color: colors.paving, repeat: [(w.x1 - w.x0) / 3, (w.z1 - w.z0) / 3],
-  }));
-  walk.name = "cross-walk";
-  group.add(walk);
+  /* The 1.30 m mow strip that actually crosses the lawn, where the retired
+     cross-walk claimed a 6 m paved walk. It is a band, so it is laid at the
+     brick rung and reads as an edging course rather than as a path. */
+  const e = lawns.edging;
+  if (e) {
+    const band = conformingSheet(e, ground, PAD, mats.get("brick", {
+      color: colors.brick, repeat: [(e.x1 - e.x0) / 0.8, (e.z1 - e.z0) / 0.8],
+    }));
+    band.name = "lawn-edging";
+    group.add(band);
+  }
   counts.lawnPanels = lawns.panels.length;
+  counts.lawnEdging = e ? 1 : 0;
 }
 
-/* The decomposed-granite belt under the York-belt pines. [estimated] extent. */
+/**
+ * The plaza's north third: 38.8 x 13.6 m of dormant, unirrigated turf.
+ *
+ * Surveyed three times over and built by nobody until R1. It is NOT painted
+ * the south lawns' green: OSM and the facilities GIS both call it `green` and
+ * the newest imagery shows it dormant, which is two sources describing two
+ * different years, and repainting it would be inventing irrigation. The
+ * conflict is declared in the section; the outline is the mean of the two
+ * surveys.
+ */
+function buildNorthBed(section, group, ground, mats, counts) {
+  const b = section.northBed;
+  const mesh = conformingSheet(b, ground, CARPET, mats.get("decomposedGranite", {
+    color: section.colors.northBedTurf,
+    repeat: [(b.x1 - b.x0) / 1.4, (b.z1 - b.z0) / 1.4],
+  }));
+  mesh.name = "north-bed";
+  group.add(mesh);
+  counts.northBed = 1;
+}
+
+/** The five surveyed planting beds inside the plaza window. */
+function buildBeds(section, group, ground, mats, counts) {
+  section.beds.items.forEach((b, i) => {
+    const mesh = conformingSheet(b, ground, PAD, mats.get("decomposedGranite", {
+      color: section.colors.bedMulch,
+      repeat: [(b.x1 - b.x0) / 1.0, (b.z1 - b.z0) / 1.0],
+    }));
+    mesh.name = `bed-${i}`;
+    group.add(mesh);
+  });
+  counts.beds = section.beds.items.length;
+}
+
+/* The decomposed-granite belt under the York-belt pines. [estimated] extent,
+   except its south edge, which is Galbraith's measured ring. */
 function buildDgBelt(section, group, ground, mats) {
   const d = section.dgBelt;
   const mesh = conformingSheet(d, ground, PAD, mats.get("decomposedGranite", {
@@ -489,19 +631,20 @@ function buildDgBelt(section, group, ground, mats) {
 
 /**
  * The fanned-brick corner arcs at every band crossing — the plaza's
- * signature. Crossings are derived from the revelle section's own paving
- * cells: where four cells meet, each panel corner is struck with the 1.8 m
- * radius, and a fan of small brick wedges follows each arc so the coursing
- * turns with it instead of butting into the curve.
+ * signature. Crossings are derived from this section's OWN paving cells:
+ * where four cells meet, each panel corner is struck with the 1.8 m radius,
+ * and a fan of small brick wedges follows each arc so the coursing turns with
+ * it instead of butting into the curve.
  */
-function buildBrickArcs(section, revellePaving, group, ground, mats, counts) {
+function buildBrickArcs(section, group, ground, mats, counts) {
   const A = section.arcs;
-  if (!revellePaving?.cells?.length) { counts.brickArcCrossings = 0; return; }
+  const paving = section.paving;
+  if (!paving?.cells?.length) { counts.brickArcCrossings = 0; return; }
   const P = A.pitch;
   const key = ([x, z]) => `${Math.round(x * 10)},${Math.round(z * 10)}`;
-  const have = new Set(revellePaving.cells.map(key));
+  const have = new Set(paving.cells.map(key));
   const crossings = [];
-  for (const [x, z] of revellePaving.cells) {
+  for (const [x, z] of paving.cells) {
     if (have.has(key([x + P, z])) && have.has(key([x, z + P])) && have.has(key([x + P, z + P]))) {
       crossings.push([x + P / 2, z + P / 2]);
     }
@@ -556,11 +699,18 @@ function buildFountain(section, group, ground, mats, counts) {
   sub.position.set(F.cx, g, F.cz);
   sub.rotation.y = F.rot;
 
-  /* The square plinth: charcoal sides, light concrete deck, sit-on edge. */
+  /* The square plinth: charcoal sides, light concrete deck, sit-on edge.
+     ITS SIDES ARE BATTERED — they lean inward toward grade, which UCSD DC
+     bb5393567s resolves unmistakably at the near corner and which the shipped
+     prism did not have. A four-sided cone rotated 45 degrees is a truncated
+     pyramid on the world axes: radius r puts a corner at r, so a square of
+     side s needs r = s / sqrt(2). */
+  const half = Math.SQRT1_2;
   const plinth = new THREE.Mesh(
-    new THREE.BoxGeometry(F.plinth, F.plinthHeight, F.plinth),
+    new THREE.CylinderGeometry(F.plinth * half, F.plinthBase * half, F.plinthHeight, 4),
     mats.get("smoothConcrete", { color: C.plinthCharcoal })
   );
+  plinth.rotation.y = Math.PI / 4;
   plinth.position.y = F.plinthHeight / 2;
   sub.add(plinth);
   const deck = new THREE.Mesh(
@@ -584,7 +734,13 @@ function buildFountain(section, group, ground, mats, counts) {
   water.position.y = F.plinthHeight - F.basinDepth;
   sub.add(water);
 
-  /* The jet: central foam column plus the skirt of arcing streams. */
+  /* The jet: a central foam plume, plus a RING OF DISCRETE ARCING STREAMS.
+     The shipped model was a smooth cone skirt, which is an approximation of
+     something the archive frame shows is countable: bb5393567s resolves
+     individual arcs springing from the basin rim and falling inward toward
+     the plume. Each stream is a quadratic Bezier tube from its nozzle up to
+     an apex and down toward the centre, so the ring reads as water thrown
+     rather than as a translucent cone. */
   const J = F.jet;
   const foamMat = new THREE.MeshStandardMaterial({
     color: C.foam, roughness: 0.9, metalness: 0, transparent: true, opacity: 0.8, depthWrite: false,
@@ -592,18 +748,31 @@ function buildFountain(section, group, ground, mats, counts) {
   const core = new THREE.Mesh(new THREE.CylinderGeometry(J.coreRadius, J.coreRadius * 0.5, J.coreHeight, 10), foamMat);
   core.position.y = F.plinthHeight - F.basinDepth + J.coreHeight / 2;
   sub.add(core);
-  const skirt = new THREE.Mesh(
-    new THREE.CylinderGeometry(J.skirtRadius, J.coreRadius * 0.9, J.skirtHeight, 20, 1, true),
-    new THREE.MeshStandardMaterial({
-      color: C.foam, roughness: 0.9, metalness: 0, transparent: true, opacity: 0.35,
-      side: THREE.DoubleSide, depthWrite: false,
-    })
+
+  const rim = F.plinthHeight - F.basinDepth;
+  const streamMat = new THREE.MeshStandardMaterial({
+    color: C.foam, roughness: 0.9, metalness: 0, transparent: true, opacity: 0.55, depthWrite: false,
+  });
+  /* One geometry in the ring's local frame, instanced round the yaw — every
+     arc is the same throw, so the variety is entirely the bearing. */
+  const arc = new THREE.QuadraticBezierCurve3(
+    new THREE.Vector3(J.nozzleRadius, 0, 0),
+    new THREE.Vector3(J.nozzleRadius - J.nozzleReach / 2, J.nozzleRise * 1.6, 0),
+    new THREE.Vector3(Math.max(J.nozzleRadius - J.nozzleReach, J.coreRadius), J.nozzleRise * 0.15, 0)
   );
-  skirt.position.y = F.plinthHeight - F.basinDepth + J.skirtHeight / 2;
-  sub.add(skirt);
+  const streamGeo = new THREE.TubeGeometry(arc, 10, J.streamRadius, 4, false);
+  const streams = [];
+  for (let i = 0; i < J.nozzles; i++) {
+    streams.push({ x: 0, y: rim, z: 0, rot: (i / J.nozzles) * Math.PI * 2 });
+  }
+  const ring = instanced(streamGeo, streamMat, streams, (it) => it);
+  ring.name = "fountain-nozzles";
+  ring.castShadow = false;
+  sub.add(ring);
 
   group.add(sub);
   counts.fountain = 1;
+  counts.fountainNozzles = J.nozzles;
 }
 
 function buildMemorial(section, group, ground, mats, counts) {
@@ -694,8 +863,13 @@ function buildLamps(section, group, ground, counts) {
       x: it.x + Math.sin(it.rot) * 0.28, y: on(it) + L.height + L.head[1] / 2,
       z: it.z + Math.cos(it.rot) * 0.28, rot: it.rot,
     })));
-  /* Crossarm with a banner hanging each side — the photographed pair. */
-  group.add(instanced(new THREE.BoxGeometry(1.6, 0.05, 0.05), poleMat, L.items,
+  /* Crossarm with a banner hanging each side — the photographed pair. Only
+     on the poles the section FLAGS as bannered: the two posts standing in the
+     north bed are a plan read off measured pads, and nothing resolves a
+     banner on them, so they do not get one. A banner pair is a separate,
+     separately-sourced claim from a pole's position. */
+  const bannered = L.items.filter((it) => it.banner);
+  group.add(instanced(new THREE.BoxGeometry(1.6, 0.05, 0.05), poleMat, bannered,
     (it) => ({ x: it.x, y: on(it) + L.crossarmY, z: it.z, rot: it.rot })));
   const [bw, bh] = L.bannerSize;
   const bannerBits = [
@@ -707,7 +881,7 @@ function buildLamps(section, group, ground, counts) {
   for (const bit of bannerBits) {
     const geo = new THREE.PlaneGeometry(bw, bh * bit.frac);
     const items = [];
-    for (const it of L.items) for (const side of [-0.55, 0.55]) items.push({ it, side });
+    for (const it of bannered) for (const side of [-0.55, 0.55]) items.push({ it, side });
     group.add(instanced(geo, cloth(bit.color), items, ({ it, side }) => ({
       x: it.x + Math.cos(it.rot) * side,
       y: on(it) + L.bannerBottomY + bh * bit.off,
@@ -716,26 +890,34 @@ function buildLamps(section, group, ground, counts) {
     })));
   }
   counts.lamps = L.items.length;
-  counts.banners = L.items.length * 2;
+  counts.banners = bannered.length * 2;
 }
 
 function buildBenches(section, group, ground, mats, counts) {
   const B = section.furniture.benches;
   const C = section.colors;
+  /* HELD OUT OF THE DRAW, KEPT IN THE RECORD. The three south-row objects are
+     measured where the shipped scooter centreline runs — 0.48 m from it at
+     the closest — and the campus-wide rule is 3 m. The objects are not wrong
+     and the route is not this module's to move, so they are skipped here and
+     the conflict is declared in the section for arbitration. Deleting the
+     measurement, or relaxing the clearance gate, would both be worse. */
+  const items = B.items.filter((it) => !it.held);
   const mat = mats.get("smoothConcrete", { color: C.benchConcrete });
-  group.add(instanced(new THREE.BoxGeometry(B.length, B.slab, B.depth), mat, B.items,
+  group.add(instanced(new THREE.BoxGeometry(B.length, B.slab, B.depth), mat, items,
     (it) => ({ x: it.x, y: ground(it.x, it.z) + B.seatHeight - B.slab / 2, z: it.z, rot: it.rot })));
   /* Flared pedestal legs: 4-sided cylinders wider at the ground. */
   const legGeo = new THREE.CylinderGeometry(0.17, 0.26, B.seatHeight - B.slab, 4);
   const legs = [];
-  for (const it of B.items) for (const side of [-1, 1]) legs.push({ it, side });
+  for (const it of items) for (const side of [-1, 1]) legs.push({ it, side });
   group.add(instanced(legGeo, mat, legs, ({ it, side }) => ({
     x: it.x + Math.cos(it.rot) * side * (B.length / 2 - B.legInset),
     y: ground(it.x, it.z) + (B.seatHeight - B.slab) / 2,
     z: it.z - Math.sin(it.rot) * side * (B.length / 2 - B.legInset),
     rot: it.rot + Math.PI / 4,
   })));
-  counts.benches = B.items.length;
+  counts.benches = items.length;
+  counts.benchesHeld = B.items.length - items.length;
 }
 
 function buildBinPairs(section, group, ground, mats, counts) {
@@ -760,6 +942,14 @@ function buildBinPairs(section, group, ground, mats, counts) {
 
 function buildBikes(section, group, ground, counts) {
   const K = section.furniture.bikes;
+  /* RETIRED 2026-08-21 (R2 arbitration item R2): the November 2024 photosphere
+     that retired revelle's rack hoops over this same ground shows no bicycles
+     on it either, so count is 0 and nothing is drawn. The block stays in the
+     section with its 2012 read — see superseded['furniture.bikes'] — and the
+     draw returns the moment a count comes back, so this is a retirement and
+     not a deletion. Returning early rather than emitting empty instanced
+     meshes keeps counts.draws honest about what is on screen. */
+  if (!K || !K.count) { counts.bikes = 0; return; }
   const C = section.colors;
   const seed = section.seed;
   const rng = mulberry32((seed ^ 0xb1ce5) | 0);
@@ -823,11 +1013,12 @@ function buildTerraces(section, group, ground, mats, counts) {
 /**
  * Build the Revelle Plaza landscape detail.
  *
- * `photo` is the loaded photo-detail document; this reads its `plaza` section
- * (and, read-only, `revelle.paving.cells` to place the corner arcs) and
- * returns `{ group, counts }` — empty and harmless when the section is
- * missing. Everything stands on `surfaceAt`, the height of the DRAWN terrain
- * triangle; `heightAt` is only the fallback for an older call site.
+ * `photo` is the loaded photo-detail document; this reads ONLY its `plaza`
+ * section — R1 moved the paving field in here, so the module no longer
+ * reaches across into `revelle` for it — and returns `{ group, counts }`,
+ * empty and harmless when the section is missing. Everything stands on
+ * `surfaceAt`, the height of the DRAWN terrain triangle; `heightAt` is only
+ * the fallback for an older call site.
  */
 export function createPhotoPlaza(scene, { photo, heightAt, surfaceAt } = {}) {
   const group = new THREE.Group();
@@ -845,9 +1036,18 @@ export function createPhotoPlaza(scene, { photo, heightAt, surfaceAt } = {}) {
   const mats = sharedMaterialLibrary(THREE);
   const counts = {};
   buildTrees(section, group, ground, mats, counts);
+  /* The four ground systems R1 added or moved in are guarded, for the same
+     reason a missing section is a quiet no-op: a document that predates the
+     merge is a half-wired boot, and a half-wired boot should render what it
+     has rather than throw. Each guard is a presence check on the section's
+     own data, never a default value — a missing block means the feature is
+     ABSENT, and the counts say so. */
+  if (section.paving) buildPaving(section, group, ground, mats, counts);
   buildLawns(section, group, ground, mats, counts);
+  if (section.northBed) buildNorthBed(section, group, ground, mats, counts);
+  if (section.beds) buildBeds(section, group, ground, mats, counts);
   buildDgBelt(section, group, ground, mats);
-  buildBrickArcs(section, photo?.revelle?.paving, group, ground, mats, counts);
+  buildBrickArcs(section, group, ground, mats, counts);
   buildFountain(section, group, ground, mats, counts);
   buildMemorial(section, group, ground, mats, counts);
   buildLamps(section, group, ground, counts);
@@ -855,6 +1055,11 @@ export function createPhotoPlaza(scene, { photo, heightAt, surfaceAt } = {}) {
   buildBinPairs(section, group, ground, mats, counts);
   buildBikes(section, group, ground, counts);
   buildTerraces(section, group, ground, mats, counts);
+  /* Retired from the draw, kept in the record: the invented 6 m cross-walk and
+     the fountain-geometry absent entry are still fully described in the
+     section and are read by nothing here. Reported so the count gate can see
+     that a supersession has not quietly widened. */
+  counts.superseded = Object.keys(section.superseded || {}).length;
   counts.draws = group.children.length;
 
   scene?.add(group);

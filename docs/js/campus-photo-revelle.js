@@ -27,9 +27,21 @@
 // objects. (York Hall moved to its own module, campus-photo-york.js.)
 //
 // What is deliberately NOT here is listed in the section's `absent` array,
-// and it is a long list: no Peace Memorial (no photograph exists), no El Mac
-// mural, no change to the fountain basin, no fleet-hall facades, no Revelle
-// Commons frontage. Better absent than wrong.
+// and it is a long list: no El Mac mural, no fleet-hall facades, no Revelle
+// Commons frontage, no lava-wall coping. Better absent than wrong.
+//
+// AND WHAT IS NO LONGER HERE IS IN `superseded`. Zone 3's R1 pass gave five
+// better-sourced sections the ground this one used to claim: `plaza` took the
+// paving field and re-derived it off the orthophoto's own joints, `blake` took
+// the z 357.5 lava wall it was drawing 0.6 m too short and 0.1 m alongside,
+// `york` took the frontage bins and racks, `argo` retired the hoops a Nov 2024
+// photosphere shows are not there, and `plaza` took the duplicated bench row
+// and lamps. Nothing was deleted — every retired item is still fully described
+// in the section, because the successors cite these entries as the thing they
+// improve on. applySuperseded() below is what stops them being drawn twice,
+// and it mirrors campus-photo-eighth.js. What is left is the college-wide
+// furniture no zone section has reached yet, plus Urey's plaza corner and the
+// Mayer/Bonner breezeway, both held for R4 with their conflicts on the record.
 import * as THREE from "../vendor/three/three.module.min.js";
 import { applyOverlayDepth, OVERLAY, overlayLift } from "./campus-overlay.js";
 
@@ -497,31 +509,80 @@ function buildBreezeway(section, group, ground) {
   ));
 }
 
+/* ------------------------------------------------- retired from the draw */
+
+const ITEM_SYSTEMS = [
+  "benchesA", "benchesB", "kiosks", "lamps", "globes", "bins", "racks", "lavaWalls",
+];
+
+/**
+ * Apply the section's `superseded` map, returning a view of the section in
+ * which retired work is simply absent, plus how much was retired.
+ *
+ * RETIRED FROM THE DRAW, KEPT IN THE RECORD (see the section's
+ * supersededNote). Five better-sourced zone sections now cover ground this
+ * one used to claim, and drawing both is what put two lava-rock walls 0.1 m
+ * apart and two bench rows 1.46 m apart into the same plaza. Two keys are
+ * honoured: a bare system name retires that system entirely, and
+ * `<system>.items[sup]` says the system's own items carry a `sup` field
+ * naming their successor. Per-item flags are used in preference to index
+ * ranges because a range is silently invalidated by any reordering of
+ * items[], and a flag travels with the item it retires.
+ */
+function applySuperseded(section) {
+  const keys = new Set(Object.keys(section.superseded || {}));
+  const view = { ...section };
+  let superseded = 0;
+
+  if (keys.has("paving")) {
+    view.paving = null;
+    superseded += 1;
+  }
+  for (const name of ITEM_SYSTEMS) {
+    const sys = section[name];
+    if (!sys?.items) continue;
+    if (!keys.has(`${name}.items[sup]`)) continue;
+    const live = sys.items.filter((it) => !it.sup);
+    superseded += sys.items.length - live.length;
+    view[name] = { ...sys, items: live };
+  }
+  return { view, superseded };
+}
+
 /* ------------------------------------------------------------------ api */
 
 /**
  * Build Revelle's photo-sourced detail.
  *
  * `photo` is the loaded photo-detail document; this reads only its `revelle`
- * section and returns `{ group }` (empty and harmless if the section is
- * missing, so a half-wired boot still runs). Pass `surfaceAt` — the height of
- * the DRAWN terrain triangle — for everything placed on the ground;
- * `heightAt` is only the fallback.
+ * section. Pass `surfaceAt` — the height of the DRAWN terrain triangle — for
+ * everything placed on the ground; `heightAt` is only the fallback.
+ *
+ * A MISSING SECTION IS A HARD FAILURE, not a quiet no-op (R2 arbitration item
+ * M1). Returning an empty group when `photo.revelle` is absent meant the whole
+ * of Revelle could vanish — a renamed key, a half-applied merge — and every
+ * consumer, including this module's own suite, would carry on green with
+ * nothing drawn. A vacuous pass is the same defect at file level that the
+ * axiom gate exists to stop everywhere else. Callers that legitimately have no
+ * photo document already guard on `data.photo` before reaching this.
  */
 export function createPhotoRevelle(scene, { photo, heightAt, surfaceAt } = {}) {
   const group = new THREE.Group();
   group.name = "photo-revelle";
-  const section = photo?.revelle;
-  if (!section) {
-    scene?.add(group);
-    return { group, counts: {} };
+  const raw = photo?.revelle;
+  if (!raw) {
+    throw new Error(
+      "campus-photo-revelle: the photo document carries no `revelle` section — " +
+        "refusing to draw nothing and report success"
+    );
   }
   const ground = surfaceAt || heightAt;
   if (typeof ground !== "function") {
     throw new Error("campus-photo-revelle: needs surfaceAt (or heightAt) to place on the ground");
   }
+  const { view: section, superseded } = applySuperseded(raw);
 
-  buildPaving(section, group, ground);
+  if (section.paving) buildPaving(section, group, ground);
   buildFurniture(section, group, ground);
   buildUrey(section, group, ground);
   buildBreezeway(section, group, ground);
@@ -530,12 +591,17 @@ export function createPhotoRevelle(scene, { photo, heightAt, surfaceAt } = {}) {
   return {
     group,
     counts: {
-      pavingCells: section.paving.cells.length,
-      benches: section.benchesA.items.length + section.benchesB.items.length,
-      lamps: section.lamps.items.length,
+      pavingCells: section.paving ? section.paving.cells.length : 0,
+      benchesA: section.benchesA.items.length,
+      benchesB: section.benchesB.items.length,
       kiosks: section.kiosks.items.length,
-      lavaWallSegments: section.lavaWalls.items.length,
+      lamps: section.lamps.items.length,
+      globes: section.globes.items.length,
+      bins: section.bins.items.length,
+      racks: section.racks.items.length,
+      lavaWalls: section.lavaWalls.items.length,
       breezewayLevels: section.systems.breezeway.levels,
+      superseded,
       draws: group.children.length,
     },
   };

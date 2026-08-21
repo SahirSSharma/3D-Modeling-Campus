@@ -25,3 +25,7 @@ gauntlet-loop/.no-push
 
 # visual-audit working screenshots — harness output, not source
 audit/
+
+# College source libraries — local-only research corpora (PDFs, renders, notes)
+Eighth-College-Sources/
+Revelle-College-Sources/

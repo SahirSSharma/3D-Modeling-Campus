@@ -1,52 +1,69 @@
 // Blake Hall, from photographs — the INVENTED class.
 //
-// Tucker, Sadler & Bennett, 1967, for Revelle College; renovated LEED Gold and
-// repainted WHITE by Vasquez Marshall. NOT a Fleet hall. Argo's sibling — the
-// same family language (white precast fins, awning sashes, plain parapet band,
-// recessed ground colonnade) but a DIFFERENT module, and the inventory is
-// explicit that copying Argo's rhythm onto Blake is wrong. The only things
-// this file takes from the survey are where Blake stands and how tall it is:
-// the ring campus-massing.js actually EXTRUDES (the university's own massing
-// ring — the OSM ring is suppressed under it) and that mass's own 12.4 m
-// per-mass LiDAR height.
+// Tucker, Sadler & Bennett (the year is a declared 1967-vs-1968 conflict, not
+// an assertion — see the section's conflicts[]), for Revelle College; renovated
+// LEED Gold and repainted WHITE by Vasquez Marshall, complete by January 2014.
+// NOT a Fleet hall. Argo's sibling — the same family language (white precast
+// fins, awning sashes, plain parapet band, recessed ground colonnade) but a
+// DIFFERENT module. The only things this file takes from the survey are where
+// Blake stands and how tall it is: the ring campus-massing.js actually EXTRUDES
+// (the university's own massing ring — the OSM ring is suppressed under it),
+// that ring's INNER ring, and the mass's own 12.4 m per-mass LiDAR height.
 //
-// Three things decided the shape of this file:
+// FOUR THINGS DECIDED THE SHAPE OF THIS FILE.
 //
-//   1. The building solves on the DRAWN LiDAR height: 12.4 m is four levels
-//      of 2.8 m plus a 1.2 m parapet with zero residual, within 2% of the
-//      inventory's assumed 3.05 m anchor (declared [estimated]). An earlier
-//      build used the campus-3d builder's 15.6 m on the suppressed OSM ring;
-//      the LiDAR itself says 12.4, and the 15.6 hung the whole roofscape
-//      3.2 m over the drawn roof — the losing read stays on the record in
-//      the section's measured.heightNote.
+//   0. BLAKE IS A COURTYARD DONUT AND THE WELL IS OPEN. The previous build
+//      painted a decal lid over it at the roof plane and declared everything
+//      below "not sourced". Four independent sources say otherwise: the survey
+//      itself (massing[58] carries two rings and campus-massing.js:826 pushes
+//      every ring after the first into shape.holes, so the extruder has always
+//      built this void); the 2026 ortho, looking down at crowns, beds and
+//      paving eleven metres below; Vasquez Marshall's own scope ("a completely
+//      renovated courtyard concept at the building's center"); and two
+//      photographs taken INSIDE it. The lid is gone. The court floor is at
+//      surfaceAt on the paving rung and the well faces carry the gallery
+//      language those photographs actually show — pale horizontal board
+//      cladding, picket guards on three levels, door-plus-window bays — which
+//      is a completely different system from the Argo courtyard pattern the
+//      old build was extending into a court it could not see.
 //
-//   2. Bays are COUNTS, not metres. ~30-31 bays over the near-orthographic
-//      south elevation is the foreshortening-immune fact; the photo-derived
-//      58 m length does not reconcile with the 37.5 m drawn ring, and the
-//      ring wins. The sibling difference from Argo survives per bay: a large
-//      glazed panel at 0.85 of the bay against Argo's 0.66 narrow window, and
-//      2 fin storeys plus penthouse against Argo's 5.
+//   1. THE STOREY IS 3.10 m AND THE PARAPET IS INSIDE THE HEIGHT. 12.40 =
+//      4 x 3.10 with zero residual, read off a four-step stack in the
+//      near-orthographic south elevation whose every line is an independently
+//      visible feature. The 12.4 m is the top of the LEVEL 4 ROOF SLAB, not
+//      the top of the outer wall: the outer parapet tops out at 10.59 m and
+//      the slab stands 1.81 m proud of it. The LiDAR builder's own guard
+//      proves that anchoring — it withholds massHeights when p98 - p75 > 2 m,
+//      Blake HAS an entry, and the alternative anchoring would have put a
+//      2.12 m step between planes and fired it.
 //
-//   3. The drawn extrusion is flat-topped at 12.4 m (its only opening is the
-//      courtyard well), so the set-back penthouse and its terrace cannot be
-//      carved out of it. The band above the fin storeys is dressed as plain
-//      precast, and the penthouse, guardrail and mechanical screen are
-//      DECLARED absent, not faked.
+//   2. THE LEVEL 4 BAR IS MEASURED AND NOT BUILT. Its plan is a 35.5 x 19.1 m
+//      east-west bar with 9.3 m and 9.5 m roof terraces north and south of it,
+//      all in the section's `level4` with the arithmetic. The VOLUME is not
+//      built: campus-massing.js extrudes Blake's ring flat to 12.40 m, so a
+//      9.30 m terrace deck would be three metres inside a solid mass —
+//      invisible, and intersecting, which this project forbids. Better absent
+//      than wrong. The band between 10.59 m and 12.40 m on the outer
+//      elevations is dressed as plain precast under the honest name
+//      `system.surveyOvershoot`, and the whole thing is the section's largest
+//      declared conflict rather than a quiet compromise.
 //
-// The east end wall is honoured as what the photographs show — a glazed grid
-// with mullions and flat pilasters, not the fin field. The south base carries
-// the lava-rock rubble terrace wall, the best instance on campus.
-//
-// Colours are DATA from the section's `colors` block: Argo's daylight precast
-// whites with Blake's dusk relationships, per the inventory — the backlit
-// Street View samples and every pre-repaint tan are dead epochs. Surfaces come
-// from the seeded material library; irregularity comes from `hash`. Deterministic.
+//   3. EVERY METRE THAT DECIDES THE BUILDING, AND EVERY COLOUR, IS THE
+//      SECTION'S. Storey heights, bay modules, plan positions and hexes all
+//      come from the section's `grid`, `system`, `court`, `roof` and `colors`
+//      blocks, each derived in `derivations.figures` with its own arithmetic,
+//      extended in `estimates` with a band and the ladder that failed, or read
+//      in `reads` with a tolerance. There is NO hex in this file and the test
+//      gates that. There ARE bare decimal literals — the 2026-08-20 audit
+//      counted 85 — and the header used to claim otherwise; that claim was
+//      false and is withdrawn (R2 item B4/5). They are proportions and render
+//      trim (rock pitch, crown offsets, panel gaps, skirt drops); the ones
+//      that decide a datum are in the section's `draw`. Irregularity comes
+//      from `hash` off the section's pinned seed. Nothing reads a clock or a
+//      random source.
 import * as THREE from "../vendor/three/three.module.min.js";
 import { applyOverlayDepth, OVERLAY, overlayLift } from "./campus-overlay.js";
 import { sharedMaterialLibrary } from "./campus-materials.js";
-
-const PAD = "pad";
-const CARPET = "carpet";
 
 const lib = () => sharedMaterialLibrary(THREE);
 
@@ -55,6 +72,7 @@ const painted = (color) => lib().get("metalPanel", { color, metalness: 0.35, rou
 const louvre = (color) => lib().get("metalPanelSeam", { color, metalness: 0.5, roughness: 0.5 });
 const glassMat = (color) => lib().get("glass", { color });
 const rock = (color) => lib().get("lavaRock", { color });
+const boardClad = (color, repeat) => lib().get("metalPanelSeam", { color, repeat, metalness: 0.1, roughness: 0.8 });
 const foliage = (color) =>
   new THREE.MeshStandardMaterial({ color, roughness: 0.95, metalness: 0.0 });
 
@@ -141,8 +159,8 @@ function frameOf(f, ring) {
 
 /* The Blake panel bay: a large frosted glazed panel filling most of the bay,
    a full-width dark awning sash below it, faceted fins between bays that stop
-   at the spandrel bands. Two fin storeys, then the plain upper band standing
-   in for the set-back penthouse level, then the parapet. */
+   at the spandrel bands. Two fin storeys, then the parapet around the Level 4
+   roof terrace, then the survey-overshoot band. */
 function collectPanelFace(section, f, frame, base, ground, bins) {
   const G = section.grid;
   const S = section.system;
@@ -165,7 +183,7 @@ function collectPanelFace(section, f, frame, base, ground, bins) {
 
     for (let i = 0; i < G.longFaceBays; i++) {
       const u = (i + 0.5) * module;
-      const sky = hash(7, s, i, Math.round(length)) < 0.2;
+      const sky = hash(section.seed, s, i, Math.round(length)) < 0.2;
       (sky ? bins.glassSky : bins.glassFrosted).push({
         ...frame.at(u, 0.02, y0 + spandrelH + awningH + panH / 2),
         rot,
@@ -247,24 +265,20 @@ function collectGridFace(section, f, frame, base, ground, bins) {
   collectGround(section, f, frame, base, ground, bins);
 }
 
-/* The plain upper band (the penthouse level the flat-topped extrusion cannot
-   set back — declared, not faked) and the parapet with its panel joints. */
+/* Above the fin storeys the outer wall is the PARAPET around the Level 4 roof
+   terrace — it starts at the terrace deck and stops 1.29 m up, both measured —
+   and above THAT is the survey overshoot: the band the flat-topped extrusion
+   puts where the real building has open terrace 9.4 m behind. It is dressed as
+   plain precast and named for what it is; see the section's
+   conflicts['flat-topped-mass']. */
 function collectUpper(section, frame, base, bins) {
   const G = section.grid;
   const S = section.system;
-  const F = G.floorToFloor;
   const module = frame.length / G.longFaceBays;
   const { rot, length } = frame;
-  const bandY0 = base + (G.finStoreys + 1) * F;
-
-  bins.upperBands.push({
-    ...frame.at(length / 2, S.upperBand.proud, bandY0 + F / 2),
-    rot,
-    scale: [length, F, 0.06],
-  });
 
   const P = S.parapet;
-  const pY = bandY0 + F;
+  const pY = base + G.terraceDeck;
   bins.parapets.push({
     ...frame.at(length / 2, P.proud, pY + P.height / 2),
     rot,
@@ -282,6 +296,15 @@ function collectUpper(section, frame, base, bins) {
       scale: [0.03, P.height - 0.15, 0.02],
     });
   }
+
+  const O = S.surveyOvershoot;
+  const oY0 = base + G.parapetTop;
+  const oH = G.roofSlab - G.parapetTop;
+  bins.upperBands.push({
+    ...frame.at(length / 2, O.proud, oY0 + oH / 2),
+    rot,
+    scale: [length, oH, 0.06],
+  });
 }
 
 /* The ground colonnade: near-black recess glazing tight to the wall, square
@@ -312,6 +335,23 @@ function collectGround(section, f, frame, base, ground, bins) {
     rot,
     scale: [length - 0.4, recessTop - recessBottom, 1],
   });
+  /* Storefront differentiation, at the level the source supports: _67 shows a
+     glazed storefront behind the colonnade whose mullions fall on the facade's
+     OWN bay module (reads['ground.storefront.mullionPitch']), so one mullion
+     goes on every bay boundary but the two at each face's ends, which are the
+     building corners. No lettering and no per-bay tenancy — which bay is a
+     door, a shopfront or the solid panel is declared in absent[]. */
+  const SF = GR.storefront;
+  if (SF) {
+    for (let i = SF.skipEnds; i <= G.longFaceBays - SF.skipEnds; i += SF.pitchBays) {
+      bins.storefront.push({
+        ...frame.at(i * module, 0.03 + section.draw.storefrontProud, (recessBottom + recessTop) / 2),
+        rot,
+        scale: [SF.mullionWidth, recessTop - recessBottom, SF.mullionWidth],
+      });
+    }
+  }
+
   for (let i = 0; i < G.longFaceBays; i += GR.columnSpacingBays) {
     const p = frame.at((i + 0.5) * module, GR.columnProud + GR.columnSize / 2, 0);
     const g = ground(p.x, p.z);
@@ -349,12 +389,12 @@ function collectGround(section, f, frame, base, ground, bins) {
 
 /* ------------------------------------------------------------------- roof */
 
-/* Deterministic COLOUR textures for the roof, self-contained on purpose.
+/* Deterministic COLOUR textures, self-contained on purpose.
    campus-materials.js bakes grey relief multiplied into one caller colour;
-   the membrane's rust stains and the well's planting need two colours in one
-   map, so these bake their own RGBA the same DataTexture way — closed-form
-   fields over (u, v), byte-identical in Node and the browser, colours fed
-   from the section's `colors` block, never from photo or satellite pixels. */
+   the membrane's staining needs two colours in one map, so this bakes its own
+   RGBA the same DataTexture way — a closed-form field over (u, v),
+   byte-identical in Node and the browser, colours fed from the section's
+   `colors` block, never from photo or satellite pixels. */
 function bakeNoise(u, v, seed, cells, oct) {
   let sum = 0;
   let amp = 1;
@@ -412,8 +452,11 @@ function bakeTexturePair(field) {
   return { map: tex(albedo, true), roughnessMap: tex(rough, false) };
 }
 
-/** The weathered patch-stained membrane (section roof.membrane): off-white
-    field, rust/tan stain blotches, faint seam grid — Argo's treatment family. */
+/** The weathered patch-stained membrane (section roof.membrane): the ortho's
+    cool near-white field, its neutral-grey patch staining, a faint seam grid.
+    Both colours are 2026 daylight-nadir measurements of THIS roof — the warm
+    off-white and the rust stain the previous build used were Argo's, borrowed
+    on a premise the section's colorNote now refutes. */
 function blakeMembraneTexture(colors) {
   const base = hex2rgb(colors.membraneBase);
   const stain = hex2rgb(colors.membraneStain);
@@ -421,7 +464,7 @@ function blakeMembraneTexture(colors) {
     const mottle = bakeNoise(u, v, 11, 6, 3);
     const blotch = bakeNoise(u, v, 12, 5, 4);
     /* Sparse flecking, not cowhide: a high threshold and a soft cap keep the
-       field reading white with rust patches, matching the ortho's weathering. */
+       field reading white with grey patches, matching the ortho's weathering. */
     const k = Math.max(0, Math.min(1, (blotch - 0.66) / 0.1)) * (0.2 + 0.45 * mottle);
     const seamU = (u * 6) % 1;
     const seamV = (v * 6) % 1;
@@ -432,60 +475,77 @@ function blakeMembraneTexture(colors) {
   });
 }
 
-/** The well floor's planting: dark beds with leafy variation, not a flat
-    brown rectangle. */
-function blakePlantingTexture(colors) {
-  const base = hex2rgb(colors.plantingDark);
-  const leaf = hex2rgb(colors.treeGreen);
-  return bakeTexturePair((u, v, out) => {
-    const clump = bakeNoise(u, v, 13, 8, 3);
-    const fine = bakeNoise(u, v, 14, 32, 2);
-    const k = Math.max(0, Math.min(1, (clump - 0.5) / 0.3)) * 0.45;
-    const tone = 0.8 + 0.35 * fine;
-    for (let c = 0; c < 3; c++) out[c] = base[c] * tone * (1 - k) + leaf[c] * (0.55 + 0.4 * fine) * k;
-    out[3] = 0.95;
-  });
+/** The stair/lift core's footprint, from the ONE place it is measured: the four
+ *  vertices of the drawn inner ring carried verbatim into the section's survey
+ *  readings. It is SOLID MASS to 12.40 m, and it used to be treated as a void
+ *  twice with opposite signs — the membrane was cut open over it (a 3.0 x 2.9 m
+ *  hole in a roof the section calls one plane) and its three well-ring faces
+ *  were dressed with residence-room bays (12 glazed doors and 12 room windows
+ *  on a stair core nothing photographs). One rectangle, read here, used by
+ *  both, so a fix to one can no longer move the error into the other. */
+function notchRect(section) {
+  const S = section.derivations.readings.survey;
+  return { x0: S.notchX0, x1: S.notchX1, z0: S.notchZ0, z1: S.notchZ1 };
 }
 
-/* The roofscape, all plan positions measured off chunk_4_6.jpg (registered
-   to the drawn ring / drawn well) and every height [estimated] — no oblique
-   of this roof exists, and the data says so.
+/** True if a well-ring vertex lies on the core notch. The survey rectangle is
+ *  the notch's own vertices, so the tolerance only absorbs the ring's 0.1 m
+ *  drafting slop at the two corners it shares with the west run. */
+function onNotch(p, N) {
+  return p[0] >= N.x0 - 0.15 && p[0] <= N.x1 + 0.15
+    && p[1] >= N.z0 - 0.15 && p[1] <= N.z1 + 0.15;
+}
 
-   ADJUDICATION 2026-08-18 (section roof.screen.note): the cream checkerboard
-   on the north plate is a screened MECHANICAL enclosure, not PV — genuine PV
-   in the same imagery (Keeling) is unmistakably dark blue. The losing PV
-   read stays recorded in the data and is not built.
+/** True if (x, z) is inside a closed ring. */
+function inRing(x, z, r) {
+  let ins = false;
+  for (let i = 0, j = r.length - 1; i < r.length; j = i++) {
+    const [xi, zi] = r[i];
+    const [xj, zj] = r[j];
+    if (zi > z !== zj > z && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) ins = !ins;
+  }
+  return ins;
+}
 
-   The courtyard is the ROOF-PLANE read the declaration promises: the
-   planting decal caps the drawn well opening AT the drawn roof plane
-   (oversized by the kerb so no sliver of the void shows), and everything in
-   the well — trunks, trellis posts, the core block, the water feature —
-   seats on that cap, the well floor datum. The interior below stays
-   declared absent. The inner plate is a raised slab ringing the well
-   (section roof.plates, raise [estimated]) over the outer north and south
-   bands, which carry the membrane as decals on the drawn roof plane. */
-function buildRoof(section, group, roofY, ground, bins) {
+/* The roofscape, and what is left of it.
+ *
+ * THE CEILING IS THE MEASURED LiDAR MAXIMUM (section roof.anchorGate; R2 item
+ * B2). The retired gate asked whether a roof item stood higher than the roof
+ * block's own declared heights plus half a metre, which is not a gate at all —
+ * whatever the block said, it passed. Held to the LiDAR anchor instead, the R1
+ * build put 65 solid placements above it, to +2.510 m: the coping on all four
+ * faces, the mechanical screen's enclosure, deck and 32 blocks, and all twelve
+ * vent curbs with their caps. That is the exact sin roof.plates was withdrawn
+ * for, six times larger.
+ *
+ * NONE OF IT IS RE-SEATED, BECAUSE THERE IS NOWHERE BELOW THE ANCHOR TO STAND.
+ * The only lower datum in this building is the 9.30 m roof-terrace deck, and
+ * the drawn mass is flat-topped at 12.40 m, so that deck is three metres inside
+ * solid mass — invisible and intersecting, which this project forbids. So the
+ * coping, the screen and the vents are WITHHELD, their measured plans, tones
+ * and adjudications kept in the section with built:false, and each declared in
+ * absent[] with the frame that would settle it. Better absent than wrong.
+ *
+ * The 2026-08-18 not-PV adjudication is unaffected and stands in the data: the
+ * cream checkerboard is a screened MECHANICAL enclosure, not an array. It is
+ * withheld for its HEIGHT, which was never measurable, not for its identity.
+ *
+ * What still draws here is the membrane, which is not furniture standing on the
+ * roof but a decal ON the drawn surface, lifted only by the repo's own declared
+ * pad rung. It is laid in five bands: four round the open well, and a fifth
+ * over the stair/lift core, which is inside the court rectangle but is SOLID
+ * MASS to 12.40 m and was carrying a 3.0 x 2.9 m hole. */
+function buildRoof(section, group, roofY, bins) {
   const R = section.roof;
   const { colors } = section;
-  const unit = new THREE.BoxGeometry(1, 1, 1);
-  const cyl = new THREE.CylinderGeometry(1, 1, 1, 16);
 
   const ring = section.measured.ring;
   const rx0 = Math.min(...ring.map((p) => p[0]));
   const rx1 = Math.max(...ring.map((p) => p[0]));
   const rz0 = Math.min(...ring.map((p) => p[1]));
   const rz1 = Math.max(...ring.map((p) => p[1]));
-
-  const copes = [];
-  for (const f of section.facades) {
-    const frame = frameOf(f, ring);
-    copes.push({
-      ...frame.at(frame.length / 2, -R.coping.width / 2 + 0.05, roofY + R.coping.height / 2),
-      rot: frame.rot,
-      scale: [frame.length, R.coping.height, R.coping.width],
-    });
-  }
-  group.add(instanced(unit, concrete(colors.copingWhite), copes));
+  const C = section.court;
+  const N = notchRect(section);
 
   const membrane = blakeMembraneTexture(colors);
   const membraneMat = (repeat) => {
@@ -495,216 +555,406 @@ function buildRoof(section, group, roofY, ground, bins) {
       c.needsUpdate = true;
       return [k, c];
     }));
-    return new THREE.MeshStandardMaterial({ ...maps, roughness: 1, metalness: 0 });
+    return applyOverlayDepth(new THREE.MeshStandardMaterial({ ...maps, roughness: 1, metalness: 0 }), "pad");
   };
 
-  /* The outer north and south bands: membrane decals on the drawn roof. */
-  const P = R.plates;
-  const bandW = rx1 - rx0 - 2 * P.inset;
-  const bandCx = (rx0 + rx1) / 2;
-  for (const [bz0, bz1] of [[rz0 + P.inset, P.innerZ0], [P.innerZ1, rz1 - P.inset]]) {
-    const band = new THREE.Mesh(quad(bandW, bz1 - bz0),
-      applyOverlayDepth(membraneMat([4, 1]), PAD));
-    band.position.set(bandCx, roofY + overlayLift(PAD), (bz0 + bz1) / 2);
-    band.renderOrder = OVERLAY[PAD].renderOrder;
-    band.name = "membrane-band";
-    band.receiveShadow = true;
-    group.add(band);
+  /* Membrane over the whole drawn roof plane, in four bands around the open
+     well — the well is a real hole and nothing is laid across it — plus a
+     fifth over the SOLID core notch, which is inside the court rectangle the
+     other four are cut against and is mass to 12.40 m. The notch rectangle is
+     read from ONE place (notchRect) that the well-face dressing reads too, so
+     the two cannot disagree about which side of it is solid. */
+  const inset = section.draw.membraneInset;
+  const bands = [
+    { x0: rx0 + inset, x1: rx1 - inset, z0: rz0 + inset, z1: C.z0 },
+    { x0: rx0 + inset, x1: rx1 - inset, z0: C.z1, z1: rz1 - inset },
+    { x0: rx0 + inset, x1: C.x0, z0: C.z0, z1: C.z1 },
+    { x0: C.x1, x1: rx1 - inset, z0: C.z0, z1: C.z1 },
+    { x0: N.x0, x1: N.x1, z0: N.z0, z1: N.z1 },
+  ];
+  for (const b of bands) {
+    const w = b.x1 - b.x0;
+    const d = b.z1 - b.z0;
+    const mesh = new THREE.Mesh(quad(w, d), membraneMat([Math.max(1, w / 9), Math.max(1, d / 9)]));
+    mesh.position.set((b.x0 + b.x1) / 2, roofY + overlayLift("pad"), (b.z0 + b.z1) / 2);
+    mesh.renderOrder = OVERLAY.pad.renderOrder;
+    mesh.name = "membrane-band";
+    mesh.receiveShadow = true;
+    group.add(mesh);
   }
+  bins.counts.membraneBands = bands.length;
 
-  /* The raised inner plate: four membrane-topped strips ringing the well,
-     one step over the bands with the ortho's shadow line at each edge. */
-  const W = R.courtyard;
-  const K = R.kerb;
-  const plateTop = roofY + P.raise;
-  const strips = [
-    { x0: rx0 + P.inset, x1: rx1 - P.inset, z0: P.innerZ0, z1: W.z0 },
-    { x0: rx0 + P.inset, x1: rx1 - P.inset, z0: W.z1, z1: P.innerZ1 },
-    { x0: rx0 + P.inset, x1: W.x0, z0: W.z0, z1: W.z1 },
-    { x0: W.x1, x1: rx1 - P.inset, z0: W.z0, z1: W.z1 },
-  ];
-  group.add(instanced(unit, membraneMat([2, 2]), strips, (s) => ({
-    x: (s.x0 + s.x1) / 2, y: roofY + P.raise / 2, z: (s.z0 + s.z1) / 2,
-    scale: [s.x1 - s.x0, P.raise, s.z1 - s.z0],
-  })));
-
-  /* The courtyard cap: the drawn well opening, floored at the drawn roof
-     plane with the planting texture — the well floor datum everything in
-     the well seats on. */
-  const wellW = W.x1 - W.x0;
-  const wellD = W.z1 - W.z0;
-  const wcx = (W.x0 + W.x1) / 2;
-  const wcz = (W.z0 + W.z1) / 2;
-  const well = new THREE.Mesh(quad(wellW + 2 * K.width, wellD + 2 * K.width),
-    applyOverlayDepth(new THREE.MeshStandardMaterial({
-      ...blakePlantingTexture(colors), roughness: 1, metalness: 0,
-    }), PAD));
-  well.position.set(wcx, roofY + overlayLift(PAD), wcz);
-  well.renderOrder = OVERLAY[PAD].renderOrder;
-  well.name = "courtyard-decal";
-  well.receiveShadow = true;
-  group.add(well);
-
-  /* Real paving on the well floor: a buff unit-paver band around the
-     perimeter and an apron at the water feature, on the rung above the
-     planting. */
-  const V = R.courtyard.water;
-  const pb = R.courtyard.paving.band;
-  const pave = (w, d, x, z, repeat) => {
-    const m = new THREE.Mesh(quad(w, d), decal(colors.pavingBuff, CARPET, "pavingConcreteUnit", repeat));
-    m.position.set(x, roofY + overlayLift(CARPET), z);
-    m.renderOrder = OVERLAY[CARPET].renderOrder;
-    m.name = "courtyard-paving";
-    m.receiveShadow = true;
-    group.add(m);
-  };
-  pave(wellW, pb, wcx, W.z0 + pb / 2, [8, 1]);
-  pave(wellW, pb, wcx, W.z1 - pb / 2, [8, 1]);
-  pave(pb, wellD - 2 * pb, W.x0 + pb / 2, wcz, [1, 8]);
-  pave(pb, wellD - 2 * pb, W.x1 - pb / 2, wcz, [1, 8]);
-  pave(V.w + 2.4, V.d + 2.4, V.x, V.z, [3, 3]);
-
-  /* The kerb rings the well ON the raised plate. */
-  const kerbs = [
-    { x: wcx, z: W.z0 - K.width / 2, scale: [wellW + 2 * K.width, K.height, K.width] },
-    { x: wcx, z: W.z1 + K.width / 2, scale: [wellW + 2 * K.width, K.height, K.width] },
-    { x: W.x0 - K.width / 2, z: wcz, scale: [K.width, K.height, wellD] },
-    { x: W.x1 + K.width / 2, z: wcz, scale: [K.width, K.height, wellD] },
-  ];
-  group.add(instanced(unit, concrete(colors.kerbWhite), kerbs,
-    (k) => ({ ...k, y: plateTop + K.height / 2 })));
-
-  /* Trellis strips along the well's north and south edges [measured plan].
-     Posts seat on whatever carries them — the well floor datum inside the
-     well, the raised plate outside it; the beam plane is one height. */
-  const TRELLIS_H = 2.6; /* [estimated] — see courtyard.trellisNote */
-  const slats = [];
-  const beams = [];
-  const posts = [];
-  const inWell = (x, z) => x > W.x0 && x < W.x1 && z > W.z0 && z < W.z1;
-  for (const T of R.courtyard.trellises) {
-    const beamTop = plateTop + TRELLIS_H;
-    const tw = T.x1 - T.x0;
-    const td = T.z1 - T.z0;
-    for (let x = T.x0 + 0.3; x <= T.x1 - 0.3; x += 0.55) {
-      slats.push({ x, y: beamTop + 0.1, z: (T.z0 + T.z1) / 2, scale: [0.1, 0.09, td] });
+  /* The coping, the mechanical screen and the vents all stood above the
+     measured LiDAR maximum and are WITHHELD — see this function's header and
+     the section's roof.anchorGate. Their records must say so, and if one of
+     them is ever flipped back to built:true it must come back with a seat
+     under the anchor rather than by deleting these guards. */
+  for (const [key, block] of [["coping", R.coping], ["screen", R.screen], ["vents", R.vents]]) {
+    if (block.built !== false) {
+      throw new Error(`campus-photo-blake: roof.${key} claims built:${block.built} but stands `
+        + "above the measured LiDAR anchor — see roof.anchorGate and absent[]");
     }
-    for (const z of [T.z0 + 0.08, T.z1 - 0.08]) {
-      beams.push({ x: (T.x0 + T.x1) / 2, y: beamTop, z, scale: [tw, 0.14, 0.16] });
-      for (let i = 0; i <= 4; i++) {
-        const x = T.x0 + 0.15 + (i * (tw - 0.3)) / 4;
-        const base = inWell(x, z) ? roofY : plateTop;
-        posts.push({ x, y: (base + beamTop) / 2, z, scale: [0.14, beamTop - base, 0.14] });
+  }
+}
+
+/* ------------------------------------------------------------------ court */
+
+/** The well ring's faces, each with the normal that points INTO the court.
+ *  The winding is read off the ring's own signed area rather than assumed, and
+ *  the notch's three faces fall out of the same loop with the right normals —
+ *  they are edges of a concave polygon, not a special case. */
+function wellFaces(ringClosed) {
+  const r = ringClosed.slice(0, -1);
+  let area = 0;
+  for (let i = 0, j = r.length - 1; i < r.length; j = i++) {
+    area += r[j][0] * r[i][1] - r[i][0] * r[j][1];
+  }
+  const ccw = area > 0;
+  const out = [];
+  for (let i = 0; i < r.length; i++) {
+    const [ax, az] = r[i];
+    const [bx, bz] = r[(i + 1) % r.length];
+    const length = Math.hypot(bx - ax, bz - az);
+    if (length < 1e-6) continue;
+    const tx = (bx - ax) / length;
+    const tz = (bz - az) / length;
+    /* Inward (into the polygon = into the court) for the ring's own winding. */
+    const nx = ccw ? -tz : tz;
+    const nz = ccw ? tx : -tx;
+    out.push({
+      a: r[i],
+      b: r[(i + 1) % r.length],
+      length,
+      rot: Math.atan2(nx, nz),
+      at: (u, w, y) => ({ x: ax + tx * u + nx * w, y, z: az + tz * u + nz * w }),
+    });
+  }
+  return out;
+}
+
+/* The court, which is the whole point of this revision.
+ *
+ * The floor is TESSELLATED and every vertex sits on surfaceAt at its own
+ * (x, z) plus the paving rung, so it follows the drawn triangle exactly and
+ * can neither hover nor sink — the CLAUDE.md rule for anything placed on the
+ * ground, applied to a floor eleven metres inside a building. Beds, boulders
+ * and palms all seat on that same datum, so the court has one datum and
+ * nothing in it can disagree about where the floor is.
+ *
+ * The well FACES carry the language _3 and _25 photograph: pale horizontal
+ * board cladding, a picket guard on stub posts at levels 2, 3 and 4 over a
+ * separate slab-edge line, and a repeating bay of a dark-framed room door plus
+ * a window with a square wall light between bays. The gallery walkway's open
+ * DEPTH is not built — the drawn mass is solid where the walkway is open — and
+ * that is declared in the section rather than faked with a projecting deck. */
+function buildCourt(section, group, baseY, ground, bins) {
+  const C = section.court;
+  const W = section.system.wellFace;
+  const { colors } = section;
+  const ring = section.measured.courtyardRing;
+  const D = section.draw;
+  const unit = new THREE.BoxGeometry(1, 1, 1);
+  const lift = overlayLift(D.courtRung);
+  const seat = (x, z) => ground(x, z) + lift;
+
+  /* ---- the floor, following the drawn surface ---- */
+  const step = 1;
+  const nx = Math.max(1, Math.ceil((C.x1 - C.x0) / step));
+  const nz = Math.max(1, Math.ceil((C.z1 - C.z0) / step));
+  const dx = (C.x1 - C.x0) / nx;
+  const dz = (C.z1 - C.z0) / nz;
+  const verts = [];
+  const uvs = [];
+  const idx = [];
+  const at = (i, j) => {
+    const x = C.x0 + i * dx;
+    const z = C.z0 + j * dz;
+    verts.push(x, seat(x, z), z);
+    uvs.push(x / 2, z / 2);
+    return verts.length / 3 - 1;
+  };
+  const grid = [];
+  for (let i = 0; i <= nx; i++) {
+    grid.push([]);
+    for (let j = 0; j <= nz; j++) grid[i].push(at(i, j));
+  }
+  let cells = 0;
+  for (let i = 0; i < nx; i++) {
+    for (let j = 0; j < nz; j++) {
+      const cx = C.x0 + (i + 0.5) * dx;
+      const cz = C.z0 + (j + 0.5) * dz;
+      if (!inRing(cx, cz, ring)) continue;
+      idx.push(grid[i][j], grid[i][j + 1], grid[i + 1][j + 1]);
+      idx.push(grid[i][j], grid[i + 1][j + 1], grid[i + 1][j]);
+      cells++;
+    }
+  }
+  const floorGeo = new THREE.BufferGeometry();
+  floorGeo.setAttribute("position", new THREE.Float32BufferAttribute(verts, 3));
+  floorGeo.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+  floorGeo.setIndex(idx);
+  floorGeo.computeVertexNormals();
+  const floor = new THREE.Mesh(floorGeo,
+    decal(colors.courtConcrete, D.courtRung, "pavingConcreteUnit", [1, 1]));
+  floor.renderOrder = OVERLAY[D.courtRung].renderOrder;
+  floor.name = "court-floor";
+  floor.receiveShadow = true;
+  group.add(floor);
+  bins.counts.courtFloorCells = cells;
+
+  /* ---- decomposed-granite beds, on the rung above the paving ---- */
+  const bedLift = overlayLift(D.bedRung);
+  for (const b of C.beds) {
+    const bw = b.x1 - b.x0;
+    const bd = b.z1 - b.z0;
+    const bx = (b.x0 + b.x1) / 2;
+    const bz = (b.z0 + b.z1) / 2;
+    const bed = new THREE.Mesh(quad(bw, bd),
+      decal(colors.decomposedGranite, D.bedRung, "decomposedGranite", [bw / 2, bd / 2]));
+    bed.position.set(bx, ground(bx, bz) + bedLift, bz);
+    bed.renderOrder = OVERLAY[D.bedRung].renderOrder;
+    bed.name = "court-bed";
+    bed.receiveShadow = true;
+    group.add(bed);
+  }
+  bins.counts.courtBeds = C.beds.length;
+
+  /* ---- granite boulders ---- */
+  group.add(instanced(new THREE.IcosahedronGeometry(1, 1), concrete(colors.boulderGrey), C.boulders,
+    (b, i) => ({
+      x: b.x, y: seat(b.x, b.z) + b.r * (0.62 - D.boulderBury), z: b.z,
+      rot: hash(section.seed, i, 3) * Math.PI,
+      scale: [b.r, b.r * 0.62, b.r * 0.85],
+    })));
+  bins.counts.courtBoulders = C.boulders.length;
+
+  /* ---- Washingtonia fan palms, seated on the court floor ---- */
+  const palms = C.palms;
+  group.add(instanced(new THREE.CylinderGeometry(1, 1.4, 1, 8),
+    lib().get("barkEucalyptus", { color: colors.palmTrunk }), palms,
+    (p) => ({
+      x: p.x, y: seat(p.x, p.z) + p.height / 2, z: p.z,
+      scale: [C.palmTrunkRadius, p.height, C.palmTrunkRadius],
+    })));
+  /* THE CLIP, stated as a rule (draw.crownClearNote). Crown centres and radii
+     are measured off the 2026 ortho and are not moved; the DRAWN cone is
+     trimmed to the well the massing actually opens, less draw.crownClear, so a
+     canopy cannot grow into a gallery slab, a guard or the solid core notch.
+     It bites on palm-4, whose 2.6 m crown reaches into the notch. */
+  const ringPts = section.measured.courtyardRing;
+  const toRing = (px, pz) => {
+    let best = Infinity;
+    for (let i = 1; i < ringPts.length; i++) {
+      const [ax, az] = ringPts[i - 1];
+      const [bx, bz] = ringPts[i];
+      const dx = bx - ax;
+      const dz = bz - az;
+      const l2 = dx * dx + dz * dz;
+      const t = l2 ? Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / l2)) : 0;
+      best = Math.min(best, Math.hypot(px - (ax + t * dx), pz - (az + t * dz)));
+    }
+    return best;
+  };
+  const crownRadius = (p) => Math.max(0, Math.min(p.radius, toRing(p.x, p.z) - D.crownClear));
+  const crowns = instanced(new THREE.ConeGeometry(1, 1, 9), foliage(colors.palmFrond), palms,
+    (p) => ({ x: p.x, y: seat(p.x, p.z) + p.height + 0.3, z: p.z, scale: [crownRadius(p), 1.1, crownRadius(p)] }));
+  crowns.name = "court-crowns";
+  group.add(crowns);
+  group.add(instanced(new THREE.ConeGeometry(1, 1, 9), foliage(colors.palmFrond), palms,
+    (p) => ({
+      x: p.x, y: seat(p.x, p.z) + p.height - 0.15, z: p.z, rotX: Math.PI,
+      scale: [p.radius * 1.05, 0.7, p.radius * 1.05],
+    })));
+  bins.counts.courtPalms = palms.length;
+
+  /* ---- the well faces ---- */
+  const faces = wellFaces(ring);
+  const clad = [];
+  const slabEdges = [];
+  const topRails = [];
+  const midRails = [];
+  const bottomRails = [];
+  const posts = [];
+  const pickets = [];
+  const doors = [];
+  const doorGlass = [];
+  const windows = [];
+  const winGlass = [];
+  const lights = [];
+  const wallH = section.grid.roofSlab;
+  const N = notchRect(section);
+
+  for (const face of faces) {
+    const { rot, length } = face;
+    /* The three faces of the SOLID stair/lift core. research-blake authorises
+       dressing them with "the same gallery-adjacent language; the galleries
+       pass it" — cladding and a passing walkway. It does not authorise a
+       repeating residence-room bay, and nothing photographs the core, so the
+       room bays are suppressed over its footprint and the guard, the slab edge
+       and the cladding carry straight past. Same rectangle as the membrane's
+       fifth band; see notchRect. */
+    const core = onNotch(face.a, N) && onNotch(face.b, N);
+    /* Cladding over the full height of the face, carried DOWN to the lowest
+       court floor under it so a rolling surface cannot open a gap at its
+       foot — the same skirt argument as the outer colonnade's. */
+    let gmin = baseY;
+    const samples = Math.max(2, Math.ceil(length / 2));
+    for (let i = 0; i <= samples; i++) {
+      const p = face.at((i * length) / samples, 0, 0);
+      const g = seat(p.x, p.z);
+      if (Number.isFinite(g) && g < gmin) gmin = g;
+    }
+    const cladBottom = gmin - 0.3;
+    const cladTop = baseY + wallH;
+    clad.push({
+      ...face.at(length / 2, D.wellFaceProud, (cladBottom + cladTop) / 2),
+      rot,
+      scale: [length, cladTop - cladBottom, 0.06],
+      repeat: [length / W.bayModule, (cladTop - cladBottom) / W.boardPitch],
+    });
+
+    const bays = Math.max(1, Math.round(length / W.bayModule));
+    const bay = length / bays;
+    /* The window takes what is left of the bay once the door leaf and a
+       one-board reveal at each end are out — the section's own expression,
+       evaluated against the bay this face actually has. */
+    const winW = bay - W.doorWidth - 2 * W.boardPitch;
+
+    for (const level of W.levels) {
+      const y0 = baseY + level.deck;
+
+      for (let b = 0; b < bays && !core; b++) {
+        const u0 = b * bay;
+        const doorU = u0 + W.boardPitch + W.doorWidth / 2;
+        doors.push({
+          ...face.at(doorU, D.wellFaceProud + 0.01, y0 + W.doorHeight / 2),
+          rot,
+          scale: [W.doorWidth, W.doorHeight, 0.05],
+        });
+        doorGlass.push({
+          ...face.at(doorU, D.wellFaceProud + 0.03, y0 + W.doorHeight / 2),
+          rot,
+          scale: [W.doorWidth - W.railFace * 2, W.doorHeight - W.railFace * 2, 1],
+        });
+        if (winW > W.doorWidth / 2) {
+          const winU = u0 + W.boardPitch + W.doorWidth + winW / 2;
+          windows.push({
+            ...face.at(winU, D.wellFaceProud + 0.01, y0 + W.windowSill + W.windowHeight / 2),
+            rot,
+            scale: [winW, W.windowHeight, 0.05],
+          });
+          winGlass.push({
+            ...face.at(winU, D.wellFaceProud + 0.03, y0 + W.windowSill + W.windowHeight / 2),
+            rot,
+            scale: [winW - W.railFace * 2, W.windowHeight - W.railFace * 2, 1],
+          });
+        }
+        /* A square wall-mounted fixture on the internal bay boundaries. */
+        if (b > 0) {
+          lights.push({
+            ...face.at(u0, D.wellFaceProud + 0.04, y0 + W.fixtureHeight),
+            rot,
+            scale: [W.fixture, W.fixture, 0.08],
+          });
+        }
+      }
+
+      if (!level.gallery) continue;
+      /* The slab edge reads BELOW the rail as its own line, and the guard
+         stands on stub posts off that edge — both straight out of _3. */
+      slabEdges.push({
+        ...face.at(length / 2, D.slabEdgeProud + D.railProud, y0 - W.slabEdge / 2),
+        rot,
+        scale: [length, W.slabEdge, 0.08],
+      });
+      topRails.push({
+        ...face.at(length / 2, D.railProud, y0 + W.guardHeight - W.railFace / 2),
+        rot,
+        scale: [length, W.railFace, W.railFace],
+      });
+      midRails.push({
+        ...face.at(length / 2, D.railProud, y0 + W.midRailHeight),
+        rot,
+        scale: [length, W.railFace, W.railFace * 0.7],
+      });
+      /* The picket panel is HELD OFF THE DECK. _3 shows it occupying roughly
+         the top 60% of the guard, closed by a bottom rail, over an open gap of
+         about a third of the guard height — a continuous stripe of light under
+         every rail on three levels and eight faces. The shipped build ran the
+         pickets deck-to-top and modelled no bottom rail at all. */
+      bottomRails.push({
+        ...face.at(length / 2, D.railProud, y0 + W.bottomRailHeight),
+        rot,
+        scale: [length, W.railFace, W.railFace * 0.7],
+      });
+      const nPosts = Math.max(2, Math.round(length / W.bayModule) + 1);
+      for (let p = 0; p < nPosts; p++) {
+        posts.push({
+          ...face.at((p * length) / (nPosts - 1), D.railProud, y0 + W.guardHeight / 2),
+          rot,
+          scale: [W.postWidth, W.guardHeight, W.postWidth],
+        });
+      }
+      const nPickets = Math.max(2, Math.floor(length / W.picketPitch));
+      const pLo = W.bottomRailHeight + W.railFace / 2;
+      const pHi = W.guardHeight - W.railFace / 2;
+      for (let p = 0; p < nPickets; p++) {
+        pickets.push({
+          ...face.at((p + 0.5) * (length / nPickets), D.railProud, y0 + (pLo + pHi) / 2),
+          rot,
+          scale: [W.picketWidth, pHi - pLo, W.picketWidth],
+        });
       }
     }
   }
-  group.add(instanced(unit, louvre(colors.trellisSlat), slats));
-  group.add(instanced(unit, painted(colors.trellisSlat), beams));
-  group.add(instanced(unit, painted(colors.screenFrame), posts));
 
-  /* The pale core block on the well's WEST side — the drawn inner ring's own
-     notch, verbatim in plan. */
-  const C = R.courtyard.core;
-  const core = new THREE.Mesh(
-    new THREE.BoxGeometry(C.x1 - C.x0, C.height, C.z1 - C.z0), concrete(colors.coreWhite));
-  core.position.set((C.x0 + C.x1) / 2, roofY + C.height / 2, (C.z0 + C.z1) / 2);
-  core.castShadow = core.receiveShadow = true;
-  core.name = "courtyard-core";
-  group.add(core);
-
-  /* The dark water feature at the centre and the round basin south of it,
-     both seated on the well floor datum. */
-  const rim = new THREE.Mesh(new THREE.BoxGeometry(V.w, V.rim, V.d), concrete(colors.waterDark));
-  rim.position.set(V.x, roofY + V.rim / 2, V.z);
-  rim.castShadow = rim.receiveShadow = true;
-  rim.name = "courtyard-water";
-  group.add(rim);
-  const sheet = new THREE.Mesh(quad(V.w - 0.3, V.d - 0.3), painted(colors.waterDark));
-  sheet.position.set(V.x, roofY + V.rim + 0.01, V.z);
-  sheet.name = "courtyard-water-sheet";
-  group.add(sheet);
-  const basin = new THREE.Mesh(cyl, concrete(colors.waterDark));
-  basin.scale.set(V.basin.r, 0.35, V.basin.r);
-  basin.position.set(V.basin.x, roofY + 0.175, V.basin.z);
-  basin.castShadow = basin.receiveShadow = true;
-  basin.name = "courtyard-basin";
-  group.add(basin);
-
-  /* Five mature crowns [measured plan], trunks to the well floor datum. */
-  const palms = W.trees.filter((t) => t.kind !== "broadleaf");
-  const broads = W.trees.filter((t) => t.kind === "broadleaf");
-  group.add(instanced(new THREE.CylinderGeometry(0.13, 0.19, 1, 8),
-    lib().get("barkEucalyptus", { color: colors.palmTrunk }), W.trees,
-    (t) => ({ x: t.x, y: roofY + t.height / 2, z: t.z, scale: [1, t.height, 1] })));
-  const crownTops = instanced(new THREE.ConeGeometry(1, 1, 9), foliage(colors.treeGreen),
-    palms, (t) => ({ x: t.x, y: roofY + t.height + 0.3, z: t.z, scale: [t.radius, 1.1, t.radius] }));
-  crownTops.name = "courtyard-crowns";
-  group.add(crownTops);
-  group.add(instanced(new THREE.ConeGeometry(1, 1, 9), foliage(colors.treeGreen),
-    palms, (t) => ({
-      x: t.x, y: roofY + t.height - 0.15, z: t.z, rotX: Math.PI, scale: [t.radius * 1.05, 0.7, t.radius * 1.05],
-    })));
-  if (broads.length) {
-    group.add(instanced(new THREE.IcosahedronGeometry(1, 1), foliage(colors.treePale),
-      broads, (t) => ({ x: t.x, y: roofY + t.height, z: t.z, scale: [t.radius, t.radius * 0.75, t.radius] })));
+  /* One cladding mesh per face: the board course has to land on the metre, so
+     the seam repeat is per-face and cannot be shared by an InstancedMesh. */
+  for (const c of clad) {
+    const mesh = new THREE.Mesh(unit, boardClad(colors.wellBoard, c.repeat));
+    mesh.position.set(c.x, c.y, c.z);
+    mesh.rotation.y = c.rot;
+    mesh.scale.set(c.scale[0], c.scale[1], c.scale[2]);
+    mesh.castShadow = mesh.receiveShadow = true;
+    mesh.name = "well-cladding";
+    group.add(mesh);
   }
-  bins.counts.courtyardTrees = W.trees.length;
+  const plane = new THREE.PlaneGeometry(1, 1);
+  const add = (geo, mat, items, name) => {
+    if (!items.length) return;
+    const mesh = instanced(geo, mat, items);
+    if (name) mesh.name = name;
+    group.add(mesh);
+  };
+  add(unit, concrete(colors.courtConcrete), slabEdges, "well-slab-edges");
+  add(unit, painted(colors.wellRail), topRails);
+  add(unit, painted(colors.wellRail), midRails);
+  add(unit, painted(colors.wellRail), bottomRails, "well-bottom-rails");
+  add(unit, painted(colors.wellRail), posts);
+  add(unit, painted(colors.wellRail), pickets, "well-pickets");
+  add(unit, painted(colors.wellDoorFrame), doors, "well-doors");
+  add(plane, glassMat(colors.wellGlass), doorGlass);
+  add(unit, painted(colors.wellDoorFrame), windows, "well-windows");
+  add(plane, glassMat(colors.wellGlass), winGlass);
+  add(unit, painted(colors.wellLight), lights, "well-lights");
 
-  /* The cream checkerboard mechanical screen on the north band — the
-     adjudicated read (roof.screen.note); the losing PV read is recorded in
-     the data and not built. */
-  const S = R.screen;
-  const scx = (S.x0 + S.x1) / 2;
-  const scz = (S.z0 + S.z1) / 2;
-  const sH = S.enclosureHeight;
-  const walls = [
-    { x: scx, z: S.z0 + 0.075, scale: [S.x1 - S.x0, sH, 0.15] },
-    { x: scx, z: S.z1 - 0.075, scale: [S.x1 - S.x0, sH, 0.15] },
-    { x: S.x0 + 0.075, z: scz, scale: [0.15, sH, S.z1 - S.z0] },
-    { x: S.x1 - 0.075, z: scz, scale: [0.15, sH, S.z1 - S.z0] },
-  ];
-  group.add(instanced(unit, louvre(colors.screenFrame), walls,
-    (w) => ({ ...w, y: roofY + sH / 2 })));
-  const deck = new THREE.Mesh(
-    new THREE.BoxGeometry(S.x1 - S.x0, 0.06, S.z1 - S.z0), painted(colors.screenFrame));
-  deck.position.set(scx, roofY + sH + 0.03, scz);
-  deck.castShadow = deck.receiveShadow = true;
-  deck.name = "screen-deck";
-  group.add(deck);
-  const cellW = (S.x1 - S.x0) / S.cols;
-  const cellD = (S.z1 - S.z0) / S.rows;
-  const blocks = [];
-  for (let i = 0; i < S.cols; i++) {
-    for (let j = 0; j < S.rows; j++) {
-      if (hash(S.seed, i, j) >= S.fill) continue;
-      blocks.push({
-        x: S.x0 + (i + 0.5) * cellW,
-        y: roofY + sH + 0.06 + S.blockHeight / 2,
-        z: S.z0 + (j + 0.5) * cellD,
-        scale: [cellW - 0.12, S.blockHeight, cellD - 0.12],
-      });
-    }
-  }
-  group.add(instanced(unit, concrete(colors.screenCream), blocks));
-  bins.counts.screenBlocks = blocks.length;
-
-  /* Round white-curbed vents across the plates [measured plan]: curbed on
-     the raised plate inside the shadow lines, on the band outside them. */
-  const vents = R.vents.items;
-  const ventBase = (v) => (v.z > P.innerZ0 && v.z < P.innerZ1 ? plateTop : roofY);
-  group.add(instanced(cyl, concrete(colors.copingWhite), vents,
-    (v) => ({ x: v.x, y: ventBase(v) + R.vents.height / 2, z: v.z, scale: [v.r, R.vents.height, v.r] })));
-  group.add(instanced(cyl, painted(colors.louvreGrey), vents,
-    (v) => ({ x: v.x, y: ventBase(v) + R.vents.height + 0.05, z: v.z, scale: [v.r * 0.72, 0.1, v.r * 0.72] })));
-  bins.counts.vents = vents.length;
+  bins.counts.wellFaces = faces.length;
+  bins.counts.wellDoors = doors.length;
+  bins.counts.wellWindows = windows.length;
+  bins.counts.wellLights = lights.length;
+  bins.counts.wellPickets = pickets.length;
+  bins.counts.wellPosts = posts.length;
+  bins.counts.wellRailRuns = topRails.length + midRails.length + bottomRails.length;
 }
 
 /* ----------------------------------------------------------------- ground */
 
 /* Blake's own south apron: the lava-rock rubble terrace wall (no coping —
    rough stone throughout, per the photographs) and the raised lawn terrace it
-   retains. Umbrellas, racks and lamps stay absent; the plaza owns the ground
-   beyond the apron. */
+   retains. This section is the SOLE OWNER of that wall; revelle.lavaWalls
+   items 30-44 are the same wall shipped twice and are retired in the section's
+   superseded[]. Umbrellas, racks and lamps stay absent; the plaza owns the
+   ground beyond the apron. */
 function buildGround(section, group, ground, bins) {
   const S = section.ground.south;
   const { colors } = section;
@@ -715,11 +965,33 @@ function buildGround(section, group, ground, bins) {
   const ux = (L.b[0] - L.a[0]) / len;
   const uz = (L.b[1] - L.a[1]) / len;
   const rot = Math.atan2(-uz, ux);
+
+  /* The wall is a RETAINING wall on ground that falls eastward, and its
+     exposed face nearly doubles along its run: three stations measured on _67
+     give 1.16 m, 1.17 m and 2.17 m. The shipped build drew one scalar, so on
+     the flat drawn terrain it came out a uniform 1.35 m — the section said
+     "non-uniform" in prose and the geometry did not. `profile` carries the
+     measured non-uniformity ADDITIVELY onto that scalar, so the 1.35-vs-1.16
+     datum disagreement stays in conflicts['lava-height'] where it was put and
+     only the wall's shape changes. */
+  const P = L.profile;
+  const stations = P.stations.map((st) => ({ u: st.u, h: section.derivations.figures[st.figure].value }));
+  const exposedAt = (t) => {
+    for (let i = 1; i < stations.length; i++) {
+      const a = stations[i - 1];
+      const b = stations[i];
+      if (t <= b.u) return a.h + ((b.h - a.h) * (t - a.u)) / (b.u - a.u);
+    }
+    return stations[stations.length - 1].h;
+  };
+  const wallHeight = (u) => L.height + (exposedAt(u / len) - stations[0].h);
+
   const rocks = [];
   const step = 0.55;
   for (let r = 0; r < L.rows; r++) {
-    const rowY = ((r + 0.5) * L.height) / L.rows;
     for (let u = step / 2; u < len; u += step) {
+      const h = wallHeight(u);
+      const rowY = ((r + 0.5) * h) / L.rows;
       const j = hash(L.seed, r, Math.round(u * 10));
       const x = L.a[0] + ux * (u + (j - 0.5) * 0.16) - uz * ((j - 0.5) * 0.1);
       const z = L.a[1] + uz * (u + (j - 0.5) * 0.16) + ux * ((j - 0.5) * 0.1);
@@ -727,7 +999,7 @@ function buildGround(section, group, ground, bins) {
         x, y: ground(x, z) + rowY, z,
         rot: rot + (j - 0.5) * 0.7,
         rotX: (hash(L.seed + 1, r, Math.round(u * 10)) - 0.5) * 0.35,
-        scale: [step * 1.15, (L.height / L.rows) * 1.2, L.thickness],
+        scale: [step * 1.15, (h / L.rows) * 1.2, L.thickness],
         dark: j < 0.4,
       });
     }
@@ -736,18 +1008,25 @@ function buildGround(section, group, ground, bins) {
   group.add(instanced(unit, rock(colors.lavaRockDark), rocks.filter((x) => x.dark)));
   bins.counts.lavaRocks = rocks.length;
 
-  /* The raised lawn terrace behind the wall — its declared lift is the wall's
-     retained height, so the lawn rides the terrain plus that lift. */
-  const T = S.terrace;
-  const tw = T.x1 - T.x0;
-  const td = T.z1 - T.z0;
-  const cx = (T.x0 + T.x1) / 2;
-  const cz = (T.z0 + T.z1) / 2;
-  const lawn = new THREE.Mesh(quad(tw, td), decal(colors.lawn, CARPET));
-  lawn.position.set(cx, ground(cx, cz) + T.lift + overlayLift(CARPET), cz);
-  lawn.renderOrder = OVERLAY[CARPET].renderOrder;
-  lawn.name = "terrace-lawn";
-  group.add(lawn);
+  /* THE RAISED TERRACE DECK IS WITHDRAWN (visual round 2). It was a flat green
+     quad at one sampled height plus a 1.1 m [estimated] lift, and the terrain
+     under it is flat to 0.05 m, so it drew as a lawn hovering a metre over the
+     plaza with daylight under its east, west and north edges and its north
+     edge cutting the colonnade columns. _67 also refutes the material: the
+     ground the wall retains is the PAVED colonnade apron, not grass. The plan
+     stays in the section with built:false; see conflicts['terrace-step']. */
+  if (S.terrace?.built !== false) {
+    const T = S.terrace;
+    const tw = T.x1 - T.x0;
+    const td = T.z1 - T.z0;
+    const cx = (T.x0 + T.x1) / 2;
+    const cz = (T.z0 + T.z1) / 2;
+    const lawn = new THREE.Mesh(quad(tw, td), decal(colors.terraceLawn, "carpet"));
+    lawn.position.set(cx, ground(cx, cz) + T.lift + overlayLift("carpet"), cz);
+    lawn.renderOrder = OVERLAY.carpet.renderOrder;
+    lawn.name = "terrace-lawn";
+    group.add(lawn);
+  }
 }
 
 /* -------------------------------------------------------------------- api */
@@ -757,8 +1036,9 @@ function buildGround(section, group, ground, bins) {
  *
  * `photo` is the loaded photo-detail document; this reads only its `blake`
  * section and returns `{ group, counts }` (empty and harmless if the section
- * is missing). `surfaceAt` places everything that stands on the ground;
- * `heightAt` sets the building base, matching campus-massing.js.
+ * is missing). `surfaceAt` places everything that stands on the ground — the
+ * court floor included, because the court floor IS ground; `heightAt` sets the
+ * building base, matching campus-massing.js.
  */
 export function createPhotoBlake(scene, { photo, heightAt, surfaceAt } = {}) {
   const group = new THREE.Group();
@@ -767,6 +1047,16 @@ export function createPhotoBlake(scene, { photo, heightAt, surfaceAt } = {}) {
   if (!section) {
     scene?.add(group);
     return { group, counts: {} };
+  }
+  /* This module builds the R1 section: an OPEN court with dressed well faces
+     and a storey grid whose parapet is inside the height. The pre-R1 shape
+     (roof.courtyard, roof.plates, grid.parapet on top of 4 x 2.8) describes a
+     different building, and half-building it would ship a Blake with a hole
+     where its courtyard is and no way to tell. Fail loudly on a partial
+     merge instead. */
+  if (!section.court || !section.system?.wellFace) {
+    throw new Error("campus-photo-blake: the document still carries the pre-R1 blake section "
+      + "(no court / no system.wellFace) — merge Revelle-College-Sources/merge/r1/blake.json");
   }
   const ground = surfaceAt || heightAt;
   const base = heightAt || surfaceAt;
@@ -777,17 +1067,7 @@ export function createPhotoBlake(scene, { photo, heightAt, surfaceAt } = {}) {
   /* Match campus-massing.js roofElevation: rim-median ground over the FULL
      measured ring (measured.ring, copied verbatim from the survey), lifted
      if that would bury a high corner. */
-  let verts = section.measured.ring;
-  if (!Array.isArray(verts) || !verts.length) {
-    verts = [];
-    const seen = new Set();
-    for (const f of section.facades) {
-      for (const p of [f.a, f.b]) {
-        const k = `${p[0]},${p[1]}`;
-        if (!seen.has(k)) { seen.add(k); verts.push(p); }
-      }
-    }
-  }
+  const verts = section.measured.ring;
   const gs = verts.map(([x, z]) => base(x, z)).filter((v) => Number.isFinite(v)).sort((p, q) => p - q);
   const median = gs.length ? gs[Math.floor(gs.length / 2)] : 0;
   const highest = gs.length ? gs[gs.length - 1] : 0;
@@ -797,7 +1077,7 @@ export function createPhotoBlake(scene, { photo, heightAt, surfaceAt } = {}) {
   const bins = {
     spandrels: [], glassFrosted: [], glassSky: [], awnings: [], fins: [], finReturns: [],
     mullions: [], pilasters: [], upperBands: [], parapets: [], drips: [], joints: [],
-    recess: [], columns: [], soffits: [], signs: [], louvres: [],
+    recess: [], columns: [], soffits: [], signs: [], louvres: [], storefront: [],
     counts: {},
   };
   const facades = new THREE.Group();
@@ -808,7 +1088,23 @@ export function createPhotoBlake(scene, { photo, heightAt, surfaceAt } = {}) {
     else collectPanelFace(section, f, frame, baseY, ground, bins);
   }
 
+  /* Five facade roles — spandrel, parapet, precastAmbient, column and
+     windowFrosted — were byte-identical copies of ARGO's hexes, borrowed on the
+     premise of one 2015 repaint programme that this section's own R1 work
+     refuted (EXIF 2014-01-12/13 against Webcor's 2015-16 Argo renovation). They
+     are removed from `colors`, declared in absent[], and drawn in the ONE white
+     the section still carries and still declares as borrowed. `colorFallback`
+     is a fallback and never a source; a role that is neither in `colors` nor in
+     it is a merge error and must be loud. */
   const { colors } = section;
+  const FB = section.colorFallback || {};
+  const col = (role) => {
+    if (colors[role] !== undefined) return colors[role];
+    const to = FB[role];
+    if (to && colors[to] !== undefined) return colors[to];
+    throw new Error(`campus-photo-blake: colour role \`${role}\` is in neither `
+      + "colors nor colorFallback — see the section's colorNote");
+  };
   const unit = new THREE.BoxGeometry(1, 1, 1);
   const plane = new THREE.PlaneGeometry(1, 1);
   const add = (geo, mat, items, name) => {
@@ -817,20 +1113,21 @@ export function createPhotoBlake(scene, { photo, heightAt, surfaceAt } = {}) {
     if (name) mesh.name = name;
     facades.add(mesh);
   };
-  add(unit, concrete(colors.spandrel), bins.spandrels);
-  add(plane, glassMat(colors.windowFrosted), bins.glassFrosted);
+  add(unit, concrete(col("spandrel")), bins.spandrels);
+  add(plane, glassMat(col("windowFrosted")), bins.glassFrosted);
   add(plane, glassMat(colors.windowSky), bins.glassSky);
   add(unit, painted(colors.awningFrame), bins.awnings);
   add(unit, concrete(colors.finWhite), bins.fins);
   add(unit, concrete(colors.finWhite), bins.finReturns);
   add(unit, painted(colors.mullion), bins.mullions);
   add(unit, concrete(colors.pilaster), bins.pilasters);
-  add(unit, concrete(colors.precast), bins.upperBands);
-  add(unit, concrete(colors.parapet), bins.parapets);
+  add(unit, concrete(colors.precast), bins.upperBands, "survey-overshoot");
+  add(unit, concrete(col("parapet")), bins.parapets, "outer-parapet");
   add(unit, concrete(colors.copingWhite), bins.drips);
   add(unit, painted(colors.panelJoint), bins.joints);
   add(plane, glassMat(colors.groundRecess), bins.recess, "ground-recess");
-  add(unit, concrete(colors.column), bins.columns, "ground-columns");
+  add(unit, concrete(col("column")), bins.columns, "ground-columns");
+  add(unit, painted(colors.mullion), bins.storefront, "storefront-mullions");
   add(unit, concrete(colors.soffit), bins.soffits);
   add(unit, painted(colors.marketGreen), bins.signs);
   add(unit, louvre(colors.louvreGrey), bins.louvres);
@@ -838,8 +1135,13 @@ export function createPhotoBlake(scene, { photo, heightAt, surfaceAt } = {}) {
 
   const roof = new THREE.Group();
   roof.name = "blake-roof";
-  buildRoof(section, roof, roofY, ground, bins);
+  buildRoof(section, roof, roofY, bins);
   group.add(roof);
+
+  const court = new THREE.Group();
+  court.name = "blake-court";
+  buildCourt(section, court, baseY, ground, bins);
+  group.add(court);
 
   const groundGroup = new THREE.Group();
   groundGroup.name = "blake-ground";
@@ -856,11 +1158,9 @@ export function createPhotoBlake(scene, { photo, heightAt, surfaceAt } = {}) {
       fins: bins.fins.length,
       awnings: bins.awnings.length,
       mullions: bins.mullions.length,
+      groundMullions: bins.storefront.length,
       columns: bins.columns.length,
-      screenBlocks: bins.counts.screenBlocks || 0,
-      vents: bins.counts.vents || 0,
-      courtyardTrees: bins.counts.courtyardTrees || 0,
-      lavaRocks: bins.counts.lavaRocks || 0,
+      ...bins.counts,
       draws: group.children.reduce((s, g) => s + g.children.length, 0),
     },
   };

@@ -1,22 +1,45 @@
 // Galbraith Hall, Revelle College, from photographs — the INVENTED class.
 //
 // Deems Lewis Martin, 1965; Kevin deFreitas Architects renovation, 2013. A
-// 62 m square block under one enormous coffered concrete roof that oversails
-// it by eight metres on every side, carried on five pairs of leaning,
-// flare-headed, splay-footed struts per face. This file draws the roof, the
-// struts, the two glazed levels between them and the ground immediately
-// around three of the four sides. It never touches the measured mass.
+// 62 m square coffered concrete roof plate — the thing the survey ring
+// traces — with the glazed enclosure standing well inside it and five pairs
+// of leaning, flare-headed, splay-footed struts per face carrying its edge.
+// This file draws the roof, the struts, the two glazed levels between them
+// and the ground immediately around three of the four sides. It never
+// touches the measured mass.
 //
-// Four things decided the shape of this file:
+// Five things decided the shape of this file:
 //
-//   1. The grid is not eyeballed, it is DERIVED. The architect's Second Floor
-//      Plan (KdA, 02.17.12) gives two numbers and only two: 10.83 m between
-//      pair centres and 2.45 m inside a pair. Centre five pairs at 10.83 m on
-//      the MEASURED ring and what is left over at each end is the oversail —
-//      it lands at 8.07-8.22 m against the 8.29 m counted off the photographs,
-//      and it was never typed in. The coffer module is that same number over
-//      eight, 1.354 m, and 46 of them fit each measured face. Everything on
-//      this building solves on one grid or it is wrong.
+//   0. THE MEASURED RING IS THE ROOF EDGE, NOT THE WALL LINE. The repo's own
+//      orthophoto measures this roof plate at 62.45 x 61.9 m against the
+//      ring's 62.4 x 62.7 — the same size, offset by the top displacement a
+//      nadir mosaic gives anything 16.6 m tall. So there is no collar outside
+//      the ring, and the previous revision's 12.474 m one built an 87 m
+//      building and then laid its own sourced east and west ground furniture
+//      underneath it. What remains outboard is a REGISTRATION band and is
+//      declared as one: campus-massing.js extrudes the same ring solid to
+//      16.6 m, so nothing this file draws can stand where the real facade
+//      stands, and `draw.registration` is the least it may stand outside it
+//      and still be seen. The residual 12% plan oversize is in `absent`, and
+//      the compressed colonnade depth is in `conflicts`. Both are errors that
+//      are named rather than hidden.
+//
+//   1. The grid is not eyeballed, it is DERIVED — but from RATIOS, because
+//      the architect's Second Floor Plan (KdA, 02.17.12) is on disk now and
+//      its SCALE does not reproduce: THREE mutually inconsistent px-per-metre
+//      scales can be read off the same raster and the outer two are 26%
+//      apart (conflicts.gridScaleThree). What the sheet does give, needing no
+//      scale at all, is gap-to-spacing — and re-measured at native resolution
+//      in the R2 arbitration it gives 53.5/241.1 = 0.2219 in the rows and
+//      53.7/241.0 = 0.2228 in the letters. ONE SQUARE GRID, BOTH WAYS, to
+//      0.4%. The retired 0.3105 came from a 172.6 px interval that exists
+//      nowhere on that sheet, and the waffle-slab story this comment used to
+//      tell — "two genuinely different numbers because the beams are spaced
+//      differently each way" — was invented afterwards to explain a gap only
+//      a bad reading had opened. It is deleted, not softened.
+//      Add the photograph's inset-to-spacing and the grid CLOSES on each
+//      measured face: two insets, four steps and one gap span it exactly, and
+//      the spacing falls out of that identity rather than being typed.
 //
 //   2. The heights had to be re-reconciled, and the ground survey won — but
 //      only where it actually speaks. The 2014 drawn surface is flat at
@@ -47,10 +70,17 @@
 //      seated per-item on the drawn terrain and run up to a floating datum, so
 //      nothing floats and nothing sinks when the grade moves under it.
 //
+//   5. NO DIMENSION LIVES IN THIS FILE. Every metre this module draws with
+//      comes out of the section: `derivations.figures` (with the arithmetic
+//      that produces it), `estimates` (labelled, naming the sourced pattern
+//      it extends), `reads` (a citation and its tolerance) or `draw` (render
+//      offsets, which are declared as offsets and are not claims about the
+//      building). The test fails on a bare number here.
+//
 // Colours are DATA — every hex comes from the `colors` block of the photo
-// document's `galbraith` section, with the lighting condition of the sample
-// named there. Repeats are InstancedMesh: the coffers alone are ~5,000 pans
-// and rib bosses in a handful of draws.
+// document's `galbraith` section, and every role carries its own provenance
+// and tier in `colorSources`. Repeats are InstancedMesh: the coffers alone
+// are ~5,000 pans and rib bosses in a handful of draws.
 //
 // What is NOT here is in the section's `absent` array. Two long-standing
 // refusals CLOSED on 2026-08-17, when the repo's own Google orthophoto
@@ -59,10 +89,20 @@
 // monitors" turn out to be a 9x9 grid of white-capped skylights on a raised
 // central block (buildRoof), and the east strip gets its shaded recess,
 // unit-paver walk, DG tree band and SE lawn (buildEastGround). What replaced
-// them in `absent` is every HEIGHT up on that roof — the orthophoto is nadir
-// and casts no usable shadow, so the roofscape is drawn as curb-scale relief
-// on the measured box top rather than as guessed storeys — and the ground
-// east of x ~90, which the current epoch shows as active construction.
+// them in `absent` is every HEIGHT up on that roof — the roofscape is drawn
+// as curb-scale relief on the measured box top rather than as guessed
+// storeys — and the ground east of x ~90, which the current epoch shows as
+// the Central Utilities Plant Expansion site, a NEIGHBOUR'S project and not
+// work on this building.
+//
+// Two claims that stood here until 2026-08-20 are gone. The roof shadow is
+// not absent: the dark band round the raised block runs along its north and
+// west edges ONLY, which is a shadow cast by a south-east sun and not the
+// symmetric reveal the section called it — so `buildRoof` draws it on two
+// edges, and what is absent is the calculation that would turn its width
+// into the block's height. And the roof monitors were never absent at all:
+// they are 1965 fabric, retained through the 2013 interior renovation, and
+// the mid-1960s archive aerial shows the same field on the same block.
 import * as THREE from "../vendor/three/three.module.min.js";
 import { applyOverlayDepth, OVERLAY, overlayLift } from "./campus-overlay.js";
 import { ribbon } from "./campus-drape.js";
@@ -74,6 +114,12 @@ import { SPECIES, treeSpecies, treeTint, crownFor } from "./campus-species.js";
 const PAD = "pad";
 const CARPET = "carpet";
 const PAINT = "paint";
+
+/* How many seeded draws a bed-planting point gets inside its ring's bounding
+   box before it is given up. A LOOP BOUND, not a dimension: the three north
+   rings fill better than 97% of their own boxes, so the first draw lands
+   inside for all but a handful and no point has ever needed a second. */
+const RING_SAMPLE_TRIES = 32;
 
 /* Surfaces big enough to carry microstructure come from the procedural
    material library (campus-materials.js): smooth or board-formed concrete,
@@ -97,8 +143,10 @@ function makeMats() {
        SMOOTH-cast (the pans were formed on steel), hence smoothConcrete. */
     soff: (color, repeat = [24, 4]) =>
       lib.get("smoothConcrete", { color, repeat, emissive: color, emissiveIntensity: 0.3 }),
-    /* Dark bronze curtain wall standing under an eleven-metre oversail is in
-       permanent shade; the library's glass carries the PMREM environment
+    /* Dark bronze curtain wall standing under the 3.67 m oversail band (0.949
+       registration + 2.721 roofOut) is in permanent shade; the eleven metres
+       this comment used to claim was the retired 12.474 m collar, which
+       grid.oversail was deleted for. the library's glass carries the PMREM environment
        reflection, and a little self-light keeps it a surface, not a hole.
        `opts` is the per-surface lever: the library's default 0.35 opacity is
        right for a skylight pane but on the facade it let the measured massing
@@ -208,10 +256,6 @@ function quad(w, d) {
   return g;
 }
 
-/* One drape vertex every 2 m: the drawn terrain is piecewise linear on a 6 m
-   triangle grid, so 2 m sampling reproduces it to centimetres. */
-const DRAPE_SEG = 2;
-
 /**
  * A ground-field decal DRAPED over the drawn terrain. The ground around this
  * building is only flat under the footprint itself — the west court climbs
@@ -222,19 +266,72 @@ const DRAPE_SEG = 2;
  * `ground` itself; the mesh origin stays at the rect centre so the overlay
  * lift still rides in `position.y`.
  */
-function drapedQuad(r, ground, lift) {
+function drapedQuad(r, ground, lift, seg) {
   const w = r.x1 - r.x0;
   const d = r.z1 - r.z0;
   const cx = (r.x0 + r.x1) / 2;
   const cz = (r.z0 + r.z1) / 2;
+  /* One drape vertex every `draw.drapeSegment`: the drawn terrain is
+     piecewise linear on a 6 m triangle grid, so 2 m sampling reproduces it
+     to centimetres. */
   const geo = new THREE.PlaneGeometry(w, d,
-    Math.max(1, Math.ceil(w / DRAPE_SEG)), Math.max(1, Math.ceil(d / DRAPE_SEG)));
+    Math.max(1, Math.ceil(w / seg)), Math.max(1, Math.ceil(d / seg)));
   geo.rotateX(-Math.PI / 2);
   const base = ground(cx, cz);
   const pos = geo.attributes.position;
   for (let i = 0; i < pos.count; i++) {
     pos.setY(i, ground(cx + pos.getX(i), cz + pos.getZ(i)) - base);
   }
+  geo.computeVertexNormals();
+  const place = (mesh) => {
+    mesh.position.set(cx, base + lift, cz);
+    mesh.name = "ground-decal";
+  };
+  return { geo, place };
+}
+
+/**
+ * The same drape for a SURVEYED QUADRILATERAL rather than an axis-aligned
+ * rect. The three north beds are arcgis rings carried verbatim (they are half
+ * a degree off square, like the building's own ring), so they cannot be
+ * redrawn as rects without ceasing to be the survey's polygons. The quad is
+ * subdivided bilinearly — which is exact on its four corners, so the survey
+ * vertices are the mesh's vertices — and every vertex seats on the drawn
+ * terrain exactly as drapedQuad's do.
+ */
+function drapedRing(ring, ground, lift, seg) {
+  const q = ring.slice(0, 4);
+  const nu = Math.max(1, Math.ceil(Math.hypot(q[1][0] - q[0][0], q[1][1] - q[0][1]) / seg));
+  const nv = Math.max(1, Math.ceil(Math.hypot(q[3][0] - q[0][0], q[3][1] - q[0][1]) / seg));
+  const cx = q.reduce((t, p) => t + p[0], 0) / 4;
+  const cz = q.reduce((t, p) => t + p[1], 0) / 4;
+  const base = ground(cx, cz);
+  const P = (u, v) => {
+    const ax = q[0][0] + (q[1][0] - q[0][0]) * u;
+    const az = q[0][1] + (q[1][1] - q[0][1]) * u;
+    const bx = q[3][0] + (q[2][0] - q[3][0]) * u;
+    const bz = q[3][1] + (q[2][1] - q[3][1]) * u;
+    const x = ax + (bx - ax) * v;
+    const z = az + (bz - az) * v;
+    return [x - cx, ground(x, z) - base, z - cz];
+  };
+  const verts = [];
+  for (let i = 0; i < nu; i++) {
+    for (let j = 0; j < nv; j++) {
+      const a = P(i / nu, j / nv);
+      const b = P((i + 1) / nu, j / nv);
+      const c = P((i + 1) / nu, (j + 1) / nv);
+      const d = P(i / nu, (j + 1) / nv);
+      /* (a, b, c) and (a, c, d) in the SURVEY RING'S OWN vertex order, which
+         for all three of these rings gives a +y face normal. A back-facing
+         lit DoubleSide fill renders at ~0.42x its measured colour — the
+         near-black-splat failure four other modules in this repo record — so
+         tests/campus-photo-galbraith.test.mjs asserts normal.y > 0 here. */
+      verts.push(...a, ...b, ...c, ...a, ...c, ...d);
+    }
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(verts, 3));
   geo.computeVertexNormals();
   const place = (mesh) => {
     mesh.position.set(cx, base + lift, cz);
@@ -280,14 +377,23 @@ function frameOf(f) {
   };
 }
 
-/** The five strut pairs on a face: ten `u` positions with their lean sign. */
+/**
+ * The five strut pairs on a face: ten `u` positions with their lean sign.
+ *
+ * The gap INSIDE a pair is per-face, not per-building — but NOT because the
+ * two axes differ. The sheet gives ONE SQUARE GRID both ways (53.5/241.1 in
+ * the rows, 53.7/241.0 in the letters, agreeing to 0.4%; see the header). The
+ * gap is per-face because the four faces have different MEASURED LENGTHS, and
+ * the grid closes on each of them separately: two insets, four steps and one
+ * gap span a face exactly, so `pairGap` falls out of that identity per face
+ * rather than being one typed building-wide number.
+ */
 function columnLines(section, f, frame) {
-  const { pairIndices, pairGap } = section.grid;
   const out = [];
-  for (const k of pairIndices) {
+  for (const k of section.grid.pairIndices) {
     const centre = frame.length / 2 + k * f.pairSpacing;
     for (const s of [-1, 1]) {
-      out.push({ u: centre + (s * pairGap) / 2, lean: s, pair: k });
+      out.push({ u: centre + (s * f.pairGap) / 2, lean: s, pair: k });
     }
   }
   return out;
@@ -310,10 +416,14 @@ function strutGeometry(profile, height) {
 
 function collectStruts(section, f, frame, ctx, bins) {
   const C = section.column;
-  /* 3.4 m is glass-to-strut, not ring-to-strut. The glazing plane is itself
-     held off the ring far enough to clear the drawn mass, and the colonnade
-     rides out with it or the terrace ends up outboard of its own columns. */
-  const wCol = section.facade.wallStandoff + C.standoff;
+  /* `standoffBuilt`, not `standoff`. The photographs read 3.4 m of colonnade
+     between the glass and the strut line; only `grid.roofOut` of band exists
+     to hold it, and one bracket half-width of that is the bracket. So the
+     strut centre stands where its head dies INTO the fascia — which is what
+     oceanlight-21220, -21225 and -12848 all show — and the depth behind it is
+     the sourced one times `draw.compression`. Both numbers ship; the section
+     declares the difference in `conflicts.colonnadeDepth`. */
+  const wCol = section.facade.wallStandoff + C.standoffBuilt;
   const { soffitY } = ctx;
 
   for (const line of columnLines(section, f, frame)) {
@@ -347,6 +457,7 @@ function collectStruts(section, f, frame, ctx, bins) {
 
 function collectRoofEdge(section, f, frame, ctx, bins) {
   const R = section.roofEdge;
+  const D = ctx.draw;
   const { eavesY, soffitY } = ctx;
   const wEdge = section.facade.wallStandoff + section.grid.roofOut;
   const L = f.roofLength;
@@ -357,7 +468,7 @@ function collectRoofEdge(section, f, frame, ctx, bins) {
      expression, 3. the bird-spike comb on the outer soffit arris. All three
      are in crop-roofedge.jpg (2011) and still in wm-from-below.jpg (2026). */
   bins.dripCap.push({
-    ...frame.at(mid, wEdge - R.dripCap.depth / 2 + 0.02, eavesY - R.dripCap.height / 2),
+    ...frame.at(mid, wEdge - R.dripCap.depth / 2 + D.edgeNudge, eavesY - R.dripCap.height / 2),
     rot: frame.rot,
     scale: [L, R.dripCap.height, R.dripCap.depth],
   });
@@ -379,7 +490,7 @@ function collectRoofEdge(section, f, frame, ctx, bins) {
   });
   const spikeY = soffitY + R.birdSpike.height / 2;
   bins.birdSpike.push({
-    ...frame.at(mid, wEdge - R.birdSpike.depth / 2 - 0.02, spikeY),
+    ...frame.at(mid, wEdge - R.birdSpike.depth / 2 - D.edgeNudge, spikeY),
     rot: frame.rot,
     scale: [L, R.birdSpike.height, R.birdSpike.depth],
   });
@@ -399,6 +510,7 @@ function collectRoofEdge(section, f, frame, ctx, bins) {
 
 function collectSoffit(section, f, frame, ctx, bins) {
   const S = section.soffit;
+  const D = ctx.draw;
   const { soffitY } = ctx;
   const L = f.roofLength;
   const u0 = -f.ext;
@@ -416,9 +528,9 @@ function collectSoffit(section, f, frame, ctx, bins) {
      the rib faces, so the ribs read as a pale grid standing off a darker
      field rather than as lines drawn on a flat ceiling. */
   bins.cofferPan.push({
-    ...frame.at(u0 + L / 2, depth / 2, soffitY + S.recess + 0.01),
+    ...frame.at(u0 + L / 2, depth / 2, soffitY + S.recess + D.coplanarNudge),
     rot: frame.rot,
-    scale: [L, 0.02, depth],
+    scale: [L, D.panThickness, depth],
   });
 
   /* Ribs across the face and ribs running out of it, both on the module. */
@@ -453,7 +565,7 @@ function collectSoffit(section, f, frame, ctx, bins) {
   bins.solidStrip.push({
     ...frame.at(u0 + L / 2, wEdge - solid / 2, panY),
     rot: frame.rot,
-    scale: [L, S.recess + 0.02, solid],
+    scale: [L, S.recess + D.panThickness, solid],
   });
 
   /* Cylindrical surface downlights on the colonnade line, every second
@@ -461,7 +573,7 @@ function collectSoffit(section, f, frame, ctx, bins) {
   for (let i = 1; i < cols; i += S.lightPitchModules) {
     bins.downlight.push({
       ...frame.at(u0 + ((i + 0.5) * L) / cols,
-        section.facade.wallStandoff + section.column.standoff, soffitY - S.lightHeight / 2),
+        section.facade.wallStandoff + section.column.standoffBuilt, soffitY - S.lightHeight / 2),
       rot: frame.rot,
     });
   }
@@ -517,16 +629,18 @@ function drawnClearanceOf(section, f, frame) {
  * get the full 0.45. A single depth would bury the east backing inside the
  * mass, which is the one face the read-through was worst on.
  */
-function backingStandoff(section, f, frame, preferred = 0.45) {
-  const glassW = section.facade.wallStandoff + 0.04;
+function backingStandoff(section, f, frame, D) {
+  const glassW = section.facade.wallStandoff + D.glassOffset;
   const clear = drawnClearanceOf(section, f, frame);
-  /* 0.04 outboard of the drawn skin, the same hair the standoff itself keeps,
-     and never closer than 0.06 to the glass or there is no depth at all. */
-  return Math.min(glassW - 0.06, Math.max(clear + 0.04, glassW - preferred));
+  /* A hair outboard of the drawn skin, the same one the standoff itself keeps,
+     and never closer than `backingClear` to the glass or there is no depth. */
+  return Math.min(glassW - D.backingClear,
+    Math.max(clear + D.glassOffset, glassW - D.backingDepth));
 }
 
 function collectGlazing(section, f, frame, ctx, bins) {
   const F = section.facade;
+  const D = ctx.draw;
   const { l1Y, l2Y, soffitY } = ctx;
   const L = frame.length;
   const wWall = section.facade.wallStandoff;
@@ -540,7 +654,7 @@ function collectGlazing(section, f, frame, ctx, bins) {
   }
   bands.push([l2Y + F.glassSillGap, soffitY - F.glassTopGap, "glass"]);
 
-  const wBack = backingStandoff(section, f, frame);
+  const wBack = backingStandoff(section, f, frame, D);
 
   for (const [y0, y1, kind] of bands) {
     if (y1 <= y0) continue;
@@ -549,37 +663,37 @@ function collectGlazing(section, f, frame, ctx, bins) {
     bins.backing.push({
       ...frame.at(mid, wBack, (y0 + y1) / 2),
       rot: frame.rot,
-      scale: [L, y1 - y0 + 0.2, 1],
+      scale: [L, y1 - y0 + D.paneMargin, 1],
     });
     bins.glass.push({
-      ...frame.at(mid, wWall + 0.04, (y0 + y1) / 2),
+      ...frame.at(mid, wWall + D.glassOffset, (y0 + y1) / 2),
       rot: frame.rot,
-      scale: [L - 0.2, y1 - y0, 1],
+      scale: [L - D.paneMargin, y1 - y0, 1],
       kind,
     });
     /* Mullions on their own pitch — deliberately finer than the coffer
        module, and never equal to it, or the facade turns into a grid. */
     for (let u = F.mullionPitch / 2; u < L; u += F.mullionPitch) {
       bins.mullion.push({
-        ...frame.at(u, wWall + 0.05, (y0 + y1) / 2),
+        ...frame.at(u, wWall + D.mullionOffset, (y0 + y1) / 2),
         rot: frame.rot,
-        scale: [F.mullionWidth, y1 - y0, 0.12],
+        scale: [F.mullionWidth, y1 - y0, D.mullionDepth],
       });
     }
     for (const y of [y0, y1]) {
       bins.mullion.push({
-        ...frame.at(mid, wWall + 0.05, y),
+        ...frame.at(mid, wWall + D.mullionOffset, y),
         rot: frame.rot,
-        scale: [L - 0.2, F.mullionWidth, 0.12],
+        scale: [L - D.paneMargin, F.mullionWidth, D.mullionDepth],
       });
     }
   }
 
   /* The pale spandrel under the balcony floor line. */
   bins.spandrel.push({
-    ...frame.at(mid, wWall - 0.02, l2Y - F.spandrel / 2),
+    ...frame.at(mid, wWall - D.spandrelInset, l2Y - F.spandrel / 2),
     rot: frame.rot,
-    scale: [L, F.spandrel, 0.16],
+    scale: [L, F.spandrel, D.spandrelDepth],
   });
 }
 
@@ -604,10 +718,12 @@ function collectGlazing(section, f, frame, ctx, bins) {
  * covers the drawn corner from both of the faces that see it.
  */
 function collectCornerPiers(section, frames, ctx, bins) {
-  /* +0.14 clears the mullions, whose outer faces sit at wallStandoff + 0.11;
-     anything shallower leaves a mullion standing out of the solid panel. */
-  const out = section.facade.wallStandoff + 0.14;
-  const inset = section.drawnClearance + 0.15;
+  /* `pierProud` clears the mullions, whose outer faces sit at the mullion
+     offset plus half their depth; anything shallower leaves a mullion
+     standing out of the solid panel. */
+  const D = ctx.draw;
+  const out = section.facade.wallStandoff + D.pierProud;
+  const inset = section.drawnClearance + D.clearanceMargin;
   const side = out + inset;
   const y1 = ctx.soffitY + section.soffit.recess;
   const faces = section.faces;
@@ -625,7 +741,7 @@ function collectCornerPiers(section, frames, ctx, bins) {
     const d = (out - inset) / 2;
     const x = px + (n1x + n2x) * d;
     const z = pz + (n1z + n2z) * d;
-    const y0 = ctx.ground(x, z) - 0.6;
+    const y0 = ctx.ground(x, z) - D.pierBury;
     bins.cornerPier.push({
       x, y: (y0 + y1) / 2, z,
       rot: frames.get(f1.id).rot,
@@ -641,6 +757,7 @@ function collectCornerPiers(section, frames, ctx, bins) {
  *  this same assembly at two different heights. */
 function collectDeck(section, f, frame, ctx, bins, spec, y, redBand) {
   const F = section.facade;
+  const D = ctx.draw;
   const L = frame.length;
   const wWall = section.facade.wallStandoff;
   const wEdge = wWall + spec.project;
@@ -653,9 +770,9 @@ function collectDeck(section, f, frame, ctx, bins, spec, y, redBand) {
   });
   if (redBand) {
     bins.redBand.push({
-      ...frame.at(mid, wEdge + 0.03, y - spec.deck / 2),
+      ...frame.at(mid, wEdge + D.bandOffset, y - spec.deck / 2),
       rot: frame.rot,
-      scale: [L, redBand, 0.06],
+      scale: [L, redBand, D.bandDepth],
     });
   }
 
@@ -663,20 +780,20 @@ function collectDeck(section, f, frame, ctx, bins, spec, y, redBand) {
   const h = spec.railHeight ?? B.railHeight;
   for (let u = B.picketPitch / 2; u < L; u += B.picketPitch) {
     bins.picket.push({
-      ...frame.at(u, wEdge - 0.05, y + h / 2),
+      ...frame.at(u, wEdge - D.railInset, y + h / 2),
       rot: frame.rot,
       scale: [B.picketSize, h, B.picketSize],
     });
   }
   bins.railCap.push({
-    ...frame.at(mid, wEdge - 0.05, y + h),
+    ...frame.at(mid, wEdge - D.railInset, y + h),
     rot: frame.rot,
-    scale: [L, B.railCap, B.railCap * 1.6],
+    scale: [L, B.railCap, B.railCap * D.capAspect],
   });
   bins.railCap.push({
-    ...frame.at(mid, wEdge - 0.05, y + h * 0.42),
+    ...frame.at(mid, wEdge - D.railInset, y + h * D.midRailFrac),
     rot: frame.rot,
-    scale: [L, B.midRail, B.midRail * 1.4],
+    scale: [L, B.midRail, B.midRail * D.midRailAspect],
   });
 }
 
@@ -685,6 +802,7 @@ function collectDeck(section, f, frame, ctx, bins, spec, y, redBand) {
 function collectLowerColonnade(section, f, frame, ctx, bins) {
   const C = section.facade.lowerColonnade;
   const T = section.facade.terrace;
+  const D = ctx.draw;
   const { l2Y } = ctx;
   const L = frame.length;
   const wWall = section.facade.wallStandoff;
@@ -710,15 +828,17 @@ function collectLowerColonnade(section, f, frame, ctx, bins) {
   if (f.flutedWall) return;
   const p = frame.at(L / 2, wWall, 0);
   const g = ctx.ground(p.x, p.z);
+  const midY = (g + D.lowerGlassSill + topY - D.lowerGlassHead) / 2;
+  const h = Math.max(D.lowerGlassMin, topY - D.lowerGlassFoot - g);
   bins.backing.push({
-    ...frame.at(L / 2, backingStandoff(section, f, frame), (g + 0.1 + topY - 0.3) / 2),
+    ...frame.at(L / 2, backingStandoff(section, f, frame, D), midY),
     rot: frame.rot,
-    scale: [L, Math.max(0.5, topY - 0.4 - g) + 0.2, 1],
+    scale: [L, h + D.paneMargin, 1],
   });
   bins.lowerGlass.push({
-    ...frame.at(L / 2, wWall + 0.04, (g + 0.1 + topY - 0.3) / 2),
+    ...frame.at(L / 2, wWall + D.glassOffset, midY),
     rot: frame.rot,
-    scale: [L - 0.4, Math.max(0.5, topY - 0.4 - g), 1],
+    scale: [L - 2 * D.paneMargin, h, 1],
   });
 }
 
@@ -727,6 +847,7 @@ function collectLowerColonnade(section, f, frame, ctx, bins) {
 function collectFlutedWall(section, f, frame, ctx, bins) {
   const W = section.facade.flutedWall;
   const T = section.facade.terrace;
+  const D = ctx.draw;
   const { l2Y } = ctx;
   const L = frame.length;
   const wWall = section.facade.wallStandoff;
@@ -734,7 +855,7 @@ function collectFlutedWall(section, f, frame, ctx, bins) {
   const doorU0 = L / 2 - W.doorWidth / 2;
   const doorU1 = L / 2 + W.doorWidth / 2;
 
-  for (const [u0, u1] of [[0.1, doorU0], [doorU1, L - 0.1]]) {
+  for (const [u0, u1] of [[D.wallEndMargin, doorU0], [doorU1, L - D.wallEndMargin]]) {
     const p = frame.at((u0 + u1) / 2, wWall, 0);
     const g = ctx.ground(p.x, p.z);
     bins.flutedWall.push({
@@ -758,7 +879,7 @@ function collectFlutedWall(section, f, frame, ctx, bins) {
   bins.doorBronze.push({
     ...frame.at(L / 2, wWall + W.thickness, g + W.doorHeight / 2),
     rot: frame.rot,
-    scale: [W.doorWidth, W.doorHeight, 0.08],
+    scale: [W.doorWidth, W.doorHeight, D.doorThickness],
   });
 }
 
@@ -766,20 +887,23 @@ function collectFlutedWall(section, f, frame, ctx, bins) {
 
 function buildEntry(section, group, frame, f, ctx) {
   const E = section.entry;
+  const D = ctx.draw;
   const { colors } = section;
   const { l1Y, soffitY, eavesY } = ctx;
   const L = frame.length;
   const wWall = section.facade.wallStandoff;
   const C = section.column;
 
-  /* The two projecting beams. They ride the MIDDLE pair's column lines, taken
-     at the head where the pair has already splayed, and they run right out
-     past the fascia — the deepest, whitest thing on this elevation and the
-     blades the building's name is painted on. */
+  /* The two beams. They ride the MIDDLE pair's column lines, taken at the
+     head where the pair has already splayed, and they run out to the FASCIA
+     AND STOP — the deepest, whitest thing on this elevation and the blades
+     the building's name is painted on. The retired revision ran them 2.6 m
+     past the fascia; nothing projects north of the roof plate in the
+     orthophoto, so `entry.beam.project` is now `grid.roofOut` itself. */
   const beamH = eavesY - (soffitY - E.beam.dropBelowSoffit);
   const shape = new THREE.Shape();
   const inner = 0;
-  const outer = wWall + section.grid.roofOut + E.beam.project;
+  const outer = wWall + E.beam.project;
   const ch = E.beam.chamfer;
   shape.moveTo(inner, 0);
   shape.lineTo(outer, 0);
@@ -799,7 +923,7 @@ function buildEntry(section, group, frame, f, ctx) {
 
   const headSplay = C.splayHead;
   for (const s of [-1, 1]) {
-    const u = L / 2 + (s * section.grid.pairGap) / 2 + s * headSplay + E.beam.width / 2;
+    const u = L / 2 + (s * f.pairGap) / 2 + s * headSplay + E.beam.width / 2;
     const p = frame.at(u, 0, 0);
     const mesh = new THREE.Mesh(beamGeo, ctx.mats.conc(colors.entryBeam, [6, 2]));
     mesh.position.set(p.x, eavesY, p.z);
@@ -812,7 +936,7 @@ function buildEntry(section, group, frame, f, ctx) {
   /* The 2013 canopy: a flat red-orange blade over the doors with two exposed
      linear luminaires under it. It sits beside the entry pair, not on it. */
   const K = E.canopy;
-  const uCan = L / 2 - K.width / 2 - section.grid.pairGap / 2 - 0.4;
+  const uCan = L / 2 - K.width / 2 - f.pairGap / 2 - K.gap;
   const canopy = new THREE.Mesh(
     new THREE.BoxGeometry(K.width, K.depth, K.project), painted(colors.canopyRed)
   );
@@ -828,7 +952,7 @@ function buildEntry(section, group, frame, f, ctx) {
     const lp = frame.at(uCan, w, 0);
     const bar = new THREE.Mesh(
       new THREE.BoxGeometry(lum.length, lum.size, lum.size),
-      new THREE.MeshStandardMaterial({ color: colors.luminaire, roughness: 0.4, emissive: colors.luminaire, emissiveIntensity: 0.35 })
+      new THREE.MeshStandardMaterial({ color: colors.luminaireLens, roughness: 0.4, emissive: colors.luminaireLens, emissiveIntensity: 0.35 })
     );
     bar.position.set(lp.x, l1Y + K.height - K.depth / 2 - lum.size, lp.z);
     bar.rotation.y = frame.rot;
@@ -837,110 +961,53 @@ function buildEntry(section, group, frame, f, ctx) {
 
   /* Light-anodised glazed door leaves under it — the 2013 contrast against
      the bronze the rest of the building wears. */
-  const D = E.doors;
+  const DR = E.doors;
   const leaves = [];
-  for (let i = 0; i < D.leaves; i++) {
-    leaves.push(uCan + (i - (D.leaves - 1) / 2) * (D.width + 0.06));
+  for (let i = 0; i < DR.leaves; i++) {
+    leaves.push(uCan + (i - (DR.leaves - 1) / 2) * (DR.width + D.doorGap));
   }
   group.add(instanced(
-    new THREE.BoxGeometry(D.width, D.height, 0.08), painted(section.colors.doorAnodised),
-    leaves, (u) => ({ ...frame.at(u, wWall + 0.06, l1Y + D.height / 2), rot: frame.rot })
+    new THREE.BoxGeometry(DR.width, DR.height, D.doorThickness), painted(section.colors.doorAnodised),
+    leaves, (u) => ({ ...frame.at(u, wWall + D.doorGap, l1Y + DR.height / 2), rot: frame.rot })
   ));
 
   /* The 'Theatre & Dance Department' hanging blade on its two rods. The
      lettering is absent; the blade is not. */
   const S = E.sign;
-  const uSign = L / 2 + 8;
-  const sp = frame.at(uSign, wWall + 1.6, 0);
+  const uSign = L / 2 + S.uFromCentre;
+  const sp = frame.at(uSign, wWall + S.standoff, 0);
   const blade = new THREE.Mesh(
-    new THREE.BoxGeometry(S.width, S.height, 0.05), painted(colors.signBlade)
+    new THREE.BoxGeometry(S.width, S.height, S.thickness), painted(colors.signBlade)
   );
   blade.position.set(sp.x, l1Y + S.height_above, sp.z);
   blade.rotation.y = frame.rot;
   group.add(blade);
   group.add(instanced(
-    new THREE.CylinderGeometry(0.012, 0.012, S.rodLength, 5), metal(colors.stairSteel),
+    new THREE.CylinderGeometry(S.rodRadius, S.rodRadius, S.rodLength, 5), metal(colors.stairSteel),
     [-1, 1], (s) => ({
-      ...frame.at(uSign + s * S.width * 0.4, wWall + 1.6, l1Y + S.height_above + S.height / 2 + S.rodLength / 2),
+      ...frame.at(uSign + s * S.width * D.rodSpread, wWall + S.standoff,
+        l1Y + S.height_above + S.height / 2 + S.rodLength / 2),
       rot: frame.rot,
     })
   ));
 }
 
-/* --------------------------------------------------------- the west stair */
-
-function buildStair(section, group, ctx) {
-  const S = section.west.stair;
-  const { colors } = section;
-  const topY = ctx.l2Y;
-  const baseY = ctx.ground(S.x, S.z1);
-  const rise = topY - baseY;
-  if (!(rise > 1)) return;
-  const run = S.z1 - S.z0;
-  const treads = S.treads;
-
-  /* A straight flight of real treads and risers with white stringers either
-     side and a picket rail — prominent in ucsdmap.jpg and, until now,
-     unmodelled. */
-  const steps = [];
-  for (let i = 0; i < treads; i++) {
-    steps.push({
-      z: S.z1 - (run * (i + 0.5)) / treads,
-      y: baseY + (rise * (i + 1)) / treads,
-    });
-  }
-  group.add(instanced(
-    new THREE.BoxGeometry(S.width, 0.06, run / treads + 0.04), ctx.mats.conc(colors.deck, [1, 1]),
-    steps, (s) => ({ x: S.x, y: s.y, z: s.z })
-  ));
-  group.add(instanced(
-    new THREE.BoxGeometry(S.width, rise / treads, 0.05), ctx.mats.conc(colors.deck, [1, 1]),
-    steps, (s) => ({ x: S.x, y: s.y - rise / treads / 2, z: s.z + run / treads / 2 })
-  ));
-
-  const ang = Math.atan2(rise, run);
-  const len = Math.hypot(rise, run);
-  for (const side of [-1, 1]) {
-    const str = new THREE.Mesh(
-      new THREE.BoxGeometry(S.stringer, 0.34, len), painted(colors.stairSteel)
-    );
-    str.position.set(S.x + side * (S.width / 2 + S.stringer / 2), baseY + rise / 2 - 0.25, (S.z0 + S.z1) / 2);
-    str.rotation.x = -ang;
-    str.castShadow = true;
-    group.add(str);
-
-    const pickets = [];
-    for (let t = 0.1; t < 1; t += 0.1) pickets.push(t);
-    group.add(instanced(
-      new THREE.BoxGeometry(0.028, S.railHeight, 0.028), painted(colors.picket),
-      pickets, (t) => ({
-        x: S.x + side * (S.width / 2 + S.stringer),
-        y: baseY + rise * t + S.railHeight / 2,
-        z: S.z1 - run * t,
-      })
-    ));
-    const cap = new THREE.Mesh(
-      new THREE.BoxGeometry(0.05, 0.05, len), painted(colors.picket)
-    );
-    cap.position.set(S.x + side * (S.width / 2 + S.stringer), baseY + rise / 2 + S.railHeight, (S.z0 + S.z1) / 2);
-    cap.rotation.x = -ang;
-    group.add(cap);
-  }
-
-  /* The landing that carries the top of the flight across to the terrace
-     edge, so the stair arrives somewhere instead of stopping in mid-air. */
-  const land = new THREE.Mesh(
-    new THREE.BoxGeometry(S.landing, 0.22, S.width), ctx.mats.conc(colors.deck, [2, 1])
-  );
-  land.position.set(S.x + S.landing / 2, topY - 0.11, S.z0);
-  land.castShadow = true;
-  group.add(land);
-}
+/* --------------------------------------------------------- the west stair
+ *
+ * WITHDRAWN 2026-08-21. A 26-tread flight from the west court up to the
+ * terrace used to be built here off `west.stair`. Its only citation was
+ * ucsdmap.jpg, whose page is 404, and no cached live frame shows a flight
+ * rising out of that paving — see `west.stairNote` and the `absent` entry,
+ * which carry the retired geometry and the whole ladder. The visual round-2
+ * audit also found the build broken (its stringers and rail caps were mirrored
+ * about the flight), and a dead citation plus a broken build is a withdrawal
+ * rather than a repair. Restore from `west.stairNote` when a frame appears. */
 
 /* ------------------------------------------------------------- the ground */
 
 function buildGround(section, group, ctx) {
   const { colors } = section;
+  const D = ctx.draw;
   const ground = ctx.ground;
 
   /* Ground fields carry their material class from the library; the repeat is
@@ -949,7 +1016,7 @@ function buildGround(section, group, ctx) {
      plain decal for fields with no microstructure worth carrying. Every field
      is DRAPED (drapedQuad): the west court and the south lawn each carry
      metres of real relief, and a flat quad there is a hole or a hover. */
-  const flat = (rects, color, rung, cls = "smoothConcrete", tile = 2.5) => {
+  const flat = (rects, color, rung, cls = "smoothConcrete", tile = D.tiles.concrete) => {
     for (const r of rects) {
       const w = r.x1 - r.x0;
       const d = r.z1 - r.z0;
@@ -959,7 +1026,7 @@ function buildGround(section, group, ctx) {
             repeat: [Math.max(1, Math.round(w / tile)), Math.max(1, Math.round(d / tile))],
           }), rung)
         : decal(color, rung);
-      const { geo, place } = drapedQuad(r, ground, overlayLift(rung));
+      const { geo, place } = drapedQuad(r, ground, overlayLift(rung), D.drapeSegment);
       const mesh = new THREE.Mesh(geo, mat);
       place(mesh);
       mesh.renderOrder = OVERLAY[rung].renderOrder;
@@ -998,8 +1065,26 @@ function buildGround(section, group, ctx) {
   const W = section.west;
   const S = section.south;
 
+  /* THE NORTH APRON IS SEVEN RECTANGLES, NOT ONE, and the three holes in it
+     are not holes: they are arcgis.ground#1764, #1765 and #1766, surveyed
+     PLANTED ground (`k: "green"`) that the campus paving multipolygon itself
+     punches out, and which the retired single rect laid 194.9 m2 of jointed
+     concrete deck over. The cut and the beds are one edit — an apron with
+     three holes and nothing in them would be a hole in the world — so the
+     beds are drawn here, from the survey rings verbatim, seated on the same
+     drawn surface as every other ground field. See north.apronNote and
+     north.bedSource. What SPECIES grow in them is still absent; that they are
+     planted is not — see plantBeds below. */
   flat(N.apron, colors.pavingBuff, PAD);
   scored(N.apron, N.jointPitch, N.jointWidth);
+  for (const bed of N.beds) {
+    const { geo, place } = drapedRing(bed.ring, ground, overlayLift(PAD), D.drapeSegment);
+    const mesh = new THREE.Mesh(geo, decal(colors.northBed, PAD));
+    place(mesh);
+    mesh.renderOrder = OVERLAY[PAD].renderOrder;
+    mesh.receiveShadow = true;
+    group.add(mesh);
+  }
   flat(W.paving, colors.pavingBuff, PAD);
   scored(W.paving, W.jointPitch, W.jointWidth);
   flat(S.apron, colors.pavingBuff, PAD);
@@ -1012,8 +1097,8 @@ function buildGround(section, group, ctx) {
      1,600 instances in the same colour as the field beneath them — invisible,
      and the single most expensive thing this file drew. The library's unit
      tile is 6 pavers, so one tile is six of the measured 0.42 m pitch. */
-  flat(W.pavers, colors.unitPaver, PAD, "pavingConcreteUnit", W.paverPitch * 6);
-  scored(W.pavers, W.paverPitch * 2, 0.03);
+  flat(W.pavers, colors.unitPaver, PAD, "pavingConcreteUnit", W.paverPitch * D.tiles.paverUnits);
+  scored(W.pavers, W.paverPitch * 2, W.paverJointWidth);
 
   /* The lava-rock retaining wall along the measured grade break, and the
      groundcover spilling over it off the bank above. */
@@ -1033,43 +1118,76 @@ function buildGround(section, group, ctx) {
     }
     caps.push({ x: (r.a[0] + r.b[0]) / 2, z: (r.a[1] + r.b[1]) / 2, rot, len });
   }
-  group.add(instanced(new THREE.BoxGeometry(0.028, 1.05, 0.028), painted(colors.picket),
-    posts, (p) => ({ x: p.x, y: ground(p.x, p.z) + 0.525, z: p.z, rot: p.rot }), false));
-  group.add(instanced(new THREE.BoxGeometry(1, 0.05, 0.06), painted(colors.picket),
-    caps, (c) => ({ x: c.x, y: ground(c.x, c.z) + 1.05, z: c.z, rot: c.rot, scale: [c.len, 1, 1] })));
+  const B0 = section.facade.balcony;
+  group.add(instanced(new THREE.BoxGeometry(B0.picketSize, W.railHeight, B0.picketSize),
+    painted(colors.picket),
+    posts, (p) => ({ x: p.x, y: ground(p.x, p.z) + W.railHeight / 2, z: p.z, rot: p.rot }), false));
+  group.add(instanced(new THREE.BoxGeometry(1, B0.railCap, D.bandDepth), painted(colors.picket),
+    caps, (c) => ({ x: c.x, y: ground(c.x, c.z) + W.railHeight, z: c.z, rot: c.rot, scale: [c.len, 1, 1] })));
 
   /* South: the 1.8 m walk running perpendicular out of the lower colonnade
      into the lawn, with a continuous planting bed on either side of it. */
   flat(S.lawn, colors.lawn, CARPET, null);
-  flat(S.beds, colors.dg, CARPET, "decomposedGranite", 1.5);
+  flat(S.beds, colors.dg, CARPET, "decomposedGranite", D.tiles.dg);
   flat([{ x0: S.walk.x - S.walk.width / 2, x1: S.walk.x + S.walk.width / 2, z0: S.walk.z0, z1: S.walk.z1 }],
     colors.pavingBuff, PAINT);
 
   const cl = S.clumps;
+  const seed = section.seed;
   const tufts = [];
   for (let k = 0; k < cl.count; k++) {
     const bed = S.beds[k % S.beds.length];
     tufts.push({
-      x: bed.x0 + hash(cl.seed, k, 1) * (bed.x1 - bed.x0),
-      z: bed.z0 + hash(cl.seed, k, 2) * (bed.z1 - bed.z0),
+      x: bed.x0 + hash(seed, k, 1) * (bed.x1 - bed.x0),
+      z: bed.z0 + hash(seed, k, 2) * (bed.z1 - bed.z0),
       k,
     });
   }
+  /* THE THREE NORTH BEDS ARE PLANTED TOO, into the same two draws. They
+     shipped cut correctly out of the apron and then left as flat green
+     rectangles (visual round-2 finding 5), which is inconsistent with this
+     building's own west and south beds and with the frame those beds were
+     read off. Only the COUNT is new and it is [estimated] — the south field's
+     own density across the surveyed ring areas (north.plantingSource). Size,
+     shape and shrub fraction stay `south`'s, so the extension cannot drift
+     off the field it extends. The beds are surveyed RINGS, not rects, so each
+     point is drawn in the ring's bounding box and rejected until it lands
+     inside the ring — seeded, so it cannot put a shrub on the apron and two
+     builds stay byte-identical. `k` continues past the south's field, which
+     is what keeps the two scatters out of each other's hash stream. */
+  for (let i = 0; i < N.clumps.count; i++) {
+    const ring = N.beds[i % N.beds.length].ring;
+    const xs = ring.map((p) => p[0]);
+    const zs = ring.map((p) => p[1]);
+    const x0 = Math.min(...xs); const x1 = Math.max(...xs);
+    const z0 = Math.min(...zs); const z1 = Math.max(...zs);
+    const k = cl.count + i;
+    for (let j = 0; j < RING_SAMPLE_TRIES; j++) {
+      const x = x0 + hash(seed, k, 1, j) * (x1 - x0);
+      const z = z0 + hash(seed, k, 2, j) * (z1 - z0);
+      if (pointInRing(ring, x, z)) { tufts.push({ x, z, k }); break; }
+    }
+  }
   group.add(instanced(new THREE.ConeGeometry(cl.radius, cl.height, 5), foliage(colors.grassClump),
-    tufts.filter((t) => hash(t.k, 7) >= S.shrubFraction),
-    (t) => ({ x: t.x, y: ground(t.x, t.z) + cl.height / 2, z: t.z, rot: hash(t.k, 8) * Math.PI }), false));
-  group.add(instanced(new THREE.SphereGeometry(cl.radius * 1.15, 6, 4), foliage(colors.shrubPink),
-    tufts.filter((t) => hash(t.k, 7) < S.shrubFraction),
+    tufts.filter((t) => hash(seed, t.k, 7) >= S.shrubFraction),
+    (t) => ({ x: t.x, y: ground(t.x, t.z) + cl.height / 2, z: t.z, rot: hash(seed, t.k, 8) * Math.PI }), false));
+  group.add(instanced(new THREE.SphereGeometry(cl.radius * cl.shrubRatio, 6, 4),
+    foliage(colors.shrubPink),
+    tufts.filter((t) => hash(seed, t.k, 7) < S.shrubFraction),
     (t) => ({ x: t.x, y: ground(t.x, t.z) + cl.radius, z: t.z }), false));
+  const northClumps = tufts.length - cl.count;
 
   /* The precast cylinder bins that stand either side of the entry doors. */
   const B = section.entry.bins;
-  group.add(instanced(new THREE.CylinderGeometry(B.radius, B.radius * 0.94, B.height, 14),
+  group.add(instanced(new THREE.CylinderGeometry(B.radius, B.radius * D.binTaper, B.height, 14),
     ctx.mats.conc(colors.bin, [2, 1]), N.bins,
     (b) => ({ x: b.x, y: ground(b.x, b.z) + B.height / 2, z: b.z })));
-  group.add(instanced(new THREE.CylinderGeometry(B.radius + 0.01, B.radius + 0.01, B.bandHeight, 14),
+  group.add(instanced(new THREE.CylinderGeometry(B.radius + D.coplanarNudge,
+    B.radius + D.coplanarNudge, B.bandHeight, 14),
     painted(colors.binBand), N.bins.filter((b) => b.recycling),
     (b) => ({ x: b.x, y: ground(b.x, b.z) + B.height - B.bandHeight, z: b.z })));
+
+  return { northClumps };
 }
 
 /** The ~0.9 m mortared scoria retaining wall along the west court's grade
@@ -1089,8 +1207,9 @@ function buildLavaWall(section, group, ctx) {
   const ux = (L.b[0] - L.a[0]) / len;
   const uz = (L.b[1] - L.a[1]) / len;
   const rot = Math.atan2(-uz, ux);
-  const SEG = 2; // one terrain-following segment every 2 m, like the drapes
-  const n = Math.max(1, Math.ceil(len / SEG));
+  const D = ctx.draw;
+  const seed = section.seed;
+  const n = Math.max(1, Math.ceil(len / D.drapeSegment));
   const seg = len / n;
   const segs = [];
   const lichens = [];
@@ -1098,33 +1217,34 @@ function buildLavaWall(section, group, ctx) {
     const t = (i + 0.5) * seg;
     const x = L.a[0] + ux * t;
     const z = L.a[1] + uz * t;
-    const j = hash(L.seed, i, 3);
+    const j = hash(seed, i, 3);
     segs.push({
       x, y: ground(x, z) + L.height / 2, z, rot,
-      /* 0.06 m of overlap keeps the run visibly seamless where the terrain
-         steps the neighbouring segments apart. */
-      scale: [seg + 0.06, L.height, L.thickness],
-      tone: j < 0.35 ? "lavaRockRed" : "lavaRock",
+      /* `segOverlap` keeps the run visibly seamless where the terrain steps
+         the neighbouring segments apart. */
+      scale: [seg + D.segOverlap, L.height, L.thickness],
+      tone: j < L.redFraction ? "lavaRockRed" : "westWallRock",
     });
     /* Lichen patches sit ON the face of the wall, west (outer) side. */
-    if (hash(L.seed + 2, i, 5) < L.lichenFraction * 2) {
-      const u = t + (hash(L.seed + 4, i, 1) - 0.5) * seg * 0.6;
+    if (hash(seed + 2, i, 5) < L.lichenFraction * 2) {
+      const u = t + (hash(seed + 4, i, 1) - 0.5) * seg * D.lichenJitter;
       const px = L.a[0] + ux * u;
       const pz = L.a[1] + uz * u;
+      const off = L.thickness / 2 + D.coplanarNudge;
       lichens.push({
-        x: px - uz * (L.thickness / 2 + 0.01), z: pz + ux * (L.thickness / 2 + 0.01),
-        y: ground(px, pz) + L.height * (0.35 + hash(L.seed + 5, i, 2) * 0.5),
+        x: px - uz * off, z: pz + ux * off,
+        y: ground(px, pz) + L.height * (D.lichenLow + hash(seed + 5, i, 2) * D.lichenSpan),
         rot,
       });
     }
   }
   const box = new THREE.BoxGeometry(1, 1, 1);
-  for (const tone of ["lavaRock", "lavaRockRed"]) {
+  for (const tone of ["westWallRock", "lavaRockRed"]) {
     group.add(instanced(box, ctx.mats.lava(colors[tone]), segs.filter((s) => s.tone === tone), (it) => it));
   }
   /* Yellow lichen as its own scatter of small patches, because a lichen-toned
      course reads as a different rock and a patched one reads as lichen. */
-  group.add(instanced(new THREE.BoxGeometry(0.22, 0.14, 0.02), rock(colors.lichen),
+  group.add(instanced(new THREE.BoxGeometry(...L.lichenPatch), rock(colors.lichen),
     lichens, (it) => it, false));
 }
 
@@ -1138,7 +1258,7 @@ function buildLavaWall(section, group, ctx) {
  * `treeOverrides.skipMeasuredKeys` (the same contract plaza uses; campus-walk
  * unions the keys into createTrees' skip set) — but its measured 18.3 m top
  * stands above the soffit, and the blob renderer knows nothing about a roof
- * that oversails 12.5 m past the footprint it checks clearance against. So
+ * band that reaches 3.67 m past the footprint it checks clearance against. So
  * this draws the same species, same tint, same silhouette family as the
  * measured renderer would, with ONE invented change, declared in the section:
  * the canopy is pruned below the soffit plane, the way the real understorey
@@ -1192,6 +1312,19 @@ function speciesColor(rgb) {
  * facade: a crown radius is metres, the trunk stands 0.7 m off the glass, and
  * "lean the clumps outward" is not the same as "no clump crosses the wall".
  */
+/** Even-odd point-in-polygon on a closed ring. Used to keep the north bed
+ *  planting inside the SURVEYED rings rather than inside their bounding
+ *  boxes, which would spill onto the apron at every skewed edge. */
+function pointInRing(ring, x, z) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, zi] = ring[i];
+    const [xj, zj] = ring[j];
+    if ((zi > z) !== (zj > z) && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
 function ringClearance(ring, x, z) {
   let best = Infinity;
   let bx = 1;
@@ -1235,40 +1368,63 @@ function limbTo(from, to) {
   };
 }
 
+/** The plane a re-skinned trunk is pruned below. `ceiling: "balcony"` names
+ *  the underside of the level-2 deck; anything else is the roof soffit, which
+ *  is what the mechanism was built for and stays the default. */
+function ceilingOf(section, ctx, item) {
+  return item.ceiling === "balcony"
+    ? ctx.l2Y - section.facade.balcony.deck
+    : ctx.soffitY;
+}
+
 function buildTreeReskins(section, group, ctx) {
   const T = section.treeOverrides;
   if (!T || !T.items?.length) return { reskinnedTrees: 0, canopyLobes: 0 };
-  const clear = T.clearBelowSoffit ?? 0.5;
+  const CN = T.canopy;
+  const D = ctx.draw;
+  const seed = section.seed;
+  const clear = T.clearBelowSoffit;
   const sub = new THREE.Group();
   sub.name = "galbraith-tree-reskins";
 
-  /* One bin per material, so the whole re-skin set is three draws however
-     many stems it grows to. */
-  const boles = [];
-  const limbs = [];
-  const lobes = [];
-  let species = "eucalyptus";
-  let tint = { leaf: [0.4, 0.43, 0.3], trunk: [0.69, 0.64, 0.56] };
+  /* One bin per material PER SPECIES, so the set is three draws per species
+     however many stems it grows to. Per-species and not per-set, because the
+     species table gives each one its own bark and leaf hue and `instanced`
+     only carries a per-instance VALUE — a single set of bins takes whichever
+     species the loop happened to end on and repaints every other stem with
+     it. That was invisible while one stem was re-skinned and wrong the moment
+     a second one of a different species arrived. */
+  const bins = new Map();
+  const binFor = (species) => {
+    if (!bins.has(species)) bins.set(species, { boles: [], limbs: [], lobes: [] });
+    return bins.get(species);
+  };
 
   T.items.forEach((it, idx) => {
     const g = ctx.ground(it.x, it.z);
-    species = treeSpecies(it.x, it.z, it.h, it.r);
+    const species = treeSpecies(it.x, it.z, it.h, it.r);
+    const bin = binFor(species);
     const form = SPECIES[species].form;
     /* What the measured renderer would draw, before the slab exists... */
     let { crownR, crownV, centre } = crownFor([it.x, it.z, it.h, it.r], form);
-    /* ...clamped so the canopy TOP stays `clear` below the soffit plane. The
-       underside keeps the species walk-under clearance; the crown compresses
-       between the two, and its spread follows the compression so the pruned
-       tree keeps tree proportions instead of becoming a disc. */
-    const capTop = ctx.soffitY - clear - g;
-    let under = 2.4;
+    /* ...clamped so the canopy TOP stays `clear` below the plane it was
+       piercing. WHICH plane is the item's own business and is named in the
+       data, because the two re-skinned stems pierce different slabs: the
+       NE-corner stem passes the roof soffit, and the mid-east stem passes the
+       level-2 balcony deck eleven metres lower. The underside keeps the
+       species walk-under clearance; the crown compresses between the two, and
+       its spread follows the compression so the pruned tree keeps tree
+       proportions instead of becoming a disc. */
+    const ceilY = ceilingOf(section, ctx, it);
+    const capTop = ceilY - clear - g;
+    let under = CN.underMin;
     if (centre + crownV > capTop) {
-      under = Math.max(2.4, capTop - 2 * crownV);
-      crownV = Math.max(0.6, (capTop - under) / 2);
+      under = Math.max(CN.underMin, capTop - 2 * crownV);
+      crownV = Math.max(CN.crownVMin, (capTop - under) / 2);
       centre = (capTop + under) / 2;
-      crownR = Math.min(crownR, crownV * 1.25);
+      crownR = Math.min(crownR, crownV * CN.crownRatio);
     }
-    tint = treeTint(species, it.x, it.z);
+
 
     /* The pruning is ASYMMETRIC, and the direction is not a taste call: this
        stem stands under eleven metres of soffit with the building's own glass
@@ -1289,44 +1445,47 @@ function buildTreeReskins(section, group, ctx) {
        by the slab instead of the sky. The bole runs the FULL height from the
        ground to just under the canopy, one textured piece with nothing to
        leave a bare untextured stub at the bottom. */
-    const boleH = Math.min(capTop * 0.86, centre + crownV * 0.35);
-    boles.push({
-      x: it.x, y: g + boleH / 2, z: it.z, rot: hash(idx, 11) * Math.PI,
+    const boleH = Math.min(capTop * CN.boleFraction, centre + crownV * CN.boleCrownFraction);
+    bin.boles.push({
+      x: it.x, y: g + boleH / 2, z: it.z, rot: hash(seed, idx, 11) * Math.PI,
       scale: [1, boleH, 1],
     });
 
-    const from = [it.x, g + boleH * 0.94, it.z];
-    const clumps = 8;
-    const phase = hash(idx, 12) * Math.PI * 2;
+    const from = [it.x, g + boleH * D.boleFoot, it.z];
+    const clumps = CN.clumps;
+    const phase = hash(seed, idx, 12) * Math.PI * 2;
     for (let c = 0; c < clumps; c++) {
       const k = idx * 97 + c;
       /* Spaced round the pole rather than scattered: purely random bearings
          leave three clumps on one side and a hole you can see through. */
-      const a = phase + (c / clumps) * Math.PI * 2 + (hash(k, 1) - 0.5) * 0.5;
+      const a = phase + (c / clumps) * Math.PI * 2 + (hash(seed, k, 1) - 0.5) * CN.jitter;
       const dirX = Math.sin(a);
       const dirZ = Math.cos(a);
       /* 1 out toward the open side, -1 back into the building. The inboard
          clumps keep barely a third of the reach, which is the prune. */
       const lean = dirX * bx + dirZ * bz;
-      const reach = crownR * (0.3 + hash(k, 2) * 0.4) * (0.45 + 0.55 * ((lean + 1) / 2));
-      let rad = Math.min(crownR * 0.46, 1.4 + hash(k, 3) * 1.6);
-      const squash = 0.8;
+      const reach = crownR * (CN.reachMin + hash(seed, k, 2) * CN.reachSpread)
+        * (CN.leanFloor + CN.leanSpan * ((lean + 1) / 2));
+      let rad = Math.min(crownR * CN.radiusOfCrown,
+        CN.radiusMin + hash(seed, k, 3) * CN.radiusSpread);
+      const squash = CN.squash;
       /* Clumps ride the top of what is left, and the ones reaching back under
          the deeper slab ride lower still. */
-      let y = g + under + (capTop - under) * (0.42 + hash(k, 4) * 0.5 - 0.12 * (1 - lean));
+      let y = g + under + (capTop - under)
+        * (CN.heightBase + hash(seed, k, 4) * CN.heightSpread - CN.heightLeanDrop * (1 - lean));
       /* The hard gate, applied per lobe and not per tree: nothing may reach
-         the soffit. Drop the clump first, and only shrink it if dropping it
-         would push it below the crown's own underside. */
-      const top = ctx.soffitY - clear;
+         the item's own ceiling. Drop the clump first, and only shrink it if
+         dropping it would push it below the crown's own underside. */
+      const top = ceilY - clear;
       if (y + rad * squash > top) {
         y = Math.min(y, top - rad * squash);
-        if (y < g + under * 0.8) {
-          y = g + under * 0.8;
-          rad = Math.max(0.5, (top - y) / squash);
+        if (y < g + under * CN.underFloor) {
+          y = g + under * CN.underFloor;
+          rad = Math.max(CN.radiusFloor, (top - y) / squash);
         }
       }
-      let px = it.x + dirX * reach + bx * crownR * 0.18;
-      let pz = it.z + dirZ * reach + bz * crownR * 0.18;
+      let px = it.x + dirX * reach + bx * crownR * CN.offsetFraction;
+      let pz = it.z + dirZ * reach + bz * crownR * CN.offsetFraction;
       /* THE PRUNE, as a clearance and not as a lean. Reducing the inboard
          reach still let clumps stand 1.5 m inside the measured ring and clean
          through the curtain wall, because a lobe is a BODY: what has to clear
@@ -1335,40 +1494,48 @@ function buildTreeReskins(section, group, ctx) {
          clears the outermost thing on that wall — the corner pier's face at
          wallStandoff + 0.14 — with 0.15 m to spare. Two passes, because
          sliding along one edge can bring a lobe up against the next. */
-      const faceOut = section.facade.wallStandoff + 0.14 + 0.15;
-      const radH = Math.max(rad, rad * (0.85 + hash(k, 6) * 0.3));
+      const faceOut = section.facade.wallStandoff + D.pierProud + CN.lobeClear;
+      const radH = Math.max(rad, rad * (CN.aspectMin + hash(seed, k, 6) * CN.aspectSpread));
       for (let pass = 0; pass < 2; pass++) {
         const c = ringClearance(section.ring, px, pz);
         const over = faceOut + radH - c.d;
         if (over > 0) { px += c.nx * over; pz += c.nz * over; }
       }
       const p = [px, y, pz];
-      lobes.push({
+      bin.lobes.push({
         x: p[0], y: p[1], z: p[2],
-        rot: hash(k, 5) * Math.PI * 2,
-        scale: [rad, rad * squash, rad * (0.85 + hash(k, 6) * 0.3)],
-        tone: 0.82 + hash(k, 7) * 0.36,
+        rot: hash(seed, k, 5) * Math.PI * 2,
+        scale: [rad, rad * squash, rad * (CN.aspectMin + hash(seed, k, 6) * CN.aspectSpread)],
+        tone: CN.toneBase + hash(seed, k, 7) * CN.toneSpread,
       });
-      /* Two clumps are carried on a visible limb run into the mass, so the
-         canopy hangs off the tree instead of floating beside it. */
-      if (c < 2) limbs.push(limbTo(from, p));
+      /* A couple of clumps are carried on a visible limb run into the mass, so
+         the canopy hangs off the tree instead of floating beside it. */
+      if (c < CN.limbClumps) bin.limbs.push(limbTo(from, p));
     }
   });
 
-  const leafRgb = speciesColor(tint.leaf);
-  const trunkRgb = speciesColor(tint.trunk);
+  /* The tint is taken at the species' FIRST stem, so a species' bark and leaf
+     are one material however many stems share it. */
   const named = (name, mesh) => { mesh.name = name; sub.add(mesh); return mesh; };
-  named("galbraith-tree-boles", instanced(
-    new THREE.CylinderGeometry(0.18, 0.32, 1, 7),
-    ctx.mats.bark(species, trunkRgb, [2, 8]), boles, (i) => i));
-  named("galbraith-tree-limbs", instanced(
-    new THREE.CylinderGeometry(0.07, 0.13, 1, 5),
-    ctx.mats.bark(species, trunkRgb, [1, 3]), limbs, (i) => i));
-  named("galbraith-canopy-lobes", instanced(
-    lobeGeometry(), ctx.mats.leaf(leafRgb), lobes, (i) => i));
+  let canopyLobes = 0;
+  for (const [species, bin] of bins) {
+    const first = T.items.find((i) => treeSpecies(i.x, i.z, i.h, i.r) === species);
+    const tint = treeTint(species, first.x, first.z);
+    const leafRgb = speciesColor(tint.leaf);
+    const trunkRgb = speciesColor(tint.trunk);
+    named(`galbraith-tree-boles-${species}`, instanced(
+      new THREE.CylinderGeometry(CN.boleTop, CN.boleBottom, 1, 7),
+      ctx.mats.bark(species, trunkRgb, [2, 8]), bin.boles, (i) => i));
+    named(`galbraith-tree-limbs-${species}`, instanced(
+      new THREE.CylinderGeometry(CN.limbTop, CN.limbBottom, 1, 5),
+      ctx.mats.bark(species, trunkRgb, [1, 3]), bin.limbs, (i) => i));
+    named(`galbraith-canopy-lobes-${species}`, instanced(
+      lobeGeometry(), ctx.mats.leaf(leafRgb), bin.lobes, (i) => i));
+    canopyLobes += bin.lobes.length;
+  }
 
   group.add(sub);
-  return { reskinnedTrees: T.items.length, canopyLobes: lobes.length };
+  return { reskinnedTrees: T.items.length, canopyLobes };
 }
 
 /* ---------------------------------------------------------- the roofscape */
@@ -1389,6 +1556,7 @@ function buildRoof(section, group, ctx) {
   const R = section.roof;
   if (!R) return { skylights: 0, penthouses: 0, mechUnits: 0 };
   const { colors } = section;
+  const D = ctx.draw;
   const y0 = ctx.roofY;
   const roof = new THREE.Group();
   roof.name = "galbraith-roof";
@@ -1414,7 +1582,7 @@ function buildRoof(section, group, ctx) {
   const paneMesh = instanced(
     quad(K.size - K.glassInset * 2, K.size - K.glassInset * 2),
     ctx.mats.glass(colors.skylightGlass),
-    cells, (c) => ({ x: c.x, y: y0 + K.curb - 0.02, z: c.z }), false
+    cells, (c) => ({ x: c.x, y: y0 + K.curb - D.paneSink, z: c.z }), false
   );
   roof.add(paneMesh);
 
@@ -1433,12 +1601,17 @@ function buildRoof(section, group, ctx) {
   ]) {
     rim.push({ x, y: y0 + B.rim.curb / 2, z, scale: [sx, B.rim.curb, sz] });
   }
+  /* NORTH AND WEST ONLY. The previous revision ringed the block on all four
+     sides and called the band a symmetric reveal; it is not symmetric in the
+     orthophoto, it runs along the north and west edges alone, and that is the
+     signature of a shadow cast by a south-east sun (roof.block.revealNote).
+     Drawn on the two edges the frame actually shows it on. */
   const rw = B.reveal.width;
   for (const [x, z, sx, sz] of [
-    [midX, B.z0 - rw / 2, lenX + 2 * rw, rw], [midX, B.z1 + rw / 2, lenX + 2 * rw, rw],
-    [B.x0 - rw / 2, midZ, rw, lenZ], [B.x1 + rw / 2, midZ, rw, lenZ],
+    [midX, B.z0 - rw / 2, lenX + 2 * rw, rw],
+    [B.x0 - rw / 2, midZ, rw, lenZ],
   ]) {
-    reveal.push({ x, y: y0 + 0.015, z, scale: [sx, 0.03, sz] });
+    reveal.push({ x, y: y0 + D.revealThickness / 2, z, scale: [sx, D.revealThickness, sz] });
   }
   const unit = new THREE.BoxGeometry(1, 1, 1);
   roof.add(instanced(unit, ctx.mats.conc(colors.fascia, [8, 1]), rim, (it) => it, false));
@@ -1464,14 +1637,10 @@ function buildRoof(section, group, ctx) {
 
   /* Mech enclosures: dark walls, pale equipment standing slightly proud. */
   boxes(R.mech, R.mechExpression, () => ctx.mats.conc(colors.mechWall, [4, 4]));
-  const equip = R.mech.map((r) => {
-    const ex = (r.x1 - r.x0) * 0.55;
-    const ez = (r.z1 - r.z0) * 0.55;
-    return {
-      x: (r.x0 + r.x1) / 2, y: y0 + R.mechExpression + 0.03, z: (r.z0 + r.z1) / 2,
-      scale: [ex, 0.06, ez],
-    };
-  });
+  const equip = R.mech.map((r) => ({
+    x: (r.x0 + r.x1) / 2, y: y0 + R.mechExpression + D.equipLift, z: (r.z0 + r.z1) / 2,
+    scale: [(r.x1 - r.x0) * D.equipFraction, D.equipHeight, (r.z1 - r.z0) * D.equipFraction],
+  }));
   roof.add(instanced(unit, ctx.mats.conc(colors.mechEquip, [2, 2]), equip, (it) => it, false));
 
   group.add(roof);
@@ -1501,6 +1670,7 @@ function buildEastGround(section, group, ctx, frames) {
   const E = section.east;
   if (!E) return { eastRects: 0, eastPads: 0 };
   const { colors } = section;
+  const D = ctx.draw;
   const ground = ctx.ground;
   const east = new THREE.Group();
   east.name = "galbraith-east-ground";
@@ -1519,7 +1689,7 @@ function buildEastGround(section, group, ctx, frames) {
             repeat: [Math.max(1, Math.round(w / tile)), Math.max(1, Math.round(d / tile))],
           }), rung)
         : decal(color, rung);
-      const { geo, place } = drapedQuad(r, ground, overlayLift(rung));
+      const { geo, place } = drapedQuad(r, ground, overlayLift(rung), D.drapeSegment);
       const mesh = new THREE.Mesh(geo, mat);
       place(mesh);
       mesh.renderOrder = OVERLAY[rung].renderOrder;
@@ -1531,8 +1701,8 @@ function buildEastGround(section, group, ctx, frames) {
 
   flat(E.recess, colors.eastRecess, PAD, null);
   /* One library tile is 6 pavers, so a tile is six of the banding pitch. */
-  flat(E.walk, colors.eastWalk, PAD, "pavingConcreteUnit", E.walkPitch * 6);
-  flat(E.dg, colors.eastDg, CARPET, "decomposedGranite", 1.5);
+  flat(E.walk, colors.eastWalk, PAD, "pavingConcreteUnit", E.walkPitch * D.tiles.paverUnits);
+  flat(E.dg, colors.eastDg, CARPET, "decomposedGranite", D.tiles.dg);
   /* The lawn rides one rung above the DG band it partly overlaps. */
   flat(E.lawn, colors.eastLawn, PAINT, null);
 
@@ -1544,7 +1714,7 @@ function buildEastGround(section, group, ctx, frames) {
   const pads = [];
   for (const k of section.grid.pairIndices) {
     const u = frame.length / 2 + k * face.pairSpacing;
-    const p = frame.at(u, section.facade.wallStandoff + section.column.standoff, 0);
+    const p = frame.at(u, section.facade.wallStandoff + section.column.standoffBuilt, 0);
     pads.push({ x: p.x, z: p.z, rot: frame.rot });
   }
   const padMesh = instanced(
@@ -1585,6 +1755,17 @@ export function createPhotoGalbraith(scene, { photo, heightAt, surfaceAt } = {})
   if (typeof ground !== "function" || typeof base !== "function") {
     throw new Error("campus-photo-galbraith: needs surfaceAt (or heightAt) to place on the ground");
   }
+  /* The module and its section are ONE unit. Every metre this file draws with
+     comes out of `draw`, `derivations.figures`, `estimates` or `reads`, and a
+     pre-R1 section has none of them — so a stale document would not degrade,
+     it would silently build a different building. Fail loudly and name the
+     file that fixes it instead. */
+  if (!section.draw || !section.faces?.[0]?.pairGap || !section.column?.standoffBuilt) {
+    throw new Error(
+      "campus-photo-galbraith: this builder needs the R1 galbraith section " +
+      "(draw, per-face pairGap, column.standoffBuilt). Merge " +
+      "Revelle-College-Sources/merge/r1/galbraith.json into docs/data/campus-photo-detail.json.");
+  }
 
   /* Match campus-massing.js exactly: the mass sits on the MEDIAN ground under
      its ring, lifted if that would bury a high corner. Any other datum and
@@ -1599,6 +1780,7 @@ export function createPhotoGalbraith(scene, { photo, heightAt, surfaceAt } = {})
   const ctx = {
     ground,
     mats,
+    draw: section.draw,
     roofY,
     eavesY: roofY - LV.eavesBelowRoof,
     soffitY: roofY - LV.soffitBelowRoof,
@@ -1651,7 +1833,8 @@ export function createPhotoGalbraith(scene, { photo, heightAt, surfaceAt } = {})
   add(unit, mats.conc(colors.fascia, [24, 2]), bins.fascia);
   add(unit, metal(colors.dripCap), bins.dripCap);
   add(unit, mats.conc(colors.birdSpike, [24, 1]), bins.birdSpike);
-  add(new THREE.BoxGeometry(0.012, 1, 0.012), metal(colors.birdSpike), bins.needles, false);
+  const wire = section.roofEdge.birdSpike.wire;
+  add(new THREE.BoxGeometry(wire, 1, wire), metal(colors.birdSpike), bins.needles, false);
   add(new THREE.CylinderGeometry(section.soffit.lightRadius, section.soffit.lightRadius,
     section.soffit.lightHeight, 10), painted(colors.downlight), bins.downlight, false);
 
@@ -1666,7 +1849,7 @@ export function createPhotoGalbraith(scene, { photo, heightAt, surfaceAt } = {})
   }
   add(unit, mats.conc(colors.columnHead, [1, 1]), bins.brackets);
 
-  add(unit, mats.conc(colors.spandrel, [24, 1]), bins.spandrel);
+  add(unit, mats.conc(colors.fascia, [24, 1]), bins.spandrel);
   /* The curtain wall is near-opaque: every dated photograph reads it as a
      dark bronze SURFACE, and at the library's default 0.35 the measured
      massing texture behind it dominated on all four faces. depthWrite stays
@@ -1697,12 +1880,11 @@ export function createPhotoGalbraith(scene, { photo, heightAt, surfaceAt } = {})
   /* The 1965 aggregate wall is the one board-formed surface on the building. */
   add(unit, mats.board(colors.flutedPanel), bins.flutedWall);
   add(unit, mats.conc(colors.flutedPanel, [1, 2]), bins.flute, false);
-  add(unit, painted(colors.doorBronze), bins.doorBronze);
+  add(unit, painted(colors.glassLower), bins.doorBronze);
 
   const north = section.faces.find((f) => f.entry);
   if (north) buildEntry(section, group, frames.get(north.id), north, ctx);
-  buildStair(section, group, ctx);
-  buildGround(section, group, ctx);
+  const groundCounts = buildGround(section, group, ctx);
   const roofCounts = buildRoof(section, group, ctx);
   const eastCounts = buildEastGround(section, group, ctx, frames);
   const reskinCounts = buildTreeReskins(section, group, ctx);
@@ -1719,6 +1901,8 @@ export function createPhotoGalbraith(scene, { photo, heightAt, surfaceAt } = {})
       downlights: bins.downlight.length,
       pickets: bins.picket.length,
       lowerColumns: bins.lowerColumn.length,
+      northBeds: section.north.beds.length,
+      ...groundCounts,
       ...roofCounts,
       ...eastCounts,
       ...reskinCounts,

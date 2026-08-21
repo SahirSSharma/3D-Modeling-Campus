@@ -751,8 +751,10 @@ export async function boot({ report, mode = "campus" } = {}) {
          landmark ring, lawns, paving arcs, furniture. Ground module — surfaceAt. */
       () => photoZone.add(createPhotoPlaza(null, { photo: data.photo, heightAt, surfaceAt }).group),
       /* The Zone 1 rebuilds: York owns itself now (the revelle module no longer
-         draws it), Argo and Blake are the 2015 white repaint, sibling modules
-         with different bays. Two-sampler contract throughout. */
+         draws it). Argo is the 2015-16 Webcor white repaint; Blake's repaint is
+         EXIF-dated Jan 2014 and is NOT the same programme — sibling modules
+         with different bays and separately-tiered palettes (R1, 2026-08-21).
+         Both are open-court donuts. Two-sampler contract throughout. */
       () => photoZone.add(createPhotoYork(null, { photo: data.photo, heightAt, surfaceAt }).group),
       () => photoZone.add(createPhotoArgo(null, { photo: data.photo, heightAt, surfaceAt }).group),
       () => photoZone.add(createPhotoBlake(null, { photo: data.photo, heightAt, surfaceAt }).group),
@@ -987,12 +989,12 @@ export async function boot({ report, mode = "campus" } = {}) {
      campus, parked over the stretch each tab is about — the run's start on
      the Eighth courts, and the workbench over the zone being built. */
   /* Staging spawns over the ACTIVE zone and moves when the zone moves. Zone 1
-     was Revelle plaza at (38, 380); the active zone is now Zone 2, Eighth
-     College, so staging opens between Pulse and Sankofa with the Ramble and
-     the courtyards ahead and the 64 m Sankofa tower on the skyline. */
+     was Revelle plaza at (38, 380); Zone 2 was Eighth College at (-140, 580);
+     the active zone is now Zone 3, Revelle at the ultra standard, so staging
+     opens over Revelle Plaza with Argo, York and Galbraith around it. */
   const SPAWNS = {
     scooter: { x: -174.5, z: 525.2 },
-    staging: { x: -140, z: 580 },
+    staging: { x: 15, z: 378 },
   };
   const argo = campus.places["Argo Hall"];
   const at = SPAWNS[mode] || argo;
