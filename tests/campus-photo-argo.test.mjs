@@ -44,11 +44,10 @@ import { overlayLift } from "../docs/js/campus-overlay.js";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (p) => JSON.parse(readFileSync(p, "utf8"));
 
-/* The shipped document is the only source; PHOTO_DETAIL still lets a repair
-   agent point the whole file at a candidate. */
-const section = read(
-  process.env.PHOTO_DETAIL || join(root, "docs/data/campus-photo-detail.json"),
-).argo;
+/* PHOTO_DETAIL still lets a repair agent point the whole file at a candidate. */
+const section = process.env.PHOTO_DETAIL
+  ? read(process.env.PHOTO_DETAIL).argo
+  : read(join(root, "docs/data/campus-photo-detail.json")).argo;
 
 const campus = read(join(root, "docs/data/campus-3d.json"));
 const lidar = read(join(root, "docs/data/campus-lidar.json"));
@@ -90,6 +89,7 @@ const PRECISION = {
   "system.ground.height": 0.005,
   "court.gallery.beamDepth": 0.005,
   "court.screen.height": 0.01,
+  "court.guard.postPitch": 0.005,
 };
 
 function toRoute(x, z) {
@@ -138,6 +138,42 @@ function facadePoints() {
     }
   }
   return out;
+}
+
+/* R4b — an INDEPENDENT mirror of the guard circuit: each face's rail line is
+   the face offset guardW into the court along its own normal, and a corner is
+   the INTERSECTION of two adjacent offset lines. The counts and the crossing
+   gate both derive from this rather than trusting the module. */
+function guardCircuit() {
+  const C = section.court;
+  const w = C.gallery.projection - C.gallery.beamThickness - C.guard.railSection / 2;
+  const faces = C.faces;
+  const line = (f) => {
+    const nl = Math.hypot(f.out[0], f.out[1]);
+    const dl = seg(f.a, f.b);
+    return {
+      px: f.a[0] + (f.out[0] / nl) * w,
+      pz: f.a[1] + (f.out[1] / nl) * w,
+      dx: (f.b[0] - f.a[0]) / dl,
+      dz: (f.b[1] - f.a[1]) / dl,
+    };
+  };
+  const n = faces.length;
+  const corners = [];
+  for (let i = 0; i < n; i++) {
+    const A = line(faces[(i + n - 1) % n]);
+    const B = line(faces[i]);
+    const det = A.dx * B.dz - A.dz * B.dx;
+    if (Math.abs(det) < 1e-9) { corners.push([B.px, B.pz]); continue; }
+    const t = ((B.px - A.px) * B.dz - (B.pz - A.pz) * B.dx) / det;
+    corners.push([A.px + A.dx * t, A.pz + A.dz * t]);
+  }
+  const runs = corners.map((c, i) => {
+    const d = corners[(i + 1) % n];
+    const run = Math.hypot(d[0] - c[0], d[1] - c[1]);
+    return { a: c, b: d, run, panels: Math.max(1, Math.round(run / C.guard.postPitch)) };
+  });
+  return { corners, runs };
 }
 
 /** Every solid the section stands on the OUTSIDE ground, as (x, z). */
@@ -261,8 +297,15 @@ test("every drawn figure is the arithmetic its own readings give", () => {
     "court.guard.picketClear": picketClear,
     "court.guard.picketPitch": picketClear + picketDia,
     "court.guard.railSection": 2 * picketDia,
-    "court.guard.railMidHeight": guardHeight / 2,
+    /* R4b: railMidHeight is RETIRED — the 2019 video and the 2024 tour both
+       show NO rail at mid height; the sub-top panel rail is a pinned READ
+       (court.guard.panelDrop) and the posts are the video's own pitch. */
+    "court.guard.postPitch": (R.video.postPitchPx / R.video.storeyPitchPx) * F,
+    "court.guard.postSection": 2 * (2 * picketDia),
     "court.guard.railLowHeight": picketClear,
+    "court.opening.perWall": R.video.openingsPerWall,
+    "court.opening.sliderWidth": 2 * doorW,
+    "court.opening.windowWidth": doorW,
     "court.gallery.clear": R.code.corridorClearIn * IN,
     "court.gallery.beamThickness": R.cmu.thicknessIn * IN,
     "court.gallery.beamDepth": beamDepth,
@@ -306,6 +349,13 @@ test("every drawn figure is the arithmetic its own readings give", () => {
     near(decl.value, want, tol, `${path}: the section STATES ${decl.value}, its own readings give`);
     near(at(section, path), want, tol, `${path}: the section SHIPS ${at(section, path)}, its own readings give`);
   }
+
+  /* R4b: the retired mid-height rail may not come back, in the data or the
+     derivation table — its retirement is a superseded[] record, not a gap. */
+  assert.equal(section.court.guard.railMidHeight, undefined,
+    "court.guard.railMidHeight is back — the 2019 video and the 2024 tour both show NO mid-height rail");
+  assert.equal(figures["court.guard.railMidHeight"], undefined,
+    "the retired railMidHeight still has a derivation row");
 
   /* The solve closes on the LiDAR plane with zero residual, and closes on the
      figures the section actually ships rather than on this test's copies. */
@@ -407,6 +457,13 @@ const READING_PINS = {
   "ortho.priorDz": pin(4.15, "docs/data/campus-photo-detail.json argo.roof: the SHIPPED plate-centre z correction"),
   "ortho.priorTreeX": pin(-37.25, "docs/data/campus-photo-detail.json argo.roof.tree.x, the shipped ortho crown read"),
   "ortho.priorTreeZ": pin(385.95, "docs/data/campus-photo-detail.json argo.roof.tree.z, the shipped ortho crown read"),
+
+  /* R4b — the 2019 video (VIhkKjgWN5o, uploaded 2019-12-03), pixel reads
+     taken within one image column so depth cancels. */
+  "video.storeyPitchPx": pin(190, "video-argo-VIhkKjgWN5o/f002.jpg at x~575 — rail-top to rail-top on one wall plane, the column every video ratio divides by"),
+  "video.postPitchPx": pin(115, "video-argo-VIhkKjgWN5o/f002.jpg — square guard posts at x~430, 545, 655, 770; ~115 px pitch in the same column as the 190 px storey read"),
+  "video.guardPx": pin(75, "video-argo-VIhkKjgWN5o/f002.jpg — deck line to top rail in the same column; 75/190 = 0.395 F, the check that agrees with the IBC-derived guard height"),
+  "video.openingsPerWall": pin(4, "video-argo-VIhkKjgWN5o/f002-f003.jpg — 4+ glazed openings per court wall per gallery level; four is the video's own minimum COUNT, foreshortening-immune"),
 };
 
 /* S1(i). `draw` is render offsets, not dimensions — and R1 walked none of them.
@@ -447,7 +504,10 @@ const DRAW_PINS = {
   "tiles.plank": pin(1.4, "texture repeats per metre for the boardwalk plank class"),
   "tiles.slat": pin(1.2, "texture repeats per metre for the slat class"),
   "tiles.membraneTilesPerJoint": pin(4, "membrane texture tiles per expansion-joint bay, so the grid reads at 3 m"),
-  "tiles.cmuCourses": pin(8, "courses per masonry texture tile — the York convention, eight courses each way"),
+  "tiles.cmuCourses": pin(8, "courses per masonry texture tile VERTICALLY — the brick field's own COURSES constant; dividing the HORIZONTAL repeat by it was the R4b-retired oversizing"),
+  "tiles.cmuUnitsPerTile": pin(4, "units per masonry texture tile HORIZONTALLY — the brick field's own PER constant, which is what makes one drawn block exactly 0.4064 x 0.2032 m"),
+  "tiles.grooveCourses": pin(8, "boards per boardFormedConcrete tile — the field's own BOARDS constant, driven at one 0.2032 m CMU course per board for the video's bed-joints-only score"),
+  cmuNormalScale: pin(0.5, "relief scale for both court masonry classes — f022 reads the joints thin, slightly recessed and LOW-CONTRAST, so the shared class's default relief is halved; art direction on cost, not a dimension"),
 };
 
 /* S1(v). `absent` was gated by LIST LENGTH, which cannot tell a retirement from
@@ -477,6 +537,8 @@ const ABSENT = {
   exitSigns: /EXIT SIGNS, WAYFINDING/,
   legacyRacks: /BIKE-RACK RUN IS NOT REBUILT/,
   argoBlakeGapGround: /ARGO-BLAKE GAP'S GROUND SURFACE/,
+  lanternRhythm: /MARINE-LANTERN PENDANTS' RHYTHM/,
+  gardenPlan: /COURT GARDEN'S PLAN/,
 };
 
 const absentEntries = () => {
@@ -549,7 +611,8 @@ test("S1(ii): every estimate carries a machine-readable band and ships inside it
     skip: ["why"],
     label: "argo",
   });
-  assert.equal(n, 30, "every estimate is banded and the count is declared here");
+  assert.equal(n, 52,
+    "every estimate is banded and the count is declared here — 30 from R1/R2 plus the 22 video-era garden, opening, plaque and lantern estimates R4b adds");
   /* The acceptance test S1(ii) names: the band is the section's OWN published
      2.66-2.85 m, so 2.25 m — 0.41 m outside it — cannot be reached. */
   assert.deepEqual(section.estimates["grid.floorToFloor"].band, [2.66, 2.85]);
@@ -581,7 +644,7 @@ test("S1(iii): every reading with an external truth is pinned to that truth", ()
     assertPins({
       readings: R,
       pins: READING_PINS,
-      namespaces: ["units", "px", "survey", "published", "cmu", "code", "ortho"],
+      namespaces: ["units", "px", "survey", "published", "cmu", "code", "ortho", "video"],
       label: "argo",
     }),
     Object.keys(READING_PINS).length,
@@ -649,6 +712,11 @@ test("S1(iii): every reading with an external truth is pinned to that truth", ()
         got: Math.hypot(R.ortho.dx, R.ortho.dz), want: 3.89, tol: 0.005 },
       { name: "ortho.source: 0.208 m of displacement per metre of height",
         got: Math.hypot(R.ortho.dx, R.ortho.dz) / R.survey.massHeight, want: 0.208, tol: 0.001 },
+      { name: "video: the 2019 guard read (75/190 of a storey) lands inside +/-0.1 m of the IBC-derived height — the video CONFIRMS the shipped guard",
+        got: (R.video.guardPx / R.video.storeyPitchPx) * section.grid.floorToFloor,
+        want: section.court.guard.height, tol: 0.1 },
+      { name: "video: the post pitch at the pixel-solve F (2.7489 m) reproduces the dossier's ~1.66 m centres",
+        got: (R.video.postPitchPx / R.video.storeyPitchPx) * 2.7489, want: 1.66, tol: 0.01 },
     ],
   });
 });
@@ -681,8 +749,8 @@ test("S1(iv): the tier gate runs BOTH ways over colours and estimates", () => {
 test("S1(v): every absent entry is held by a stable key and a probe", () => {
   const entries = absentEntries();
   assert.equal(assertAbsentEntries({ absent: entries, expected: ABSENT, label: "argo" }), entries.length);
-  assert.equal(entries.length, 23,
-    "21 R1 withholdings, plus the Argo-Blake gap's ground assigned in R2, plus the roof deck withheld in visual round 2");
+  assert.equal(entries.length, 25,
+    "21 R1 withholdings, the Argo-Blake gap's ground (R2), the roof deck (visual round 2), plus R4b's lantern rhythm and court-garden plan");
   /* BASELINE CHANGE (R2 S1 v): the list-length gate is replaced, but the list
      still may not shrink — that claim was never the problem with it. */
   /* 21 is the R1 merge-day count; the floor is a literal so a shrink cannot
@@ -712,7 +780,8 @@ test("S1(vi): every expr is arithmetic, is EVALUATED, and reproduces its own val
     face: Object.fromEntries(section.court.faces.map((f) => [f.id, f.length])),
   };
   const { evaluated, prose } = assertExprs({ figures: section.derivations.figures, scope, label: "argo" });
-  assert.equal(evaluated, 48, "all 48 figures evaluate — none was left as prose under the name `expr`");
+  assert.equal(evaluated, 52,
+    "all 52 figures evaluate — R1's 48, minus the retired railMidHeight, plus the five video-era figures (postPitch, postSection, opening.perWall/sliderWidth/windowWidth)");
   assert.equal(prose, 0);
   /* An expr referencing a reading that does not exist is a hard failure, and
      an expr rewritten to a formula that does not give its own value fails. */
@@ -929,10 +998,13 @@ test("colours are data, hex, the repaint whites, and every role carries a tier",
   assert.ok(spread(section.colors.precast) < 35, "the precast is near-neutral, not tan");
   assert.ok(luma(section.colors.groundRecess) < 60, "the colonnade recess reads near-black");
 
-  /* THE COURT INTRODUCES NO NEW COLOUR VALUE. N9 is over-exposed and is not a
-     colour source, so every court role must SHIP AN EXISTING HEX and say so. */
+  /* THE COURT'S N9-ERA ROLES INTRODUCE NO NEW COLOUR VALUE. N9 is over-exposed
+     and is not a colour source, so every role that rests on it must SHIP AN
+     EXISTING HEX and say so. (courtPaving left this list through superseded[]:
+     its premise — no frame shows the court floor — is retired by the 2019
+     video, and the garden's roles below are video-sourced with pinned rects.) */
   const courtRoles = ["cmuWhite", "gallerySoffit", "guardWhite", "beamWhite", "screenWhite",
-    "sconceWhite", "doorBronze", "plaqueTan", "courtPaving", "baseWall"];
+    "sconceWhite", "doorBronze", "plaqueTan", "baseWall"];
   for (const role of courtRoles) {
     const hex = section.colors[role];
     assert.ok(hex, `the court needs a ${role}`);
@@ -950,6 +1022,57 @@ test("colours are data, hex, the repaint whites, and every role carries a tier",
   for (const [k, v] of psphere) assert.match(v, /NOT CACHED/i, `${k} cites the photosphere without the caveat`);
   /* No hex literal may live in the module. */
   assert.equal(moduleSrc.match(/#[0-9a-fA-F]{6}\b/g), null, "a colour literal leaked into the builder");
+
+  /* R4b: the roles retired with their premises stay gone. */
+  for (const dead of ["courtPaving", "coreStain"]) {
+    assert.equal(section.colors[dead], undefined, `colors.${dead} is back — it left through superseded[]`);
+    assert.equal(section.colorSources[dead], undefined, `colorSources.${dead} is back`);
+  }
+
+  /* R4b: the video colour reads carry their pinned rects and their honesty. */
+  for (const role of ["pathConcrete", "deckTimber", "mulchRock", "plantGreen", "ledgeStone",
+    "planterTeal", "sofaSage", "chairLime", "chairWhite", "loungeTimber", "doorYellow", "plaqueOrange"]) {
+    const src = section.colorSources[role];
+    assert.match(src, /^\[sourced\]/, `${role} is a video read and is [sourced] at best`);
+    assert.match(src, /channel-mean/, `${role} must state the (R+G+B)/3 method, never 'luminance'`);
+    assert.match(src, /\(\d+,\d+,\d+,\d+\)/, `${role} must pin its sample rect`);
+    assert.match(src, /f0\d\d\.jpg/, `${role} must name its frame`);
+    assert.match(src, /2019/, `${role} must date its source`);
+    assert.equal(/luminance/i.test(src), false, `${role} says 'luminance' — the R4 addendum bans the word`);
+  }
+  assert.match(section.colorSources.doorBronze, /EPOCH DRIFT NOTED/,
+    "the 2019/2024 door-grey drift must be recorded on the doorBronze line, not repainted");
+
+  /* R4b audit F1: colour was the one figure class with no ships-vs-derives
+     gate — a hex could drift while its provenance line kept stating the old
+     value. Every colorSources line that states its result as `= #xxxxxx`
+     must ship exactly that hex. */
+  let statedHexes = 0;
+  for (const [role, src] of Object.entries(section.colorSources)) {
+    const stated = /= (#[0-9a-f]{6})\b/.exec(src);
+    if (!stated) continue;
+    statedHexes += 1;
+    assert.equal(section.colors[role], stated[1],
+      `${role} ships ${section.colors[role]} but its own provenance line derives ${stated[1]}`);
+  }
+  assert.ok(statedHexes >= 12, `only ${statedHexes} provenance lines state their hex — the video reads must`);
+
+  /* R4b bidirectional role gate (R4 addendum lesson): every declared role is
+     either referenced by the module or named as a parent by another role's
+     provenance line — with one visible, reasoned exception. */
+  const PARENT_ONLY = {
+    precastAmbient: "a sourced photosphere sample kept on the record; nothing draws it since the court floor's premise retirement (it was courtPaving's parent) — see superseded[]",
+  };
+  const named = new Set();
+  for (const v of Object.values(section.colorSources)) {
+    for (const m of v.matchAll(/colors\.(\w+)/g)) named.add(m[1]);
+  }
+  for (const role of Object.keys(section.colors)) {
+    assert.ok(
+      moduleSrc.includes(`colors.${role}`) || named.has(role) || PARENT_ONLY[role],
+      `colors.${role} is declared and nothing references it — a role nobody draws is a claim nobody checks`,
+    );
+  }
 });
 
 test("the module carries no dimension of its own — geometry is data", () => {
@@ -1104,9 +1227,33 @@ test("the module builds every system, and the counts are the declared ones", () 
   /* BASELINE CHANGE (R2 A1): a deck is the soffit of the gallery BELOW it, so
      five galleries need six deck-and-beam pairs per face, not five. */
   assert.equal(counts.galleryDecks, section.court.faces.length * (G.finStoreys + 1));
-  const pickets = section.court.faces
-    .reduce((s, f) => s + Math.floor(f.length / section.court.guard.picketPitch), 0) * G.finStoreys;
-  assert.equal(counts.pickets, pickets, "the guard's picket count is not the code pitch over the surveyed runs");
+  /* R4b: the guard is a corner-wrapped circuit, so the picket and post counts
+     derive from the INDEPENDENT circuit mirror, not from raw face lengths. */
+  const circ = guardCircuit();
+  const ps = section.court.guard.postSection;
+  const pitch = section.court.guard.picketPitch;
+  let pickets = 0;
+  let posts = circ.corners.length;
+  for (const r of circ.runs) {
+    posts += r.panels - 1;
+    for (let j = 0; j < r.panels; j++) {
+      pickets += Math.floor((r.run / r.panels - ps) / pitch);
+    }
+  }
+  assert.equal(counts.pickets, pickets * G.finStoreys,
+    "the guard's picket count is not the code pitch over the circuit's panels");
+  assert.equal(counts.guardPosts, posts * G.finStoreys,
+    "the post count is not the video pitch over the circuit — 8 shared corner posts plus the intermediates");
+  assert.equal(counts.guardRails, section.court.faces.length * 3 * G.finStoreys,
+    "three rails per face per level — top, sub-top panel, low; NO mid rail");
+  assert.equal(counts.courtOpenings,
+    section.court.faces.filter((f) => f.kind === "wall").length * section.court.opening.perWall * G.finStoreys,
+    "four glazed openings per long wall per gallery level — the video's own minimum count");
+  assert.equal(counts.levelPlaques, G.finStoreys, "one orange lounge plaque per gallery level");
+  assert.equal(counts.stairDoors, 1, "the one sourced yellow stair door");
+  assert.equal(counts.lanterns, 1, "ONE marine lantern is sourced; the rhythm is withheld");
+  assert.equal(counts.courtFloorCells, counts.gardenPathCells + counts.gardenBedCells,
+    "the floor cells are the garden's path and bed cells, nothing more");
   assert.equal(counts.columns, section.system.colonnade.spans + 1,
     "the ONE sourced colonnade opening carries the only columns on this building");
   assert.ok(counts.courtFloorCells > 100, "the court floor did not get laid");
@@ -1126,6 +1273,17 @@ test("the module builds every system, and the counts are the declared ones", () 
   assert.equal(stale.group.children.length, 0, "a pre-merge section drew geometry off a shape it does not have");
   assert.match(stale.counts.pendingMerge, /court/,
     "the guard must name what it is waiting for, so the merge cannot half-land unnoticed");
+  /* R4b: the SHIPPED section (pre-R4b-merge) must also build nothing — the
+     module now draws the video-grounded court, and drawing the retired guard
+     off the old keys (or crashing on the missing garden) is exactly the
+     half-landed merge the guard exists to refuse. */
+  if (!shipped.court?.garden) {
+    const preR4b = createPhotoArgo(null, { photo: { argo: shipped }, heightAt: flat, surfaceAt: flat });
+    assert.equal(preR4b.group.children.length, 0,
+      "the shipped pre-R4b section drew geometry — the merge could half-land unnoticed");
+    assert.match(preR4b.counts.pendingMerge, /court\.garden/,
+      "the guard must name the R4b keys it is waiting for");
+  }
   assert.throws(() => createPhotoArgo(null, { photo: { argo: section } }), /surfaceAt/,
     "a missing sampler must not be silent");
 });
@@ -1217,7 +1375,7 @@ test("nothing hovers and nothing sinks — flat, an exaggerated slope, and the D
     const lift = overlayLift(section.court.floor.rung);
     let cells = 0;
     each(group.children.find((c) => c.name === "argo-court"), (x, y, z, sy, o) => {
-      if (o.name === "court-floor") {
+      if (/^court-floor/.test(o.name || "")) {
         /* Instance matrices are Float32, so the tolerance is the format's,
            not the geometry's. */
         near(y, ground(x, z) + lift, 2e-4,
@@ -1286,7 +1444,7 @@ test("nothing built crosses a surveyed facade", () => {
   const proj = section.court.projection ?? section.court.gallery.projection;
   let deepest = 0;
   each(group.children.find((c) => c.name === "argo-court"), (x, y, z, sy, o) => {
-    if (o.name === "court-floor") return;
+    if (/^court-floor/.test(o.name || "")) return;
     /* Distance from the court hole, positive when outside it. */
     if (inRing(x, z, ring1)) return;
     let d = Infinity;
@@ -1511,5 +1669,269 @@ test("R2-VIS: the roof deck is withheld because it is inside the mass, with its 
     roof.traverse((o) => { if ((o.isMesh || o.isInstancedMesh) && (o.count ?? 1) > 0) names.push(o.name); });
     assert.deepEqual(names, ["roof-coping"],
       `the roof draws ${names.join(", ")} — only the coping band belongs at the coping plane`);
+  }
+});
+
+/* --------------------------------------------------- R4b: the 2019 video */
+
+/** All placements of one named instanced mesh in the court, decomposed. */
+function courtItems(group, name) {
+  const court = group.children.find((c) => c.name === "argo-court");
+  let mesh = null;
+  court.traverse((o) => { if (o.name === name) mesh = o; });
+  if (!mesh) return null;
+  const out = [];
+  if (mesh.isInstancedMesh) {
+    const m = new THREE.Matrix4();
+    const p = new THREE.Vector3();
+    const q = new THREE.Quaternion();
+    const s = new THREE.Vector3();
+    const e = new THREE.Euler();
+    for (let i = 0; i < mesh.count; i++) {
+      mesh.getMatrixAt(i, m);
+      m.decompose(p, q, s);
+      e.setFromQuaternion(q, "YXZ");
+      out.push({ x: p.x, y: p.y, z: p.z, rot: e.y, sx: s.x, sy: s.y, sz: s.z, mesh });
+    }
+  } else {
+    out.push({ x: mesh.position.x, y: mesh.position.y, z: mesh.position.z, rot: 0,
+      sx: mesh.scale.x, sy: mesh.scale.y, sz: mesh.scale.z, mesh });
+  }
+  return out;
+}
+
+/* 2D segment-segment minimum distance. */
+function segDist(a0, a1, b0, b1) {
+  const d = (p, q0, q1) => {
+    const dx = q1[0] - q0[0], dz = q1[1] - q0[1];
+    const l2 = dx * dx + dz * dz;
+    let t = l2 ? ((p[0] - q0[0]) * dx + (p[1] - q0[1]) * dz) / l2 : 0;
+    t = Math.max(0, Math.min(1, t));
+    return Math.hypot(p[0] - (q0[0] + dx * t), p[1] - (q0[1] + dz * t));
+  };
+  const cross = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const s1 = cross(a0, a1, b0), s2 = cross(a0, a1, b1);
+  const s3 = cross(b0, b1, a0), s4 = cross(b0, b1, a1);
+  if (((s1 > 0) !== (s2 > 0)) && ((s3 > 0) !== (s4 > 0))) return 0; // proper crossing
+  return Math.min(d(b0, a0, a1), d(b1, a0, a1), d(a0, b0, b1), d(a1, b0, b1));
+}
+
+/* The rail-crossing rule as a pure checker: two coplanar rail segments may
+   come within a rail section of each other ONLY inside a shared post. */
+function railViolations(rails, posts, railSection, postSection) {
+  const out = [];
+  for (let i = 0; i < rails.length; i++) {
+    for (let j = i + 1; j < rails.length; j++) {
+      const A = rails[i], B = rails[j];
+      if (Math.abs(A.y - B.y) > railSection) continue;
+      const dmin = segDist(A.a, A.b, B.a, B.b);
+      if (dmin >= railSection) continue;
+      /* The touch must sit inside a shared post's footprint. */
+      const nearPost = posts.some((p) =>
+        [A.a, A.b, B.a, B.b].some(([x, z]) => Math.hypot(x - p.x, z - p.z) <= postSection));
+      if (!nearPost) out.push([A, B, dmin]);
+    }
+  }
+  return out;
+}
+
+const railEnds = (it) => {
+  const vx = Math.cos(it.rot), vz = -Math.sin(it.rot);
+  return {
+    y: it.y,
+    a: [it.x - (vx * it.sx) / 2, it.z - (vz * it.sx) / 2],
+    b: [it.x + (vx * it.sx) / 2, it.z + (vz * it.sx) / 2],
+  };
+};
+
+test("R4b: no two rail segments intersect except at a shared post — the X-crossing is dead", () => {
+  const { group } = build();
+  group.updateMatrixWorld(true);
+  const rails = courtItems(group, "court-rails").map(railEnds);
+  const posts = courtItems(group, "court-guard-posts-sourced");
+  assert.ok(rails.length >= 120 && posts.length >= 100, "the circuit did not build");
+  const bad = railViolations(rails, posts, section.court.guard.railSection, section.court.guard.postSection);
+  assert.deepEqual(bad.map(([A, B, d]) => `y=${A.y.toFixed(2)} d=${d.toFixed(3)}`), [],
+    "two rail segments meet outside a shared post — the X-crossing is back");
+
+  /* THE MUTATION: the R1 layout — full-length rail boxes per wall at the
+     guard line — must FAIL this same checker, or the gate proves nothing. */
+  const C = section.court;
+  const w = C.gallery.projection - C.gallery.beamThickness - C.guard.railSection / 2;
+  const old = C.faces.map((f) => {
+    const nl = Math.hypot(f.out[0], f.out[1]);
+    const ox = (f.out[0] / nl) * w, oz = (f.out[1] / nl) * w;
+    return { y: 1, a: [f.a[0] + ox, f.a[1] + oz], b: [f.b[0] + ox, f.b[1] + oz] };
+  });
+  assert.ok(railViolations(old, [], C.guard.railSection, C.guard.postSection).length > 0,
+    "the checker passes the R1 full-length-per-wall layout — it would not have caught the reported defect");
+  /* And posts are not a magic eraser: the old layout must fail even with the
+     BUILT posts present, because its overshoots cross far from any post. */
+  assert.ok(railViolations(old, posts, C.guard.railSection, C.guard.postSection).length > 0,
+    "the built posts absolve the old crossing layout — the post allowance is too wide");
+});
+
+test("R4b: the masonry tiles at the real block module, running bond on the core only", () => {
+  const { group } = build();
+  const court = group.children.find((c) => c.name === "argo-court");
+  const D = section.draw;
+  const C = section.court;
+  const F = section.grid.floorToFloor;
+  const bond = [];
+  const score = [];
+  const base = [];
+  court.traverse((o) => {
+    if (/^court-cmu-bond/.test(o.name || "")) bond.push(o);
+    if (/^court-cmu-score/.test(o.name || "")) score.push(o);
+    if (/^court-base/.test(o.name || "")) base.push(o);
+  });
+  const coreLens = [...new Set(C.faces.filter((f) => f.kind === "core").map((f) => f.length))];
+  const wallLens = [...new Set(C.faces.filter((f) => f.kind !== "core").map((f) => f.length))];
+  assert.equal(bond.length, coreLens.length, "one running-bond mesh per distinct core face length");
+  assert.equal(score.length, wallLens.length, "one scored mesh per distinct perimeter face length");
+  assert.ok(base.length >= 1, "the court base did not build");
+
+  /* TEXTURE SCALE TO DERIVATION: one drawn block is one 0.4064 x 0.2032 m
+     block, recomputed from the mesh's own repeat and the survey lengths. */
+  for (const m of bond) {
+    const r = m.material.map.repeat;
+    const L = coreLens.find((l) => Math.abs(r.x - l / (D.tiles.cmuUnitsPerTile * C.cmu.length)) < 1e-6);
+    assert.ok(L !== undefined, `bond repeat.x ${r.x} matches no core face at the derived block module`);
+    near(L / r.x / D.tiles.cmuUnitsPerTile, C.cmu.length, 1e-6, "drawn block length is not 0.4064 m");
+    near(F / r.y / D.tiles.cmuCourses, C.cmu.course, 1e-6, "drawn course is not 0.2032 m");
+    /* The R1 oversizing — dividing the horizontal repeat by the COURSE count —
+       must no longer match anything. */
+    assert.ok(!coreLens.some((l) => Math.abs(r.x - l / (D.tiles.cmuCourses * C.cmu.length)) < 1e-6),
+      "a bond mesh still tiles at the retired oversized formula — one block per 0.8128 m");
+  }
+  for (const m of score) {
+    const r = m.material.map.repeat;
+    const L = wallLens.find((l) => Math.abs(r.x - l / (D.tiles.grooveCourses * C.cmu.course)) < 1e-6);
+    assert.ok(L !== undefined, `score repeat.x ${r.x} matches no perimeter face at one course per board`);
+    near(F / r.y / D.tiles.grooveCourses, C.cmu.course, 1e-6, "drawn score course is not 0.2032 m");
+  }
+  for (const m of base) {
+    near(section.grid.groundStorey / m.material.map.repeat.y / D.tiles.grooveCourses, C.cmu.course, 1e-6,
+      "the court ground storey's score is not at the 0.2032 m course");
+  }
+  /* And the perimeter is NOT running bond: the scored meshes carry the
+     boardFormedConcrete relief, distinct texture from the bond class. */
+  assert.notEqual(score[0].material.map, bond[0].material.map,
+    "perimeter and core share one texture — the bed-joints-only read is lost");
+});
+
+test("R4b: the court garden is zoned, seated, and inside the survey hole", () => {
+  const sloped = (x, z) => 20 + 1.2 * Math.sin(x / 14) + 0.9 * Math.cos(z / 17);
+  const GA = section.court.garden;
+  const DK = GA.deck;
+  for (const [label, ground] of [["flat", flat], ["slope", sloped], ["drawn", drawnGround]]) {
+    const { group, counts } = build(ground);
+    group.updateMatrixWorld(true);
+
+    /* The deck: inside ring 1, clear of the measured tree read, riding the
+       highest drawn ground under it. */
+    for (const x of [DK.x0, DK.x1]) for (const z of [DK.z0, DK.z1]) {
+      assert.ok(inRing(x, z, ring1), `deck corner (${x}, ${z}) is outside the court`);
+    }
+    const T = section.court.tree;
+    assert.ok(!(T.x >= DK.x0 && T.x <= DK.x1 && T.z >= DK.z0 && T.z <= DK.z1),
+      "the declared deck swallows the measured courtyard tree read");
+    const [deck] = courtItems(group, "court-garden-deck-estimated");
+    const gCorners = [ground(DK.x0, DK.z0), ground(DK.x1, DK.z0), ground(DK.x0, DK.z1),
+      ground(DK.x1, DK.z1), ground((DK.x0 + DK.x1) / 2, (DK.z0 + DK.z1) / 2)];
+    near(deck.y + deck.sy / 2, Math.max(...gCorners) + GA.deckHeight, 2e-4,
+      `${label}: the deck top does not ride the highest drawn ground plus the declared step`);
+    assert.ok(deck.y - deck.sy / 2 <= Math.min(...gCorners),
+      `${label}: the deck skirt hovers over the lowest ground under it`);
+
+    /* Path cells hug the walls at the declared width; bed cells do not. */
+    const faceDist = (x, z) => {
+      let d = Infinity;
+      for (const f of section.court.faces) {
+        const dx = f.b[0] - f.a[0], dz = f.b[1] - f.a[1];
+        const l2 = dx * dx + dz * dz;
+        let t = l2 ? ((x - f.a[0]) * dx + (z - f.a[1]) * dz) / l2 : 0;
+        t = Math.max(0, Math.min(1, t));
+        d = Math.min(d, Math.hypot(x - (f.a[0] + dx * t), z - (f.a[1] + dz * t)));
+      }
+      return d;
+    };
+    const paths = courtItems(group, "court-floor-path-sourced");
+    const beds = courtItems(group, "court-floor-bed-sourced");
+    assert.equal(paths.length, counts.gardenPathCells);
+    assert.equal(beds.length, counts.gardenBedCells);
+    for (const c of paths) {
+      assert.ok(faceDist(c.x, c.z) < GA.pathWidth, `${label}: a path cell strays off the perimeter`);
+    }
+    for (const c of beds) {
+      assert.ok(faceDist(c.x, c.z) >= GA.pathWidth, `${label}: a bed cell sits in the path zone`);
+      assert.ok(!(c.x >= DK.x0 && c.x <= DK.x1 && c.z >= DK.z0 && c.z <= DK.z1),
+        `${label}: a bed cell hides under the deck`);
+    }
+
+    /* Cubes, ledges and every furniture item: inside ring 1, seated on the
+       drawn surface (or on the deck top when they stand on it). */
+    const seatChecked = [];
+    for (const name of ["court-garden-cubes-sourced", "court-garden-ledges-sourced",
+      "court-garden-sofa-estimated", "court-garden-chairLime-estimated",
+      "court-garden-chairWhite-estimated", "court-garden-table-estimated",
+      "court-garden-lounge-estimated"]) {
+      const items = courtItems(group, name);
+      assert.ok(items && items.length, `${label}: ${name} did not build`);
+      for (const it of items) {
+        assert.ok(inRing(it.x, it.z, ring1), `${label}: ${name} at (${it.x}, ${it.z}) left the court`);
+        const onDeck = it.x >= DK.x0 && it.x <= DK.x1 && it.z >= DK.z0 && it.z <= DK.z1;
+        const seat = onDeck ? deck.y + deck.sy / 2 : ground(it.x, it.z);
+        near(it.y - it.sy / 2, seat, 2e-4, `${label}: ${name} at (${it.x.toFixed(1)}, ${it.z.toFixed(1)}) does not seat`);
+        seatChecked.push(name);
+      }
+    }
+    assert.ok(seatChecked.length >= counts.gardenCubes + counts.gardenLedges + counts.gardenFurniture,
+      `${label}: the garden seat walk did not cover the declared set`);
+  }
+});
+
+test("R4b: lantern, level plaques, stair door and glass ship where the video puts them", () => {
+  const { group, counts } = build();
+  group.updateMatrixWorld(true);
+  const C = section.court;
+
+  /* The lantern hangs below the L2 beam at the corner its faces name. */
+  const [lantern] = courtItems(group, "court-lantern-sourced");
+  const [fa, fb] = C.lantern.corner.split("/");
+  const A = C.faces.find((f) => f.id === fa);
+  const B = C.faces.find((f) => f.id === fb);
+  const w = C.gallery.projection - C.gallery.beamThickness / 2;
+  near(lantern.x, A.a[0] + A.out[0] * w + B.out[0] * w, 2e-4, "lantern x");
+  near(lantern.z, A.a[1] + A.out[1] * w + B.out[1] * w, 2e-4, "lantern z");
+  const roofY = roofElevation(section.measured.mass.ring, section.measured.mass.h, flat);
+  const firstFloor = roofY - section.measured.mass.h + section.grid.groundStorey;
+  near(lantern.y + lantern.sy / 2, firstFloor - C.gallery.beamDepth, 2e-4,
+    "the lantern does not hang from the underside of the L2 fascia beam");
+  assert.ok(inRing(lantern.x, lantern.z, ring1), "the lantern hangs outside the court");
+
+  /* One plaque per level on the named wall; the sourced yellow door on its
+     declared wall at ground level. */
+  const plaques = courtItems(group, "court-level-plaques-sourced");
+  assert.equal(plaques.length, section.grid.finStoreys);
+  const ys = plaques.map((p) => p.y).sort((a, b) => a - b);
+  for (let i = 1; i < ys.length; i++) {
+    near(ys[i] - ys[i - 1], section.grid.floorToFloor, 2e-4, "plaques are not one per gallery level");
+  }
+  const [door] = courtItems(group, "court-stair-door-estimated");
+  assert.ok(door, "the yellow stair door did not build");
+  near(door.y, flat(door.x, door.z) + C.door.height / 2, 2e-4, "the stair door does not stand on the court ground");
+  assert.equal(counts.courtOpenings, courtItems(group, "court-glass-sourced").length,
+    "the glazed openings are not the declared count");
+
+  /* Provenance-in-scene: every R4b mesh says its tier in its name. */
+  const court = group.children.find((c) => c.name === "argo-court");
+  const names = [];
+  court.traverse((o) => { if (o.name) names.push(o.name); });
+  for (const must of ["court-guard-posts-sourced", "court-glass-sourced", "court-level-plaques-sourced",
+    "court-stair-door-estimated", "court-lantern-sourced", "court-garden-deck-estimated",
+    "court-garden-cubes-sourced", "court-garden-ledges-sourced", "court-garden-planting-estimated",
+    "court-floor-path-sourced", "court-floor-bed-sourced"]) {
+    assert.ok(names.includes(must), `no ${must} in the scene — the tier must be readable off a render`);
   }
 });

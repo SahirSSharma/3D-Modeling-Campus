@@ -50,7 +50,17 @@ import { sharedMaterialLibrary } from "./campus-materials.js";
 const lib = () => sharedMaterialLibrary(THREE);
 
 const concrete = (color) => lib().get("smoothConcrete", { color });
-const masonry = (color, repeat) => lib().get("brick", { color, repeat });
+/* TWO masonry reads coexist in the court and the 2019 video separates them
+   (research-argo-video.md §3): true running bond — head AND bed joints — on
+   the core faces (f006, f022), and a bed-joints-only horizontal score on the
+   court perimeter walls (f012–f020; tour 2024 f092). The bond class is the
+   library's brick field; the score is the boardFormedConcrete field driven at
+   one CMU course per board. Both take their normal relief from
+   draw.cmuNormalScale, because f022 reads the joints as thin, slightly
+   recessed and LOW-CONTRAST — a fine grid, not bold brick. */
+const masonry = (color, repeat, normalScale) => lib().get("brick", { color, repeat, normalScale });
+const scored = (color, repeat, normalScale) =>
+  lib().get("boardFormedConcrete", { color, repeat, normalScale });
 const painted = (color) => lib().get("metalPanel", { color, metalness: 0.35, roughness: 0.55 });
 const wood = (color, repeat) => lib().get("woodSlat", { color, repeat });
 const glassMat = (color) => lib().get("glass", { color });
@@ -345,15 +355,31 @@ function collectCourtFace(ctx, f, frame, bins) {
   const firstFloor = baseY + G.groundStorey;
   const proj = C.gallery.projection;
   const guardW = proj - C.gallery.beamThickness - C.guard.railSection / 2;
-  /* campus-materials' brick class tiles cmuCourses courses by four units, so
-     one texture tile covers cmuCourses courses each way — the York
-     convention. The repeat is per-face because the faces differ in length,
-     and instances of one mesh share one material, so faces are binned by it. */
-  const cmuRepeat = [
-    length / (D.tiles.cmuCourses * C.cmu.length),
-    F / (D.tiles.cmuCourses * C.cmu.course),
+  /* THE TEXTURE SCALE IS THE DERIVATION, NOT A LOOK. The library's brick tile
+     is 8 courses tall by 4 units wide (its own COURSES and PER constants), so
+     one drawn block is 0.4064 x 0.2032 m exactly when the repeat divides by
+     tiles.cmuUnitsPerTile horizontally and tiles.cmuCourses vertically. The
+     R1 build divided BOTH axes by cmuCourses, which drew every block 0.8128 m
+     long — twice the measured module — and is the oversized wash the video
+     research flagged (f022). The scored class is one course per board on both
+     axes. The repeat is per-face because the faces differ in length, and
+     instances of one mesh share one material, so faces are binned by it. */
+  const isBond = f.kind === "core";
+  const cmuRepeat = isBond
+    ? [
+        length / (D.tiles.cmuUnitsPerTile * C.cmu.length),
+        F / (D.tiles.cmuCourses * C.cmu.course),
+      ]
+    : [
+        length / (D.tiles.grooveCourses * C.cmu.course),
+        F / (D.tiles.grooveCourses * C.cmu.course),
+      ];
+  /* The court's ground-storey walls read bed joints ONLY in every 2019 frame
+     that shows them (f001, f012–f020), so the base is scored on every face. */
+  const baseRepeat = [
+    length / (D.tiles.grooveCourses * C.cmu.course),
+    G.groundStorey / (D.tiles.grooveCourses * C.cmu.course),
   ];
-  const baseRepeat = [cmuRepeat[0], G.groundStorey / (D.tiles.cmuCourses * C.cmu.course)];
 
   /* The ground storey of the court: the same closed base condition as
      outside, clad in the court's own masonry and skirted to the court floor. */
@@ -364,6 +390,20 @@ function collectCourtFace(ctx, f, frame, bins) {
     scale: [length, firstFloor - bottom, D.bandThickness],
     repeat: baseRepeat,
   });
+
+  /* The bright yellow stair door on the court's ground storey [sourced,
+     video 2019 f001–f004; its WALL is estimated — the frame cannot be
+     oriented, so the position ships declared-approximate in court.stairDoor]. */
+  const SD = C.stairDoor;
+  if (SD && SD.face === f.id) {
+    const p = frame.at(SD.u, 0, 0);
+    const g = ground(p.x, p.z);
+    bins.stairDoor.push({
+      ...frame.at(SD.u, D.wallOffset + D.glassOffset, g + C.door.height / 2),
+      rot,
+      scale: [C.door.width, C.door.height, D.bandThickness],
+    });
+  }
 
   /* THE DECK AT INDEX s IS ALSO THE SOFFIT OF THE GALLERY BELOW, so five
      galleries need SIX deck-and-beam pairs: the pass at s = finStoreys is the
@@ -398,22 +438,51 @@ function collectCourtFace(ctx, f, frame, bins) {
       rot,
       scale: [length, F, D.bandThickness],
       repeat: cmuRepeat,
+      bond: isBond,
     });
 
-    /* The white-painted vertical picket guard, every dimension a code clause. */
-    const n = Math.floor(length / C.guard.picketPitch);
-    for (let i = 0; i < n; i++) {
-      bins.pickets.push({
-        ...frame.at(((i + 0.5) * length) / n, guardW, deckTop + C.guard.height / 2),
-        rot,
-        scale: [C.guard.picketDia, C.guard.height, C.guard.picketDia],
-      });
+    /* The guard is NOT built here. The 2019 video shows it as a continuous
+       circuit wrapping the court's corners through shared corner posts
+       (f002, f006), and the R1 per-wall full-length rail boxes crossed in an
+       X at every corner — OUR defect, not reality's. buildGuardCircuit lays
+       the whole loop once per level. */
+
+    /* Regular glazed openings along every gallery level [sourced, video 2019
+       f002/f003, corroborated by the 2024 tour f090–f092]: the court walls
+       are NOT mostly blank. Four openings per long wall per level is the
+       video's own minimum count; the two middle ones are the sliding glass
+       doors the frames show, the outer two are windows. */
+    if (f.kind === "wall") {
+      const O = C.opening;
+      for (let k = 0; k < O.perWall; k++) {
+        const u = ((k + 0.5) * length) / O.perWall;
+        const slider = k > 0 && k < O.perWall - 1;
+        if (slider) {
+          bins.courtGlass.push({
+            ...frame.at(u, D.wallOffset + D.glassOffset, deckTop + C.door.height / 2),
+            rot,
+            scale: [O.sliderWidth - D.glassInset, C.door.height - D.glassInsetV, 1],
+          });
+        } else {
+          bins.courtGlass.push({
+            ...frame.at(u, D.wallOffset + D.glassOffset, deckTop + O.sill + O.windowHeight / 2),
+            rot,
+            scale: [O.windowWidth, O.windowHeight, 1],
+          });
+        }
+      }
     }
-    for (const h of [C.guard.height - C.guard.railSection / 2, C.guard.railMidHeight, C.guard.railLowHeight]) {
-      bins.rails.push({
-        ...frame.at(length / 2, guardW, deckTop + h),
+
+    /* The orange per-level lounge plaque near the wall's end [sourced, video
+       2019 f001–f003 '2 · Terra' at L2; the directory (f053–f054) confirms
+       Terra L2, Oceania L3 and a further L4 lounge; L5–L6 extend the same
+       per-level pattern, estimated. Text recorded, never rendered]. */
+    const LP = C.levelPlaque;
+    if (LP && LP.face === f.id) {
+      bins.levelPlaques.push({
+        ...frame.at(length - LP.uFromEnd, D.wallOffset + D.glassOffset, deckTop + C.plaque.height),
         rot,
-        scale: [length, C.guard.railSection, C.guard.railSection],
+        scale: [LP.w, LP.h, D.jointDepth],
       });
     }
 
@@ -476,12 +545,143 @@ function collectCourtFace(ctx, f, frame, bins) {
   });
 }
 
+/* -------------------------------------------------------- the guard circuit */
+
+/**
+ * The corner points of the guard line: each face's rail line is the face
+ * offset `w` into the court along its own normal, and the corner between two
+ * adjacent faces is the INTERSECTION of their two offset lines. That single
+ * construction is what kills the R1 X-crossing: a full-length rail box per
+ * wall overshoots this point and crosses the neighbouring wall's run, which
+ * is exactly what f002 and f006 of the 2019 video show reality NOT doing —
+ * the guard wraps every corner as a continuous circuit through a shared
+ * corner post.
+ */
+function guardCorners(faces, w) {
+  const line = (f) => {
+    const nl = Math.hypot(f.out[0], f.out[1]);
+    const nx = f.out[0] / nl;
+    const nz = f.out[1] / nl;
+    const dl = Math.hypot(f.b[0] - f.a[0], f.b[1] - f.a[1]);
+    return {
+      px: f.a[0] + nx * w,
+      pz: f.a[1] + nz * w,
+      dx: (f.b[0] - f.a[0]) / dl,
+      dz: (f.b[1] - f.a[1]) / dl,
+    };
+  };
+  const n = faces.length;
+  const corners = [];
+  for (let i = 0; i < n; i++) {
+    const A = line(faces[(i + n - 1) % n]);
+    const B = line(faces[i]);
+    const det = A.dx * B.dz - A.dz * B.dx;
+    if (Math.abs(det) < 1e-9) {
+      /* Collinear neighbours: the offset lines coincide; the corner is the
+         shared vertex pushed in along the shared normal. */
+      corners.push([B.px, B.pz]);
+      continue;
+    }
+    const t = ((B.px - A.px) * B.dz - (B.pz - A.pz) * B.dx) / det;
+    corners.push([A.px + A.dx * t, A.pz + A.dz * t]);
+  }
+  return corners;
+}
+
+/* The guard as reality has it [sourced, video 2019 f001–f008; tour 2024
+   f090–f096]: one continuous circuit per gallery level, wrapping the court's
+   eight corners through shared square corner posts; square posts at the
+   video-derived pitch framing picket panels; and a rail layout of top rail +
+   sub-top panel rail + LOW bottom rail — there is NO rail at mid height in
+   any frame, and the shipped railMidHeight is retired on that evidence. No
+   two rail segments meet anywhere except inside a shared post, and the test
+   holds that as a geometric gate. */
+function buildGuardCircuit(ctx, bins) {
+  const { G, C, baseY } = ctx;
+  const F = G.floorToFloor;
+  const firstFloor = baseY + G.groundStorey;
+  const guardW = C.gallery.projection - C.gallery.beamThickness - C.guard.railSection / 2;
+  const ps = C.guard.postSection;
+  const corners = guardCorners(ctx.section.court.faces, guardW);
+  const n = corners.length;
+
+  for (let s = 0; s < G.finStoreys; s++) {
+    const deckTop = firstFloor + s * F;
+    const topY = deckTop + C.guard.height - C.guard.railSection / 2;
+    const panelY = deckTop + C.guard.height - C.guard.panelDrop;
+    const lowY = deckTop + C.guard.railLowHeight;
+    const picketH = C.guard.height - C.guard.panelDrop - C.guard.railLowHeight;
+    const picketY = deckTop + C.guard.railLowHeight + picketH / 2;
+
+    for (let i = 0; i < n; i++) {
+      const [ax, az] = corners[i];
+      const [bx, bz] = corners[(i + 1) % n];
+      const run = Math.hypot(bx - ax, bz - az);
+      const vx = (bx - ax) / run;
+      const vz = (bz - az) / run;
+      const rot = Math.atan2(-vz, vx);
+
+      /* Corner post, shared by this face and the last one. */
+      bins.guardPosts.push({
+        x: ax, y: deckTop + C.guard.height / 2, z: az,
+        rot, scale: [ps, C.guard.height, ps],
+      });
+
+      /* Intermediate posts at the video's ~0.605 F pitch, framing panels. */
+      const panels = Math.max(1, Math.round(run / C.guard.postPitch));
+      for (let j = 1; j < panels; j++) {
+        const u = (j * run) / panels;
+        bins.guardPosts.push({
+          x: ax + vx * u, y: deckTop + C.guard.height / 2, z: az + vz * u,
+          rot, scale: [ps, C.guard.height, ps],
+        });
+      }
+
+      /* Three rails per face, stopped at the corner posts' faces so the only
+         place two runs ever meet is inside a shared post. */
+      for (const y of [topY, panelY, lowY]) {
+        bins.rails.push({
+          x: (ax + bx) / 2, y, z: (az + bz) / 2,
+          rot, scale: [run - ps, C.guard.railSection, C.guard.railSection],
+        });
+      }
+
+      /* Pickets fill each panel between the low rail and the panel rail. */
+      for (let j = 0; j < panels; j++) {
+        const p0 = (j * run) / panels + ps / 2;
+        const p1 = ((j + 1) * run) / panels - ps / 2;
+        const clear = p1 - p0;
+        const nPk = Math.floor(clear / C.guard.picketPitch);
+        for (let k = 0; k < nPk; k++) {
+          const u = p0 + (clear - nPk * C.guard.picketPitch) / 2 + (k + 0.5) * C.guard.picketPitch;
+          bins.pickets.push({
+            x: ax + vx * u, y: picketY, z: az + vz * u,
+            rot, scale: [C.guard.picketDia, picketH, C.guard.picketDia],
+          });
+        }
+      }
+    }
+  }
+  return corners;
+}
+
 /* The court floor, which the shipped section did not have at all: laid over
    ring 1 on the campus-overlay 'pad' rung above the DRAWN surface, in cells
    on the building's own bay module so it follows rolling ground instead of
    hovering over it at one datum. */
-function buildCourtFloor(ctx, group) {
+/* The 2019 video RETIRES the premise that no frame shows the court floor
+   (f001–f020): the floor is a landscaped garden — concrete perimeter paths,
+   a central timber deck platform carrying the movable furniture, planted
+   beds under rock mulch with tree-fern and rosette planting, grey
+   ledgestone-faced planter walls and teal perforated-steel planter cubes.
+   Existence and character are [sourced, video 2019]; PLAN positions are not
+   derivable from any frame (no orthogonal view, and the furniture is
+   movable), so every extent here is declared-approximate under
+   court.garden and flagged in absent[]. Cells still seat one by one on the
+   drawn surface so the garden follows rolling ground. */
+function buildCourtGarden(ctx, group) {
   const { section, C, D, ground, colors } = ctx;
+  const GA = C.garden;
   const hole = section.measured.mass.hole;
   const xs = hole.map((p) => p[0]);
   const zs = hole.map((p) => p[1]);
@@ -491,26 +691,123 @@ function buildCourtFloor(ctx, group) {
   const nx = Math.ceil((x1 - x0) / cell);
   const nz = Math.ceil((z1 - z0) / cell);
   const lift = overlayLift(C.floor.rung);
-  const cells = [];
+  const DK = GA.deck;
+  const inDeck = (x, z) => x >= DK.x0 && x <= DK.x1 && z >= DK.z0 && z <= DK.z1;
+  const faceDist = (x, z) => {
+    let d = Infinity;
+    for (const f of section.court.faces) {
+      const dx = f.b[0] - f.a[0], dz = f.b[1] - f.a[1];
+      const l2 = dx * dx + dz * dz;
+      let t = l2 ? ((x - f.a[0]) * dx + (z - f.a[1]) * dz) / l2 : 0;
+      t = Math.max(0, Math.min(1, t));
+      d = Math.min(d, Math.hypot(x - (f.a[0] + dx * t), z - (f.a[1] + dz * t)));
+    }
+    return d;
+  };
+  const paths = [];
+  const beds = [];
+  const shrubs = [];
   for (let i = 0; i < nx; i++) {
     for (let j = 0; j < nz; j++) {
       const x = x0 + (i + 0.5) * cell;
       const z = z0 + (j + 0.5) * cell;
       if (!inRing(x, z, hole)) continue;
-      cells.push({ x, y: ground(x, z) + lift, z });
+      if (inDeck(x, z)) continue;
+      const y = ground(x, z) + lift;
+      if (faceDist(x, z) < GA.pathWidth) {
+        paths.push({ x, y, z });
+      } else {
+        beds.push({ x, y, z });
+        /* Hash-scattered understorey — tree ferns, yucca rosettes, ferns —
+           deterministic from the cell index, dense where the frames are. */
+        if (hash(21, i, j) < GA.planting.frac) {
+          const h = GA.planting.height * (1 + (hash(22, i, j) - 0.5));
+          const r = GA.planting.radius * (1 + (hash(23, i, j) - 0.5));
+          shrubs.push({ x, y: ground(x, z) + h / 2, z, scale: [r, h, r] });
+        }
+      }
     }
   }
   const geo = quad(cell - D.courtFloorGap, cell - D.courtFloorGap);
-  const mesh = instanced(
-    geo,
-    decal(colors.courtPaving, C.floor.rung, "pavingConcreteUnit", [1, 1]),
-    cells
+  const lay = (cells, mat, name) => {
+    if (!cells.length) return;
+    const mesh = instanced(geo, mat, cells);
+    mesh.renderOrder = OVERLAY[C.floor.rung].renderOrder;
+    mesh.castShadow = false;
+    mesh.name = name;
+    group.add(mesh);
+  };
+  lay(paths, decal(colors.pathConcrete, C.floor.rung, "pavingConcreteUnit", [1, 1]),
+    "court-floor-path-sourced");
+  lay(beds, decal(colors.mulchRock, C.floor.rung, "lavaRock", [1, 1]),
+    "court-floor-bed-sourced");
+  if (shrubs.length) {
+    const planting = instanced(new THREE.ConeGeometry(1, 1, 7), foliage(colors.plantGreen), shrubs);
+    planting.name = "court-garden-planting-estimated";
+    group.add(planting);
+  }
+
+  const unit = new THREE.BoxGeometry(1, 1, 1);
+
+  /* The central timber deck platform. Its top rides the highest drawn ground
+     under it plus the declared step; its skirt runs below the lowest, so it
+     neither hovers nor sinks on any surface. */
+  const dkG = [
+    ground(DK.x0, DK.z0), ground(DK.x1, DK.z0),
+    ground(DK.x0, DK.z1), ground(DK.x1, DK.z1),
+    ground((DK.x0 + DK.x1) / 2, (DK.z0 + DK.z1) / 2),
+  ];
+  const dkTop = Math.max(...dkG) + GA.deckHeight;
+  const dkBottom = Math.min(...dkG) - D.skirtDrop;
+  const deck = new THREE.Mesh(
+    unit,
+    wood(colors.deckTimber, [(DK.x1 - DK.x0) / D.tiles.plank, (DK.z1 - DK.z0) / D.tiles.plank])
   );
-  mesh.renderOrder = OVERLAY[C.floor.rung].renderOrder;
-  mesh.castShadow = false;
-  mesh.name = "court-floor";
-  group.add(mesh);
-  return cells.length;
+  deck.position.set((DK.x0 + DK.x1) / 2, (dkBottom + dkTop) / 2, (DK.z0 + DK.z1) / 2);
+  deck.scale.set(DK.x1 - DK.x0, dkTop - dkBottom, DK.z1 - DK.z0);
+  deck.castShadow = true;
+  deck.receiveShadow = true;
+  deck.name = "court-garden-deck-estimated";
+  group.add(deck);
+
+  /* Teal perforated-steel planter cubes and grey ledgestone planter walls
+     [sourced, video 2019 f001/f011; positions declared-approximate]. */
+  group.add(Object.assign(instanced(unit, painted(colors.planterTeal),
+    GA.cubes.map((c) => ({ x: c.x, y: ground(c.x, c.z) + GA.cubeSize / 2, z: c.z,
+      scale: [GA.cubeSize, GA.cubeSize, GA.cubeSize] }))),
+  { name: "court-garden-cubes-sourced" }));
+  group.add(Object.assign(instanced(unit, concrete(colors.ledgeStone),
+    GA.ledges.map((l) => {
+      const cx = (l.x0 + l.x1) / 2;
+      const cz = (l.z0 + l.z1) / 2;
+      return {
+        x: cx, y: ground(cx, cz) + GA.ledgeHeight / 2, z: cz,
+        scale: [Math.max(l.x1 - l.x0, GA.ledgeThickness), GA.ledgeHeight,
+          Math.max(l.z1 - l.z0, GA.ledgeThickness)],
+      };
+    })), { name: "court-garden-ledges-sourced" }));
+
+  /* The movable furniture, shipped as a DECLARED movable set: the kinds and
+     colours are sourced off the frames, the positions are one arrangement of
+     objects the video itself shows being movable. */
+  const FD = GA.furnDims;
+  const kinds = {
+    sofa: { mat: matte(colors.sofaSage), s: (it) => [FD.sofaLength, FD.sofaHeight, FD.sofaDepth], h: () => FD.sofaHeight },
+    chairLime: { mat: painted(colors.chairLime), s: () => [FD.chairSize, FD.chairHeight, FD.chairSize], h: () => FD.chairHeight },
+    chairWhite: { mat: painted(colors.chairWhite), s: () => [FD.chairSize, FD.chairHeight, FD.chairSize], h: () => FD.chairHeight },
+    table: { mat: painted(colors.chairWhite), s: () => [FD.tableSize, FD.tableHeight, FD.tableSize], h: () => FD.tableHeight },
+    lounge: { mat: wood(colors.loungeTimber, [1, 1]), s: () => [FD.loungeSize, FD.loungeHeight, FD.loungeSize], h: () => FD.loungeHeight },
+  };
+  for (const [kind, K] of Object.entries(kinds)) {
+    const items = GA.furniture.filter((it) => it.kind === kind);
+    if (!items.length) continue;
+    const seat = (it) => (inDeck(it.x, it.z) ? dkTop : ground(it.x, it.z));
+    group.add(Object.assign(instanced(unit, K.mat, items.map((it) => ({
+      x: it.x, y: seat(it) + K.h() / 2, z: it.z, rot: it.rot || 0, scale: K.s(it),
+    }))), { name: `court-garden-${kind}-estimated` }));
+  }
+
+  return { pathCells: paths.length, bedCells: beds.length, shrubs: shrubs.length };
 }
 
 /* ------------------------------------------------------------------- roof */
@@ -792,6 +1089,13 @@ export function createPhotoArgo(scene, { photo, heightAt, surfaceAt } = {}) {
      merge cannot half-land unnoticed. */
   const missing = ["court", "draw", "estimates", "reads"].filter((k) => !section[k]);
   if (section.grid?.groundStorey === undefined) missing.push("grid.groundStorey");
+  /* R4b keys: the video-grounded court. A pre-R4b section (the shipped doc
+     until main merges Revelle-College-Sources/merge/r4b/argo.json) builds
+     NOTHING rather than crashing or drawing the retired guard. */
+  if (section.court && !section.court.garden) missing.push("court.garden");
+  if (section.court && !section.court.opening) missing.push("court.opening");
+  if (section.court?.guard && section.court.guard.postPitch === undefined) missing.push("court.guard.postPitch");
+  if (section.draw?.tiles && section.draw.tiles.cmuUnitsPerTile === undefined) missing.push("draw.tiles.cmuUnitsPerTile");
   if (missing.length) {
     scene?.add(group);
     return { group, counts: { pendingMerge: missing.join(",") } };
@@ -834,9 +1138,11 @@ export function createPhotoArgo(scene, { photo, heightAt, surfaceAt } = {}) {
     recess: [], columns: [], soffits: [], baseWall: [], copings: [],
     courtParapets: [], courtBase: [], cmu: [], decks: [], beams: [], pickets: [], rails: [],
     doors: [], sconces: [], plaques: [], slats: [],
+    guardPosts: [], courtGlass: [], levelPlaques: [], stairDoor: [],
   };
   for (const f of section.facades) collectFace(ctx, f, frameOf(f), bins);
   for (const f of section.court.faces) collectCourtFace(ctx, f, frameOf(f), bins);
+  buildGuardCircuit(ctx, bins);
 
   const { colors } = section;
   const unit = new THREE.BoxGeometry(1, 1, 1);
@@ -872,7 +1178,7 @@ export function createPhotoArgo(scene, { photo, heightAt, surfaceAt } = {}) {
   /* Instances of one mesh share one material, so the masonry is binned by its
      own texture repeat: the court faces differ in length and a single repeat
      would stretch the coursing on all but one of them. */
-  const byRepeat = (items, name) => {
+  const byRepeat = (items, name, mat) => {
     const groups = new Map();
     for (const it of items) {
       const k = it.repeat.join();
@@ -880,19 +1186,44 @@ export function createPhotoArgo(scene, { photo, heightAt, surfaceAt } = {}) {
       groups.get(k).items.push(it);
     }
     let n = 0;
-    for (const g of groups.values()) add(unit, masonry(colors.cmuWhite, g.repeat), g.items, `${name}-${n++}`, court);
+    for (const g of groups.values()) add(unit, mat(g.repeat), g.items, `${name}-${n++}`, court);
   };
-  byRepeat(bins.cmu, "court-cmu");
-  byRepeat(bins.courtBase, "court-base");
+  /* Running bond on the core faces, bed-joints-only score on the perimeter
+     walls and the whole ground storey — the split the 2019 video sources. */
+  const bond = (r) => masonry(colors.cmuWhite, r, section.draw.cmuNormalScale);
+  const score = (r) => scored(colors.cmuWhite, r, section.draw.cmuNormalScale);
+  byRepeat(bins.cmu.filter((b) => b.bond), "court-cmu-bond", bond);
+  byRepeat(bins.cmu.filter((b) => !b.bond), "court-cmu-score", score);
+  byRepeat(bins.courtBase, "court-base", score);
   add(unit, concrete(colors.parapet), bins.courtParapets, "court-parapet", court);
   add(unit, concrete(colors.gallerySoffit), bins.decks, "court-decks", court);
   add(unit, concrete(colors.beamWhite), bins.beams, "court-beams", court);
   add(unit, painted(colors.guardWhite), bins.pickets, "court-pickets", court);
   add(unit, painted(colors.guardWhite), bins.rails, "court-rails", court);
+  add(unit, painted(colors.guardWhite), bins.guardPosts, "court-guard-posts-sourced", court);
   add(unit, painted(colors.doorBronze), bins.doors, "court-doors", court);
   add(unit, painted(colors.sconceWhite), bins.sconces, "court-sconces", court);
   add(unit, painted(colors.plaqueTan), bins.plaques, "court-plaques", court);
   add(unit, painted(colors.screenWhite), bins.slats, "court-screens", court);
+  add(plane, glassMat(colors.windowSky), bins.courtGlass, "court-glass-sourced", court);
+  add(unit, painted(colors.plaqueOrange), bins.levelPlaques, "court-level-plaques-sourced", court);
+  add(unit, painted(colors.doorYellow), bins.stairDoor, "court-stair-door-estimated", court);
+  /* The caged marine-lantern pendant at the L2 fascia corner [sourced, video
+     2019 f005–f008 — ONE is sourced; the rhythm is not, and absent[] says
+     so]. It hangs below the L2 beam at the corner its faces name. */
+  const LN = section.court.lantern;
+  {
+    const [fa, fb] = LN.corner.split("/");
+    const A = section.court.faces.find((f) => f.id === fa);
+    const B = section.court.faces.find((f) => f.id === fb);
+    const w = section.court.gallery.projection - section.court.gallery.beamThickness / 2;
+    const cx = A.a[0] + A.out[0] * w + B.out[0] * w;
+    const cz = A.a[1] + A.out[1] * w + B.out[1] * w;
+    const y = ctx.baseY + section.grid.groundStorey - section.court.gallery.beamDepth - LN.height / 2;
+    add(unit, painted(colors.lanternDark),
+      [{ x: cx, y, z: cz, scale: [LN.size, LN.height, LN.size] }],
+      "court-lantern-sourced", court);
+  }
   const T = section.court.tree;
   court.add(instanced(
     new THREE.ConeGeometry(1, 1, 7),
@@ -900,7 +1231,7 @@ export function createPhotoArgo(scene, { photo, heightAt, surfaceAt } = {}) {
     [{ x: T.x, y: ground(T.x, T.z) + overlayLift(section.court.floor.rung) + T.height / 2, z: T.z,
       scale: [T.radius, T.height, T.radius] }]
   ));
-  const floorCells = buildCourtFloor(ctx, court);
+  const garden = buildCourtGarden(ctx, court);
   group.add(court);
 
   const roof = new THREE.Group();
@@ -934,7 +1265,20 @@ export function createPhotoArgo(scene, { photo, heightAt, surfaceAt } = {}) {
       screens: bins.slats.length / section.court.screen.slats,
       screenSlats: bins.slats.length,
       pickets: bins.pickets.length,
-      courtFloorCells: floorCells,
+      guardPosts: bins.guardPosts.length,
+      guardRails: bins.rails.length,
+      courtOpenings: bins.courtGlass.length,
+      levelPlaques: bins.levelPlaques.length,
+      stairDoors: bins.stairDoor.length,
+      lanterns: 1,
+      courtFloorCells: garden.pathCells + garden.bedCells,
+      gardenPathCells: garden.pathCells,
+      gardenBedCells: garden.bedCells,
+      gardenShrubs: garden.shrubs,
+      gardenDecks: 1,
+      gardenCubes: section.court.garden.cubes.length,
+      gardenLedges: section.court.garden.ledges.length,
+      gardenFurniture: section.court.garden.furniture.length,
       columns: bins.columns.length,
       curbs: section.roof.curbs.built === false ? 0 : section.roof.curbs.items.length,
       draws: group.children.reduce((s, g) => s + g.children.length, 0),

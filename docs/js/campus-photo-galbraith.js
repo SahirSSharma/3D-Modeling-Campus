@@ -423,32 +423,51 @@ function collectStruts(section, f, frame, ctx, bins) {
      oceanlight-21220, -21225 and -12848 all show — and the depth behind it is
      the sourced one times `draw.compression`. Both numbers ship; the section
      declares the difference in `conflicts.colonnadeDepth`. */
-  const wCol = section.facade.wallStandoff + C.standoffBuilt;
+  /* THE LEAN IS OUT OF THE FACADE PLANE, NEVER IN IT. The retired revision
+     splayed each pair APART along the elevation (`rotZ` about the face
+     normal) — the "saggy noodle" defect. f061 of the 2024 tour, the only
+     frontal of the north face in the repo, tracks a member within +-2 px over
+     40 px of rise, and dc-bb4438071r_2.jpg holds a pair's two members
+     parallel within ~1.5%: face-on these shafts are VERTICAL. What leans is
+     the whole rank, out of the plane — foot inboard, head outboard by
+     `splayHead` over the rise (~4.4 deg) — which is why wm-from-below, looking
+     ALONG the facade, shows a leaning prism while f061, looking AT it, shows
+     verticals. So the foot stands `splayHead` inboard of the strut station
+     and the head dies at the station itself. */
+  const wFoot = section.facade.wallStandoff + C.standoffBuilt - C.splayHead;
   const { soffitY } = ctx;
 
   for (const line of columnLines(section, f, frame)) {
     /* The foot stands on the DRAWN terrain, not on a level line, so a strut
        never floats over the grade or sinks under it. */
-    const p = frame.at(line.u, wCol, 0);
+    const p = frame.at(line.u, wFoot, 0);
     const footY = ctx.ground(p.x, p.z);
     const height = soffitY - footY;
     if (!(height > 1)) continue;
-    /* The lean is the pair splaying apart going up: the head ends up
-       `splayHead` further from the pair centre than the foot. */
+    /* `rotX` about the face TANGENT, so the shaft's axis tilts toward the
+       face's own outward normal and not along it. Euler order is YXZ, so this
+       is applied before the face heading and stays out-of-plane whatever the
+       heading is. `rotZ` — the retired in-plane lean — is gone entirely. */
     const tilt = Math.atan2(C.splayHead, height);
     bins.struts.push({
-      x: p.x, y: footY, z: p.z, rot: frame.rot, rotZ: -line.lean * tilt,
+      x: p.x, y: footY, z: p.z, rot: frame.rot, rotX: tilt,
       height,
     });
-    /* The bracket: a broad flat-topped head that meets the beam hard, riding
-       the leaning axis so it stays square to its own strut. */
+    /* The head's real mass is a DEEP SECTION-PLANE BRACKET, not an along-face
+       flare. Face-on at oceanlight-21220's optical-centre pair — where depth
+       projects to nothing — the head reads 22 px, barely wider than the shaft;
+       the oblique frames read 2.7x the waist only because the bracket's DEPTH
+       projects into apparent width there (conflicts.headPlane). So it is
+       narrow along the face and long through the band, spanning glazing plane
+       to fascia, and it rides the leaning axis to stay square to its shaft. */
     const cap = C.headCap;
-    const along = height - cap.height / 2;
-    const q = frame.at(line.u + line.lean * along * Math.sin(tilt), wCol, 0);
+    const along = height - cap.bracketHeight / 2;
+    const wHead = wFoot + along * Math.sin(tilt);
+    const q = frame.at(line.u, wHead, 0);
     bins.brackets.push({
       x: q.x, y: footY + along * Math.cos(tilt), z: q.z,
-      rot: frame.rot, rotZ: -line.lean * tilt,
-      scale: [cap.halfWidth * 2, cap.height, cap.halfWidth * 2],
+      rot: frame.rot, rotX: tilt,
+      scale: [cap.alongFace, cap.bracketHeight, cap.halfLength * 2],
     });
   }
 }
@@ -768,6 +787,42 @@ function collectDeck(section, f, frame, ctx, bins, spec, y, redBand) {
     rot: frame.rot,
     scale: [L, spec.deck, spec.project],
   });
+  /* THE BALCONY'S OWN SOFFIT IS COFFERED. wm-from-below shows small waffle
+     pans under this walkway band, the same family as the great roof soffit at
+     half its module. One continuous strip per face, its underside carrying a
+     recessed pan plane and a rib grid — never a separate planter box, which
+     no frame in four epochs contains (facade.balcony.stripNote). Terrace decks
+     have no coffering in any frame, so this is balcony-only. */
+  const K = spec.soffitCoffer;
+  if (K) {
+    const under = y - spec.deck;
+    const panDepth = spec.project - 2 * K.rib;
+    bins.balconyPan.push({
+      ...frame.at(mid, wWall + spec.project / 2, under - K.recess / 2),
+      rot: frame.rot,
+      scale: [L, K.recess, panDepth],
+    });
+    /* Ribs across the strip, ONE PER COFFER CELL on the balcony's own pitch —
+       the cell count is solved against the measured face the same way the
+       roof's coffers are, so the grid stays regular right to both ends
+       instead of leaving a part cell at one — plus the two edge ribs that
+       close the grid along its length. */
+    const cells = Math.max(1, Math.round(L / K.pitch));
+    for (let i = 0; i < cells; i++) {
+      bins.balconyRib.push({
+        ...frame.at(((i + 0.5) * L) / cells, wWall + spec.project / 2, under - K.recess / 2),
+        rot: frame.rot,
+        scale: [K.rib, K.recess, spec.project],
+      });
+    }
+    for (const w of [wWall + K.rib / 2, wWall + spec.project - K.rib / 2]) {
+      bins.balconyRib.push({
+        ...frame.at(mid, w, under - K.recess / 2),
+        rot: frame.rot,
+        scale: [L, K.recess, K.rib],
+      });
+    }
+  }
   if (redBand) {
     bins.redBand.push({
       ...frame.at(mid, wEdge + D.bandOffset, y - spec.deck / 2),
@@ -921,9 +976,12 @@ function buildEntry(section, group, frame, f, ctx) {
      each beam is placed half a width further along to sit on its strut. */
   beamGeo.rotateY(-Math.PI / 2);
 
-  const headSplay = C.splayHead;
+  /* No `splayHead` term in the station any more: the lean is out-of-plane, so
+     a head does not displace ALONG the face and the beams ride their pair's
+     column lines exactly. That offset was a knock-on of the retired in-plane
+     splay (see collectStruts). */
   for (const s of [-1, 1]) {
-    const u = L / 2 + (s * f.pairGap) / 2 + s * headSplay + E.beam.width / 2;
+    const u = L / 2 + (s * f.pairGap) / 2 + E.beam.width / 2;
     const p = frame.at(u, 0, 0);
     const mesh = new THREE.Mesh(beamGeo, ctx.mats.conc(colors.entryBeam, [6, 2]));
     mesh.position.set(p.x, eavesY, p.z);
@@ -1714,7 +1772,11 @@ function buildEastGround(section, group, ctx, frames) {
   const pads = [];
   for (const k of section.grid.pairIndices) {
     const u = frame.length / 2 + k * face.pairSpacing;
-    const p = frame.at(u, section.facade.wallStandoff + section.column.standoffBuilt, 0);
+    /* At the FOOT station, not the head station: the shafts lean out-of-plane,
+       so what shows past the roof edge on the ground is where they land, which
+       is `splayHead` inboard of the strut line (see collectStruts). */
+    const p = frame.at(u, section.facade.wallStandoff
+      + section.column.standoffBuilt - section.column.splayHead, 0);
     pads.push({ x: p.x, z: p.z, rot: frame.rot });
   }
   const padMesh = instanced(
@@ -1793,6 +1855,7 @@ export function createPhotoGalbraith(scene, { photo, heightAt, surfaceAt } = {})
     cofferPan: [], ribAcross: [], ribAlong: [], ribBoss: [], solidStrip: [], downlight: [],
     glass: [], backing: [], mullion: [], spandrel: [], cornerPier: [],
     deck: [], redBand: [], picket: [], railCap: [],
+    balconyPan: [], balconyRib: [],
     lowerColumn: [], lowerGlass: [], flutedWall: [], flute: [], doorBronze: [],
   };
 
@@ -1872,6 +1935,11 @@ export function createPhotoGalbraith(scene, { photo, heightAt, surfaceAt } = {})
   }
   add(unit, painted(colors.mullion), bins.mullion);
   add(unit, mats.conc(colors.deck, [24, 1]), bins.deck);
+  /* The balcony's coffered underside: the darker pan field first, then the
+     pale rib grid over it, so the ribs win the depth test the same way the
+     great roof soffit's do. */
+  add(unit, mats.soff(colors.cofferPan, [24, 2]), bins.balconyPan, false);
+  add(unit, mats.soff(colors.soffitRib, [24, 1]), bins.balconyRib, false);
   add(unit, painted(colors.terraceRed), bins.redBand);
   add(unit, painted(colors.picket), bins.picket, false);
   add(unit, painted(colors.picket), bins.railCap, false);
@@ -1901,6 +1969,8 @@ export function createPhotoGalbraith(scene, { photo, heightAt, surfaceAt } = {})
       downlights: bins.downlight.length,
       pickets: bins.picket.length,
       lowerColumns: bins.lowerColumn.length,
+      balconyRibs: bins.balconyRib.length,
+      balconyPans: bins.balconyPan.length,
       northBeds: section.north.beds.length,
       ...groundCounts,
       ...roofCounts,

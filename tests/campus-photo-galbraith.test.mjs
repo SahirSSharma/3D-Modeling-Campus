@@ -148,7 +148,9 @@ function frameOf(f) {
   return { length, at: (u, w) => [sx + tx * u + nx * w, sz + tz * u + nz * w] };
 }
 
-/** Every strut foot, as (x, z). Per-face pair gap, like the module. */
+/** Every strut foot, as (x, z). Per-face pair gap, like the module — and at
+ *  the FOOT station: the shafts lean out-of-plane, feet `splayHead` inboard
+ *  of the head line. */
 function strutFeet() {
   const out = [];
   for (const f of section.faces) {
@@ -156,7 +158,8 @@ function strutFeet() {
     for (const k of G.pairIndices) {
       const c = frame.length / 2 + k * f.pairSpacing;
       for (const s of [-1, 1]) {
-        out.push(frame.at(c + (s * f.pairGap) / 2, REG + section.column.standoffBuilt));
+        out.push(frame.at(c + (s * f.pairGap) / 2,
+          REG + section.column.standoffBuilt - section.column.splayHead));
       }
     }
   }
@@ -172,6 +175,7 @@ function facadePoints() {
     REG + F.balcony.project,
     REG + F.terrace.project,
     REG + section.column.standoffBuilt,
+    REG + section.column.standoffBuilt - section.column.splayHead,
   ];
   for (const f of section.faces) {
     const frame = frameOf(f);
@@ -301,9 +305,13 @@ test("retirements are supersessions, and the list never simply shrinks", () => {
     assert.ok(s.why && s.why.length > 60, "a supersession must say why the evidence changed");
     assert.match(s.when, /^\d{4}-\d{2}-\d{2}$/, "a supersession must be dated");
   }
-  /* The four this revision actually made. */
+  /* The four the R1/R2 revisions made, plus the four R4b made: the in-plane
+     lean, the along-face head cap, the independent foot read, and the
+     balcony-as-planter-box reading. */
   const all = JSON.stringify(section.superseded);
-  for (const must of [/revelle\.absent\[7\]/, /12\.474/, /pairGap/, /revealNote/]) {
+  for (const must of [/revelle\.absent\[7\]/, /12\.474/, /pairGap/, /revealNote/,
+    /IN-PLANE strut lean/, /along-face square cap/, /column\.footHalfWidth/,
+    /planter box/]) {
     assert.match(all, must, `${must} is a retirement that must be recorded, not deleted`);
   }
 });
@@ -317,9 +325,17 @@ test("conflicts are declared and never averaged", () => {
       `conflicts.${k} must say what each side describes and which one is drawn`);
   }
   for (const k of ["roofPlate", "colonnadeDepth", "gridScale", "cofferModule",
-    "westCitation", "p11", "lectureSeats", "outerGridLines", "oversailCount"]) {
+    "westCitation", "p11", "lectureSeats", "outerGridLines", "oversailCount",
+    "northPairGap", "headPlane"]) {
     assert.ok(C[k], `conflicts.${k} is missing`);
   }
+  /* R4b finding 5: the north-face pair-gap tension is DECLARED, all three
+     numbers on the record, resolved by nobody. */
+  for (const n of [/0\.27/, /0\.2219/, /0\.315/]) {
+    assert.match(C.northPairGap, n, `${n} is one of the three pair-gap readings`);
+  }
+  assert.match(C.headPlane, /0\.67|22 px/, "the frontal head read stays on the record");
+  assert.match(C.headPlane, /2\.7/, "and so does the oblique ratio it reconciles");
   /* The two headline ones must carry BOTH numbers, so nobody can quietly
      average them later. */
   assert.match(C.colonnadeDepth, /3\.4/, "the sourced colonnade depth stays on the record");
@@ -507,8 +523,16 @@ test("every figure recomputes from the section's own readings", () => {
   const moduleV = (ortho.skylightPitch / 2 + ring.meanFaceLength / px.coffersAcrossFace) / 2;
   const roofOut = 2 * moduleV;
   const registration = section.drawnClearance + D.clearanceMargin;
-  const standoffBuilt = roofOut - section.column.headCap.halfWidth;
+  const standoffBuilt = roofOut - section.column.headCap.outboardReach;
   const compression = standoffBuilt / sourcedDepths.colonnade;
+  /* R4b: the strut widths, re-derived at full resolution per
+     research-galbraith-video.md §1.3 — waist and face-on head off
+     oceanlight-21220 against its own 14.12 m pair-pitch anchor, foot off the
+     dc within-member ratio. */
+  const { olFull, dc } = R;
+  const waistElev = olFull.memberWaistPx * olFull.spacingAnchor / olFull.pairMidSpacingPx;
+  const footElev = dc.footRatio * waistElev;
+  const alongFace = olFull.headAlongFacePx * olFull.spacingAnchor / olFull.pairMidSpacingPx;
   const insetRatio = px.endInset / px.pairSpacing;
   const gapNS = kda.rowPairGap / kda.rowPairToPair;
   const gapEW = kda.alPairGap / kda.alPairToPair;
@@ -528,6 +552,11 @@ test("every figure recomputes from the section's own readings", () => {
     "draw.compression": compression,
     "facade.wallStandoff": registration,
     "column.standoffBuilt": standoffBuilt,
+    "column.waistElevation": waistElev,
+    "column.footElevation": footElev,
+    "column.footHalfWidth": footElev / 2,
+    "column.headCap.alongFace": alongFace,
+    "column.headCap.halfLength": (roofOut - D.glassOffset) / 2,
     "facade.balcony.project": sourcedDepths.balcony * compression,
     "facade.terrace.project": sourcedDepths.terrace * compression,
     "entry.canopy.project": sourcedDepths.canopy * compression,
@@ -549,7 +578,7 @@ test("every figure recomputes from the section's own readings", () => {
        plus one column foot plus one bin radius, compressed like every other
        outward projection inside the band. */
     "north.binStandoff": standoffBuilt +
-      (section.reads["column.footHalfWidth"].value + section.entry.bins.radius) * compression,
+      (footElev / 2 + section.entry.bins.radius) * compression,
   };
   /* audit-galbraith finding 7 again: `ortho.block` used to exist ONLY as a
      literal here, so the four figures deriving from it could not be run from
@@ -603,6 +632,12 @@ test("every figure recomputes from the section's own readings", () => {
   assert.ok(Math.abs(G.module - 1.3603) < 1e-3, "the coffer module is the re-chained 1.3603");
   assert.ok(Math.abs(G.roofOut - 2.7206) < 1e-3, "the roof band is two coffer bays");
   assert.ok(Math.abs(section.column.standoffBuilt - 1.8806) < 1e-3);
+  /* R4b spot-checks: the waist that replaced the noodle question, and the
+     bracket band the video dossier ordered. */
+  assert.ok(Math.abs(section.column.waistElevation - 0.5757) < 1e-3,
+    "the waist is the full-res 19 px x 14.12 / 466 re-derivation");
+  assert.ok(section.column.headCap.halfLength >= 1.2 && section.column.headCap.halfLength <= 1.6,
+    "the head bracket half-length must sit inside the dossier's 1.2-1.6 m read band");
   /* BASELINE INVERTED IN THE R2 SURGERY (item G1), and the reason is the whole
      point of this batch: this line used to demand the two axes differ by more
      than 0.9 m, which is what the FABRICATED rowPairToPair = 172.6 produced.
@@ -830,7 +865,7 @@ test("the strut grid closes on each measured face", () => {
     }
     /* An outer strut whose head bracket hangs off its own corner is the read
        the retired 1.5 m inset produced; the photographed inset is 2.6 m. */
-    assert.ok(f.endInset > section.column.headCap.halfWidth,
+    assert.ok(f.endInset > section.column.headCap.alongFace / 2,
       `${f.id}'s outer bracket overhangs the corner`);
   }
 });
@@ -1864,6 +1899,14 @@ const PINS = {
   "ortho.block.x1": { value: 37.4, tol: 0.5, truth: `${ORTHO}, the raised block's apparent plan rect` },
   "ortho.block.z0": { value: 442.4, tol: 0.5, truth: `${ORTHO}, the raised block's apparent plan rect` },
   "ortho.block.z1": { value: 471.0, tol: 0.5, truth: `${ORTHO}, the raised block's apparent plan rect` },
+  /* R4b full-res re-reads (research-galbraith-video.md §1). The crop is a 2x
+     upscale of the cached full-res frame; px values are crop px. */
+  "olFull.pairMidSpacingPx": { value: 466, tol: 6, truth: `${OL} — pair-2-to-pair-3 midpoint spacing at frame centre, threshold row-runs` },
+  "olFull.memberWaistPx": { value: 19, tol: 2, truth: `${OL} — sustained minimum member run, threshold 130, rows y150-260` },
+  "olFull.headAlongFacePx": { value: 22, tol: 2, truth: `${OL} — widest FACE-ON head run at the optical-centre pair, where section-plane depth projects to nothing` },
+  "olFull.spacingAnchor": { value: 14.12, tol: 0.1, truth: `${OL} — 62 x 410/1800 (R1 §3.4); f061 (2024 tour) reads the same pitch at 100 px` },
+  "dc.footRatio": { value: 1.9, tol: 0.5, truth: "dc-bb4438071r_2.jpg (mid-1960s) — within-member foot:waist width ratio, research-galbraith-video.md §1.2, +-30%" },
+  "dc.headRatio": { value: 2.7, tol: 0.7, truth: "dc-bb4438071r_2.jpg (mid-1960s) — the OBLIQUE's apparent head:waist ratio; the frontal resolves it into the section-plane bracket (conflicts.headPlane)" },
   "sourcedDepths.colonnade": { value: 3.4, tol: 0.4, truth: PHOTOS },
   "sourcedDepths.balcony": { value: 2.2, tol: 0.3, truth: PHOTOS },
   "sourcedDepths.terrace": { value: 3, tol: 0.35, truth: PHOTOS },
@@ -1881,7 +1924,7 @@ test("S1(iii) every reading is pinned to the artefact it claims to come from", (
   const n = assertPins({
     readings: section.derivations.readings,
     pins: PINS,
-    namespaces: ["px", "kda", "ortho", "sourcedDepths", "ring"],
+    namespaces: ["px", "kda", "ortho", "sourcedDepths", "ring", "olFull", "dc"],
     label: "galbraith",
   });
   assert.ok(n >= 40, `only ${n} readings pinned`);
@@ -2070,6 +2113,9 @@ const ABSENT_KEYS = [
   ["westStair", /THE WEST COURT STAIR AND ITS RAILS/],
   ["eastBank", /WHETHER THE 3\.1 m EAST BANK IS GROUND/],
   ["reskinHeights", /HOW TALL THE TWO RE-SKINNED EAST TREES/],
+  /* R4b: the two questions the video research opened and could not close. */
+  ["headFlare", /ALONG-FACE HEAD FLARE EXISTS BEYOND THE MEASURED 0\.67 m/],
+  ["northFrontal", /FULL-RESOLUTION FRONTAL OF THE NORTH FACE/],
 ];
 const absentEntries = () => section.absent.map((what) => {
   const hit = ABSENT_KEYS.find(([, re]) => re.test(what));
@@ -2578,3 +2624,244 @@ function pointInRing(ring, x, z) {
   }
   return inside;
 }
+
+/* ================= R4b: the front colonnade, held to the video research =====
+   research-galbraith-video.md, off Sahir's 2026-08-21 defect report ("saggy
+   noodle struts; the white balcony/planter box juts oddly"). Three gates, each
+   with its own mutation check: verticality in the facade plane, the profile
+   pinned to its derived anchors, and the balcony as a continuous strip pierced
+   at the strut stations. */
+
+/** Every strut instance's decomposed placement, from a real build. */
+function strutPlacements(ground = flatGround) {
+  const { group } = build(ground);
+  group.updateMatrixWorld(true);
+  const out = [];
+  const m = new THREE.Matrix4();
+  const p = new THREE.Vector3();
+  const q = new THREE.Quaternion();
+  const s = new THREE.Vector3();
+  group.traverse((o) => {
+    if (!o.isInstancedMesh || o.geometry.type !== "LatheGeometry") return;
+    for (let i = 0; i < o.count; i++) {
+      o.getMatrixAt(i, m);
+      out.push(m.clone());
+    }
+  });
+  return out.map((mat) => {
+    mat.decompose(p, q, s);
+    const e = new THREE.Euler().setFromQuaternion(q, "YXZ");
+    const axis = new THREE.Vector3(0, 1, 0).applyQuaternion(q);
+    return {
+      x: p.x, y: p.y, z: p.z, height: s.y,
+      rot: e.y, tiltOut: e.x, tiltIn: e.z,
+      axis: [axis.x, axis.y, axis.z],
+    };
+  });
+}
+
+/** The verticality assertion, factored out so the mutation check can feed it
+ *  a corrupted placement and watch it fail. Tolerance is the dossier's own
+ *  ±1.5% member parallelism (§1.1), as a tangent. */
+function assertFacadePlaneVertical(placements) {
+  const IN_PLANE_TOL = 0.015;
+  for (const it of placements) {
+    assert.ok(Math.abs(it.tiltIn) <= IN_PLANE_TOL,
+      `a strut leans ${it.tiltIn.toFixed(3)} rad IN the facade plane at ` +
+      `(${it.x.toFixed(1)}, ${it.z.toFixed(1)}) — the retired noodle defect`);
+  }
+  /* Same face, same lean: pair members (and the whole rank) are parallel. */
+  const byFace = new Map();
+  for (const it of placements) {
+    const k = it.rot.toFixed(3);
+    if (!byFace.has(k)) byFace.set(k, []);
+    byFace.get(k).push(it);
+  }
+  assert.equal(byFace.size, section.faces.length, "struts on other headings than the four faces");
+  for (const [, rank] of byFace) {
+    for (const a of rank) {
+      const dot = a.axis[0] * rank[0].axis[0] + a.axis[1] * rank[0].axis[1] + a.axis[2] * rank[0].axis[2];
+      assert.ok(dot > Math.cos(IN_PLANE_TOL),
+        "two struts on one face are not parallel within the dossier's 1.5%");
+    }
+  }
+}
+
+test("R4b the struts are VERTICAL in the facade plane; the ~5° lean is out-of-plane, head outboard", () => {
+  const placements = strutPlacements();
+  assert.equal(placements.length, section.counts.struts);
+  assertFacadePlaneVertical(placements);
+  for (const it of placements) {
+    /* The lean magnitude is splayHead over the rise: ~4.4° on the full-height
+       strut, and always out of the plane, never in it. */
+    const want = Math.atan2(section.column.splayHead, it.height);
+    assert.ok(Math.abs(it.tiltOut - want) < 1e-6,
+      `a strut's out-of-plane lean is ${it.tiltOut.toFixed(4)}, not splayHead/height = ${want.toFixed(4)}`);
+    assert.ok(it.tiltOut > 0.05 && it.tiltOut < 0.13,
+      `a full-height strut should lean ~3-7°, got ${(it.tiltOut * 180 / Math.PI).toFixed(1)}°`);
+    /* Head OUTBOARD: the top of the shaft stands further from the ring than
+       the foot — wm-from-below's leaning prism, §1.1. */
+    const head = [it.x + it.axis[0] * it.height, it.z + it.axis[2] * it.height];
+    assert.ok(toRing(head[0], head[1]) > toRing(it.x, it.z) + 0.9,
+      "a strut's head is not outboard of its own foot — the lean runs the wrong way");
+  }
+  /* R4b audit F2: the BUILT feet must stand at the section's derived stations.
+     assertStripPierced replays section data only, so a module that slid the
+     whole rank outboard still pierced the replayed strip; this pins the
+     drawn instances to strutFeet()'s frame math. */
+  const wantFeet = strutFeet();
+  assert.equal(placements.length, wantFeet.length);
+  for (const it of placements) {
+    const near = Math.min(...wantFeet.map(([fx, fz]) => Math.hypot(it.x - fx, it.z - fz)));
+    assert.ok(near < 0.01,
+      `a built strut foot at (${it.x.toFixed(1)}, ${it.z.toFixed(1)}) stands ` +
+      `${near.toFixed(2)} m off every derived foot station`);
+  }
+  /* MUTATION: an in-plane lean of the retired kind must fail the gate. */
+  const noodle = strutPlacements();
+  noodle[0] = { ...noodle[0], tiltIn: 0.05 };
+  assert.throws(() => assertFacadePlaneVertical(noodle), /noodle|facade plane/);
+  const skew = strutPlacements();
+  skew[3] = { ...skew[3], axis: [Math.sin(0.05), Math.cos(0.05), 0], tiltIn: 0 };
+  assert.throws(() => assertFacadePlaneVertical(skew), /not parallel/);
+});
+
+/** The profile stations recomputed from the section's own three anchors, at
+ *  the R1 sweep's declared fractions (column.profileSource). */
+function expectedProfile(sec) {
+  const S2 = Math.SQRT2;
+  const rWaist = sec.column.waistElevation / S2;
+  const rFoot = sec.column.footElevation / S2;
+  const rTop = sec.column.headCap.alongFace / S2;
+  return [
+    ...[[0, 1], [0.03, 24 / 38], [0.07, 12 / 38], [0.13, 4 / 38]]
+      .map(([t, f]) => [t, rWaist + f * (rFoot - rWaist)]),
+    [0.3, rWaist],
+    ...[[0.5, 1 / 45], [0.66, 5 / 45], [0.79, 13 / 45], [0.88, 24 / 45], [0.95, 38 / 45], [1, 1]]
+      .map(([t, f]) => [t, rWaist + f * (rTop - rWaist)]),
+  ];
+}
+
+function assertProfilePinned(sec) {
+  const want = expectedProfile(sec);
+  assert.equal(sec.column.profile.length, want.length);
+  sec.column.profile.forEach(([t, r], i) => {
+    assert.equal(t, want[i][0], `profile station ${i} moved off its t`);
+    assert.ok(Math.abs(r - want[i][1]) < 5e-9,
+      `profile station ${i} ships r=${r}, its anchors derive ${want[i][1]}`);
+  });
+  /* The waist is the minimum, and it is the derived waist. */
+  const rs = sec.column.profile.map(([, r]) => r);
+  assert.equal(Math.min(...rs), sec.column.waistElevation / Math.SQRT2);
+}
+
+test("R4b the profile ratios are pinned to their derivations, not to taste", () => {
+  assertProfilePinned(section);
+  const C = section.column;
+  const R = section.derivations.readings;
+  /* waist : foot ≈ 1 : 1.9 by the dc within-member ratio, by construction —
+     and the construction itself is what the figures table pins. */
+  assert.ok(Math.abs(C.footElevation / C.waistElevation - R.dc.footRatio) < 1e-9);
+  /* The oblique 2.7× head is NOT drawn as along-face width: face-on the head
+     is barely wider than the shaft, and the missing mass is the section-plane
+     bracket (conflicts.headPlane). */
+  assert.ok(C.headCap.alongFace / C.waistElevation < R.dc.headRatio,
+    "the frontal head ratio must stay below the oblique's — the difference is the bracket");
+  assert.ok(C.headCap.halfLength * 2 > C.headCap.alongFace * 2,
+    "the bracket is DEEP: its section-plane run exceeds its along-face width");
+  /* And the bracket really spans the band, glazing plane to fascia. */
+  assert.ok(Math.abs(C.headCap.halfLength - (G.roofOut - D.glassOffset) / 2) < 1e-9);
+  /* MUTATION: a station nudged off its anchors fails; an anchor nudged off
+     its derivation fails the figure recompute above. */
+  const mutant = JSON.parse(JSON.stringify(section));
+  mutant.column.profile[4][1] += 0.05;
+  assert.throws(() => assertProfilePinned(mutant), /anchors derive|minimum/);
+  const beefed = JSON.parse(JSON.stringify(section));
+  beefed.column.waistElevation *= 1.5; // a fabricated beefy waist with no derivation
+  assert.throws(() => assertProfilePinned(beefed), /anchors derive/);
+});
+
+/** Piecewise-linear profile half-ELEVATION at height fraction t. */
+function halfElevationAt(sec, t) {
+  const P = sec.column.profile;
+  for (let i = 1; i < P.length; i++) {
+    if (t <= P[i][0]) {
+      const f = (t - P[i - 1][0]) / (P[i][0] - P[i - 1][0]);
+      return (P[i - 1][1] + f * (P[i][1] - P[i - 1][1])) * Math.SQRT2 / 2;
+    }
+  }
+  return P[P.length - 1][1] * Math.SQRT2 / 2;
+}
+
+/** The strip/pierce assertion, over the data the module draws from, factored
+ *  for the mutation check. */
+function assertStripPierced(sec) {
+  const roofY = flatGround() + sec.measured.lidarHeight;
+  const l2Y = roofY - sec.levels.l2BelowRoof;
+  const soffitY = roofY - sec.levels.soffitBelowRoof;
+  const B = sec.facade.balcony;
+  for (const f of sec.faces) {
+    if (!f.balcony || f.terrace) continue;
+    const footY = flatGround();
+    const t = (l2Y - footY) / (soffitY - footY);
+    const wStrut = sec.facade.wallStandoff + sec.column.standoffBuilt
+      - sec.column.splayHead + sec.column.splayHead * t;
+    const half = halfElevationAt(sec, t);
+    const overlap = Math.min(wStrut + half, sec.facade.wallStandoff + B.project)
+      - Math.max(wStrut - half, sec.facade.wallStandoff);
+    assert.ok(overlap > 0.05,
+      `${f.id}: at deck height the strut (w ${wStrut.toFixed(2)} ± ${half.toFixed(2)}) ` +
+      `misses the balcony strip — the strip is not PIERCED, it just juts`);
+  }
+}
+
+test("R4b the balcony is ONE continuous cream strip with a coffered soffit, pierced at the strut stations", () => {
+  assertStripPierced(section);
+  assert.match(section.facade.balcony.stripNote, /NO WHITE PLANTER BOX/,
+    "the verified negative stays on the record");
+  assert.ok(section.facade.balcony.soffitCoffer,
+    "wm-from-below shows the balcony's own soffit coffered — the spec must exist");
+
+  /* CONTINUITY, on the built scene: one deck box per balcony face, spanning
+     the face's full measured length. */
+  const { group, counts } = build();
+  group.updateMatrixWorld(true);
+  const B = section.facade.balcony;
+  const m = new THREE.Matrix4();
+  const p = new THREE.Vector3();
+  const q = new THREE.Quaternion();
+  const s = new THREE.Vector3();
+  const decks = [];
+  let ribs = 0;
+  let pans = 0;
+  group.traverse((o) => {
+    if (!o.isInstancedMesh || o.geometry.type !== "BoxGeometry") return;
+    for (let i = 0; i < o.count; i++) {
+      o.getMatrixAt(i, m);
+      m.decompose(p, q, s);
+      if (Math.abs(s.y - B.deck) < 1e-6 && Math.abs(s.z - B.project) < 1e-6) decks.push(s.x);
+      if (Math.abs(s.y - B.soffitCoffer.recess) < 1e-6 &&
+        (Math.abs(s.x - B.soffitCoffer.rib) < 1e-6 || Math.abs(s.z - B.soffitCoffer.rib) < 1e-6)) ribs++;
+      if (Math.abs(s.z - (B.project - 2 * B.soffitCoffer.rib)) < 1e-6) pans++;
+    }
+  });
+  const balconyFaces = section.faces.filter((f) => f.balcony && !f.terrace);
+  assert.equal(decks.length, balconyFaces.length, "one continuous deck per balcony face");
+  for (const f of balconyFaces) {
+    const L = Math.hypot(f.b[0] - f.a[0], f.b[1] - f.a[1]);
+    assert.ok(decks.some((len) => Math.abs(len - L) < 1e-6),
+      `${f.id}'s balcony must span its whole ${L.toFixed(2)} m face in ONE piece`);
+  }
+  /* The coffered soffit is really built, and its counts are declared. */
+  assert.equal(ribs, section.counts.balconyRibs);
+  assert.equal(pans, section.counts.balconyPans);
+  assert.equal(counts.balconyRibs, section.counts.balconyRibs);
+  assert.ok(ribs >= 150, `${ribs} balcony soffit ribs — the coffer grid is missing`);
+  assert.equal(pans, balconyFaces.length);
+
+  /* MUTATION: shrink the strip and the pierce gate must notice the strut no
+     longer passes through it. */
+  const mutant = JSON.parse(JSON.stringify(section));
+  mutant.facade.balcony.project *= 0.4;
+  assert.throws(() => assertStripPierced(mutant), /not PIERCED/);
+});
