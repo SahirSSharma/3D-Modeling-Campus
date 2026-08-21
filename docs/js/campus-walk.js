@@ -50,6 +50,7 @@ import { createPhotoPlaza } from "./campus-photo-plaza.js";
 import { createPhotoYork } from "./campus-photo-york.js";
 import { createPhotoArgo } from "./campus-photo-argo.js";
 import { createPhotoBlake } from "./campus-photo-blake.js";
+import { createPhotoRevellecommons } from "./campus-photo-revellecommons.js";
 import { createPhotoSankofa } from "./campus-photo-sankofa.js";
 import { createPhotoPodemos } from "./campus-photo-podemos.js";
 import { createPhotoAzad } from "./campus-photo-azad.js";
@@ -758,6 +759,10 @@ export async function boot({ report, mode = "campus" } = {}) {
       () => photoZone.add(createPhotoYork(null, { photo: data.photo, heightAt, surfaceAt }).group),
       () => photoZone.add(createPhotoArgo(null, { photo: data.photo, heightAt, surfaceAt }).group),
       () => photoZone.add(createPhotoBlake(null, { photo: data.photo, heightAt, surfaceAt }).group),
+      /* Zone 3 batch R2 — the 1966 Dining Commons (64 Degrees / 64 North are
+         tenancies, not buildings). Bands hang from surfaceAt to each block's
+         own LiDAR height; the GIS prism's overshoot is declared, not dressed. */
+      () => photoZone.add(createPhotoRevellecommons(null, { photo: data.photo, heightAt, surfaceAt }).group),
       /* Zone 2 — Eighth College / the Theatre District neighbourhood, 2023. The
          2014 LiDAR is blind to all of it, so every one of these anchors to the
          ArcGIS massing ring and its GIS h instead: heightAt would be measuring
