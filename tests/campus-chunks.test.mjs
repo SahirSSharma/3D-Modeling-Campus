@@ -96,6 +96,18 @@ test("addStatic takes charge of every mesh under a root and returns the count", 
   assert.equal(world.entries.length, 4);
 });
 
+test("addStatic skips meshes campus-perf already folded into an InstancedMesh", () => {
+  const world = createChunkWorld({ config: cfg() });
+  const root = new THREE.Group();
+  const hidden = boxMesh(standard());
+  hidden.userData.perfMerged = true;
+  hidden.visible = false;
+  const live = boxMesh(standard());
+  root.add(hidden, live);
+  assert.equal(world.addStatic(root), 1, "a perf-merged original must not become a second draw");
+  assert.equal(world.entries[0].object, live);
+});
+
 test("the registered AABB and unit size are world-space, not local", () => {
   const world = createChunkWorld({ config: cfg() });
   const root = new THREE.Group();
@@ -297,7 +309,7 @@ test("buildBatches folds meshes sharing one material into a BatchedMesh and hide
     boxMesh(shared, { size: 4, at: [20, 0, 0] }),
     boxMesh(shared, { size: 4, at: [40, 0, 0] }),
   ];
-  const lonely = boxMesh(standard(), { size: 4, at: [60, 0, 0] }); // its own material
+  const lonely = boxMesh(new THREE.MeshStandardMaterial({ color: 0x8a8378, roughness: 0.2 }), { size: 4, at: [60, 0, 0] }); // different roughness — same hue is not enough to stay out of the fold
   root.add(...meshes, lonely);
   world.addStatic(root);
 
@@ -318,6 +330,28 @@ test("buildBatches folds meshes sharing one material into a BatchedMesh and hide
   /* A batch of one is just overhead: the lonely mesh keeps drawing itself. */
   assert.equal(lonely.visible, true);
   assert.equal(world.entries.find((e) => e.object === lonely).parts, null);
+});
+
+test("buildBatches folds same-class materials that differ only in colour", () => {
+  const world = createChunkWorld({ config: cfg() });
+  const root = new THREE.Group();
+  const a = boxMesh(new THREE.MeshStandardMaterial({ color: 0x804020, roughness: 0.85 }), { size: 4, at: [0, 0, 0] });
+  const b = boxMesh(new THREE.MeshStandardMaterial({ color: 0xc6bfb0, roughness: 0.85 }), { size: 4, at: [20, 0, 0] });
+  const c = boxMesh(new THREE.MeshStandardMaterial({ color: 0x20524f, roughness: 0.85 }), { size: 4, at: [40, 0, 0] });
+  const rough = boxMesh(new THREE.MeshStandardMaterial({ color: 0x804020, roughness: 0.5 }), { size: 4, at: [60, 0, 0] });
+  root.add(a, b, c, rough);
+  world.addStatic(root);
+  const made = world.buildBatches();
+  assert.equal(made.length, 1, "three hues of one stucco are one draw");
+  assert.equal(world.batches[0].count, 3);
+  assert.equal(made[0].material.color.getHex(), 0xffffff, "the batch material is white; hue is per instance");
+  const got = new THREE.Color();
+  made[0].getColorAt(0, got);
+  assert.equal(got.getHex(), 0x804020);
+  assert.equal(a.visible, false);
+  assert.equal(b.visible, false);
+  assert.equal(c.visible, false);
+  assert.equal(rough.visible, true, "a roughness miss must not join");
 });
 
 test("a second buildBatches never re-buckets an entry — no object draws twice", () => {
@@ -354,8 +388,8 @@ test("a second buildBatches never re-buckets an entry — no object draws twice"
 
 test("a two-group non-indexed mesh is split so each group joins its material's bucket", () => {
   const world = createChunkWorld({ config: cfg() });
-  const wall = standard();
-  const roof = standard();
+  const wall = new THREE.MeshStandardMaterial({ color: 0x8a8378, roughness: 0.92 });
+  const roof = new THREE.MeshStandardMaterial({ color: 0x8a8378, roughness: 0.5 });
   const root = new THREE.Group();
   const a = twoGroupMesh(wall, roof, [0, 0, 0]);
   const b = twoGroupMesh(wall, roof, [40, 0, 0]);
@@ -489,7 +523,7 @@ test("showAll puts the world back the way the builders made it", () => {
     boxMesh(shared, { size: 0.5, at: [0, 0, 0] }),
     boxMesh(shared, { size: 0.5, at: [4, 0, 0] }),
   ];
-  const single = boxMesh(standard(), { size: 0.5, at: [8, 0, 0] });
+  const single = boxMesh(new THREE.MeshStandardMaterial({ color: 0x8a8378, roughness: 0.2 }), { size: 0.5, at: [8, 0, 0] });
   root.add(...batched, single);
   world.addStatic(root);
   const batch = world.buildBatches()[0];
@@ -517,7 +551,7 @@ test("stats reports what is registered, retired and folded", () => {
   root.add(
     boxMesh(shared, { size: 0.5, at: [0, 0, 0] }),
     boxMesh(shared, { size: 0.5, at: [4, 0, 0] }),
-    boxMesh(standard(), { size: 4, at: [8, 0, 0] }),
+    boxMesh(new THREE.MeshStandardMaterial({ color: 0x8a8378, roughness: 0.2 }), { size: 4, at: [8, 0, 0] }),
   );
   world.addStatic(root);
   assert.deepEqual(world.stats(), { entries: 3, hidden: 0, batches: 0, batchedDraws: 0 });

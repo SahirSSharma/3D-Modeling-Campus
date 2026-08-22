@@ -696,7 +696,12 @@ export function assembleMasses({ campus, lidar, arcgis, colors }) {
      prism is wrong about one of them at any height; campus-photo-bonner.js
      ships both plates, the 7.71 m step wall, and the full envelope. Keyed
      like massHeights, by rounded GIS centroid. */
-  const skipGis = new Set(["m:-10,266", "m:80,205"]);
+  const skipGis = new Set(["m:-10,266", "m:80,205",
+    /* R5 (2026-08-22): Pacific, NatSci, Tata, HDH Admin — each module ships
+       the measured envelope its buildlog derives; the single-lid prisms are
+       wrong about penthouse/oversail/step masses (and Tata has no LiDAR at
+       all — 2014 saw a lawn). */
+    "m:-92,234", "m:-156,308", "m:-55,171", "m:-175,382"]);
   for (const m of masses) {
     if (m.src === "gis" && m._c && skipGis.has(`m:${Math.round(m._c[0])},${Math.round(m._c[1])}`)) {
       m._skipGis = true;

@@ -357,7 +357,10 @@ describe("2. post-2014 buildings render at their documented heights", () => {
     "Cresta": 18, // GIS 21.3
     "Viento": 30, // GIS 36.6, 12 storeys
     "Survivance": 30, // GIS 33.5
-    "Tata Hall for the Sciences": 20, // GIS masses top at 25.6
+    /* "Tata Hall for the Sciences" left this table 2026-08-22 (R5): its GIS
+       prism is a declared skipGis retirement — photo-tata ships the Regents
+       GB7 planning-doc envelope (built top 48.16 repo) and carries the far
+       silhouette via REPLACES_MEASURED. The declared-skip test in §7 pins it. */
     "Athena Parking Structure": 25, // GIS 29.9, 7 levels
     "Altman Clinical and Translational Research Institute": 25, // GIS 29.9, 7 storeys
   };
@@ -511,11 +514,21 @@ describe("7. per-mass roof planes (the 2026-08-04 host-bleed fix)", () => {
       "the Urey skip must be the declared skipGis mechanism");
     assert.match(massingSrc, /skipGis = new Set\(\[[^\]]*"m:80,205"/,
       "the Bonner skip must be the declared skipGis mechanism");
+    /* R5 2026-08-22: four more declared skips — Pacific (penthouse band the
+       prism flattens), NatSci (roof-slab oversail + service masses), Tata
+       (NO LiDAR: 2014 saw the demolished-USB lawn; height is the Regents GB7
+       chain), HDH Admin (twin-ridge roof + mechanical penthouse). Each photo
+       module ships the measured envelope its buildlog derives. */
+    for (const key of ["m:-92,234", "m:-156,308", "m:-55,171", "m:-175,382"]) {
+      assert.equal(gisByKey.get(key), undefined, `the ${key} prism is back — it entombs its photo module`);
+      assert.match(massingSrc, new RegExp(`skipGis = new Set\\(\\[[^\\]]*"${key}"`),
+        `the ${key} skip must be the declared skipGis mechanism`);
+    }
     const walkSrc = readFileSync(path.join(ROOT, "docs/js/campus-walk.js"), "utf8");
-    assert.match(walkSrc, /REPLACES_MEASURED = new Set\(\[[^\]]*"photo-urey"/,
-      "with the prism gone, photo-urey must carry the far silhouette (base chunk category)");
-    assert.match(walkSrc, /REPLACES_MEASURED = new Set\(\[[^\]]*"photo-bonner"/,
-      "with the prism gone, photo-bonner must carry the far silhouette (base chunk category)");
+    for (const name of ["photo-urey", "photo-bonner", "photo-pacific", "photo-natsci", "photo-tata", "photo-hdhadmin"]) {
+      assert.match(walkSrc, new RegExp(`REPLACES_MEASURED = new Set\\(\\[[^\\]]*"${name}"`),
+        `with the prism gone, ${name} must carry the far silhouette (base chunk category)`);
+    }
   });
   test("a stepped slab emits no per-mass plane (p75 is not a roof)", () => {
     /* Urey Hall's main mass: half its 2014 returns sit on ~16 m steps, the
@@ -687,6 +700,11 @@ describe("9. the north-west shard sweep (r0c0, 2026-08-04)", () => {
       "64 Degrees", "64 North",
       "Print Labs", "Nigella Hillgarth Education Center",
       "RIMAC Annex", "Urey Hall", "Bonner Hall",
+      /* R5 skipGis retirements (2026-08-22) — each carried by its photo
+         module in the base chunk category; §7's declared-skip test pins it. */
+      "Pacific Hall", "Natural Science Building",
+      "Housing Dining and Hospitality Administration Building",
+      "Tata Hall for the Sciences",
     ]);
     const carried = new Set(MASSES.filter((m) => m.name).map((m) => m.name));
     const carriedAsSuffix = (n) =>
@@ -2298,7 +2316,12 @@ describe("campus epoch — r1c1 re-sweep (2026-08-05)", () => {
     assert.equal(LIDAR.heights["Ida and Cecil Green Faculty Club"], 6.5);
     assert.equal(rendersNear(159.3, -127.8).find((m) => m.src === "gis")?.h, 6.5);
     assert.equal(LIDAR.massHeights["m:-55,171"], undefined, "Tata must not ship a 2014 plane");
-    assert.equal(rendersNear(-55.4, 171.0).find((m) => /Tata/i.test(m.name || ""))?.h, 25.6);
+    /* R5 2026-08-22: the 25.6 GIS prism is a declared skipGis retirement —
+       photo-tata ships the Regents GB7 envelope instead, and rendering the
+       prism again would entomb it. The §7 declared-skip test pins the
+       mechanism; here we pin the absence at the site. */
+    assert.equal(rendersNear(-55.4, 171.0).find((m) => /Tata/i.test(m.name || "")), undefined,
+      "the Tata GIS prism is back — it entombs photo-tata");
   });
 
   test("Strauss-edge and trolley rings keep their guesses; VAF-3 double stays open", () => {

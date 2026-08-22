@@ -162,6 +162,17 @@ function resolveBuilding(query) {
     "urey hall": { minX: -51.3, maxX: 28.3, minZ: 229.1, maxZ: 309.5, topY: 54.4 },
     /* Bonner: GIS mass 206 bbox; bar plate repo 35.71 + spine crest ≈ 38.5. */
     "bonner hall": { minX: 51.8, maxX: 95.3, minZ: 164.7, maxZ: 248.2, topY: 38.6 },
+    /* R5 (2026-08-22): survey-ring bboxes per recon; topY is each module's
+       built max on the drawn terrain (offline Box3 over the real build). */
+    "pacific hall": { minX: -141.0, maxX: -50.2, minZ: 193.8, maxZ: 244.2, topY: 57.2 },
+    "natural sciences building": { minX: -176.8, maxX: -102.5, minZ: 280.0, maxZ: 346.7, topY: 52.7 },
+    "natural science building": { minX: -176.8, maxX: -102.5, minZ: 280.0, maxZ: 346.7, topY: 52.7 },
+    "tata hall": { minX: -81.0, maxX: 8.4, minZ: 147.4, maxZ: 185.9, topY: 48.16 },
+    "hdh administration": { minX: -201.0, maxX: -151.6, minZ: 369.3, maxZ: 400.5, topY: 42.8 },
+    /* Not a mass at all: the striped lot, framed by its surveyed ring bbox
+       (arcgis.ground#71); topY is the built max (light poles) on the drawn
+       terrain. */
+    "lot p101": { minX: -170.4, maxX: -110.3, minZ: 243.8, maxZ: 281.3, topY: 30.3 },
   };
   if (PHOTO_CARRIED[q]) {
     const b = PHOTO_CARRIED[q];

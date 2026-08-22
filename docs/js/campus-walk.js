@@ -37,7 +37,7 @@ import { makeSolidSampler } from "./campus-clearance.js";
 import { nullReporter } from "./campus-boot.js";
 import { surveyFacts, geometryFacts, sourceLines } from "./campus-facts.js";
 import { createPostfx } from "./campus-postfx.js";
-import { freezeStatic, filterShadowCasters, dedupeMaterials } from "./campus-perf.js";
+import { freezeStatic, filterShadowCasters, dedupeMaterials, mergeInstancedMeshes } from "./campus-perf.js";
 import { createChunkWorld } from "./campus-chunks.js";
 import { createQuality } from "./campus-quality.js";
 import { createPhotoEighth } from "./campus-photo-eighth.js";
@@ -55,6 +55,11 @@ import { createPhotoFleets } from "./campus-photo-fleets.js";
 import { createPhotoUrey } from "./campus-photo-urey.js";
 import { createPhotoBonner } from "./campus-photo-bonner.js";
 import { createPhotoMayer } from "./campus-photo-mayer.js";
+import { createPhotoPacific } from "./campus-photo-pacific.js";
+import { createPhotoNatsci } from "./campus-photo-natsci.js";
+import { createPhotoTata } from "./campus-photo-tata.js";
+import { createPhotoHdhAdmin } from "./campus-photo-hdhadmin.js";
+import { createPhotoP101 } from "./campus-photo-p101.js";
 import { createPhotoSankofa } from "./campus-photo-sankofa.js";
 import { createPhotoPodemos } from "./campus-photo-podemos.js";
 import { createPhotoAzad } from "./campus-photo-azad.js";
@@ -780,6 +785,16 @@ export async function boot({ report, mode = "campus" } = {}) {
       () => photoZone.add(createPhotoUrey(null, { photo: data.photo, heightAt, surfaceAt }).group),
       () => photoZone.add(createPhotoBonner(null, { photo: data.photo, heightAt, surfaceAt }).group),
       () => photoZone.add(createPhotoMayer(null, { photo: data.photo, heightAt, surfaceAt }).group),
+      /* Zone 3 batch R5 — the science spine south/west + the lot. Pacific,
+         NatSci and HDH Admin carry their skipped GIS prisms' silhouettes via
+         REPLACES_MEASURED; Tata has NO LiDAR (opened 2018) and its height is
+         the Regents GB7 planning-doc chain; p101 is the striped lot — flat
+         decals and kerb furniture, no mass to replace. */
+      () => photoZone.add(createPhotoPacific(null, { photo: data.photo, heightAt, surfaceAt }).group),
+      () => photoZone.add(createPhotoNatsci(null, { photo: data.photo, heightAt, surfaceAt }).group),
+      () => photoZone.add(createPhotoTata(null, { photo: data.photo, heightAt, surfaceAt }).group),
+      () => photoZone.add(createPhotoHdhAdmin(null, { photo: data.photo, heightAt, surfaceAt }).group),
+      () => photoZone.add(createPhotoP101(null, { photo: data.photo, heightAt, surfaceAt }).group),
       /* Zone 2 — Eighth College / the Theatre District neighbourhood, 2023. The
          2014 LiDAR is blind to all of it, so every one of these anchors to the
          ArcGIS massing ring and its GIS h instead: heightAt would be measuring
@@ -817,18 +832,22 @@ export async function boot({ report, mode = "campus" } = {}) {
   /* The render-performance layer (campus-perf.js). Only static roots are
      handed over — never the sky dome (it re-centres itself per frame and
      needs matrixAutoUpdate), never the label sprites (they move). Dedupe
-     first so the folded materials are what freeze/filter walk over. */
+     first so the folded materials are what filter/merge/freeze walk over;
+     filter before merge so a dropped caster does not re-arm inside a fold. */
   const staticRoots = [
     terrain.mesh, built.group, surfaces, markingsGroup, trees.group, details,
     athleticsZone, eighthZone, landmarksGroup, photoZone, regionZone,
   ];
-  const folded = dedupeMaterials(staticRoots);
+  const materialCanon = new Map();
+  const folded = dedupeMaterials(staticRoots, { canon: materialCanon });
   const unshadowed = filterShadowCasters(staticRoots);
+  const instanced = mergeInstancedMeshes(staticRoots);
   const frozen = freezeStatic(staticRoots);
   rep.log(
     `perf — ${folded.replaced.toLocaleString()} duplicate materials folded into ` +
       `${folded.unique.toLocaleString()} · ${unshadowed.toLocaleString()} sub-texel casters ` +
-      `unshadowed · ${frozen.toLocaleString()} static matrices frozen`
+      `unshadowed · ${instanced.folded} instanced draws merged into ${instanced.merged} · ` +
+      `${frozen.toLocaleString()} static matrices frozen`
   );
 
   /* The chunked-world layer (campus-chunks.js): distance tiers plus one
@@ -1016,7 +1035,7 @@ export async function boot({ report, mode = "campus" } = {}) {
      opens over Revelle Plaza with Argo, York and Galbraith around it. */
   const SPAWNS = {
     scooter: { x: -174.5, z: 525.2 },
-    staging: { x: 15, z: 378 },
+    staging: { x: -75, z: 215 }, /* R5 zone: the science spine south/west — between Pacific, Tata and Urey Green */
   };
   const argo = campus.places["Argo Hall"];
   const at = SPAWNS[mode] || argo;
@@ -1043,7 +1062,7 @@ export async function boot({ report, mode = "campus" } = {}) {
      modules build ONE PER FRAME-GAP so the running frame loop never blocks
      for more than a single builder. Each finished zone then gets the same
      perf treatment the boot-time zones got — shadows, dedupe, caster
-     filter, matrix freeze, chunk registration, batching. `streamed` flips
+     filter, instanced merge, matrix freeze, chunk registration, batching. `streamed` flips
      when the world is whole; the audit and the perf gate wait on it. */
   const gap = () => new Promise((r) => requestAnimationFrame(() => setTimeout(r, 0)));
   (async () => {
@@ -1075,8 +1094,9 @@ export async function boot({ report, mode = "campus" } = {}) {
          paint), and streaming must not change that. */
       photoZone.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
       const lateRoots = [photoZone, regionZone];
-      dedupeMaterials(lateRoots);
+      dedupeMaterials(lateRoots, { canon: materialCanon });
       filterShadowCasters(lateRoots);
+      mergeInstancedMeshes(lateRoots);
       freezeStatic(lateRoots);
       /* Plaza and Galbraith REPLACE measured entities (the ultra trees on
          measured trunks, the fountain that supersedes the landmark ring) —
@@ -1084,7 +1104,8 @@ export async function boot({ report, mode = "campus" } = {}) {
          measured thing was withheld on their behalf, so they register as
          "base" and never retire wholesale. Every other photo module only
          ADDS on top of massing, and massing carries its silhouette. */
-      const REPLACES_MEASURED = new Set(["photo-plaza", "photo-galbraith", "photo-urey", "photo-bonner"]);
+      const REPLACES_MEASURED = new Set(["photo-plaza", "photo-galbraith", "photo-urey", "photo-bonner",
+        "photo-pacific", "photo-natsci", "photo-tata", "photo-hdhadmin"]);
       for (const child of photoZone.children) {
         chunks.addStatic(child, { category: REPLACES_MEASURED.has(child.name) ? "base" : "photo", zone: photoZone });
       }

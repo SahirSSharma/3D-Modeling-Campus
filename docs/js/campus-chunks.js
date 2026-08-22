@@ -25,6 +25,7 @@
 // Every threshold lives in CHUNK_CONFIG and is runtime-mutable — the dev
 // panel and the URL both get to override it.
 import * as THREE from "../vendor/three/three.module.min.js";
+import { materialFoldKey } from "./campus-perf.js";
 
 export const CHUNK_CONFIG = {
   props: 800,         // m — hide units smaller than smallUnit beyond this
@@ -131,7 +132,7 @@ export function createChunkWorld({ config = CHUNK_CONFIG } = {}) {
     let n = 0;
     r.updateMatrixWorld(true);
     r.traverse((o) => {
-      if (!o.isMesh || !o.geometry) return;
+      if (!o.isMesh || !o.geometry || o.userData.perfMerged) return;
       entries.push(makeEntry(o, worldAABB(o), unitRadius(o), category, z));
       n++;
     });
@@ -143,6 +144,9 @@ export function createChunkWorld({ config = CHUNK_CONFIG } = {}) {
      opaque, renderOrder-0, non-instanced meshes join: the draped decal
      ladder (campus-overlay.js) depends on draw order between SEPARATE
      objects, and transparency depends on sorting, so both stay as they are.
+     A bucket is a material CLASS (maps, roughness, metalness, side, …),
+     not a hue — two sourced colours of the same stucco share one draw and
+     carry the hue on setColorAt.
      Multi-material meshes (massing's wall/roof groups) are split by their
      geometry groups so each part joins its material's bucket.
      Originals go `visible = false` but stay in the graph — massInfo, layer
@@ -205,7 +209,16 @@ export function createChunkWorld({ config = CHUNK_CONFIG } = {}) {
         verts += p.geometry.attributes.position.count;
         indices += p.geometry.index ? p.geometry.index.count : p.geometry.attributes.position.count;
       }
-      const mesh = new THREE.BatchedMesh(parts.length, verts, indices, b.material);
+      /* Same class, different sourced hues: one material (white) × per-
+         instance colour. Same hue: keep the originals' own material so a
+         one-colour batch is bit-identical to what it was. */
+      const hexes = new Set(parts.map((p) => p.colorHex));
+      let material = b.material;
+      if (hexes.size > 1) {
+        material = b.material.clone();
+        material.color.setHex(0xffffff);
+      }
+      const mesh = new THREE.BatchedMesh(parts.length, verts, indices, material);
       mesh.perObjectFrustumCulled = true;
       mesh.castShadow = b.castShadow;
       mesh.receiveShadow = b.receiveShadow;
@@ -213,6 +226,7 @@ export function createChunkWorld({ config = CHUNK_CONFIG } = {}) {
       for (const p of parts) {
         const iid = mesh.addInstance(mesh.addGeometry(p.geometry));
         mesh.setMatrixAt(iid, p.entry.object.matrixWorld);
+        if (hexes.size > 1) mesh.setColorAt(iid, p.color);
         /* Seed from the entry's CURRENT tier state — a sweep may have run
            between registration and batching (the streaming layer yields to
            the frame loop), and show() is edge-triggered, so an instance
@@ -234,16 +248,17 @@ export function createChunkWorld({ config = CHUNK_CONFIG } = {}) {
   }
 
   function partFor(buckets, m, o, e, geometry) {
-    /* One batch per material × shadow flags × attribute layout × indexedness
-       × ZONE — the zone keeps layer toggles honest (a batch shows only while
-       its zone does), the layout keeps addGeometry from mixing incompatible
-       vertex formats, and indexedness because a BatchedMesh cannot mix
-       indexed and non-indexed geometry. */
+    /* One batch per material CLASS (not hue) × shadow flags × attribute
+       layout × indexedness × ZONE — two sourced colours of the same stucco
+       are one draw with setColorAt. The zone keeps layer toggles honest,
+       the layout keeps addGeometry from mixing incompatible vertex formats,
+       and indexedness because a BatchedMesh cannot mix indexed and
+       non-indexed geometry. */
     const attrs = Object.keys(geometry.attributes).sort().join(",");
-    const key = `${m.uuid}|${o.castShadow}|${o.receiveShadow}|${attrs}|${geometry.index ? "i" : "n"}|${e.zone?.uuid ?? "-"}`;
+    const key = `${materialFoldKey(m)}|${o.castShadow}|${o.receiveShadow}|${attrs}|${geometry.index ? "i" : "n"}|${e.zone?.uuid ?? "-"}`;
     let b = buckets.get(key);
     if (!b) buckets.set(key, (b = { material: m, castShadow: o.castShadow, receiveShadow: o.receiveShadow, zone: e.zone, parts: [] }));
-    const part = { entry: e, geometry, bucket: b };
+    const part = { entry: e, geometry, bucket: b, color: m.color?.clone() ?? new THREE.Color(0xffffff), colorHex: m.color?.getHexString() ?? "ffffff" };
     b.parts.push(part);
     return part;
   }
